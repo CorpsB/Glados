@@ -1,0 +1,17 @@
+name: Protect main
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if head branch is not preprod
+        run: |
+          if [ "${{ github.head_ref }}" != "preprod" ]; then
+            echo "Les PR vers main doivent venir de la branche 'preprod' uniquement."
+            exit 1
+          fi
