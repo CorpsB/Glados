@@ -2,16 +2,15 @@ name: Protect main
 
 on:
   pull_request:
-    branches:
-      - main
-    types: [opened, synchronize, reopened]
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   check-source-branch:
     runs-on: ubuntu-latest
     steps:
       - name: Block PRs to main that are not from preprod
-        if: ${{ github.event.pull_request.head.ref != 'preprod' }}
+        if: ${{ github.event.pull_request.base.ref == 'main' && github.event.pull_request.head.ref != 'preprod' }}
         run: |
           echo "Les PR vers main doivent venir de la branche 'preprod' uniquement."
           exit 1
