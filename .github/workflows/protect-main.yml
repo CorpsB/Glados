@@ -2,11 +2,11 @@ name: Protect main
 
 on:
   pull_request:
-    branches:
-      - main
+    types: [opened, synchronize, reopened]
 
 jobs:
   check-source-branch:
+    if: ${{ github.base_ref == 'main' }}
     runs-on: ubuntu-latest
     steps:
       - name: Fail if head branch is not preprod
