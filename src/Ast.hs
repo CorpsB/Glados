@@ -5,11 +5,12 @@
 -- Ast
 -}
 
-module Ast (Ast(..), sexprToAST, evalAST) where
+module Ast (Ast(..), sexprToAST, execBuiltin, evalAST) where
 
 import Lisp (SExpr(..))
 
-data Ast = Define String Ast
+data Ast =
+    Define String Ast
     | AInteger Int
     | ABool Bool
     | ASymbol String
