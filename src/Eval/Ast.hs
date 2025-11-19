@@ -19,6 +19,8 @@ data Ast = Define String Ast
 sexprToAST :: SExpr -> Maybe Ast
 sexprToAST (SInteger n) = Just (AInteger n)
 sexprToAST (SSymbol s) = Just (ASymbol s)
+sexprToAST (SSymbol "#t") = Just (ABool True)
+sexprToAST (SSymbol "#f") = Just (ABool False)
 sexprToAST (List (SSymbol "define" : SSymbol name : body : [])) = do
     b <- sexprToAST body
     return (Define name b)
