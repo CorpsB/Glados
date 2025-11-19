@@ -1,0 +1,26 @@
+steps:
+  - name: make-build
+    image: haskell:9.8
+    commands:
+      - make
+
+  - name: make-clean
+    image: haskell:9.8
+    commands:
+      - make clean
+    depends_on:
+      - make-build
+
+  - name: make-fclean
+    image: haskell:9.8
+    commands:
+      - make fclean
+    depends_on:
+      - make-clean
+
+  - name: make-re
+    image: haskell:9.8
+    commands:
+      - make re
+    depends_on:
+      - make-fclean
