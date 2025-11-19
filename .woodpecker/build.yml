@@ -1,5 +1,14 @@
+kind: pipeline
+name: Build test
+
+when:
+  event:
+    include:
+      - push
+      - pull_request
+
 steps:
-  - name: make-build
+  - name: make
     image: haskell:9.10.3
     commands:
       - make
