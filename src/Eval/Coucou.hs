@@ -1,3 +1,10 @@
+{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Coucou.hs
+-}
+
 module Eval.Coucou
   ( sayEval
   ) where

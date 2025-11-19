@@ -11,6 +11,7 @@ import Lisp (SExpr(..))
 
 data Ast = Define String Ast
     | AInteger Int
+    | ABool Bool
     | ASymbol String
     | Call Ast [Ast]
     deriving Show
@@ -31,34 +32,59 @@ toInt :: Ast -> Maybe Int
 toInt (AInteger n) = Just n
 toInt _ = Nothing
 
+-- Builtins
+
 execBuiltin :: String -> [Ast] -> Maybe Ast
-execBuiltin "+" as = do
-    numbers <- traverse toInt as
-    return (AInteger (sum numbers))
-execBuiltin "*" as = do
-    numbers <- traverse toInt as
-    return (AInteger (product numbers))
-execBuiltin "-" as = do
-    numbers <- traverse toInt as
-    case numbers of
-        (x:xs) -> return (AInteger (foldl (-) x xs))
-        _ -> Nothing
-execBuiltin "/" as = do
-    numbers <- traverse toInt as
-    case numbers of
-        (x:xs) -> if all (/= 0) xs
-                  then return (AInteger (foldl div x xs))
-                  else Nothing
-        _ -> Nothing
-execBuiltin ">" as = do
-    numbers <- traverse toInt as
-    case numbers of
-        (a:b:_) -> return (AInteger (if a > b then 1 else 0))
-        _ -> Nothing
+execBuiltin "eq?" as = builtinEq as
+execBuiltin "<" as = builtinLowerThan as
+execBuiltin ">" as = builtinGreaterThan as
+execBuiltin "+" as = builtinAddition as
+execBuiltin "-" as = builtinSubtraction as
+execBuiltin "*" as = builtinMultiplication as
+execBuiltin "div" as = builtinDivision as
+execBuiltin "mod" as = builtinModulo as
 execBuiltin _ _ = Nothing
+
+builtinEq :: [Ast] -> Maybe Ast
+builtinEq [AInteger x, AInteger y] = Just $ ABool (x == y)
+builtinEq [ABool x, ABool y] = Just $ ABool (x == y)
+builtinEq _ = Nothing
+
+builtinLowerThan :: [Ast] -> Maybe Ast
+builtinLowerThan [AInteger x, AInteger y] = Just $ ABool (x < y)
+builtinLowerThan _ = Nothing
+
+builtinGreaterThan :: [Ast] -> Maybe Ast
+builtinGreaterThan [AInteger x, AInteger y] = Just $ ABool (x > y)
+builtinGreaterThan _ = Nothing
+
+builtinAddition :: [Ast] -> Maybe Ast
+builtinAddition [AInteger x, AInteger y] = Just $ AInteger (x + y)
+builtinAddition _ = Nothing
+
+builtinSubtraction :: [Ast] -> Maybe Ast
+builtinSubtraction [AInteger x, AInteger y] = Just $ AInteger (x - y)
+builtinSubtraction _ = Nothing
+
+builtinMultiplication :: [Ast] -> Maybe Ast
+builtinMultiplication [AInteger x, AInteger y] = Just $ AInteger (x * y)
+builtinMultiplication _ = Nothing
+
+builtinDivision :: [Ast] -> Maybe Ast
+builtinDivision [_, AInteger 0] = Nothing
+builtinDivision [AInteger x, AInteger y] = Just $ AInteger (div x y)
+builtinDivision _ = Nothing
+
+builtinModulo :: [Ast] -> Maybe Ast
+builtinModulo [_, AInteger 0] = Nothing
+builtinModulo [AInteger x, AInteger y] = Just $ AInteger (mod x y)
+builtinModulo _ = Nothing
+
+-- Evaluation
 
 evalAST :: Ast -> Maybe Ast
 evalAST (AInteger n) = Just (AInteger n)
+evalAST (ABool b) = Just (ABool b)
 evalAST (ASymbol _) = Nothing
 evalAST (Define name body) = do
     b2 <- evalAST body
