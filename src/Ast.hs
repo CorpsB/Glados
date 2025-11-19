@@ -9,22 +9,31 @@ module Ast (Ast(..), sexprToAST, execBuiltin, evalAST) where
 
 import Lisp (SExpr(..))
 
-data Ast =
-    Define String Ast
-    | AInteger Int
+data Ast
+    = AInteger Int
     | ABool Bool
     | ASymbol String
+    | Define String Ast
+    | DefineFun String [String] Ast -- (define f [a,b] exec)
     | Call Ast [Ast]
     deriving Show
 
+extractParam :: SExpr -> Maybe String
+extractParam (SSymbol s) = Just s
+extractParam _           = Nothing
+
 sexprToAST :: SExpr -> Maybe Ast
 sexprToAST (SInteger n) = Just (AInteger n)
-sexprToAST (SSymbol s) = Just (ASymbol s)
 sexprToAST (SSymbol "#t") = Just (ABool True)
 sexprToAST (SSymbol "#f") = Just (ABool False)
+sexprToAST (SSymbol s) = Just (ASymbol s)
 sexprToAST (List (SSymbol "define" : SSymbol name : body : [])) = do
     b <- sexprToAST body
     return (Define name b)
+sexprToAST (List (SSymbol "define" : List (SSymbol name : params) : body : [])) = do
+    ps <- mapM extractParam params
+    b  <- sexprToAST body
+    return (DefineFun name ps b)
 sexprToAST (List (h:q)) = do
     h2 <- sexprToAST h
     q2 <- mapM sexprToAST q
@@ -91,7 +100,10 @@ evalAST (ABool b) = Just (ABool b)
 evalAST (ASymbol _) = Nothing
 evalAST (Define name body) = do
     b2 <- evalAST body
-    return (Define name b2)
+    return Just (Define name b2)
+evalAST (DefineFun name params body) = do
+    b2 <- evalAST body
+    return Just (DefineFun name params b2)
 evalAST (Call (ASymbol op) args) = do
     evalArgs <- mapM evalAST args
     execBuiltin op evalArgs
