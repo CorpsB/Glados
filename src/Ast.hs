@@ -19,10 +19,10 @@ data Ast =
     deriving Show
 
 sexprToAST :: SExpr -> Maybe Ast
-sexprToAST (SInteger n) = Just (AInteger n)
-sexprToAST (SSymbol s) = Just (ASymbol s)
-sexprToAST (SSymbol "#t") = Just (ABool True)
-sexprToAST (SSymbol "#f") = Just (ABool False)
+sexprToAST (SInteger n) = Just $ AInteger n
+sexprToAST (SSymbol s) = Just $ ASymbol s
+sexprToAST (SSymbol "#t") = Just $ ABool True
+sexprToAST (SSymbol "#f") = Just $ ABool False
 sexprToAST (List (SSymbol "define" : SSymbol name : body : [])) = do
     b <- sexprToAST body
     return (Define name b)
@@ -33,7 +33,7 @@ sexprToAST (List (h:q)) = do
 sexprToAST _ = Nothing
 
 toInt :: Ast -> Maybe Int
-toInt (AInteger n) = Just n
+toInt $ AInteger n = Just n
 toInt _ = Nothing
 
 -- Builtins
@@ -94,8 +94,8 @@ execCondition _ _ _ = Nothing
 -- Evaluation
 
 evalAST :: Ast -> Maybe Ast
-evalAST (AInteger n) = Just (AInteger n)
-evalAST (ABool b) = Just (ABool b)
+evalAST (AInteger n) = Just $ AInteger n
+evalAST (ABool b) = Just $ ABool b
 evalAST (ASymbol _) = Nothing
 evalAST (Define name body) = do
     b2 <- evalAST body
