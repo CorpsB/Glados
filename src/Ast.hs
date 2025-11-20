@@ -14,6 +14,7 @@ data Ast =
     | AInteger Int
     | ABool Bool
     | ASymbol String
+    | Condition Ast Ast Ast
     | Call Ast [Ast]
     deriving Show
 
@@ -83,6 +84,13 @@ builtinModulo [_, AInteger 0] = Nothing
 builtinModulo [AInteger x, AInteger y] = Just $ AInteger (mod x y)
 builtinModulo _ = Nothing
 
+-- Condition
+
+execCondition :: Ast -> Ast -> Ast -> Maybe Ast
+execCondition (ABool True) th _ = Just $ th
+execCondition (ABool False) _ el = Just $ el
+execCondition _ _ _ = Nothing
+
 -- Evaluation
 
 evalAST :: Ast -> Maybe Ast
@@ -92,6 +100,11 @@ evalAST (ASymbol _) = Nothing
 evalAST (Define name body) = do
     b2 <- evalAST body
     return (Define name b2)
+evalAST (Condition cond th el) = do
+    c <- evalAST cond
+    t <- evalAST th
+    e <- evalAST el
+    execCondition c t e
 evalAST (Call (ASymbol op) args) = do
     evalArgs <- mapM evalAST args
     execBuiltin op evalArgs
