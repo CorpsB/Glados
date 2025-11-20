@@ -24,6 +24,7 @@ executable glados
     Coucou
     Parser.Coucou
     Eval.Coucou
+    Eval.Ast
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
   ghc-options:         -Wall

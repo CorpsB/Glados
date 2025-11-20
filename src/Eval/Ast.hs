@@ -5,7 +5,7 @@
 -- Ast
 -}
 
-module Ast (Ast(..), sexprToAST, execBuiltin, evalAST) where
+module Eval.Ast (Ast(..), sexprToAST, execBuiltin, evalAST) where
 
 import Lisp (SExpr(..))
 
@@ -20,9 +20,9 @@ data Ast =
 
 sexprToAST :: SExpr -> Maybe Ast
 sexprToAST (SInteger n) = Just $ AInteger n
-sexprToAST (SSymbol s) = Just $ ASymbol s
 sexprToAST (SSymbol "#t") = Just $ ABool True
 sexprToAST (SSymbol "#f") = Just $ ABool False
+sexprToAST (SSymbol s) = Just $ ASymbol s
 sexprToAST (List (SSymbol "define" : SSymbol name : body : [])) = do
     b <- sexprToAST body
     return (Define name b)
@@ -33,7 +33,7 @@ sexprToAST (List (h:q)) = do
 sexprToAST _ = Nothing
 
 toInt :: Ast -> Maybe Int
-toInt $ AInteger n = Just n
+toInt (AInteger n) = Just n
 toInt _ = Nothing
 
 -- Builtins
@@ -89,6 +89,8 @@ builtinModulo _ = Nothing
 execCondition :: Ast -> Ast -> Ast -> Maybe Ast
 execCondition (ABool True) th _ = Just $ th
 execCondition (ABool False) _ el = Just $ el
+execCondition (AInteger 1) th _ = Just $ th
+execCondition (AInteger 0) _ el = Just $ el
 execCondition _ _ _ = Nothing
 
 -- Evaluation
