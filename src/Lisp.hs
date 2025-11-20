@@ -10,7 +10,7 @@ module Lisp (SExpr(..), getSymbol, getInteger, getList) where
 data SExpr = SInteger Int
     | SSymbol String
     | List [SExpr]
-    deriving Show
+    deriving (Show, Eq)
 
 getSymbol :: SExpr -> Maybe String
 getSymbol (SSymbol s) = Just s

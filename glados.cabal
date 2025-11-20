@@ -24,8 +24,10 @@ executable glados
     Coucou
     Parser.ParserISL
     Eval.Coucou
+    Lisp
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5,
+                       hspec,
                        megaparsec,
                        parser-combinators
   ghc-options:         -Wall
@@ -44,3 +46,17 @@ executable glados
 source-repository head
   type:     git
   location: https://github.com/githubuser/glados
+
+test-suite glados-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      test
+                     , src
+  main-is:             ParseTest.hs
+  other-modules:       Parser.ParserISL
+                     , Lisp
+  build-depends:       base
+                     , hspec
+                     , megaparsec
+                     , parser-combinators
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  default-language:    Haskell2010
