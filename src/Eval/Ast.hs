@@ -25,16 +25,17 @@ sexprToAST (SSymbol "#f") = Just $ ABool False
 sexprToAST (SSymbol s) = Just $ ASymbol s
 sexprToAST (List (SSymbol "define" : SSymbol name : body : [])) = do
     b <- sexprToAST body
-    return (Define name b)
+    return $ Define name b
+sexprToAST (List (SSymbol "if" : cond : th : el : [])) = do
+    c <- sexprToAST cond
+    t <- sexprToAST th
+    e <- sexprToAST el
+    return $ Condition c t e
 sexprToAST (List (h:q)) = do
     h2 <- sexprToAST h
     q2 <- mapM sexprToAST q
-    return (Call h2 q2)
+    return $ Call h2 q2
 sexprToAST _ = Nothing
-
-toInt :: Ast -> Maybe Int
-toInt (AInteger n) = Just n
-toInt _ = Nothing
 
 -- Builtins
 
