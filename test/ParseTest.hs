@@ -12,7 +12,7 @@ import Lisp (SExpr(..))
 
 shouldParse :: String -> SExpr -> Expectation
 shouldParse input expected = case parseLisp input of
-    Right result -> result `shouldBe` expected
+    Right result -> result `shouldSatisfy` (== expected)
     Left _       -> expectationFailure $ "Parsing failed for input: " ++ input
 
 shouldFail :: String -> Expectation
