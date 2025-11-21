@@ -12,12 +12,6 @@ data SExpr = SInteger Int
     | List [SExpr]
     deriving Show
 
-instance Eq SExpr where
-    (SInteger a) == (SInteger b) = a == b
-    (SSymbol a)  == (SSymbol b)  = a == b
-    (List a)     == (List b)     = a == b
-    _ == _ = False
-
 getSymbol :: SExpr -> Maybe String
 getSymbol (SSymbol s) = Just s
 getSymbol _ = Nothing
