@@ -88,10 +88,10 @@ builtinModulo _ = Nothing
 -- Condition
 
 execCondition :: Ast -> Ast -> Ast -> Maybe Ast
-execCondition (ABool True) th _ = Just $ th
-execCondition (ABool False) _ el = Just $ el
-execCondition (AInteger 1) th _ = Just $ th
-execCondition (AInteger 0) _ el = Just $ el
+execCondition (ABool True) th _ = evalAST th
+execCondition (ABool False) _ el = evalAST el
+execCondition (AInteger 1) th _ = evalAST th
+execCondition (AInteger 0) _ el = evalAST el
 execCondition _ _ _ = Nothing
 
 -- Evaluation
@@ -105,9 +105,7 @@ evalAST (Define name body) = do
     return (Define name b2)
 evalAST (Condition cond th el) = do
     c <- evalAST cond
-    t <- evalAST th
-    e <- evalAST el
-    execCondition c t e
+    execCondition c th el
 evalAST (Call (ASymbol op) args) = do
     evalArgs <- mapM evalAST args
     execBuiltin op evalArgs
