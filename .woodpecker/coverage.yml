@@ -16,17 +16,26 @@ steps:
   - name: coverage-check
     image: haskell:9.10.3
     commands:
-      - COV=$(stack test --coverage --no-terminal 2>/dev/null \
+      - |
+        # Run tests with coverage and extract the unified "expressions used" percentage
+        COV=$(stack test --coverage --no-terminal 2>/dev/null \
           | grep 'expressions used' \
           | tail -n1 \
           | awk '{print $1}' \
           | tr -d '%')
 
-      - echo "Coverage = $COV%"
+        echo "Coverage = ${COV}%"
 
-      - if [ "$COV" -lt 80 ]; then
-          echo "❌ Coverage too low: $COV% (minimum required: 80%)";
-          exit 1;
+        # Default to 0 if COV is empty (safety)
+        if [ -z "$COV" ]; then
+          echo "Coverage could not be determined, failing the build."
+          exit 1
+        fi
+
+        # Fail the pipeline if coverage is below 80%
+        if [ "$COV" -lt 80 ]; then
+          echo "Coverage too low: ${COV}% (minimum required: 80%)"
+          exit 1
         else
-          echo "✔️ Coverage OK: $COV%";
+          echo "Coverage OK: ${COV}%"
         fi
