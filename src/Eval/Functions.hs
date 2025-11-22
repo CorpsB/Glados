@@ -5,23 +5,29 @@
 -- Functions
 -}
 
-import Ast (Ast(..), sexprToAST, execBuiltin, evalAST)
+module Eval.Functions (registerFunction, getFunction, callFunction) where
 
--- TO REFACTO (DefineFun)
-registerFunction :: String -> [Ast] -> [Define] -> [Define]
-registerFunction name value stack = ((Define name value):stack)
+import Ast (Ast(..))
+import Utils.List (sameLength)
 
-getFunctionValue :: String -> [Define] -> Maybe [Ast]
-getFunctionValue _ [] = Nothing
-getFunctionValue target ((Define key value):q)
-    | key == target = Just value
-    | otherwise     = getFunctionValue target q
+type FuncTable = [(String, [String], Ast)]
+type Env = [(String, Ast)]
 
-execFunction :: Maybe [Ast] -> [Ast] -> Maybe Ast
-execFunction (Just pattern) args = -- TO DO
+registerFunction :: FuncTable -> String -> [String] -> Ast -> Maybe FuncTable
+registerFunction ftable name params body = case getFunction ftable name of
+    Just _  -> Nothing
+    Nothing -> Just ((name, params, body) : ftable)
 
-callFunction :: Call -> Maybe Ast
-callFunction (Call name args)
-    | value == Nothing = Nothing
-    | otherwise        = execFunction value args
-    where value = getFunctionValue name
+getFunction :: FuncTable -> String -> Maybe ([String], Ast)
+getFunction [] _ = Nothing
+getFunction ((n, ps, b):xs) name
+    | n == name = Just (ps, b)
+    | otherwise = getFunction xs name
+
+callFunction :: FuncTable -> Env -> String -> [Ast] -> Maybe Ast
+callFunction ftable env name args = case getFunction ftable name of
+    Nothing -> Nothing
+    Just (params, body)
+        | not (Utils.List.sameLength params args) -> Nothing
+        | otherwise -> let localEnv = zip params args ++ env in
+            evalWithEnv ftable localEnv body
