@@ -1,0 +1,27 @@
+kind: pipeline
+name: Build test
+
+when:
+  event:
+    include:
+      - push
+
+volumes:
+  - name: stack-cache
+    host:
+      path: /var/lib/woodpecker/stack
+
+steps:
+  - name: make
+    image: haskell:9.10.3
+    volumes:
+      - stack-cache:/root/.stack
+    commands:
+      - make test
+
+  - name: coverage-check
+    image: haskell:9.10.3
+    volumes:
+      - stack-cache:/root/.stack
+    commands:
+      - ./tools/coverage_test.sh
