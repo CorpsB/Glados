@@ -38,8 +38,8 @@ lookupEnv ((k,v):xs) key
     | otherwise = lookupEnv xs key
 
 evalASTEnv :: FuncTable -> Env -> Ast -> Maybe Ast
-evalASTEnv ftable env (AInteger n) = Just (AInteger n)
-evalASTEnv ftable env (ABool b) = Just (ABool b)
+evalASTEnv _ _ (AInteger n) = Just (AInteger n)
+evalASTEnv _ _ (ABool b) = Just (ABool b)
 evalASTEnv _ env (ASymbol s) = lookupEnv env s
 evalASTEnv ftable env (Define name body) =
     evalAST ftable env (Define name body)

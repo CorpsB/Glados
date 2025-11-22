@@ -5,7 +5,8 @@
 -- Functions
 -}
 
-module Eval.Functions (registerFunction, getFunction, callFunction) where
+module Eval.Functions (FuncTable, Env,
+    registerFunction, getFunction, callFunction) where
 
 import Ast (Ast(..))
 import Utils.List (sameLength)
@@ -24,10 +25,11 @@ getFunction ((n, ps, b):xs) name
     | n == name = Just (ps, b)
     | otherwise = getFunction xs name
 
-callFunction :: FuncTable -> Env -> String -> [Ast] -> Maybe Ast
-callFunction ftable env name args = case getFunction ftable name of
+callFunction :: (FuncTable -> Env -> Ast -> Maybe Ast) ->
+    FuncTable -> Env -> String -> [Ast] -> Maybe Ast
+callFunction evalFn ftable env name args = case getFunction ftable name of
     Nothing -> Nothing
     Just (params, body)
         | not (Utils.List.sameLength params args) -> Nothing
         | otherwise -> let localEnv = zip params args ++ env in
-            evalWithEnv ftable localEnv body
+            evalFn ftable localEnv body

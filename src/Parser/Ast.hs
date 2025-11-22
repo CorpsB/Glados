@@ -7,6 +7,7 @@
 
 module Parser.Ast (sexprToAST) where
 
+import Ast (Ast(..))
 import Lisp (SExpr(..))
 
 extractParam :: SExpr -> Maybe String
