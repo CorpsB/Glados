@@ -1,0 +1,18 @@
+kind: pipeline
+name: Pull request Unitary tests
+
+when:
+  event:
+    include:
+      - pull_request
+
+steps:
+  - name: make
+    image: haskell:9.10.3
+    commands:
+      - make test
+
+  - name: coverage-check
+    image: haskell:9.10.3
+    commands:
+      - ./tools/coverage_test.sh
