@@ -1,0 +1,35 @@
+kind: pipeline
+name: Build test
+
+when:
+  event:
+    include:
+      - push
+      - pull_request
+
+steps:
+  - name: make
+    image: haskell:9.10.3
+    commands:
+      - make
+
+  - name: make-clean
+    image: haskell:9.10.3
+    commands:
+      - make clean
+    depends_on:
+      - make
+
+  - name: make-fclean
+    image: haskell:9.10.3
+    commands:
+      - make fclean
+    depends_on:
+      - make-clean
+
+  - name: make-re
+    image: haskell:9.10.3
+    commands:
+      - make re
+    depends_on:
+      - make-fclean
