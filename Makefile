@@ -20,7 +20,7 @@ clean:
 
 fclean:
 	$(MAKE) clean
-	rm glados
+	rm -f glados
 
 re:
 	$(MAKE) fclean
