@@ -25,3 +25,6 @@ fclean:
 re:
 	$(MAKE) fclean
 	$(MAKE) all
+
+test:
+	stack test --coverage

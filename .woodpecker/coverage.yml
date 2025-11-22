@@ -1,0 +1,32 @@
+kind: pipeline
+name: Build test
+
+when:
+  event:
+    include:
+      - push
+      - pull_request
+
+steps:
+  - name: make
+    image: haskell:9.10.3
+    commands:
+      - make test
+
+  - name: coverage-check
+    image: haskell:9.10.3
+    commands:
+      - COV=$(stack test --coverage --no-terminal 2>/dev/null \
+          | grep 'expressions used' \
+          | tail -n1 \
+          | awk '{print $1}' \
+          | tr -d '%')
+
+      - echo "Coverage = $COV%"
+
+      - if [ "$COV" -lt 80 ]; then
+          echo "❌ Coverage too low: $COV% (minimum required: 80%)";
+          exit 1;
+        else
+          echo "✔️ Coverage OK: $COV%";
+        fi
