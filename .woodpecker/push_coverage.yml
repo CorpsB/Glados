@@ -6,24 +6,17 @@ when:
     include:
       - push
 
-volumes:
-  - name: stack-cache
-    host:
-      path: /var/lib/woodpecker/stack
-
 steps:
   - name: make
     image: haskell:9.10.3
     volumes:
-      - name: stack-cache
-        path: /root/.stack
+      - /var/lib/woodpecker/stack:/root/.stack
     commands:
       - make test
 
   - name: coverage-check
     image: haskell:9.10.3
     volumes:
-      - name: stack-cache
-        path: /root/.stack
+      - /var/lib/woodpecker/stack:/root/.stack
     commands:
       - ./tools/coverage_test.sh
