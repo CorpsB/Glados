@@ -15,13 +15,15 @@ steps:
   - name: make
     image: haskell:9.10.3
     volumes:
-      - stack-cache:/root/.stack
+      - name: stack-cache
+        path: /root/.stack
     commands:
       - make test
 
   - name: coverage-check
     image: haskell:9.10.3
     volumes:
-      - stack-cache:/root/.stack
+      - name: stack-cache
+        path: /root/.stack
     commands:
       - ./tools/coverage_test.sh
