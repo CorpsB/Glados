@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+##
+## EPITECH PROJECT, 2025
+## Glados
+## File description:
+## commit
+##
+
 set -e
 
 BOLD="$(tput bold 2>/dev/null || true)"; RESET="$(tput sgr0 2>/dev/null || true)"
