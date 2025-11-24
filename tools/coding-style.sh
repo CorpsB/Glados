@@ -15,7 +15,7 @@ if test -s coding-style-reports.log; then
 
     while IFS= read -r line; do
 
-        if [[ "$line" == *"main.hs"* ]]; then
+        if [[ "$line" == *"./app/Main.hs"* ]]; then
             continue
         else 
             echo "$line"
