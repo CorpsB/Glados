@@ -1,5 +1,5 @@
 kind: pipeline
-name: Build test
+name: Build test (On pull request)
 
 when:
   event:
