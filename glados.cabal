@@ -19,9 +19,15 @@ executable glados
   main-is:             Main.hs
   other-modules:
     Coucou
-    Eval.Coucou
+    Ast
     Lisp
     Parser.Coucou
+    Eval.Coucou
+    Eval.Ast
+    Eval.Builtins
+    Eval.Functions
+    Parser.Ast
+    Utils.List
     Parser.ParserISL
   default-language:    Haskell2010
   build-depends:

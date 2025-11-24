@@ -5,7 +5,7 @@
 -- Main.hs
 -}
 
-module Main where
+module Main (main) where
 
 import qualified Coucou
 import qualified Parser.Coucou as Parser
