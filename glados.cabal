@@ -2,14 +2,11 @@ cabal-version:       2.2
 
 name:                glados
 version:             0.1.0.0
--- synopsis:
--- description:
 homepage:            https://github.com/githubuser/glados#readme
 license:             BSD-3-Clause
 license-file:        LICENSE
 author:              Author name here
 maintainer:          example@example.com
-copyright:           2025 Author name here
 category:            Web
 build-type:          Simple
 extra-source-files:  README.md
@@ -22,24 +19,70 @@ executable glados
   main-is:             Main.hs
   other-modules:
     Coucou
+    Ast
+    Lisp
     Parser.Coucou
     Eval.Coucou
     Eval.Ast
+    Eval.Builtins
+    Eval.Functions
+    Parser.Ast
+    Utils.List
+    Parser.ParserISL
   default-language:    Haskell2010
-  build-depends:       base >= 4.7 && < 5
-  ghc-options:         -Wall
-                       -Wcompat
-                       -Widentities
-                       -Wincomplete-record-updates
-                       -Wincomplete-uni-patterns
-                       -Wmissing-export-lists
-                       -Wmissing-home-modules
-                       -Wpartial-fields
-                       -Wredundant-constraints
-                       -threaded
-                       -rtsopts
-                       -with-rtsopts=-N
+  build-depends:
+      base >= 4.7 && < 5
+    , megaparsec
+    , parser-combinators
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-export-lists
+    -Wmissing-home-modules
+    -Wpartial-fields
+    -Wredundant-constraints
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+
+test-suite glados-unit
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:
+      test/Unit
+      src
+  main-is:             Spec.hs
+  default-language:    Haskell2010
+  other-modules:
+      Coucou
+      Eval.Coucou
+      Parser.Coucou
+      CoucouSpec
+      Eval.CoucouSpec
+      Parser.CoucouSpec
+  build-depends:
+      base >= 4.7 && < 5
+    , hspec
+    , silently
+    , megaparsec
+    , parser-combinators
+  ghc-options:
+    -Wall
+    -Wcompat
+    -Widentities
+    -Wincomplete-record-updates
+    -Wincomplete-uni-patterns
+    -Wmissing-export-lists
+    -Wmissing-home-modules
+    -Wpartial-fields
+    -Wredundant-constraints
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
 
 source-repository head
   type:     git
   location: https://github.com/githubuser/glados
+  
