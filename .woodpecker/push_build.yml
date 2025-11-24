@@ -1,0 +1,42 @@
+kind: pipeline
+name: Build test
+
+when:
+  event:
+    include:
+      - push
+
+steps:
+  - name: make
+    image: haskell:9.10.3
+    volumes:
+      - /var/lib/woodpecker/stack:/root/.stack
+    commands:
+      - make
+
+  - name: make-clean
+    image: haskell:9.10.3
+    volumes:
+      - /var/lib/woodpecker/stack:/root/.stack
+    commands:
+      - make clean
+    depends_on:
+      - make
+
+  - name: make-fclean
+    image: haskell:9.10.3
+    volumes:
+      - /var/lib/woodpecker/stack:/root/.stack
+    commands:
+      - make fclean
+    depends_on:
+      - make-clean
+
+  - name: make-re
+    image: haskell:9.10.3
+    volumes:
+      - /var/lib/woodpecker/stack:/root/.stack
+    commands:
+      - make re
+    depends_on:
+      - make-fclean
