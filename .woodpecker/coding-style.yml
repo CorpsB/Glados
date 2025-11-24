@@ -11,14 +11,5 @@ steps:
   - name: coding-style checker
     image: ghcr.io/epitech/coding-style-checker:latest
     commands:
-      - check.sh $(pwd) $(pwd)
-      - |
-        if test -s coding-style-reports.log; then
-          echo "Coding style errors detected:"
-          cat coding-style-reports.log
-          exit 1
-        else
-          echo "No coding-style error detected, good work."
-          exit 0
-        fi
+      - ./tools/coding-style.sh
 
