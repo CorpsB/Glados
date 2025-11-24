@@ -5,6 +5,13 @@
 ## Makefile
 ##
 
+##
+## EPITECH PROJECT, 2025
+## Glados
+## File description:
+## Makefile
+##
+
 .PHONY: all test clean re
 
 all:
