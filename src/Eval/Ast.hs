@@ -9,6 +9,7 @@ module Eval.Ast (evalAST, evalASTEnv) where
 
 import Ast (Ast(..))
 import Eval.Builtins (execBuiltin)
+import Eval.Conditions (execCondition)
 import Eval.Functions (getFunction, FuncTable, Env)
 import Utils.List (sameLength)
 
@@ -20,6 +21,11 @@ evalAST ftable env (Define name body) = do
     b2 <- evalAST ftable env body
     return (Define name b2)
 evalAST _ _ (DefineFun name params body) = Just (DefineFun name params body)
+evalAST ftable env (Condition cond th el) = do
+    c <- evalAST ftable env cond
+    t <- evalAST ftable env th
+    e <- evalAST ftable env el
+    execCondition (Just c) (Just t) (Just e)
 evalAST ftable env (Call (ASymbol op) args) = do
     evalArgs <- traverse (evalASTEnv ftable env) args
     case execBuiltin op evalArgs of

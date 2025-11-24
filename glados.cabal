@@ -25,6 +25,7 @@ executable glados
     Eval.Coucou
     Eval.Ast
     Eval.Builtins
+    Eval.Conditions
     Eval.Functions
     Parser.Ast
     Utils.List
