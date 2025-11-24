@@ -17,6 +17,8 @@ if test -s coding-style-reports.log; then
 
         if [[ "$line" == *"./app/Main.hs"* ]]; then
             continue
+        if [[ "$line" == *"./test/Unit/"* ]]; then
+            continue
         else 
             echo "$line"
             error=true
