@@ -27,6 +27,19 @@ execUserFunc ft env op args err = case getFunction ft op of
         "missmatch for function " ++ op
     Nothing -> Left err
 
+execNamedCall :: FuncTable -> Env -> String -> [Ast] -> Either String Ast
+execNamedCall ft env op args = case execBuiltin op args of
+    Right r -> Right r
+    Left _ -> case lookupEnv env op of
+        Just (Closure p b cEnv) -> applyClosure ft cEnv p b args
+        _ -> execUserFunc ft env op args ("*** ERROR: Unknown func: " ++ op)
+
+execExprCall :: FuncTable -> Env -> Ast -> [Ast] -> Either String Ast
+execExprCall ft env func args = evalAST ft env func >>= \res ->
+    case res of
+        Closure p b cEnv -> applyClosure ft cEnv p b args
+        _ -> Left "*** ERROR: Attempt to call a non-function"
+
 evalAST :: FuncTable -> Env -> Ast -> Either String Ast
 evalAST _ _ (AInteger n) = Right $ AInteger n
 evalAST _ _ (ABool b) = Right $ ABool b
@@ -47,17 +60,8 @@ evalAST ftable env (Condition cond th el) = do
 evalAST ftable env (Call func args) = do
     evalArgs <- traverse (evalASTEnv ftable env) args
     case func of
-        ASymbol op -> case execBuiltin op evalArgs of
-            Right r -> Right r
-            Left _ -> case lookupEnv env op of
-                Just (Closure p b cEnv) -> applyClosure ftable cEnv p b evalArgs
-                _ -> execUserFunc ftable env op evalArgs ("*** ERROR: Unknown function: " ++ op)
-        _ -> do
-            evaluatedFunc <- evalAST ftable env func
-            case evaluatedFunc of
-                Closure p b cEnv -> applyClosure ftable cEnv p b evalArgs
-                _ -> Left "*** ERROR: Attempt to call a non-function"
-evalAST _ _ (Call _ _) = Left "*** ERROR: Invalid function call"
+        ASymbol op -> execNamedCall ftable env op evalArgs
+        _ -> execExprCall ftable env func evalArgs
 
 lookupEnv :: Env -> String -> Maybe Ast
 lookupEnv [] _ = Nothing
