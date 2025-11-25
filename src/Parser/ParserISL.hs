@@ -26,7 +26,7 @@ symbol = L.symbol sc
 
 pInteger :: Parser SExpr
 pInteger = (lexeme $ do
-    val <- L.signed (pure ()) L.decimal
+    val <- L.signed (return ()) L.decimal
     return (SInteger val)) <?> "Expected integer (like: 42, -10)" 
 
 pSymbol :: Parser SExpr
@@ -49,4 +49,4 @@ pExpr = try pInteger
     <|> pSymbol
 
 parseLisp :: String -> Either (ParseErrorBundle String Void) SExpr
-parseLisp input = parse (sc *> pExpr <* eof) "ParserISL" input
+parseLisp = parse (sc *> pExpr <* eof) "ParserISL"
