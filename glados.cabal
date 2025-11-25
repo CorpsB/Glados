@@ -57,14 +57,7 @@ test-suite glados-unit
   main-is:             Spec.hs
   default-language:    Haskell2010
   other-modules:
-      Coucou
-      Eval.Coucou
-      Parser.Coucou
-      CoucouSpec
-      Eval.CoucouSpec
-      Parser.CoucouSpec
       Lisp
-      Parser.ParserISL
       Parser.ParserISLTest
   build-depends:
       base >= 4.7 && < 5
