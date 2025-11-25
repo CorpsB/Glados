@@ -17,4 +17,3 @@ execCondition (Just (AInteger 0)) _ (Just el) = Right el
 execCondition Nothing _ _ = Left "*** ERROR: Condition is missing"
 execCondition (Just cond) _ _ = Left $ "*** ERROR: Invalid " ++
     "condition: " ++ show cond
-execCondition _ _ _ = Left "*** ERROR: then or else branch is missing"
