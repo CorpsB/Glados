@@ -8,11 +8,10 @@
 module Eval.Functions (FuncTable, Env,
     registerFunction, getFunction, callFunction) where
 
-import Ast (Ast(..))
+import Ast (Ast(..), Env)
 import Utils.List (sameLength)
 
 type FuncTable = [(String, [String], Ast)]
-type Env = [(String, Ast)]
 
 registerFunction :: FuncTable -> String -> [String] -> Ast ->
     Either String FuncTable

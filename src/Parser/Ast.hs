@@ -19,6 +19,10 @@ sexprToAST (SInteger n) = Just $ AInteger n
 sexprToAST (SSymbol "#t") = Just $ ABool True
 sexprToAST (SSymbol "#f") = Just $ ABool False
 sexprToAST (SSymbol s) = Just $ ASymbol s
+sexprToAST (List (SSymbol "lambda" : List params : body : [])) = do
+    ps <- mapM extractParam params
+    b  <- sexprToAST body
+    return $ Lambda ps b
 sexprToAST (List (SSymbol "define" : SSymbol name : body : [])) = do
     b <- sexprToAST body
     return $ Define name b
