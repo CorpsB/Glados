@@ -67,6 +67,7 @@ test-suite glados-unit
       Eval.BuiltinsSpec
       Eval.ConditionsSpec
       Eval.FunctionsSpec
+      Eval.AstSpec
       AstSpec
       Parser.AstSpec
       Parser.ParserISLTest

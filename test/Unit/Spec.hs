@@ -5,6 +5,7 @@ import Test.Hspec
 import qualified Eval.BuiltinsSpec
 import qualified Eval.ConditionsSpec
 import qualified Eval.FunctionsSpec
+import qualified Eval.AstSpec
 import qualified AstSpec
 import qualified Parser.ParserISLTest
 import qualified Parser.AstSpec
@@ -19,6 +20,7 @@ spec = do
   Eval.BuiltinsSpec.spec
   Eval.ConditionsSpec.spec
   Eval.FunctionsSpec.spec
+  Eval.AstSpec.spec
   AstSpec.spec
   Parser.ParserISLTest.spec
   Parser.AstSpec.spec
