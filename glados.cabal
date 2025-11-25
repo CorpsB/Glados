@@ -67,8 +67,6 @@ test-suite glados-unit
       Eval.BuiltinsSpec
       Eval.ConditionsSpec
       AstSpec
-      Lisp
-      Parser.ParserISL
       Parser.ParserISLTest
       LispTest
   build-depends:
