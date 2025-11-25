@@ -63,6 +63,9 @@ test-suite glados-unit
       CoucouSpec
       Eval.CoucouSpec
       Parser.CoucouSpec
+      Lisp
+      Parser.ParserISL
+      Parser.ParserISLTest
   build-depends:
       base >= 4.7 && < 5
     , hspec
