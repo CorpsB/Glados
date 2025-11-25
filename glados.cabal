@@ -66,8 +66,11 @@ test-suite glados-unit
   other-modules:
       Eval.BuiltinsSpec
       Eval.ConditionsSpec
+      Eval.FunctionsSpec
       AstSpec
+      Parser.AstSpec
       Parser.ParserISLTest
+      Utils.ListSpec
       LispTest
   build-depends:
       base >= 4.7 && < 5
