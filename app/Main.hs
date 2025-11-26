@@ -16,18 +16,18 @@ import Eval.Run (processSExpr)
 
 processSingle :: [(String, [String], Ast)] -> Env -> SExpr ->
     Either String ([(String, [String], Ast)], Env, [Ast])
-processSingle ft en s = case processSExpr ft en s of
+processSingle ftable env s = case processSExpr ftable env s of
     Left err -> Left err
-    Right (ft', en', Nothing) -> Right (ft', en', [])
-    Right (ft', en', Just a)  -> Right (ft', en', [a])
+    Right (n_ftable, n_env, Nothing) -> Right (n_ftable, n_env, [])
+    Right (n_ftable, n_env, Just a)  -> Right (n_ftable, n_env, [a])
 
 processMany :: [(String, [String], Ast)] -> Env -> [SExpr] ->
     Either String [Ast]
 processMany _ _ [] = Right []
-processMany ft en (x:xs) = case processSingle ft en x of
+processMany ftable env (x:xs) = case processSingle ftable env x of
     Left err -> Left err
-    Right (ft', en', outs) ->
-        case processMany ft' en' xs of
+    Right (n_ftable, new_env, outs) ->
+        case processMany n_ftable new_env xs of
             Left err2  -> Left err2
             Right rest -> Right (outs ++ rest)
 
