@@ -25,16 +25,16 @@ getFunction ((n, ps, b):xs) name
     | n == name = Just (ps, b)
     | otherwise = getFunction xs name
 
-execFunc :: (FuncTable -> Env -> Ast -> Maybe Ast) -> FuncTable -> Env ->
+execFunc :: (FuncTable -> Env -> Ast -> Either String Ast) -> FuncTable -> Env ->
     ([String], Ast, [Ast], String) -> Either String Ast
 execFunc evalFn ft env (p, body, args, name)
     | not (sameLength p args) = Left $ "*** ERROR: Argument length " ++
         "mismatch for function " ++ name
     | otherwise = case evalFn ft (zip p args ++ env) body of
-        Just result -> Right result
-        Nothing -> Left $ "*** ERROR: Function evaluation failed" ++ name
+        Right result -> Right result
+        Left err -> Left $ "*** ERROR: Function evaluation failed: " ++ err
 
-callFunction :: (FuncTable -> Env -> Ast -> Maybe Ast) ->
+callFunction :: (FuncTable -> Env -> Ast -> Either String Ast) ->
     FuncTable -> Env -> String -> [Ast] -> Either String Ast
 callFunction evalFn ftable env name args = case getFunction ftable name of
     Nothing -> Left $ "*** ERROR: Unknown function: " ++ name

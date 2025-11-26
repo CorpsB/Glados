@@ -23,7 +23,11 @@ processDefine :: FuncTable -> Env -> Ast ->
     Either String (FuncTable, Env, Maybe Ast)
 processDefine ftable env (Define name body) = do
     val <- evalAST ftable env body
-    Right (ftable, (name, val) : env, Nothing)
+    case val of
+        Closure params b cenv ->
+            let recClosure = Closure params b ((name, recClosure) : cenv) in
+            Right (ftable, (name, recClosure) : env, Nothing)
+        _ -> Right (ftable, (name, val) : env, Nothing)
 processDefine ftable env (DefineFun name params body) =
     case registerFunction ftable name params body of
         Left err        -> Left err
