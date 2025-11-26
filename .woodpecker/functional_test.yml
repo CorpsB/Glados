@@ -12,4 +12,4 @@ steps:
     image: haskell:9.10.3
     commands:
       - make
-      - ./tools/test/Functional/test.sh
+      - ./test/Functional/test.sh
