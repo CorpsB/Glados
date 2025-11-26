@@ -21,6 +21,7 @@ library
       Lisp
       Parser.Coucou
       Eval.Coucou
+      Eval.Run
       Eval.Ast
       Eval.Builtins
       Eval.Conditions
