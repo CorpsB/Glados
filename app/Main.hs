@@ -8,8 +8,7 @@
 module Main (main) where
 
 import System.Exit (exitWith, ExitCode (ExitFailure))
-import System.IO (hPutStrLn, stderr, hSetBuffering, stdout,
-    BufferMode(NoBuffering), getContents)
+import System.IO (hPutStrLn, stderr, getContents)
 import Lisp (SExpr(..))
 import Ast (Ast(..), Env)
 import Parser.ParserISL (parseLisp)
@@ -50,7 +49,6 @@ printAst other = putStrLn (show other)
 
 main :: IO ()
 main = do
-    hSetBuffering stdout NoBuffering
     input <- getContents
     case parseLisp input of
         Left perr -> hPutStrLn stderr ("Parse error: " ++ show perr) >>
