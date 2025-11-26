@@ -19,45 +19,45 @@ spec = describe "Parser LISP - SExpr Conversion" $ do
     describe "Integers" $ do
       it "parses positive integer" $ do
         parseLisp "42" `shouldSatisfy` \case
-            Right (SInteger 42) -> True
+            Right [SInteger 42] -> True 
             _ -> False
 
       it "parses negative integer" $ do
         parseLisp "-42" `shouldSatisfy` \case
-            Right (SInteger (-42)) -> True
+            Right [SInteger (-42)] -> True
             _ -> False
 
       it "parses large integer" $ do
         parseLisp "123456789" `shouldSatisfy` \case
-            Right (SInteger 123456789) -> True
+            Right [SInteger 123456789] -> True
             _ -> False
 
     describe "Symbols" $ do
       it "parses simple symbols" $ do
         parseLisp "foo" `shouldSatisfy` \case
-            Right (SSymbol "foo") -> True
+            Right [SSymbol "foo"] -> True
             _ -> False
 
       it "parses operators" $ do
         parseLisp ">=" `shouldSatisfy` \case
-            Right (SSymbol ">=") -> True
+            Right [SSymbol ">="] -> True
             _ -> False
 
     describe "Lists" $ do
       it "parses empty list" $ do
         parseLisp "()" `shouldSatisfy` \case
-            Right (List []) -> True
+            Right [List []] -> True
             _ -> False
 
       it "parses simple list (+ 1 2)" $ do
         parseLisp "(+ 1 2)" `shouldSatisfy` \case
-            Right (List [SSymbol "+", SInteger 1, SInteger 2]) -> True
+            Right [List [SSymbol "+", SInteger 1, SInteger 2]] -> True
             _ -> False
 
     describe "Error Handling" $ do
-      it "fails on empty input" $ do
+      it "returns empty list on empty input" $ do
         parseLisp "" `shouldSatisfy` \case
-            Left _ -> True
+            Right [] -> True
             _ -> False
 
       it "fails on unclosed parenthesis" $ do
