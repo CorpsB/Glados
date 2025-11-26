@@ -5,7 +5,7 @@
 -- Run
 -}
 
-module Eval.Run (processSExpr) where
+module Eval.Run (processSExpr, astFromSexpr, processDefine, processCallOrEval) where
 
 import Ast (Ast(..), Env)
 import Lisp (SExpr)
