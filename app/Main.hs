@@ -8,7 +8,7 @@
 module Main (main) where
 
 import System.Exit (exitWith, ExitCode (ExitFailure))
-import System.IO (hPutStrLn, stderr, getContents)
+import System.IO (hPutStrLn, stderr)
 import Lisp (SExpr(..))
 import Ast (Ast(..), Env)
 import Parser.ParserISL (parseLisp)
@@ -31,19 +31,12 @@ processMany ft en (x:xs) = case processSingle ft en x of
             Left err2  -> Left err2
             Right rest -> Right (outs ++ rest)
 
-loop :: [(String, [String], Ast)] -> Env -> SExpr -> Either String [Ast]
-loop ftable env sexpr = case sexpr of
-    (List xs) -> processMany ftable env xs
-    _         -> case processSingle ftable env sexpr of
-        Left err -> Left err
-        Right (_, _, outs) -> Right outs
-
 printAst :: Ast -> IO ()
 printAst (AInteger i) = print i
 printAst (ABool True) = putStrLn "#t"
 printAst (ABool False) = putStrLn "#f"
 printAst (ASymbol s) = putStrLn s
-printAst (Closure _ _ _) = putStrLn "#<procedure>"
+printAst (Closure _ _ _) = putStrLn "#\\<procedure\\>"
 printAst (Lambda _ _) = putStrLn "#<lambda>"
 printAst other = putStrLn (show other)
 
@@ -53,6 +46,6 @@ main = do
     case parseLisp input of
         Left perr -> hPutStrLn stderr ("Parse error: " ++ show perr) >>
             exitWith (ExitFailure 84)
-        Right sexpr -> case loop [] [] sexpr of
+        Right sexprs -> case processMany [] [] sexprs of
             Left err     -> hPutStrLn stderr err >> exitWith (ExitFailure 84)
             Right values -> mapM_ printAst values

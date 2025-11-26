@@ -2,4 +2,4 @@
     (if (eq? x 1)
         1
         (* x (fact (- x 1)))))
-(fact10)
+(fact 10)

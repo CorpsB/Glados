@@ -54,9 +54,8 @@ evalAST ftable env (Define name body) = do
 evalAST _ _ (DefineFun name params body) = Right $ DefineFun name params body
 evalAST ftable env (Condition cond th el) = do
     c <- evalAST ftable env cond
-    t <- evalAST ftable env th
-    e <- evalAST ftable env el
-    execCondition (Just c) (Just t) (Just e) >>= Right
+    chosen <- execCondition c th el
+    evalAST ftable env chosen
 evalAST ftable env (Call func args) = do
     evalArgs <- traverse (evalASTEnv ftable env) args
     case func of

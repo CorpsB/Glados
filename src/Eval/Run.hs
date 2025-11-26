@@ -10,13 +10,8 @@ module Eval.Run (processSExpr) where
 import Ast (Ast(..), Env)
 import Lisp (SExpr)
 import Parser.Ast (sexprToAST)
-import Eval.Functions (FuncTable, registerFunction, callFunction)
-import Eval.Ast (evalAST, evalASTEnv)
-
-evalBridge :: FuncTable -> Env -> Ast -> Maybe Ast
-evalBridge ft en a = case evalASTEnv ft en a of
-    Right r -> Just r
-    Left _  -> Nothing
+import Eval.Functions (FuncTable, registerFunction)
+import Eval.Ast (evalAST)
 
 astFromSexpr :: SExpr -> Either String Ast
 astFromSexpr sexpr = case sexprToAST sexpr of
@@ -37,12 +32,8 @@ processDefine _ _ _ = Left "processDefine called with non-define AST"
 
 processCallOrEval :: FuncTable -> Env -> Ast ->
     Either String (FuncTable, Env, Maybe Ast)
-processCallOrEval ftable env (Call (ASymbol name) args) =
-    case callFunction evalBridge ftable env name args of
-        Left err  -> Left err
-        Right res -> Right (ftable, env, Just res)
-processCallOrEval ftable env other =
-    case evalAST ftable env other of
+processCallOrEval ftable env ast =
+    case evalAST ftable env ast of
         Left err -> Left err
         Right r  -> Right (ftable, env, Just r)
 
