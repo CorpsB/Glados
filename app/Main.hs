@@ -7,21 +7,23 @@
 
 module Main (main) where
 
-import System.Exit (exitWith, ExitCode (ExitFailure))
-import System.IO (hPutStrLn, stderr)
+import System.Exit (exitWith, ExitCode (ExitFailure, ExitSuccess))
+import System.IO 
+import Control.Exception (catch, IOException)
 import Lisp (SExpr(..))
 import Ast (Ast(..), Env)
-import Parser.ParserISL (parseLisp)
+import Parser.ParserISL (parseLisp, parseLispLine)
 import Eval.Run (processSExpr)
+import Eval.Functions (FuncTable)
 
-processSingle :: [(String, [String], Ast)] -> Env -> SExpr ->
-    Either String ([(String, [String], Ast)], Env, [Ast])
+processSingle :: FuncTable -> Env -> SExpr ->
+    Either String (FuncTable, Env, [Ast])
 processSingle ftable env s = case processSExpr ftable env s of
     Left err -> Left err
     Right (n_ftable, n_env, Nothing) -> Right (n_ftable, n_env, [])
     Right (n_ftable, n_env, Just a)  -> Right (n_ftable, n_env, [a])
 
-processMany :: [(String, [String], Ast)] -> Env -> [SExpr] ->
+processMany :: FuncTable -> Env -> [SExpr] ->
     Either String [Ast]
 processMany _ _ [] = Right []
 processMany ftable env (x:xs) = case processSingle ftable env x of
@@ -40,12 +42,40 @@ printAst (Closure _ _ _) = putStrLn "#\\<procedure\\>"
 printAst (Lambda _ _) = putStrLn "#<lambda>"
 printAst other = putStrLn (show other)
 
+tryEval :: FuncTable -> Env -> String -> Either String (FuncTable, Env, Maybe Ast)
+tryEval ft env input = case parseLispLine input of
+    Left _      -> Left "*** ERROR: Parse error"
+    Right sexpr -> processSExpr ft env sexpr
+
+repl :: FuncTable -> Env -> IO ()
+repl ft env = do
+    putStr "> " >> hFlush stdout
+    line <- catch getLine handleEOF
+    if null line
+        then repl ft env
+        else case tryEval ft env line of
+            Left err -> do
+                hPutStrLn stderr err
+                repl ft env
+            Right (newFt, newEnv, res) -> do
+                mapM_ printAst res
+                repl newFt newEnv
+
+handleEOF :: IOException -> IO String
+handleEOF _ = exitWith ExitSuccess
+
 main :: IO ()
 main = do
-    input <- getContents
-    case parseLisp input of
-        Left perr -> hPutStrLn stderr ("Parse error: " ++ show perr) >>
-            exitWith (ExitFailure 84)
-        Right sexprs -> case processMany [] [] sexprs of
-            Left err     -> hPutStrLn stderr err >> exitWith (ExitFailure 84)
-            Right values -> mapM_ printAst values
+    isTerm <- hIsTerminalDevice stdin
+    if isTerm
+        then do
+            hSetBuffering stdout NoBuffering
+            repl [] []
+        else do
+            input <- getContents
+            case parseLisp input of
+                Left perr -> hPutStrLn stderr ("Parse error: " ++ show perr) >>
+                    exitWith (ExitFailure 84)
+                Right sexprs -> case processMany [] [] sexprs of
+                    Left err     -> hPutStrLn stderr err >> exitWith (ExitFailure 84)
+                    Right values -> mapM_ printAst values

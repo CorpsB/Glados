@@ -5,7 +5,7 @@
 -- ParserISL.hs
 -}
 
-module Parser.ParserISL (parseLisp) where
+module Parser.ParserISL (parseLisp, parseLispLine) where
 
 import Text.Megaparsec
 import Text.Megaparsec.Char
@@ -50,3 +50,6 @@ pExpr = try pInteger
 
 parseLisp :: String -> Either (ParseErrorBundle String Void) [SExpr]
 parseLisp = parse (sc *> many pExpr <* eof) "ParserISL"
+
+parseLispLine :: String -> Either (ParseErrorBundle String Void) SExpr
+parseLispLine = parse (sc *> pExpr <* sc) "REPL"
