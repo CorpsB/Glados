@@ -2,11 +2,8 @@ kind: pipeline
 name: Functional tests
 
 when:
-  event:
-    include:
-      - push
-      - pull_request
-
+  - event: [push, pull_request]
+  
 steps:
   - name: Basic tests
     image: haskell:9.10.3

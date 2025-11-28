@@ -2,10 +2,7 @@ kind: pipeline
 name: Coding-style checker
 
 when:
-  event:
-    include:
-      - push
-      - pull_request
+  - event: [push, pull_request]
 
 steps:
   - name: coding-style checker

@@ -2,9 +2,7 @@ kind: pipeline
 name: Build test (On push)
 
 when:
-  event:
-    include:
-      - push
+  - event: push
 
 steps:
   - name: make

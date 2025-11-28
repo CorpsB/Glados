@@ -2,9 +2,7 @@ kind: pipeline
 name: Build test (On pull request)
 
 when:
-  event:
-    include:
-      - pull_request
+  - event: pull_request
 
 steps:
   - name: make
