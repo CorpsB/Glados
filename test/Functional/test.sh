@@ -19,6 +19,69 @@ declare -A test13=( [titre]="Basic : builtins3" [fichier]="test/Functional/Basic
 declare -A test14=( [titre]="Basic : superior" [fichier]="test/Functional/Basic/superior.scm" [exitcode]="0" [output]="#t")
 declare -A test15=( [titre]="Basic : factorial" [fichier]="test/Functional/Basic/factorial.scm" [exitcode]="0" [output]="3628800")
 
+#Simple : Parsing
+declare -A test1=( [titre]="Simple : Bad file extension" [fichier]="test/Functional/Simple/bad_extension.txt" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Empty file" [fichier]="test/Functional/Simple/empty_file.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : No extension file" [fichier]="test/Functional/Simple/no_extention" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Not enough parenthsis" [fichier]="test/Functional/Simple/error1.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Too much parenthesis" [fichier]="test/Functional/Simple/error2.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Bad file" [fichier]="test/Functional/Simple/error3.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Just space" [fichier]="test/Functional/Simple/error4.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Just multi-space" [fichier]="test/Functional/Simple/error5.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Just \n" [fichier]="test/Functional/Simple/error6.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Using undeclared variable" [fichier]="test/Functional/Simple/7.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Div by 0" [fichier]="test/Functional/Simple/.scm" [exitcode]="84" [output]="")
+
+#Simple : Build : Eq
+declare -A test1=( [titre]="Simple : Simple true" [fichier]="bu_eq1.scm" [exitcode]="0" [output]="#t")
+declare -A test1=( [titre]="Simple : Simple negative true" [fichier]="bu_eq2.scm" [exitcode]="0" [output]="#t")
+declare -A test1=( [titre]="Simple : Simple false" [fichier]="bu_eq3.scm" [exitcode]="0" [output]="#f")
+declare -A test1=( [titre]="Simple : Comparative positiv and negativ integer" [fichier]="bu_eq4.scm" [exitcode]="0" [output]="#f")
+declare -A test1=( [titre]="Simple : Comparative two negativ null numbers" [fichier]="bu_eq5.scm" [exitcode]="0" [output]="#t")
+declare -A test1=( [titre]="Simple : comparative one null numbers and one null and negativ numbers" [fichier]="bu_eq6.scm" [exitcode]="0" [output]="#t")
+
+#Simple : Build : <
+declare -A test1=( [titre]="Simple : Simple true case" [fichier]="bu_<1.scm" [exitcode]="0" [output]="#t")
+declare -A test1=( [titre]="Simple : Simple false case" [fichier]="bu_<2.scm" [exitcode]="0" [output]="#f")
+declare -A test1=( [titre]="Simple : Negativ integer" [fichier]="bu_<3.scm" [exitcode]="0" [output]="#t")
+declare -A test1=( [titre]="Simple : String and int" [fichier]="bu_<4.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Same numbers" [fichier]="bu_<5.scm" [exitcode]="0" [output]="#f")
+declare -A test1=( [titre]="Simple : Bool and int" [fichier]="bu_<6.scm" [exitcode]="84" [output]="")
+
+#Simple : Build : +
+declare -A test1=( [titre]="Simple : Simple add" [fichier]="bu_+1.scm" [exitcode]="0" [output]="2")
+declare -A test1=( [titre]="Simple : Add with negativ int" [fichier]="bu_+2.scm" [exitcode]="0" [output]="1")
+declare -A test1=( [titre]="Simple : Add two degativ numbers" [fichier]="bu_+3.scm" [exitcode]="0" [output]="-4")
+declare -A test1=( [titre]="Simple : Add bool with integer" [fichier]="bu_+4.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Add string with int" [fichier]="bu_+5.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Add string with string" [fichier]="bu_+6.scm" [exitcode]="84" [output]="")
+
+#Simple : Build : -
+declare -A test1=( [titre]="Simple : Simple substract" [fichier]="bu_-1.scm" [exitcode]="0" [output]="0")
+declare -A test1=( [titre]="Simple : Substract with negativ int" [fichier]="bu_-2.scm" [exitcode]="0" [output]="-3")
+declare -A test1=( [titre]="Simple : Substract two degativ numbers" [fichier]="bu_-3.scm" [exitcode]="0" [output]="0")
+declare -A test1=( [titre]="Simple : Substract bool with integer" [fichier]="bu_-4.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Substract string with int" [fichier]="bu_-5.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Substract string with string" [fichier]="bu_-6.scm" [exitcode]="84" [output]="")
+
+#Simple : Build : *
+declare -A test1=( [titre]="Simple : Simple mult" [fichier]="bu_*1.scm" [exitcode]="0" [output]="2")
+declare -A test1=( [titre]="Simple : Mult with negativ int" [fichier]="bu_*2.scm" [exitcode]="0" [output]="1")
+declare -A test1=( [titre]="Simple : Mult two degativ numbers" [fichier]="bu_*3.scm" [exitcode]="0" [output]="-4")
+declare -A test1=( [titre]="Simple : Mult bool with integer" [fichier]="bu_*4.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Mult string with int" [fichier]="bu_*5.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Mult string with string" [fichier]="bu_*6.scm" [exitcode]="84" [output]="")
+
+#Simple : Build : /
+declare -A test1=( [titre]="Simple : Simple div" [fichier]="bu_:1.scm" [exitcode]="0" [output]="2")
+declare -A test1=( [titre]="Simple : Div with negativ int" [fichier]="bu_:2.scm" [exitcode]="0" [output]="1")
+declare -A test1=( [titre]="Simple : Div two degativ numbers" [fichier]="bu_:3.scm" [exitcode]="0" [output]="-4")
+declare -A test1=( [titre]="Simple : Div bool with integer" [fichier]="bu_:4.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Div string with int" [fichier]="bu_:5.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Div string with string" [fichier]="bu_:6.scm" [exitcode]="84" [output]="")
+declare -A test1=( [titre]="Simple : Div by 0" [fichier]="bu_:6.scm" [exitcode]="84" [output]="")
+
+
 # Test func
 RED="\e[31m"
 GREEN="\e[32m"
