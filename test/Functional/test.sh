@@ -178,7 +178,16 @@ declare -A test149=( [titre]="Simple : lambda called with too few arguments" [fi
 declare -A test150=( [titre]="Simple : lambda called with too many arguments" [fichier]="test/Functional/Simple/lambda6.scm" [exitcode]="84" [output]="")
 declare -A test151=( [titre]="Simple : lambda with invalid parameter list" [fichier]="test/Functional/Simple/lambda7.scm" [exitcode]="84" [output]="")
 
-#
+# Simple : 64-bit integers
+declare -A test152=( [titre]="Simple : max 64-bit integer literal" [fichier]="test/Functional/Simple/int64_max.scm" [exitcode]="0" [output]="9223372036854775807")
+declare -A test153=( [titre]="Simple : min 64-bit integer literal" [fichier]="test/Functional/Simple/int64_min.scm" [exitcode]="0" [output]="-9223372036854775808")
+declare -A test154=( [titre]="Simple : addition with large positive integers" [fichier]="test/Functional/Simple/int64_add_pos.scm" [exitcode]="0" [output]="9223372036854775807")
+declare -A test155=( [titre]="Simple : addition with large negative integers" [fichier]="test/Functional/Simple/int64_add_neg.scm" [exitcode]="0" [output]="-9223372036854775808")
+declare -A test156=( [titre]="Simple : multiplication with large integers" [fichier]="test/Functional/Simple/int64_mul.scm" [exitcode]="0" [output]="9223372030926249001")
+declare -A test157=( [titre]="Simple : div with large integers" [fichier]="test/Functional/Simple/int64_div.scm" [exitcode]="0" [output]="4611686018427387903")
+declare -A test158=( [titre]="Simple : mod with large integers" [fichier]="test/Functional/Simple/int64_mod.scm" [exitcode]="0" [output]="6")
+
+# Advanced :
 declare -A test200=( [titre]="Advanced : gcd + fact + lambda" [fichier]="test/Functional/Advanced/advanced1.scm" [exitcode]="0" [output]="18")
 declare -A test201=( [titre]="Advanced : sign, clamp, poly" [fichier]="test/Functional/Advanced/advanced2.scm" [exitcode]="0" [output]="37")
 declare -A test202=( [titre]="Advanced : sum of primes with named functions" [fichier]="test/Functional/Advanced/advanced_named1.scm" [exitcode]="0" [output]="77")
@@ -285,6 +294,9 @@ local tests=(
 
     test145 test146 test147 test148 test149 
     test150 test151
+
+    test152 test153 test154 test155 test156
+    test157 test158
 
     test200 test201 test202 test203
 )
