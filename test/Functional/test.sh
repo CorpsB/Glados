@@ -57,7 +57,7 @@ declare -A test47=( [titre]="Simple : Bool and int" [fichier]="test/Functional/S
 declare -A test48=( [titre]="Simple : < arity 0" [fichier]="test/Functional/Simple/bu_<arity0.scm" [exitcode]="84" [output]="")
 declare -A test49=( [titre]="Simple : < arity 1" [fichier]="test/Functional/Simple/bu_<arity1.scm" [exitcode]="84" [output]="")
 declare -A test50=( [titre]="Simple : < arity 3" [fichier]="test/Functional/Simple/bu_<arity3.scm" [exitcode]="84" [output]="")
-declare -A test51=( [titre]="Simple : < with arithmetic expressions" [fichier]="test/Functional/Simple/bu_<expr1.scm" [exitcode]="0" [output]="#t")
+declare -A test51=( [titre]="Simple : < with arithmetic expressions" [fichier]="test/Functional/Simple/bu_<expr1.scm" [exitcode]="0" [output]="#f")
 declare -A test52=( [titre]="Simple : < expr false" [fichier]="test/Functional/Simple/bu_<expr2.scm" [exitcode]="0" [output]="#f")
 declare -A test53=( [titre]="Simple : Bool and bool in <" [fichier]="test/Functional/Simple/bu_<boolbool.scm" [exitcode]="84" [output]="")
 
@@ -89,9 +89,9 @@ declare -A test74=( [titre]="Simple : Subtract with arithmetic expressions" [fic
 declare -A test75=( [titre]="Simple : Subtract boolean with boolean" [fichier]="test/Functional/Simple/bu_-boolbool.scm" [exitcode]="84" [output]="")
 
 # Simple : Builtin *
-declare -A test76=( [titre]="Simple : Simple multiplication" [fichier]="test/Functional/Simple/bu_x1.scm" [exitcode]="0" [output]="2")
-declare -A test77=( [titre]="Simple : Multiply with negative integer" [fichier]="test/Functional/Simple/bu_x2.scm" [exitcode]="0" [output]="1")
-declare -A test78=( [titre]="Simple : Multiply two negative numbers" [fichier]="test/Functional/Simple/bu_x3.scm" [exitcode]="0" [output]="-4")
+declare -A test76=( [titre]="Simple : Simple multiplication" [fichier]="test/Functional/Simple/bu_x1.scm" [exitcode]="0" [output]="1")
+declare -A test77=( [titre]="Simple : Multiply with negative integer" [fichier]="test/Functional/Simple/bu_x2.scm" [exitcode]="0" [output]="-2")
+declare -A test78=( [titre]="Simple : Multiply two negative numbers" [fichier]="test/Functional/Simple/bu_x3.scm" [exitcode]="0" [output]="4")
 declare -A test79=( [titre]="Simple : Multiply boolean with integer" [fichier]="test/Functional/Simple/bu_x4.scm" [exitcode]="84" [output]="")
 declare -A test80=( [titre]="Simple : Multiply string with integer" [fichier]="test/Functional/Simple/bu_x5.scm" [exitcode]="84" [output]="")
 declare -A test81=( [titre]="Simple : Multiply string with string" [fichier]="test/Functional/Simple/bu_x6.scm" [exitcode]="84" [output]="")
@@ -102,9 +102,9 @@ declare -A test85=( [titre]="Simple : Multiply with arithmetic expressions" [fic
 declare -A test86=( [titre]="Simple : Multiply boolean with boolean" [fichier]="test/Functional/Simple/bu_xboolbool.scm" [exitcode]="84" [output]="")
 
 # Simple : Builtin /
-declare -A test87=( [titre]="Simple : Simple division" [fichier]="test/Functional/Simple/bu_:1.scm" [exitcode]="0" [output]="2")
-declare -A test88=( [titre]="Simple : Division with negative integer" [fichier]="test/Functional/Simple/bu_:2.scm" [exitcode]="0" [output]="1")
-declare -A test89=( [titre]="Simple : Division of two negative numbers" [fichier]="test/Functional/Simple/bu_:3.scm" [exitcode]="0" [output]="-4")
+declare -A test87=( [titre]="Simple : Simple division" [fichier]="test/Functional/Simple/bu_:1.scm" [exitcode]="0" [output]="1")
+declare -A test88=( [titre]="Simple : Division with negative integer" [fichier]="test/Functional/Simple/bu_:2.scm" [exitcode]="0" [output]="-1")
+declare -A test89=( [titre]="Simple : Division of two negative numbers" [fichier]="test/Functional/Simple/bu_:3.scm" [exitcode]="0" [output]="1")
 declare -A test90=( [titre]="Simple : Division of boolean with integer" [fichier]="test/Functional/Simple/bu_:4.scm" [exitcode]="84" [output]="")
 declare -A test91=( [titre]="Simple : Division of string with integer" [fichier]="test/Functional/Simple/bu_:5.scm" [exitcode]="84" [output]="")
 declare -A test92=( [titre]="Simple : Division of string with string" [fichier]="test/Functional/Simple/bu_:6.scm" [exitcode]="84" [output]="")
