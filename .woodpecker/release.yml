@@ -1,10 +1,6 @@
 when:
-  branch:
-    include:
-      - main
-  event:
-    include:
-      - push
+  - event: push
+    branch: main
 
 clone:
   git:
