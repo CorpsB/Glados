@@ -1,1 +1,1 @@
-(+ "Something" "Strange")
+(+ "a" "b")

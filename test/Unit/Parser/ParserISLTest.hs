@@ -10,7 +10,7 @@
 module Parser.ParserISLTest (spec) where
 
 import Test.Hspec
-import Parser.ParserISL (parseLisp)
+import Parser.ParserISL (parseLisp, parseLispLine)
 import Lisp (SExpr(..))
 
 spec :: Spec
@@ -62,5 +62,26 @@ spec = describe "Parser LISP - SExpr Conversion" $ do
 
       it "fails on unclosed parenthesis" $ do
         parseLisp "(+ 1 2" `shouldSatisfy` \case
+            Left _ -> True
+            _ -> False
+      
+    describe "parseLispLine (REPL Mode)" $ do
+      it "parses a single integer" $ do
+        parseLispLine "42" `shouldSatisfy` \case
+            Right (SInteger 42) -> True
+            _ -> False
+
+      it "parses a single list" $ do
+        parseLispLine "(+ 1 2)" `shouldSatisfy` \case
+            Right (List [SSymbol "+", SInteger 1, SInteger 2]) -> True
+            _ -> False
+
+      it "ignores surrounding spaces" $ do
+        parseLispLine "   foo   " `shouldSatisfy` \case
+            Right (SSymbol "foo") -> True
+            _ -> False
+
+      it "fails on incomplete input" $ do
+        parseLispLine "(" `shouldSatisfy` \case
             Left _ -> True
             _ -> False

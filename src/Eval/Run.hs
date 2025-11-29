@@ -15,8 +15,8 @@ import Eval.Ast (evalAST)
 
 astFromSexpr :: SExpr -> Either String Ast
 astFromSexpr sexpr = case sexprToAST sexpr of
-    Just a  -> Right a
-    Nothing -> Left $ "Syntax error: could not convert SExpr to AST: " ++
+    Right a  -> Right a
+    Left _ -> Left $ "Syntax error: could not convert SExpr to AST: " ++
         show sexpr
 
 processDefine :: FuncTable -> Env -> Ast ->
