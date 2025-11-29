@@ -7,9 +7,9 @@
 
 module Parser.Ast (sexprToAST) where
 
-import Ast (Ast(..))
+import Ast (Ast(..), IntValue(..))
 import Lisp (SExpr(..))
-import Data.Int (Int8, Int16, Int32, Int64)
+import Data.Int (Int8, Int16, Int32)
 
 extractParam :: SExpr -> Maybe String
 extractParam (SSymbol s) = Just s
