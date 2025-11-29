@@ -132,7 +132,20 @@ declare -A test111=( [titre]="Simple : mod with 3 arguments" [fichier]="test/Fun
 declare -A test112=( [titre]="Simple : mod with arithmetic expressions" [fichier]="test/Functional/Simple/bu_mod14.scm" [exitcode]="0" [output]="1")
 declare -A test113=( [titre]="Simple : mod boolean with boolean" [fichier]="test/Functional/Simple/bu_mod15.scm" [exitcode]="84" [output]="")
 
-
+# Simple : Conditional expressions
+declare -A test114=( [titre]="Simple : if true" [fichier]="test/Functional/Simple/if_simple_true.scm" [exitcode]="0" [output]="1")
+declare -A test115=( [titre]="Simple : if false" [fichier]="test/Functional/Simple/if_simple_false.scm" [exitcode]="0" [output]="2")
+declare -A test116=( [titre]="Simple : if with eq? true" [fichier]="test/Functional/Simple/if_eq_true.scm" [exitcode]="0" [output]="10")
+declare -A test117=( [titre]="Simple : if with eq? false" [fichier]="test/Functional/Simple/if_eq_false.scm" [exitcode]="0" [output]="20")
+declare -A test118=( [titre]="Simple : nested if in then branch" [fichier]="test/Functional/Simple/if_nested_then.scm" [exitcode]="0" [output]="2")
+declare -A test119=( [titre]="Simple : nested if in else branch" [fichier]="test/Functional/Simple/if_nested_else.scm" [exitcode]="0" [output]="2")
+declare -A test120=( [titre]="Simple : if true does not evaluate else" [fichier]="test/Functional/Simple/if_short_circuit_else.scm" [exitcode]="0" [output]="1")
+declare -A test121=( [titre]="Simple : if false does not evaluate then" [fichier]="test/Functional/Simple/if_short_circuit_then.scm" [exitcode]="0" [output]="1")
+declare -A test122=( [titre]="Simple : if with 2 arguments" [fichier]="test/Functional/Simple/if_arity2.scm" [exitcode]="84" [output]="")
+declare -A test123=( [titre]="Simple : if with 1 argument" [fichier]="test/Functional/Simple/if_arity1.scm" [exitcode]="84" [output]="")
+declare -A test124=( [titre]="Simple : if with 4 arguments" [fichier]="test/Functional/Simple/if_arity4.scm" [exitcode]="84" [output]="")
+declare -A test125=( [titre]="Simple : if with non boolean condition" [fichier]="test/Functional/Simple/if_non_boolean_condition.scm" [exitcode]="0" [output]="2")
+declare -A test126=( [titre]="Simple : if with non boolean condition (neg)" [fichier]="test/Functional/Simple/if_non_boolean_condition_neg.scm" [exitcode]="0" [output]="2")
 
 # Test func
 RED="\e[31m"
@@ -221,6 +234,10 @@ local tests=(
     test99 test100 test101 test102 test103
     test104 test105 test106 test107 test108
     test109 test110 test111 test112 test113
+
+    test114 test115 test116 test117 test118
+    test119 test120 test121 test122 test123
+    test124 test125 test126
 )
 
 
