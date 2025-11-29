@@ -147,6 +147,44 @@ declare -A test124=( [titre]="Simple : if with 4 arguments" [fichier]="test/Func
 declare -A test125=( [titre]="Simple : if with non boolean condition" [fichier]="test/Functional/Simple/if_non_boolean_condition.scm" [exitcode]="0" [output]="2")
 declare -A test126=( [titre]="Simple : if with non boolean condition (neg)" [fichier]="test/Functional/Simple/if_non_boolean_condition_neg.scm" [exitcode]="0" [output]="2")
 
+# Simple : define
+declare -A test127=( [titre]="Simple : define variable" [fichier]="test/Functional/Simple/define1.scm" [exitcode]="0" [output]="42")
+declare -A test128=( [titre]="Simple : redefine variable" [fichier]="test/Functional/Simple/define2.scm" [exitcode]="0" [output]="2")
+declare -A test129=( [titre]="Simple : define with expression" [fichier]="test/Functional/Simple/define3.scm" [exitcode]="0" [output]="3")
+declare -A test130=( [titre]="Simple : define lambda and call" [fichier]="test/Functional/Simple/define4.scm" [exitcode]="0" [output]="5")
+declare -A test131=( [titre]="Simple : define function and call" [fichier]="test/Functional/Simple/define5.scm" [exitcode]="0" [output]="5")
+declare -A test132=( [titre]="Simple : use variable before define" [fichier]="test/Functional/Simple/define6.scm" [exitcode]="84" [output]="")
+declare -A test133=( [titre]="Simple : define with no value" [fichier]="test/Functional/Simple/define7.scm" [exitcode]="84" [output]="")
+declare -A test134=( [titre]="Simple : define with too many arguments" [fichier]="test/Functional/Simple/define8.scm" [exitcode]="84" [output]="")
+declare -A test135=( [titre]="Simple : define with non symbol name" [fichier]="test/Functional/Simple/define9.scm" [exitcode]="84" [output]="")
+declare -A test136=( [titre]="Simple : multiple defines used in expression" [fichier]="test/Functional/Simple/define10.scm" [exitcode]="0" [output]="3")
+
+# Simple : Named functions
+declare -A test137=( [titre]="Simple : Named function simple add" [fichier]="test/Functional/Simple/named_fun1.scm" [exitcode]="0" [output]="3")
+declare -A test138=( [titre]="Simple : Named function zero arguments" [fichier]="test/Functional/Simple/named_fun2.scm" [exitcode]="0" [output]="42")
+declare -A test139=( [titre]="Simple : Named function one argument" [fichier]="test/Functional/Simple/named_fun3.scm" [exitcode]="0" [output]="5")
+declare -A test140=( [titre]="Simple : Named function recursion" [fichier]="test/Functional/Simple/named_fun4.scm" [exitcode]="0" [output]="120")
+declare -A test141=( [titre]="Simple : Named function called with too few arguments" [fichier]="test/Functional/Simple/named_fun5.scm" [exitcode]="84" [output]="")
+declare -A test142=( [titre]="Simple : Named function called with too many arguments" [fichier]="test/Functional/Simple/named_fun6.scm" [exitcode]="84" [output]="")
+declare -A test143=( [titre]="Simple : Named functions calling each other" [fichier]="test/Functional/Simple/named_fun7.scm" [exitcode]="0" [output]="9")
+declare -A test144=( [titre]="Simple : Named function with non symbol name" [fichier]="test/Functional/Simple/named_fun8.scm" [exitcode]="84" [output]="")
+
+# Simple : Lambdas
+declare -A test145=( [titre]="Simple : lambda value" [fichier]="test/Functional/Simple/lambda1.scm" [exitcode]="0" [output]="#\<procedure\>") 
+declare -A test146=( [titre]="Simple : lambda call with 2 arguments" [fichier]="test/Functional/Simple/lambda2.scm" [exitcode]="0" [output]="5")
+declare -A test147=( [titre]="Simple : lambda with no arguments" [fichier]="test/Functional/Simple/lambda3.scm" [exitcode]="0" [output]="42")
+declare -A test148=( [titre]="Simple : lambda defined then called" [fichier]="test/Functional/Simple/lambda4.scm" [exitcode]="0" [output]="5")
+declare -A test149=( [titre]="Simple : lambda called with too few arguments" [fichier]="test/Functional/Simple/lambda5.scm" [exitcode]="84" [output]="")
+declare -A test150=( [titre]="Simple : lambda called with too many arguments" [fichier]="test/Functional/Simple/lambda6.scm" [exitcode]="84" [output]="")
+declare -A test151=( [titre]="Simple : lambda with invalid parameter list" [fichier]="test/Functional/Simple/lambda7.scm" [exitcode]="84" [output]="")
+
+#
+declare -A test200=( [titre]="Advanced : gcd + fact + lambda" [fichier]="test/Functional/Advanced/advanced1.scm" [exitcode]="0" [output]="18")
+declare -A test201=( [titre]="Advanced : sign, clamp, poly" [fichier]="test/Functional/Advanced/advanced2.scm" [exitcode]="0" [output]="37")
+declare -A test202=( [titre]="Advanced : sum of primes with named functions" [fichier]="test/Functional/Advanced/advanced_named1.scm" [exitcode]="0" [output]="77")
+declare -A test203=( [titre]="Advanced : mixed named functions and lambda" [fichier]="test/Functional/Advanced/advanced_named2.scm" [exitcode]="0" [output]="-5")
+
+
 # Test func
 RED="\e[31m"
 GREEN="\e[32m"
@@ -238,6 +276,17 @@ local tests=(
     test114 test115 test116 test117 test118
     test119 test120 test121 test122 test123
     test124 test125 test126
+
+    test127 test128 test129 test130 test131
+    test132 test133 test134 test135 test136
+
+    test137 test138 test139 test140 test141
+    test142 test143 test144
+
+    test145 test146 test147 test148 test149 
+    test150 test151
+
+    test200 test201 test202 test203
 )
 
 
