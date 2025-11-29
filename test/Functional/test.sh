@@ -115,6 +115,22 @@ declare -A test96=( [titre]="Simple : Division with 3 arguments" [fichier]="test
 declare -A test97=( [titre]="Simple : Division with arithmetic expressions" [fichier]="test/Functional/Simple/bu_:expr1.scm" [exitcode]="0" [output]="2")
 declare -A test98=( [titre]="Simple : Division of boolean with boolean" [fichier]="test/Functional/Simple/bu_:boolbool.scm" [exitcode]="84" [output]="")
 
+# Simple : Builtin mod
+declare -A test99=( [titre]="Simple : Simple mod" [fichier]="test/Functional/Simple/bu_mod1.scm" [exitcode]="0" [output]="1")
+declare -A test100=( [titre]="Simple : mod with negative dividend" [fichier]="test/Functional/Simple/bu_mod2.scm" [exitcode]="0" [output]="1")
+declare -A test101=( [titre]="Simple : mod with negative divisor" [fichier]="test/Functional/Simple/bu_mod3.scm" [exitcode]="0" [output]="-1")
+declare -A test102=( [titre]="Simple : mod with two negative numbers" [fichier]="test/Functional/Simple/bu_mod4.scm" [exitcode]="0" [output]="-1")
+declare -A test103=( [titre]="Simple : mod with zero dividend" [fichier]="test/Functional/Simple/bu_mod5.scm" [exitcode]="0" [output]="0")
+declare -A test104=( [titre]="Simple : mod by zero" [fichier]="test/Functional/Simple/bu_mod6.scm" [exitcode]="84" [output]="")
+declare -A test105=( [titre]="Simple : mod boolean with integer" [fichier]="test/Functional/Simple/bu_mod7.scm" [exitcode]="84" [output]="")
+declare -A test106=( [titre]="Simple : mod integer with boolean" [fichier]="test/Functional/Simple/bu_mod8.scm" [exitcode]="84" [output]="")
+declare -A test107=( [titre]="Simple : mod string with integer" [fichier]="test/Functional/Simple/bu_mod9.scm" [exitcode]="84" [output]="")
+declare -A test108=( [titre]="Simple : mod integer with string" [fichier]="test/Functional/Simple/bu_mod10.scm" [exitcode]="84" [output]="")
+declare -A test109=( [titre]="Simple : mod with 0 arguments" [fichier]="test/Functional/Simple/bu_mod11.scm" [exitcode]="84" [output]="")
+declare -A test110=( [titre]="Simple : mod with 1 argument" [fichier]="test/Functional/Simple/bu_mod12.scm" [exitcode]="84" [output]="")
+declare -A test111=( [titre]="Simple : mod with 3 arguments" [fichier]="test/Functional/Simple/bu_mod13.scm" [exitcode]="84" [output]="")
+declare -A test112=( [titre]="Simple : mod with arithmetic expressions" [fichier]="test/Functional/Simple/bu_mod14.scm" [exitcode]="0" [output]="1")
+declare -A test113=( [titre]="Simple : mod boolean with boolean" [fichier]="test/Functional/Simple/bu_mod15.scm" [exitcode]="84" [output]="")
 
 
 
@@ -201,7 +217,12 @@ local tests=(
     test87 test88 test89 test90 test91
     test92 test93 test94 test95 test96
     test97 test98
+
+    test99 test100 test101 test102 test103
+    test104 test105 test106 test107 test108
+    test109 test110 test111 test112 test113
 )
+
 
 
     local total=${#tests[@]}
