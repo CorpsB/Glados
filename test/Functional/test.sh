@@ -64,38 +64,60 @@ declare -A test52=( [titre]="Simple : < expr false" [fichier]="test/Functional/S
 declare -A test53=( [titre]="Simple : Bool and bool in <" [fichier]="test/Functional/Simple/bu_<boolbool.scm" [exitcode]="84" [output]="")
 
 
-#Simple : Build : +
-declare -A test100=( [titre]="Simple : Simple add" [fichier]="test/Functional/Simple/bu_+1.scm" [exitcode]="0" [output]="2")
-declare -A test100=( [titre]="Simple : Add with negativ int" [fichier]="test/Functional/Simple/bu_+2.scm" [exitcode]="0" [output]="1")
-declare -A test100=( [titre]="Simple : Add two degativ numbers" [fichier]="test/Functional/Simple/bu_+3.scm" [exitcode]="0" [output]="-4")
-declare -A test100=( [titre]="Simple : Add bool with integer" [fichier]="test/Functional/Simple/bu_+4.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Add string with int" [fichier]="test/Functional/Simple/bu_+5.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Add string with string" [fichier]="test/Functional/Simple/bu_+6.scm" [exitcode]="84" [output]="")
+# Simple : Builtin +
+declare -A test54=( [titre]="Simple : Simple addition" [fichier]="test/Functional/Simple/bu_+1.scm" [exitcode]="0" [output]="2")
+declare -A test55=( [titre]="Simple : Addition with negative integer" [fichier]="test/Functional/Simple/bu_+2.scm" [exitcode]="0" [output]="1")
+declare -A test56=( [titre]="Simple : Addition of two negative numbers" [fichier]="test/Functional/Simple/bu_+3.scm" [exitcode]="0" [output]="-4")
+declare -A test57=( [titre]="Simple : Add boolean with integer" [fichier]="test/Functional/Simple/bu_+4.scm" [exitcode]="84" [output]="")
+declare -A test58=( [titre]="Simple : Add string with integer" [fichier]="test/Functional/Simple/bu_+5.scm" [exitcode]="84" [output]="")
+declare -A test59=( [titre]="Simple : Add string with string" [fichier]="test/Functional/Simple/bu_+6.scm" [exitcode]="84" [output]="")
+declare -A test60=( [titre]="Simple : Addition with 0 arguments" [fichier]="test/Functional/Simple/bu_+arity0.scm" [exitcode]="84" [output]="")
+declare -A test61=( [titre]="Simple : Addition with 1 argument" [fichier]="test/Functional/Simple/bu_+arity1.scm" [exitcode]="84" [output]="")
+declare -A test62=( [titre]="Simple : Addition with 3 arguments" [fichier]="test/Functional/Simple/bu_+arity3.scm" [exitcode]="84" [output]="")
+declare -A test63=( [titre]="Simple : Addition with arithmetic expressions" [fichier]="test/Functional/Simple/bu_+expr1.scm" [exitcode]="0" [output]="9")
+declare -A test64=( [titre]="Simple : Add boolean with boolean" [fichier]="test/Functional/Simple/bu_+boolbool.scm" [exitcode]="84" [output]="")
 
-#Simple : Build : -
-declare -A test100=( [titre]="Simple : Simple substract" [fichier]="test/Functional/Simple/bu_-1.scm" [exitcode]="0" [output]="0")
-declare -A test100=( [titre]="Simple : Substract with negativ int" [fichier]="test/Functional/Simple/bu_-2.scm" [exitcode]="0" [output]="-3")
-declare -A test100=( [titre]="Simple : Substract two degativ numbers" [fichier]="test/Functional/Simple/bu_-3.scm" [exitcode]="0" [output]="0")
-declare -A test100=( [titre]="Simple : Substract bool with integer" [fichier]="test/Functional/Simple/bu_-4.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Substract string with int" [fichier]="test/Functional/Simple/bu_-5.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Substract string with string" [fichier]="test/Functional/Simple/bu_-6.scm" [exitcode]="84" [output]="")
+# Simple : Builtin -
+declare -A test65=( [titre]="Simple : Simple subtract" [fichier]="test/Functional/Simple/bu_-1.scm" [exitcode]="0" [output]="0")
+declare -A test66=( [titre]="Simple : Subtract with negative integer" [fichier]="test/Functional/Simple/bu_-2.scm" [exitcode]="0" [output]="-3")
+declare -A test67=( [titre]="Simple : Subtract two negative numbers" [fichier]="test/Functional/Simple/bu_-3.scm" [exitcode]="0" [output]="0")
+declare -A test68=( [titre]="Simple : Subtract boolean with integer" [fichier]="test/Functional/Simple/bu_-4.scm" [exitcode]="84" [output]="")
+declare -A test69=( [titre]="Simple : Subtract string with integer" [fichier]="test/Functional/Simple/bu_-5.scm" [exitcode]="84" [output]="")
+declare -A test70=( [titre]="Simple : Subtract string with string" [fichier]="test/Functional/Simple/bu_-6.scm" [exitcode]="84" [output]="")
+declare -A test71=( [titre]="Simple : Subtract with 0 arguments" [fichier]="test/Functional/Simple/bu_-arity0.scm" [exitcode]="84" [output]="")
+declare -A test72=( [titre]="Simple : Subtract with 1 argument" [fichier]="test/Functional/Simple/bu_-arity1.scm" [exitcode]="84" [output]="")
+declare -A test73=( [titre]="Simple : Subtract with 3 arguments" [fichier]="test/Functional/Simple/bu_-arity3.scm" [exitcode]="84" [output]="")
+declare -A test74=( [titre]="Simple : Subtract with arithmetic expressions" [fichier]="test/Functional/Simple/bu_-expr1.scm" [exitcode]="0" [output]="3")
+declare -A test75=( [titre]="Simple : Subtract boolean with boolean" [fichier]="test/Functional/Simple/bu_-boolbool.scm" [exitcode]="84" [output]="")
 
-#Simple : Build : *
-declare -A test100=( [titre]="Simple : Simple mult" [fichier]="test/Functional/Simple/bu_*1.scm" [exitcode]="0" [output]="2")
-declare -A test100=( [titre]="Simple : Mult with negativ int" [fichier]="test/Functional/Simple/bu_*2.scm" [exitcode]="0" [output]="1")
-declare -A test100=( [titre]="Simple : Mult two degativ numbers" [fichier]="test/Functional/Simple/bu_*3.scm" [exitcode]="0" [output]="-4")
-declare -A test100=( [titre]="Simple : Mult bool with integer" [fichier]="test/Functional/Simple/bu_*4.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Mult string with int" [fichier]="test/Functional/Simple/bu_*5.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Mult string with string" [fichier]="test/Functional/Simple/bu_*6.scm" [exitcode]="84" [output]="")
+# Simple : Builtin *
+declare -A test76=( [titre]="Simple : Simple multiplication" [fichier]="test/Functional/Simple/bu_*1.scm" [exitcode]="0" [output]="2")
+declare -A test77=( [titre]="Simple : Multiply with negative integer" [fichier]="test/Functional/Simple/bu_*2.scm" [exitcode]="0" [output]="1")
+declare -A test78=( [titre]="Simple : Multiply two negative numbers" [fichier]="test/Functional/Simple/bu_*3.scm" [exitcode]="0" [output]="-4")
+declare -A test79=( [titre]="Simple : Multiply boolean with integer" [fichier]="test/Functional/Simple/bu_*4.scm" [exitcode]="84" [output]="")
+declare -A test80=( [titre]="Simple : Multiply string with integer" [fichier]="test/Functional/Simple/bu_*5.scm" [exitcode]="84" [output]="")
+declare -A test81=( [titre]="Simple : Multiply string with string" [fichier]="test/Functional/Simple/bu_*6.scm" [exitcode]="84" [output]="")
+declare -A test82=( [titre]="Simple : Multiply with 0 arguments" [fichier]="test/Functional/Simple/bu_*arity0.scm" [exitcode]="84" [output]="")
+declare -A test83=( [titre]="Simple : Multiply with 1 argument" [fichier]="test/Functional/Simple/bu_*arity1.scm" [exitcode]="84" [output]="")
+declare -A test84=( [titre]="Simple : Multiply with 3 arguments" [fichier]="test/Functional/Simple/bu_*arity3.scm" [exitcode]="84" [output]="")
+declare -A test85=( [titre]="Simple : Multiply with arithmetic expressions" [fichier]="test/Functional/Simple/bu_*expr1.scm" [exitcode]="0" [output]="9")
+declare -A test86=( [titre]="Simple : Multiply boolean with boolean" [fichier]="test/Functional/Simple/bu_*boolbool.scm" [exitcode]="84" [output]="")
 
-#Simple : Build : /
-declare -A test100=( [titre]="Simple : Simple div" [fichier]="test/Functional/Simple/bu_:1.scm" [exitcode]="0" [output]="2")
-declare -A test100=( [titre]="Simple : Div with negativ int" [fichier]="test/Functional/Simple/bu_:2.scm" [exitcode]="0" [output]="1")
-declare -A test100=( [titre]="Simple : Div two degativ numbers" [fichier]="test/Functional/Simple/bu_:3.scm" [exitcode]="0" [output]="-4")
-declare -A test100=( [titre]="Simple : Div bool with integer" [fichier]="test/Functional/Simple/bu_:4.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Div string with int" [fichier]="test/Functional/Simple/bu_:5.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Div string with string" [fichier]="test/Functional/Simple/bu_:6.scm" [exitcode]="84" [output]="")
-declare -A test100=( [titre]="Simple : Div by 0" [fichier]="test/Functional/Simple/bu_:6.scm" [exitcode]="84" [output]="")
+# Simple : Builtin /
+declare -A test87=( [titre]="Simple : Simple division" [fichier]="test/Functional/Simple/bu_:1.scm" [exitcode]="0" [output]="2")
+declare -A test88=( [titre]="Simple : Division with negative integer" [fichier]="test/Functional/Simple/bu_:2.scm" [exitcode]="0" [output]="1")
+declare -A test89=( [titre]="Simple : Division of two negative numbers" [fichier]="test/Functional/Simple/bu_:3.scm" [exitcode]="0" [output]="-4")
+declare -A test90=( [titre]="Simple : Division of boolean with integer" [fichier]="test/Functional/Simple/bu_:4.scm" [exitcode]="84" [output]="")
+declare -A test91=( [titre]="Simple : Division of string with integer" [fichier]="test/Functional/Simple/bu_:5.scm" [exitcode]="84" [output]="")
+declare -A test92=( [titre]="Simple : Division of string with string" [fichier]="test/Functional/Simple/bu_:6.scm" [exitcode]="84" [output]="")
+declare -A test93=( [titre]="Simple : Division by zero" [fichier]="test/Functional/Simple/bu_:7.scm" [exitcode]="84" [output]="")
+declare -A test94=( [titre]="Simple : Division with 0 arguments" [fichier]="test/Functional/Simple/bu_:arity0.scm" [exitcode]="84" [output]="")
+declare -A test95=( [titre]="Simple : Division with 1 argument" [fichier]="test/Functional/Simple/bu_:arity1.scm" [exitcode]="84" [output]="")
+declare -A test96=( [titre]="Simple : Division with 3 arguments" [fichier]="test/Functional/Simple/bu_:arity3.scm" [exitcode]="84" [output]="")
+declare -A test97=( [titre]="Simple : Division with arithmetic expressions" [fichier]="test/Functional/Simple/bu_:expr1.scm" [exitcode]="0" [output]="2")
+declare -A test98=( [titre]="Simple : Division of boolean with boolean" [fichier]="test/Functional/Simple/bu_:boolbool.scm" [exitcode]="84" [output]="")
+
+
 
 
 # Test func
@@ -165,7 +187,24 @@ local tests=(
     test42 test43 test44 test45 test46
     test47 test48 test49 test50 test51
     test52 test53
+
+    test54 test55 test56 test57 test58
+    test59 test60 test61 test62 test63
+    test64
+
+    test65 test66 test67 test68 test69
+    test70 test71 test72 test73 test74
+    test75
+
+    test76 test77 test78 test79 test80
+    test81 test82 test83 test84 test85
+    test86
+
+    test87 test88 test89 test90 test91
+    test92 test93 test94 test95 test96
+    test97 test98
 )
+
 
     local total=${#tests[@]}
     local passed=0
