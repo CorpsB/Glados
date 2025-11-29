@@ -115,7 +115,7 @@ run_test() {
     local expected_code="${test[exitcode]}"
     local expected_output="${test[output]}"
 
-    output=$(./glados < "$fichier")
+    output=$(./glados < "$fichier" 2>/dev/null)
     ret=$?
     output=${output%$'\n'}
 
