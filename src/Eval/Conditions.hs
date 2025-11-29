@@ -7,11 +7,11 @@
 
 module Eval.Conditions (execCondition) where
 
-import Ast (Ast(..))
+import Ast (Ast(..), intValueIsZero)
 
 execCondition :: Ast -> Ast -> Ast -> Either String Ast
 execCondition (ABool True) th _ = Right th
 execCondition (ABool False) _ el = Right el
-execCondition (AInteger 1) th _ = Right th
-execCondition (AInteger 0) _ el = Right el
+execCondition (AInteger i) th _ | not (intValueIsZero i) = Right th
+execCondition (AInteger i) _ el | intValueIsZero i = Right el
 execCondition cond _ _ = Left $ "*** ERROR: Invalid condition: " ++ show cond

@@ -9,13 +9,24 @@ module Parser.Ast (sexprToAST) where
 
 import Ast (Ast(..))
 import Lisp (SExpr(..))
+import Data.Int (Int8, Int16, Int32, Int64)
 
 extractParam :: SExpr -> Maybe String
 extractParam (SSymbol s) = Just s
 extractParam _           = Nothing
 
+fitInteger :: Int -> IntValue
+fitInteger n
+    | n >= fromIntegral (minBound :: Int8)
+        && n <= fromIntegral (maxBound :: Int8)  = I8  (fromIntegral n)
+    | n >= fromIntegral (minBound :: Int16)
+        && n <= fromIntegral (maxBound :: Int16) = I16 (fromIntegral n)
+    | n >= fromIntegral (minBound :: Int32)
+        && n <= fromIntegral (maxBound :: Int32) = I32 (fromIntegral n)
+    | otherwise = I64 (fromIntegral n)
+
 sexprToAST :: SExpr -> Maybe Ast
-sexprToAST (SInteger n) = Just $ AInteger n
+sexprToAST (SInteger n) = Just $ AInteger (fitInteger n)
 sexprToAST (SSymbol "#t") = Just $ ABool True
 sexprToAST (SSymbol "#f") = Just $ ABool False
 sexprToAST (SSymbol s) = Just $ ASymbol s
