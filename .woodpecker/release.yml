@@ -1,0 +1,25 @@
+when:
+  branch:
+    include:
+      - main
+  event:
+    include:
+      - push
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+
+steps:
+  create_release:
+    image: ghcr.io/woodpecker-ci/plugin-github-release
+    settings:
+      api_key:
+        from_secret: github_token
+      owner: CorpsB
+      repo: Glados
+      tag: "v-${CI_BUILD_NUMBER}"
+      title: "Release v${CI_BUILD_NUMBER}"
+      note: |        
+        Commit: ${CI_COMMIT_SHA}
+        Author: ${CI_COMMIT_AUTHOR}
