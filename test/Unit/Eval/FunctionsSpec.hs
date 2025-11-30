@@ -12,7 +12,7 @@ module Eval.FunctionsSpec (spec) where
 import Test.Hspec
 import Eval.Functions
 import Type.Integer (IntValue(..))
-import Ast (Ast(..), Env)
+import Ast (Ast(..))
 
 mockEvalSuccess :: FuncTable -> Env -> Ast -> Either String Ast
 mockEvalSuccess _ _ _ = Right (AInteger (I16 1000))
@@ -47,9 +47,7 @@ spec = describe "Functions Management" $ do
     describe "registerFunction" $ do
         it "registers a new function on top of existing ones (forcing body and ftable evaluation)" $ do
             registerFunction populatedTable "newFunc" ["b"] (AInteger (I16 999)) `shouldSatisfy` \case
-                Right res ->
-                    let (n, p, b) = head res
-                        rest = tail res in
+                Right ((n, p, b) : rest) ->
                     n == "newFunc" &&
                     p == ["b"] &&
                     (case b of AInteger (I16 999) -> True; _ -> False) &&

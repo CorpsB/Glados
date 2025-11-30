@@ -74,6 +74,7 @@ test-suite glados-unit
       AstSpec
       Parser.AstSpec
       Parser.ParserISLTest
+      Type.IntegerSpec
       Utils.ListSpec
       LispTest
   build-depends:
