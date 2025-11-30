@@ -9,13 +9,14 @@ module Parser.Ast (sexprToAST) where
 
 import Ast (Ast(..))
 import Lisp (SExpr(..))
+import Type.Integer (fitInteger)
 
 extractParam :: SExpr -> Either String String
 extractParam (SSymbol s) = Right s
 extractParam _           = Left "*** ERROR: Parameters must be symbols"
 
 sexprToAST :: SExpr -> Either String Ast
-sexprToAST (SInteger n) = Right $ AInteger n
+sexprToAST (SInteger n) = Right $ AInteger (fitInteger n)
 sexprToAST (SSymbol "#t") = Right $ ABool True
 sexprToAST (SSymbol "#f") = Right $ ABool False
 sexprToAST (SSymbol s) = Right $ ASymbol s

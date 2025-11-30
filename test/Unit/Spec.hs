@@ -11,6 +11,7 @@ import qualified AstSpec
 import qualified Parser.ParserISLTest
 import qualified Parser.AstSpec
 import qualified LispTest
+import qualified Type.IntegerSpec
 import qualified Utils.ListSpec
 
 main :: IO ()
@@ -26,5 +27,6 @@ spec = do
   AstSpec.spec
   Parser.ParserISLTest.spec
   Parser.AstSpec.spec
+  Type.IntegerSpec.spec
   Utils.ListSpec.spec
   LispTest.spec

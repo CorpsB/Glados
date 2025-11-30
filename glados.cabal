@@ -26,6 +26,7 @@ library
       Eval.Builtins
       Eval.Conditions
       Eval.Functions
+      Type.Integer
       Parser.Ast
       Utils.List
       Parser.ParserISL
@@ -73,6 +74,7 @@ test-suite glados-unit
       AstSpec
       Parser.AstSpec
       Parser.ParserISLTest
+      Type.IntegerSpec
       Utils.ListSpec
       LispTest
   build-depends:

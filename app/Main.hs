@@ -12,6 +12,7 @@ import System.IO
 import Control.Exception (catch, IOException)
 import Lisp (SExpr(..))
 import Ast (Ast(..), Env)
+import Type.Integer (intValueToInt)
 import Parser.ParserISL (parseLisp, parseLispLine)
 import Eval.Run (processSExpr)
 import Eval.Functions (FuncTable)
@@ -34,7 +35,7 @@ processMany ftable env (x:xs) = case processSingle ftable env x of
             Right rest -> Right (outs ++ rest)
 
 printAst :: Ast -> IO ()
-printAst (AInteger i) = print i
+printAst (AInteger i) = putStrLn $ show $ intValueToInt i
 printAst (ABool True) = putStrLn "#t"
 printAst (ABool False) = putStrLn "#f"
 printAst (ASymbol s) = putStrLn s
