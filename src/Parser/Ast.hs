@@ -7,23 +7,13 @@
 
 module Parser.Ast (sexprToAST) where
 
-import Ast (Ast(..), IntValue(..))
+import Ast (Ast(..))
 import Lisp (SExpr(..))
-import Data.Int (Int8, Int16, Int32)
+import Type.Integer (fitInteger)
 
 extractParam :: SExpr -> Either String String
 extractParam (SSymbol s) = Right s
 extractParam _           = Left "*** ERROR: Parameters must be symbols"
-
-fitInteger :: Int -> IntValue
-fitInteger n
-    | n >= fromIntegral (minBound :: Int8)
-        && n <= fromIntegral (maxBound :: Int8)  = I8  (fromIntegral n)
-    | n >= fromIntegral (minBound :: Int16)
-        && n <= fromIntegral (maxBound :: Int16) = I16 (fromIntegral n)
-    | n >= fromIntegral (minBound :: Int32)
-        && n <= fromIntegral (maxBound :: Int32) = I32 (fromIntegral n)
-    | otherwise = I64 (fromIntegral n)
 
 sexprToAST :: SExpr -> Either String Ast
 sexprToAST (SInteger n) = Right $ AInteger (fitInteger n)

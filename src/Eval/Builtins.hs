@@ -7,25 +7,8 @@
 
 module Eval.Builtins (execBuiltin) where
 
-import Ast (Ast(..), IntValue(..))
-import Data.Int (Int8, Int16, Int32, Int64)
-
-toInt64 :: IntValue -> Int64
-toInt64 (I8 n)  = fromIntegral n
-toInt64 (I16 n) = fromIntegral n
-toInt64 (I32 n) = fromIntegral n
-toInt64 (I64 n) = n
-
-fromInt64 :: Int64 -> IntValue
-fromInt64 n
-    | n >= fromIntegral (minBound :: Int8)
-        && n <= fromIntegral (maxBound :: Int8)  = I8  (fromIntegral n)
-    | n >= fromIntegral (minBound :: Int16)
-        && n <= fromIntegral (maxBound :: Int16) = I16 (fromIntegral n)
-    | n >= fromIntegral (minBound :: Int32)
-        && n <= fromIntegral (maxBound :: Int32) = I32 (fromIntegral n)
-    | otherwise = I64 n
-
+import Ast (Ast(..))
+import Type.Integer (toInt64, fromInt64)
 
 builtinEq :: [Ast] -> Either String Ast
 builtinEq [AInteger x, AInteger y] = Right $ ABool (toInt64 x == toInt64 y)

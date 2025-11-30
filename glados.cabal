@@ -26,6 +26,7 @@ library
       Eval.Builtins
       Eval.Conditions
       Eval.Functions
+      Type.Integer
       Parser.Ast
       Utils.List
       Parser.ParserISL
