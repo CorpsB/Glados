@@ -48,22 +48,35 @@ tryEval ft env input = case parseLispLine input of
     Left _      -> Left "*** ERROR: Parse error"
     Right sexpr -> processSExpr ft env sexpr
 
+runFromFile :: IO ()
+runFromFile = do
+    input <- getContents
+    case parseLisp input of
+        Left perr -> hPutStrLn stderr ("Parse error: " ++ show perr) >>
+            exitWith (ExitFailure 84)
+        Right sexprs -> case processMany [] [] sexprs of
+            Left err     -> hPutStrLn stderr err >> exitWith (ExitFailure 84)
+            Right values -> mapM_ printAst values
+
+handleEOF :: IOException -> IO String
+handleEOF _ = exitWith ExitSuccess
+
+processReplLine :: FuncTable -> Env -> String -> IO ()
+processReplLine ft env line = case tryEval ft env line of
+    Left err -> do
+        hPutStrLn stderr err
+        repl ft env
+    Right (newFt, newEnv, res) -> do
+        mapM_ printAst res
+        repl newFt newEnv
+
 repl :: FuncTable -> Env -> IO ()
 repl ft env = do
     putStr "> " >> hFlush stdout
     line <- catch getLine handleEOF
     if null line
         then repl ft env
-        else case tryEval ft env line of
-            Left err -> do
-                hPutStrLn stderr err
-                repl ft env
-            Right (newFt, newEnv, res) -> do
-                mapM_ printAst res
-                repl newFt newEnv
-
-handleEOF :: IOException -> IO String
-handleEOF _ = exitWith ExitSuccess
+        else processReplLine ft env line
 
 main :: IO ()
 main = do
@@ -72,11 +85,4 @@ main = do
         then do
             hSetBuffering stdout NoBuffering
             repl [] []
-        else do
-            input <- getContents
-            case parseLisp input of
-                Left perr -> hPutStrLn stderr ("Parse error: " ++ show perr) >>
-                    exitWith (ExitFailure 84)
-                Right sexprs -> case processMany [] [] sexprs of
-                    Left err     -> hPutStrLn stderr err >> exitWith (ExitFailure 84)
-                    Right values -> mapM_ printAst values
+        else runFromFile
