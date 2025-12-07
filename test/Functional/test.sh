@@ -186,6 +186,9 @@ declare -A test155=( [titre]="Simple : addition with large negative integers" [f
 declare -A test156=( [titre]="Simple : multiplication with large integers" [fichier]="test/Functional/Simple/int64_mul.scm" [exitcode]="0" [output]="9223372030926249001")
 declare -A test157=( [titre]="Simple : div with large integers" [fichier]="test/Functional/Simple/int64_div.scm" [exitcode]="0" [output]="4611686018427387903")
 declare -A test158=( [titre]="Simple : mod with large integers" [fichier]="test/Functional/Simple/int64_mod.scm" [exitcode]="0" [output]="6")
+declare -A test159=( [titre]="Simple : list builtin" [fichier]="test/Functional/Simple/bu_list1.scm" [exitcode]="0" [output]="(1 2 3)")
+declare -A test160=( [titre]="Simple : car builtin" [fichier]="test/Functional/Simple/bu_list2.scm" [exitcode]="0" [output]="1")
+declare -A test161=( [titre]="Simple : cdr builtin" [fichier]="test/Functional/Simple/bu_list3.scm" [exitcode]="0" [output]="(2 3)")
 
 # Advanced :
 declare -A test200=( [titre]="Advanced : gcd + fact + lambda" [fichier]="test/Functional/Advanced/advanced1.scm" [exitcode]="0" [output]="18")
@@ -296,7 +299,7 @@ local tests=(
     test150 test151
 
     test152 test153 test154 test155 test156
-    test157 test158
+    test157 test158 test159 test160 test161
 
     test200 test201 test202 test203
 )

@@ -9,6 +9,8 @@ module Eval.Builtins (execBuiltin) where
 
 import Ast (Ast(..))
 import Type.Integer (toInt64, fromInt64)
+import Utils.List (astToList, listToAst, sameLength)
+import Control.Monad (foldM)
 
 builtinEq :: [Ast] -> Either String Ast
 builtinEq [AInteger x, AInteger y] = Right $ ABool (toInt64 x == toInt64 y)
@@ -72,4 +74,56 @@ execBuiltin "-" as = builtinSubtraction as
 execBuiltin "*" as = builtinMultiplication as
 execBuiltin "div" as = builtinDivision as
 execBuiltin "mod" as = builtinModulo as
+execBuiltin "list" as = builtinList as
+execBuiltin "cons" as = builtinCons as
+execBuiltin "car" as = builtinCar as
+execBuiltin "cdr" as = builtinCdr as
+execBuiltin "list?" as = builtinIsList as
+execBuiltin "append" as = builtinAppend as
+execBuiltin "length" as = builtinLength as
 execBuiltin op _ = Left $ "*** ERROR: Unknown builtin: " ++ op
+
+
+builtinList :: [Ast] -> Either String Ast
+builtinList as = Right $ listToAst as
+
+builtinCons :: [Ast] -> Either String Ast
+builtinCons [v, lst] = do
+    xs <- astToList lst
+    Right $ listToAst (v : xs)
+builtinCons args = Left $ "*** ERROR: 'cons' expects two args, got: " ++ show args
+
+builtinCar :: [Ast] -> Either String Ast
+builtinCar [lst] = do
+    xs <- astToList lst
+    case xs of
+        (h:_) -> Right h
+        [] -> Left "*** ERROR: 'car' called on empty list"
+builtinCar args = Left $ "*** ERROR: 'car' expects one arg, got: " ++ show args
+
+builtinCdr :: [Ast] -> Either String Ast
+builtinCdr [lst] = do
+    xs <- astToList lst
+    case xs of
+        (_:ts) -> Right $ listToAst ts
+        [] -> Left "*** ERROR: 'cdr' called on empty list"
+builtinCdr args = Left $ "*** ERROR: 'cdr' expects one arg, got: " ++ show args
+
+builtinIsList :: [Ast] -> Either String Ast
+builtinIsList [x] = case x of
+    AList _ -> Right $ ABool True
+    _ -> Right $ ABool False
+builtinIsList args = Left $ "*** ERROR: 'list?' expects one arg, got: " ++ show args
+
+builtinAppend :: [Ast] -> Either String Ast
+builtinAppend args = do
+    concatenated <- foldM (\buf a -> do
+        xs <- astToList a
+        Right $ buf ++ xs) [] args
+    Right $ listToAst concatenated
+
+builtinLength :: [Ast] -> Either String Ast
+builtinLength [lst] = do
+    xs <- astToList lst
+    Right $ AInteger (fromInt64 (fromIntegral (length xs)))
+builtinLength args = Left $ "*** ERROR: 'length' expects one arg, got: " ++ show args
