@@ -91,7 +91,8 @@ builtinCons :: [Ast] -> Either String Ast
 builtinCons [v, lst] = do
     xs <- astToList lst
     Right $ listToAst (v : xs)
-builtinCons args = Left $ "*** ERROR: 'cons' expects two args, got: " ++ show args
+builtinCons args =
+    Left $ "*** ERROR: 'cons' expects two args, got: " ++ show args
 
 builtinCar :: [Ast] -> Either String Ast
 builtinCar [lst] = do
@@ -113,7 +114,8 @@ builtinIsList :: [Ast] -> Either String Ast
 builtinIsList [x] = case x of
     AList _ -> Right $ ABool True
     _ -> Right $ ABool False
-builtinIsList args = Left $ "*** ERROR: 'list?' expects one arg, got: " ++ show args
+builtinIsList args =
+    Left $ "*** ERROR: 'list?' expects one arg, got: " ++ show args
 
 builtinAppend :: [Ast] -> Either String Ast
 builtinAppend args = do
@@ -126,4 +128,5 @@ builtinLength :: [Ast] -> Either String Ast
 builtinLength [lst] = do
     xs <- astToList lst
     Right $ AInteger (fromInt64 (fromIntegral (length xs)))
-builtinLength args = Left $ "*** ERROR: 'length' expects one arg, got: " ++ show args
+builtinLength args =
+    Left $ "*** ERROR: 'length' expects one arg, got: " ++ show args
