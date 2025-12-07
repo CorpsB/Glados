@@ -1,14 +1,15 @@
 when:
-  - event: push
-    branch: main
+  - event: tag
 
 clone:
   git:
     image: woodpeckerci/plugin-git
+    settings:
+      tags: true
 
 steps:
   create_release:
-    image: woodpeckerci/plugin-github-release 
+    image: woodpeckerci/plugin-github-release
     settings:
       api_key:
         from_secret: github_token
@@ -17,5 +18,5 @@ steps:
       tag: "v-${CI_BUILD_NUMBER}"
       title: "Release v${CI_BUILD_NUMBER}"
       note: |        
-        Commit:  ${CI_COMMIT_SHA}
-        Author:  ${CI_COMMIT_AUTHOR}
+        Commit: ${CI_COMMIT_SHA}
+        Author: ${CI_COMMIT_AUTHOR}
