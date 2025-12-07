@@ -5,65 +5,80 @@
 -- Ast
 -}
 
-module Ast (Ast(..), sexprToAST, evalAST) where
+module Eval.Ast (evalAST, evalASTEnv) where
 
-import Lisp (SExpr(..))
+import Ast (Ast(..), Env)
+import Eval.Builtins (execBuiltin)
+import Eval.Conditions (execCondition)
+import Eval.Functions (getFunction, FuncTable)
+import Utils.List (sameLength)
 
-data Ast = Define String Ast
-    | AInteger Int
-    | ASymbol String
-    | Call Ast [Ast]
-    deriving Show
+applyClosure :: FuncTable -> Env -> [String] -> Ast -> [Ast] -> Either String Ast
+applyClosure ftable cEnv params body args
+    | sameLength params args =
+        evalASTEnv ftable (zip params args ++ cEnv) body
+    | otherwise = Left "*** ERROR: Argument length mismatch in lambda call"
 
-sexprToAST :: SExpr -> Maybe Ast
-sexprToAST (SInteger n) = Just (AInteger n)
-sexprToAST (SSymbol s) = Just (ASymbol s)
-sexprToAST (List (SSymbol "define" : SSymbol name : body : [])) = do
-    b <- sexprToAST body
-    return (Define name b)
-sexprToAST (List (h:q)) = do
-    h2 <- sexprToAST h
-    q2 <- mapM sexprToAST q
-    return (Call h2 q2)
-sexprToAST _ = Nothing
+execUserFunc :: FuncTable -> Env -> String -> [Ast] -> String -> Either String Ast
+execUserFunc ft env op args err = case getFunction ft op of
+    Just (p, b) | sameLength p args ->
+        evalASTEnv ft (zip p args ++ env) b
+    Just _ -> Left $ "*** ERROR: Argument length " ++
+        "missmatch for function " ++ op
+    Nothing -> Left err
 
-toInt :: Ast -> Maybe Int
-toInt (AInteger n) = Just n
-toInt _ = Nothing
+execNamedCall :: FuncTable -> Env -> String -> [Ast] -> Either String Ast
+execNamedCall ft env op args = case execBuiltin op args of
+    Right r -> Right r
+    Left _ -> case lookupEnv env op of
+        Just (Closure p b cEnv) -> applyClosure ft cEnv p b args
+        _ -> execUserFunc ft env op args ("*** ERROR: Unknown func: " ++ op)
 
-execBuiltin :: String -> [Ast] -> Maybe Ast
-execBuiltin "+" as = do
-    numbers <- traverse toInt as
-    return (AInteger (sum numbers))
-execBuiltin "*" as = do
-    numbers <- traverse toInt as
-    return (AInteger (product numbers))
-execBuiltin "-" as = do
-    numbers <- traverse toInt as
-    case numbers of
-        (x:xs) -> return (AInteger (foldl (-) x xs))
-        _ -> Nothing
-execBuiltin "/" as = do
-    numbers <- traverse toInt as
-    case numbers of
-        (x:xs) -> if all (/= 0) xs
-                  then return (AInteger (foldl div x xs))
-                  else Nothing
-        _ -> Nothing
-execBuiltin ">" as = do
-    numbers <- traverse toInt as
-    case numbers of
-        (a:b:_) -> return (AInteger (if a > b then 1 else 0))
-        _ -> Nothing
-execBuiltin _ _ = Nothing
+execExprCall :: FuncTable -> Env -> Ast -> [Ast] -> Either String Ast
+execExprCall ft env func args = evalAST ft env func >>= \res ->
+    case res of
+        Closure p b cEnv -> applyClosure ft cEnv p b args
+        _ -> Left "*** ERROR: Attempt to call a non-function"
 
-evalAST :: Ast -> Maybe Ast
-evalAST (AInteger n) = Just (AInteger n)
-evalAST (ASymbol _) = Nothing
-evalAST (Define name body) = do
-    b2 <- evalAST body
-    return (Define name b2)
-evalAST (Call (ASymbol op) args) = do
-    evalArgs <- mapM evalAST args
-    execBuiltin op evalArgs
-evalAST (Call _ _) = Nothing
+evalAST :: FuncTable -> Env -> Ast -> Either String Ast
+evalAST _ _ (AInteger n) = Right $ AInteger n
+evalAST _ _ (ABool b) = Right $ ABool b
+evalAST _ env (ASymbol s) = case lookupEnv env s of
+    Just v -> Right v
+    Nothing -> Left $ "*** ERROR: Undefined symbol: " ++ s
+evalAST _ env (Lambda params body) = Right $ Closure params body env
+evalAST _ _ (Closure p b e) = Right $ Closure p b e
+evalAST ftable env (Define name body) = do
+    b2 <- evalAST ftable env body
+    Right $ Define name b2
+evalAST _ _ (DefineFun name params body) = Right $ DefineFun name params body
+evalAST ftable env (Condition cond th el) = do
+    c <- evalAST ftable env cond
+    chosen <- execCondition c th el
+    evalAST ftable env chosen
+evalAST ftable env (Call func args) = do
+    evalArgs <- traverse (evalASTEnv ftable env) args
+    case func of
+        ASymbol op -> execNamedCall ftable env op evalArgs
+        _ -> execExprCall ftable env func evalArgs
+
+lookupEnv :: Env -> String -> Maybe Ast
+lookupEnv [] _ = Nothing
+lookupEnv ((k,v):xs) key
+    | k == key  = Just v
+    | otherwise = lookupEnv xs key
+
+evalASTEnv :: FuncTable -> Env -> Ast -> Either String Ast
+evalASTEnv _ _ (AInteger n) = Right $ AInteger n
+evalASTEnv _ _ (ABool b) = Right $ ABool b
+evalASTEnv _ env (ASymbol s) = case lookupEnv env s of
+    Just v -> Right v
+    Nothing -> Left $ "*** ERROR: Undefined symbol: " ++ s
+evalASTEnv _ env (Lambda params body) = Right $ Closure params body env
+evalASTEnv _ _ (Closure p b e) = Right $ Closure p b e
+evalASTEnv ftable env (Define name body) =
+    evalAST ftable env (Define name body)
+evalASTEnv ftable env (DefineFun name params body) =
+    evalAST ftable env (DefineFun name params body)
+evalASTEnv ftable env (Call f args) = evalAST ftable env (Call f args)
+evalASTEnv ftable env (Condition c t e) = evalAST ftable env (Condition c t e)

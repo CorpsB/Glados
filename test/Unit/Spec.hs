@@ -1,0 +1,32 @@
+module Main (main) where
+
+import Test.Hspec
+
+import qualified Eval.BuiltinsSpec
+import qualified Eval.ConditionsSpec
+import qualified Eval.FunctionsSpec
+import qualified Eval.AstSpec
+import qualified Eval.RunSpec
+import qualified AstSpec
+import qualified Parser.ParserISLTest
+import qualified Parser.AstSpec
+import qualified LispTest
+import qualified Type.IntegerSpec
+import qualified Utils.ListSpec
+
+main :: IO ()
+main = hspec spec
+
+spec :: Spec
+spec = do
+  Eval.BuiltinsSpec.spec
+  Eval.ConditionsSpec.spec
+  Eval.FunctionsSpec.spec
+  Eval.RunSpec.spec
+  Eval.AstSpec.spec
+  AstSpec.spec
+  Parser.ParserISLTest.spec
+  Parser.AstSpec.spec
+  Type.IntegerSpec.spec
+  Utils.ListSpec.spec
+  LispTest.spec

@@ -1,0 +1,12 @@
+kind: pipeline
+name: Coding-style checker
+
+when:
+  - event: [push, pull_request]
+
+steps:
+  - name: coding-style checker
+    image: ghcr.io/epitech/coding-style-checker:latest
+    commands:
+      - ./tools/coding-style.sh
+
