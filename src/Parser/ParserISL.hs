@@ -5,7 +5,7 @@
 -- ParserISL.hs
 -}
 
-module Parser.ParserISL (parseLisp) where
+module Parser.ParserISL (parseLisp, parseLispLine) where
 
 import Text.Megaparsec
 import Text.Megaparsec.Char
@@ -31,8 +31,8 @@ pInteger = (lexeme $ do
 
 pSymbol :: Parser SExpr
 pSymbol = (lexeme $ do
-    first <- letterChar <|> oneOf "+-*/<>=?!_"
-    rest <- many (alphaNumChar <|> oneOf "+-*/<>=?!_")
+    first <- letterChar <|> oneOf "+-*/<>=?!_#"
+    rest <- many (alphaNumChar <|> oneOf "+-*/<>=?!_#")
     return (SSymbol (first : rest)))
       <?> "Expected symbol (like: define, +, foo)"
 
@@ -48,5 +48,8 @@ pExpr = try pInteger
     <|> pList
     <|> pSymbol
 
-parseLisp :: String -> Either (ParseErrorBundle String Void) SExpr
-parseLisp = parse (sc *> pExpr <* eof) "ParserISL"
+parseLisp :: String -> Either (ParseErrorBundle String Void) [SExpr]
+parseLisp = parse (sc *> many pExpr <* eof) "ParserISL"
+
+parseLispLine :: String -> Either (ParseErrorBundle String Void) SExpr
+parseLispLine = parse (sc *> pExpr <* sc) "REPL"

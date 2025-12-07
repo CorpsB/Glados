@@ -1,0 +1,12 @@
+kind: pipeline
+name: Functional tests
+
+when:
+  - event: [push, pull_request]
+  
+steps:
+  - name: Basic tests
+    image: haskell:9.10.3
+    commands:
+      - make
+      - ./test/Functional/test.sh

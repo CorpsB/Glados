@@ -7,10 +7,12 @@
 
 module Ast (Ast(..), Env) where
 
+import Type.Integer (IntValue(..))
+
 type Env = [(String, Ast)]
 
 data Ast
-    = AInteger Int
+    = AInteger IntValue
     | ABool Bool
     | ASymbol String
     | Condition Ast Ast Ast

@@ -43,12 +43,10 @@ spec = describe "Lisp Data Structures" $ do
             show (SInteger 42) `shouldSatisfy` \case
                 "SInteger 42" -> True
                 _ -> False
-
         it "shows SSymbol correctly" $ do
             show (SSymbol "foo") `shouldSatisfy` \case
                 "SSymbol \"foo\"" -> True
                 _ -> False
-
         it "shows List correctly" $ do
             show (List []) `shouldSatisfy` \case
                 "List []" -> True

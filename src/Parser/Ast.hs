@@ -9,34 +9,39 @@ module Parser.Ast (sexprToAST) where
 
 import Ast (Ast(..))
 import Lisp (SExpr(..))
+import Type.Integer (fitInteger)
 
-extractParam :: SExpr -> Maybe String
-extractParam (SSymbol s) = Just s
-extractParam _           = Nothing
+extractParam :: SExpr -> Either String String
+extractParam (SSymbol s) = Right s
+extractParam _           = Left "*** ERROR: Parameters must be symbols"
 
-sexprToAST :: SExpr -> Maybe Ast
-sexprToAST (SInteger n) = Just $ AInteger n
-sexprToAST (SSymbol "#t") = Just $ ABool True
-sexprToAST (SSymbol "#f") = Just $ ABool False
-sexprToAST (SSymbol s) = Just $ ASymbol s
+sexprToAST :: SExpr -> Either String Ast
+sexprToAST (SInteger n) = Right $ AInteger (fitInteger n)
+sexprToAST (SSymbol "#t") = Right $ ABool True
+sexprToAST (SSymbol "#f") = Right $ ABool False
+sexprToAST (SSymbol s) = Right $ ASymbol s
 sexprToAST (List (SSymbol "lambda" : List params : body : [])) = do
     ps <- mapM extractParam params
     b  <- sexprToAST body
-    return $ Lambda ps b
+    Right $ Lambda ps b
+sexprToAST (List (SSymbol "lambda" : _)) =
+    Left "*** ERROR: Invalid 'lambda' expression"
 sexprToAST (List (SSymbol "define" : SSymbol name : body : [])) = do
     b <- sexprToAST body
-    return $ Define name b
+    Right $ Define name b
 sexprToAST (List (SSymbol "define" : List (SSymbol name : params) : body : [])) = do
     ps <- mapM extractParam params
     b  <- sexprToAST body
-    return $ DefineFun name ps b
+    Right $ DefineFun name ps b
+sexprToAST (List (SSymbol "define" : _)) =
+    Left "*** ERROR: Invalid 'define' expression"
 sexprToAST (List (SSymbol "if" : cond : th : el : [])) = do
     c <- sexprToAST cond
     t <- sexprToAST th
     e <- sexprToAST el
-    return $ Condition c t e
+    Right $ Condition c t e
 sexprToAST (List (h:q)) = do
     h2 <- sexprToAST h
     q2 <- mapM sexprToAST q
-    return $ Call h2 q2
-sexprToAST _ = Nothing
+    Right $ Call h2 q2
+sexprToAST _ = Left "*** ERROR: Invalid expressions"

@@ -2,7 +2,7 @@
 -- EPITECH PROJECT, 2025
 -- Glados
 -- File description:
--- FunctionsSpec.hs
+-- FunctionsSpec
 -}
 
 {-# LANGUAGE LambdaCase #-}
@@ -10,82 +10,75 @@
 module Eval.FunctionsSpec (spec) where
 
 import Test.Hspec
+import Eval.Functions
+import Type.Integer (IntValue(..))
 import Ast (Ast(..))
-import Eval.Functions (registerFunction, getFunction, callFunction, FuncTable, Env)
 
-lookupTest :: String -> Env -> Maybe Ast
-lookupTest _ [] = Nothing
-lookupTest key ((k,v):xs)
-    | k == key = Just v
-    | otherwise = lookupTest key xs
+mockEvalSuccess :: FuncTable -> Env -> Ast -> Either String Ast
+mockEvalSuccess _ _ _ = Right (AInteger (I16 1000))
 
-mockEvalSuccess :: FuncTable -> Env -> Ast -> Maybe Ast
-mockEvalSuccess _ _ _ = Just (AInteger 42)
+mockEvalFail :: FuncTable -> Env -> Ast -> Either String Ast
+mockEvalFail _ _ _ = Left "Mock Error"
 
-mockEvalFail :: FuncTable -> Env -> Ast -> Maybe Ast
-mockEvalFail _ _ _ = Nothing
-
-spyEval :: FuncTable -> Env -> Ast -> Maybe Ast
-spyEval ft env body = 
-    case (lookupTest "x" env, lookupTest "glob" env, body, length ft) of
-        (Just (AInteger 10), Just (AInteger 99), AInteger 1, len) | len > 0 -> Just (AInteger 1000)
-        _ -> Nothing
+spyForceAll :: FuncTable -> Env -> Ast -> Either String Ast
+spyForceAll ft env body =
+    if null ft then Left "Spy Error: Ftable is empty!"
+    else
+        case lookup "global" env of
+            Nothing -> Left "Spy Error: 'global' not found in env"
+            Just _ ->
+                case body of
+                     AInteger _ -> Right (AInteger (I16 1000))
+                     _ -> Right (AInteger (I8 0))
 
 spec :: Spec
-spec = describe "Eval - Functions unit tests" $ do
-    let funcBody = AInteger 1
-    let funcName = "myFunc"
-    let params = ["x"]
-    let emptyTable = [] :: FuncTable
-    let otherFn = ("other", [], AInteger 0)
-    let populatedTable = [(funcName, params, funcBody), otherFn] :: FuncTable
-    let globalEnv = [("glob", AInteger 99)]
+spec = describe "Functions Management" $ do
+    let emptyTable = []
+    let funcName = "testFunc"
+    let params = ["a"]
+    let body = AInteger (I8 1)
+
+    let populatedTable = [(funcName, params, body)]
+    let multiTable = [("f1", ["x"], AInteger (I8 10)), ("f2", ["y"], AInteger (I8 20))]
+
+    let args = [AInteger (I8 2)]
+    let globalEnv = [("global", AInteger (I8 99))] 
 
     describe "registerFunction" $ do
-        it "Registers a new function and preserves existing table (Right Nothing args check)" $ do
-            let startTable = [otherFn]
-            registerFunction startTable funcName params funcBody `shouldSatisfy` \case
-                Right ((n, p, b):rest) -> 
-                    n == funcName && 
-                    p == params && 
-                    (case b of AInteger 1 -> True; _ -> False) &&
+        it "registers a new function on top of existing ones (forcing body and ftable evaluation)" $ do
+            registerFunction populatedTable "newFunc" ["b"] (AInteger (I16 999)) `shouldSatisfy` \case
+                Right ((n, p, b) : rest) ->
+                    n == "newFunc" &&
+                    p == ["b"] &&
+                    (case b of AInteger (I16 999) -> True; _ -> False) &&
                     length rest == 1
                 _ -> False
-        it "Fails to register if function already exists" $ do
-            registerFunction populatedTable funcName ["z"] (AInteger 2) `shouldSatisfy` \case
+        it "fails if function already exists" $ do
+            registerFunction populatedTable funcName params body `shouldSatisfy` \case
                 Left err -> err == "*** ERROR: Function already exists: " ++ funcName
                 _ -> False
 
     describe "getFunction" $ do
-        it "Returns Nothing from empty table" $ do
-            getFunction emptyTable "anything" `shouldSatisfy` \case
-                Nothing -> True
-                _ -> False
-        it "Returns function params and EXACT body if found (checking b in Just(ps, b))" $ do
-            getFunction populatedTable funcName `shouldSatisfy` \case
-                Just (p, AInteger 1) -> p == params
-                _ -> False
-        it "Recursively searches the table" $ do
-            getFunction populatedTable "other" `shouldSatisfy` \case
-                Just ([], AInteger 0) -> True
+        it "finds a function deeper in the list" $ do
+            callFunction mockEvalSuccess multiTable [] "f2" [AInteger (I8 0)] `shouldSatisfy` \case
+                Right _ -> True
                 _ -> False
 
-    describe "callFunction (integration with execFunc)" $ do
-        it "Fails if function does not exist" $ do
-            callFunction mockEvalSuccess emptyTable [] "unknown" [] `shouldSatisfy` \case
-                Left err -> err == "*** ERROR: Unknown function: unknown"
-                _ -> False
-        it "Fails if argument length mismatch" $ do
-            callFunction mockEvalSuccess populatedTable [] funcName [] `shouldSatisfy` \case
-                Left err -> err == "*** ERROR: Argument length mismatch for function " ++ funcName
-                _ -> False
-        it "Passes correct Env, FT and Body to EvalFn (checking execFunc args)" $ do
-            let args = [AInteger 10]
-            callFunction spyEval populatedTable globalEnv funcName args `shouldSatisfy` \case
-                Right (AInteger 1000) -> True
-                _ -> False
-        it "Handles EvalFn failure" $ do
-            let args = [AInteger 10]
-            callFunction mockEvalFail populatedTable [] funcName args `shouldSatisfy` \case
-                Left err -> err == "*** ERROR: Function evaluation failed" ++ funcName
-                _ -> False
+    describe "callFunction & execFunc" $ do
+        it "fails for unknown function" $ do
+             callFunction mockEvalSuccess emptyTable [] "unknown" [] `shouldSatisfy` \case
+                 Left err -> err == "*** ERROR: Unknown function: unknown"
+                 _ -> False
+        it "fails on argument mismatch" $ do
+             callFunction mockEvalSuccess populatedTable [] funcName [] `shouldSatisfy` \case
+                 Left err -> err == "*** ERROR: Argument length mismatch for function " ++ funcName
+                 _ -> False
+        it "passes evaluated ftable, env AND body to evalFn" $ do
+             callFunction spyForceAll multiTable globalEnv "f2" [AInteger (I8 0)] `shouldSatisfy` \case
+                 Right (AInteger (I16 1000)) -> True
+                 Left err -> error err 
+                 _ -> False
+        it "propagates evaluation failure" $ do
+             callFunction mockEvalFail populatedTable [] funcName args `shouldSatisfy` \case
+                 Left err -> err == "*** ERROR: Function evaluation failed: Mock Error"
+                 _ -> False

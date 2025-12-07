@@ -2,9 +2,7 @@ kind: pipeline
 name: Push Unitary Tests (On push)
 
 when:
-  event:
-    include:
-      - push
+  - event: push
 
 steps:
   - name: make
