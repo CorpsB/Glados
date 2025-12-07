@@ -17,5 +17,5 @@ steps:
       tag: "v-${CI_BUILD_NUMBER}"
       title: "Release v${CI_BUILD_NUMBER}"
       note: |        
-        Commit: ${CI_COMMIT_SHA}
-        Author: ${CI_COMMIT_AUTHOR}
+        Commit:  ${CI_COMMIT_SHA}
+        Author:  ${CI_COMMIT_AUTHOR}
