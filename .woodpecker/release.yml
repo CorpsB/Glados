@@ -8,7 +8,7 @@ clone:
 
 steps:
   create_release:
-    image: ghcr.io/woodpecker-ci/plugin-github-release
+    image: woodpeckerci/plugin-github-release 
     settings:
       api_key:
         from_secret: github_token
