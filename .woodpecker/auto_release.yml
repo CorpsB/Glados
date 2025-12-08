@@ -16,8 +16,11 @@ steps:
       GIT_AUTHOR_EMAIL: "ci@glados"
       GIT_COMMITTER_NAME: "Woodpecker CI"
       GIT_COMMITTER_EMAIL: "ci@glados"
+      GITHUB_TOKEN:
+        from_secret: github_token
     commands:
       - git fetch --tags
       - TAG="v$(date -u +%Y%m%d-%H%M%S)"
       - git tag "$TAG" "${CI_COMMIT_SHA}"
+      - git remote set-url origin "https://${GITHUB_TOKEN}@${CI_REPO_CLONE_URL#https://}"
       - git push origin "$TAG"
