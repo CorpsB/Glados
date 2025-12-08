@@ -16,8 +16,6 @@ steps:
         from_secret: github_token
       GIT_AUTHOR_NAME: "Woodpecker CI"
       GIT_AUTHOR_EMAIL: "ci@glados"
-      GIT_COMMITTER_NAME: "Woodpecker CI"
-      GIT_COMMITTER_EMAIL: "ci@glados"
       GITHUB_TOKEN:
         from_secret: github_token
     commands:
