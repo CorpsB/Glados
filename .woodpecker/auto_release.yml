@@ -1,6 +1,6 @@
 when:
   - event: push
-    branch: main
+    branch: preprod
 
 clone:
   git:
@@ -22,5 +22,4 @@ steps:
       - git fetch --tags
       - TAG="v$(date -u +%Y%m%d-%H%M%S)"
       - git tag "$TAG" "${CI_COMMIT_SHA}"
-      - git remote set-url origin "https://${GITHUB_TOKEN}@${CI_REPO_CLONE_URL#https://}"
-      - git push origin "$TAG"
+      - git push "https://x-access-token:${GITHUB_TOKEN}@github.com/CorpsB/Glados.git" "$TAG"
