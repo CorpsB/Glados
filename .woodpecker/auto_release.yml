@@ -7,8 +7,6 @@ clone:
     image: woodpeckerci/plugin-git
     settings:
       tags: true
-      auth_token:
-        from_secret: github_token
 
 steps:
   - name: create_tag
@@ -24,4 +22,4 @@ steps:
       - git fetch --tags
       - TAG="v$(date -u +%Y%m%d-%H%M%S)"
       - git tag "$TAG" "${CI_COMMIT_SHA}"
-      - git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" "$TAG"
+      - git push "https://x-access-token:$${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" "$TAG"
