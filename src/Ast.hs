@@ -36,4 +36,5 @@ data Ast
     | Lambda [String] Ast
     | Closure [String] Ast Env
     | AList [Ast]
+    | Import String
     deriving Show
