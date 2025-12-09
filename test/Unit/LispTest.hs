@@ -4,6 +4,7 @@ module LispTest (spec) where
 
 import Test.Hspec
 import Lisp (SExpr(..), getInteger, getSymbol, getList)
+import qualified Data.Text as DT
 
 spec :: Spec
 spec = describe "Lisp Data Structures" $ do
@@ -14,14 +15,14 @@ spec = describe "Lisp Data Structures" $ do
                 Just 42 -> True
                 _ -> False
         it "returns Nothing for Symbol" $ do
-            getInteger (SSymbol "a") `shouldSatisfy` \case
+            getInteger (SSymbol (DT.pack "a")) `shouldSatisfy` \case
                 Nothing -> True
                 _ -> False
 
     describe "getSymbol" $ do
         it "extracts symbol" $ do
-            getSymbol (SSymbol "test") `shouldSatisfy` \case
-                Just "test" -> True
+            getSymbol (SSymbol (DT.pack "test")) `shouldSatisfy` \case
+                Just s -> s == DT.pack "test"
                 _ -> False
         it "returns Nothing for Integer" $ do
             getSymbol (SInteger 42) `shouldSatisfy` \case
@@ -34,7 +35,7 @@ spec = describe "Lisp Data Structures" $ do
                 Just [] -> True
                 _ -> False
         it "returns Nothing for Symbol" $ do
-            getList (SSymbol "foo") `shouldSatisfy` \case
+            getList (SSymbol (DT.pack "foo")) `shouldSatisfy` \case
                 Nothing -> True
                 _ -> False
 
@@ -44,7 +45,7 @@ spec = describe "Lisp Data Structures" $ do
                 "SInteger 42" -> True
                 _ -> False
         it "shows SSymbol correctly" $ do
-            show (SSymbol "foo") `shouldSatisfy` \case
+            show (SSymbol (DT.pack "foo")) `shouldSatisfy` \case
                 "SSymbol \"foo\"" -> True
                 _ -> False
         it "shows List correctly" $ do

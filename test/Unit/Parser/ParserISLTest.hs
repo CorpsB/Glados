@@ -12,76 +12,77 @@ module Parser.ParserISLTest (spec) where
 import Test.Hspec
 import Parser.ParserISL (parseLisp, parseLispLine)
 import Lisp (SExpr(..))
+import qualified Data.Text as DT
 
 spec :: Spec
 spec = describe "Parser LISP - SExpr Conversion" $ do
 
     describe "Integers" $ do
       it "parses positive integer" $ do
-        parseLisp "42" `shouldSatisfy` \case
+        parseLisp (DT.pack "42") `shouldSatisfy` \case
             Right [SInteger 42] -> True 
             _ -> False
 
       it "parses negative integer" $ do
-        parseLisp "-42" `shouldSatisfy` \case
+        parseLisp (DT.pack "-42") `shouldSatisfy` \case
             Right [SInteger (-42)] -> True
             _ -> False
 
       it "parses large integer" $ do
-        parseLisp "123456789" `shouldSatisfy` \case
+        parseLisp (DT.pack "123456789") `shouldSatisfy` \case
             Right [SInteger 123456789] -> True
             _ -> False
 
     describe "Symbols" $ do
       it "parses simple symbols" $ do
-        parseLisp "foo" `shouldSatisfy` \case
-            Right [SSymbol "foo"] -> True
+        parseLisp (DT.pack "foo") `shouldSatisfy` \case
+            Right [SSymbol s] -> s == DT.pack "foo"
             _ -> False
 
       it "parses operators" $ do
-        parseLisp ">=" `shouldSatisfy` \case
-            Right [SSymbol ">="] -> True
+        parseLisp (DT.pack ">=") `shouldSatisfy` \case
+            Right [SSymbol s] -> s == DT.pack ">="
             _ -> False
 
     describe "Lists" $ do
       it "parses empty list" $ do
-        parseLisp "()" `shouldSatisfy` \case
+        parseLisp (DT.pack "()") `shouldSatisfy` \case
             Right [List []] -> True
             _ -> False
 
       it "parses simple list (+ 1 2)" $ do
-        parseLisp "(+ 1 2)" `shouldSatisfy` \case
-            Right [List [SSymbol "+", SInteger 1, SInteger 2]] -> True
+        parseLisp (DT.pack "(+ 1 2)") `shouldSatisfy` \case
+            Right [List [SSymbol op, SInteger 1, SInteger 2]] -> op == DT.pack "+"
             _ -> False
 
     describe "Error Handling" $ do
       it "returns empty list on empty input" $ do
-        parseLisp "" `shouldSatisfy` \case
+        parseLisp (DT.pack "") `shouldSatisfy` \case
             Right [] -> True
             _ -> False
 
       it "fails on unclosed parenthesis" $ do
-        parseLisp "(+ 1 2" `shouldSatisfy` \case
+        parseLisp (DT.pack "(+ 1 2") `shouldSatisfy` \case
             Left _ -> True
             _ -> False
       
     describe "parseLispLine (REPL Mode)" $ do
       it "parses a single integer" $ do
-        parseLispLine "42" `shouldSatisfy` \case
+        parseLispLine (DT.pack "42") `shouldSatisfy` \case
             Right (SInteger 42) -> True
             _ -> False
 
       it "parses a single list" $ do
-        parseLispLine "(+ 1 2)" `shouldSatisfy` \case
-            Right (List [SSymbol "+", SInteger 1, SInteger 2]) -> True
+        parseLispLine (DT.pack "(+ 1 2)") `shouldSatisfy` \case
+            Right (List [SSymbol op, SInteger 1, SInteger 2]) -> op == DT.pack "+"
             _ -> False
 
       it "ignores surrounding spaces" $ do
-        parseLispLine "   foo   " `shouldSatisfy` \case
-            Right (SSymbol "foo") -> True
+        parseLispLine (DT.pack "   foo   ") `shouldSatisfy` \case
+            Right (SSymbol s) -> s == DT.pack "foo"
             _ -> False
 
       it "fails on incomplete input" $ do
-        parseLispLine "(" `shouldSatisfy` \case
+        parseLispLine (DT.pack "(") `shouldSatisfy` \case
             Left _ -> True
             _ -> False

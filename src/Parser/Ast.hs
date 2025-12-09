@@ -50,4 +50,4 @@ sexprToAST (List (h:q)) = do
     h2 <- sexprToAST h
     q2 <- mapM sexprToAST q
     Right $ Call h2 q2
-sexprToAST _ = Left $ DT.pack "*** ERROR: Invalid expressions"
+sexprToAST other = Left $ DT.pack $ "*** ERROR: Invalid expressions: " ++ show other
