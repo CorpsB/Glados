@@ -15,7 +15,6 @@ steps:
       - make
       - ./test/Functional/test.sh
 
-steps:
   - name: Basic tests
     when:
       - event: pull_request
