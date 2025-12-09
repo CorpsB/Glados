@@ -20,6 +20,7 @@ data IntValue
     | U16 Word16
     | U32 Word32
     | U64 Word64
+    | IChar Char
     deriving (Show, Eq, Ord)
 
 toInt64 :: IntValue -> Int64
@@ -31,6 +32,7 @@ toInt64 (U8 n)  = fromIntegral n
 toInt64 (U16 n) = fromIntegral n
 toInt64 (U32 n) = fromIntegral n
 toInt64 (U64 n) = fromIntegral n
+toInt64 (IChar c) = fromIntegral (fromEnum c)
 
 fromInt64 :: Int64 -> IntValue
 fromInt64 n
@@ -54,6 +56,7 @@ intValueToInt (U8 n)  = fromIntegral n
 intValueToInt (U16 n) = fromIntegral n
 intValueToInt (U32 n) = fromIntegral n
 intValueToInt (U64 n) = fromIntegral n
+intValueToInt (IChar c) = fromEnum c
 
 intValueEq :: IntValue -> Int64 -> Bool
 intValueEq v ref = (toInt64 v) == ref

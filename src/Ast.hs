@@ -8,33 +8,21 @@
 module Ast (Ast(..), Env) where
 
 import Type.Integer (IntValue(..))
+import Data.Text as DT
 
-type Env = [(String, Ast)]
-
-data BinOp
-    = Add
-    | Sub
-    | Mul
-    | Div
-    | Mod
-    | Eq
-    | Less
-    deriving (Show, Eq)
+type Env = [(DT.Text, Ast)]
 
 data Ast
     = AInteger IntValue
     | ABool Bool
-    | ASymbol String
-    | AString String
-    | AChar Char
+    | ASymbol DT.Text
     | AVoid
-    | BinaryOp BinOp Ast Ast
     | Condition Ast Ast Ast
-    | Define String Ast
-    | DefineFun String [String] Ast -- (define f [a,b] exec)
+    | Define DT.Text Ast
+    | DefineFun DT.Text [DT.Text] Ast -- (define f [a,b] exec)
     | Call Ast [Ast]
-    | Lambda [String] Ast
-    | Closure [String] Ast Env
+    | Lambda [DT.Text] Ast
+    | Closure [DT.Text] Ast Env
     | AList [Ast]
-    | Import String
+    | Import DT.Text
     deriving Show

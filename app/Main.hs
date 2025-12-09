@@ -16,16 +16,17 @@ import Type.Integer (intValueToInt)
 import Parser.ParserISL (parseLisp, parseLispLine)
 import Eval.Run (processSExpr)
 import Eval.Functions (FuncTable)
+import qualified Data.Text as DT
 
 processSingle :: FuncTable -> Env -> SExpr ->
-    Either String (FuncTable, Env, [Ast])
+    Either DT.Text (FuncTable, Env, [Ast])
 processSingle ftable env s = case processSExpr ftable env s of
     Left err -> Left err
     Right (n_ftable, n_env, Nothing) -> Right (n_ftable, n_env, [])
     Right (n_ftable, n_env, Just a)  -> Right (n_ftable, n_env, [a])
 
 processMany :: FuncTable -> Env -> [SExpr] ->
-    Either String [Ast]
+    Either DT.Text [Ast]
 processMany _ _ [] = Right []
 processMany ftable env (x:xs) = case processSingle ftable env x of
     Left err -> Left err
@@ -38,7 +39,7 @@ printAst :: Ast -> IO ()
 printAst (AInteger i) = putStrLn $ show $ intValueToInt i
 printAst (ABool True) = putStrLn "#t"
 printAst (ABool False) = putStrLn "#f"
-printAst (ASymbol s) = putStrLn s
+printAst (ASymbol s) = putStrLn (DT.unpack s)
 printAst (Closure _ _ _) = putStrLn "#\\<procedure\\>"
 printAst (Lambda _ _) = putStrLn "#<lambda>"
 printAst (AList xs) = putStrLn $ "(" ++ unwords (map showAst xs) ++ ")"
@@ -48,25 +49,25 @@ showAst :: Ast -> String
 showAst (AInteger i) = show $ intValueToInt i
 showAst (ABool True) = "#t"
 showAst (ABool False) = "#f"
-showAst (ASymbol s) = s
+showAst (ASymbol s) = DT.unpack s
 showAst (AList xs) = "(" ++ unwords (map showAst xs) ++ ")"
 showAst (Closure _ _ _) = "#\\<procedure\\>"
 showAst (Lambda _ _) = "#<lambda>"
 showAst other = show other
 
-tryEval :: FuncTable -> Env -> String -> Either String (FuncTable, Env, Maybe Ast)
-tryEval ft env input = case parseLispLine input of
-    Left _      -> Left "*** ERROR: Parse error"
+tryEval :: FuncTable -> Env -> String -> Either DT.Text (FuncTable, Env, Maybe Ast)
+tryEval ft env input = case parseLispLine (DT.pack input) of
+    Left _      -> Left (DT.pack "*** ERROR: Parse error")
     Right sexpr -> processSExpr ft env sexpr
 
 runFromFile :: IO ()
 runFromFile = do
     input <- getContents
-    case parseLisp input of
+    case parseLisp (DT.pack input) of
         Left perr -> hPutStrLn stderr ("Parse error: " ++ show perr) >>
             exitWith (ExitFailure 84)
         Right sexprs -> case processMany [] [] sexprs of
-            Left err     -> hPutStrLn stderr err >> exitWith (ExitFailure 84)
+            Left err     -> hPutStrLn stderr (DT.unpack err) >> exitWith (ExitFailure 84)
             Right values -> mapM_ printAst values
 
 handleEOF :: IOException -> IO String
@@ -75,7 +76,7 @@ handleEOF _ = exitWith ExitSuccess
 processReplLine :: FuncTable -> Env -> String -> IO ()
 processReplLine ft env line = case tryEval ft env line of
     Left err -> do
-        hPutStrLn stderr err
+        hPutStrLn stderr (DT.unpack err) 
         repl ft env
     Right (newFt, newEnv, res) -> do
         mapM_ printAst res
