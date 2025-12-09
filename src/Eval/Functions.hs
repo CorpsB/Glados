@@ -29,10 +29,12 @@ getFunction ((n, ps, b):xs) name
 execFunc :: (FuncTable -> Env -> Ast -> Either DT.Text Ast) -> FuncTable -> Env ->
     ([DT.Text], Ast, [Ast], DT.Text) -> Either DT.Text Ast
 execFunc evalFn ft env (p, body, args, name)
-    | not (sameLength p args) = Left $ DT.pack "*** ERROR: Argument length mismatch for function " <> name
+    | not (sameLength p args) = Left $ DT.pack
+        "*** ERROR: Argument length mismatch for function " <> name
     | otherwise = case evalFn ft (zip p args ++ env) body of
         Right result -> Right result
-        Left err -> Left $ DT.pack "*** ERROR: Function evaluation failed: " <> err
+        Left err -> Left $ DT.pack
+            "*** ERROR: Function evaluation failed: " <> err
 
 callFunction :: (FuncTable -> Env -> Ast -> Either DT.Text Ast) ->
     FuncTable -> Env -> DT.Text -> [Ast] -> Either DT.Text Ast

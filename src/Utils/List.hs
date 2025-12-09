@@ -17,7 +17,8 @@ sameLength _ _ = False
 
 astToList :: Ast -> Either DT.Text [Ast]
 astToList (AList xs) = Right xs
-astToList other = Left $ DT.pack $ "*** ERROR: Expected list, got: " ++ show other
+astToList other = Left $ DT.pack $
+    "*** ERROR: Expected list, got: " ++ show other
 
 listToAst :: [Ast] -> Ast
 listToAst = AList

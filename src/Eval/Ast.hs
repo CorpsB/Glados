@@ -18,13 +18,15 @@ applyClosure :: FuncTable -> Env -> [DT.Text] -> Ast -> [Ast] -> Either DT.Text 
 applyClosure ftable cEnv params body args
     | sameLength params args =
         evalASTEnv ftable (zip params args ++ cEnv) body
-    | otherwise = Left $ DT.pack "*** ERROR: Argument length mismatch in lambda call"
+    | otherwise = Left $ DT.pack
+        "*** ERROR: Argument length mismatch in lambda call"
 
 execUserFunc :: FuncTable -> Env -> DT.Text -> [Ast] -> DT.Text -> Either DT.Text Ast
 execUserFunc ft env op args err = case getFunction ft op of
     Just (p, b) | sameLength p args ->
         evalASTEnv ft (zip p args ++ env) b
-    Just _ -> Left $ DT.pack "*** ERROR: Argument length mismatch for function " <> op
+    Just _ -> Left $ DT.pack
+        "*** ERROR: Argument length mismatch for function " <> op
     Nothing -> Left err
 
 execNamedCall :: FuncTable -> Env -> DT.Text -> [Ast] -> Either DT.Text Ast
@@ -35,7 +37,8 @@ execNamedCall ft env op args = case execBuiltin op args of
         then 
             case lookupEnv env op of
                 Just (Closure p b cEnv) -> applyClosure ft cEnv p b args
-                _ -> execUserFunc ft env op args (DT.pack "*** ERROR: Unknown func: " <> op)
+                _ -> execUserFunc ft env op args (DT.pack
+                    "*** ERROR: Unknown func: " <> op)
         else Left builtinErr
 
 execExprCall :: FuncTable -> Env -> Ast -> [Ast] -> Either DT.Text Ast
@@ -67,7 +70,8 @@ evalAST ftable env (Call func args) = do
     case func of
         ASymbol op -> execNamedCall ftable env op evalArgs
         _ -> execExprCall ftable env func evalArgs
-evalAST _ _ (Import _) = Left $ DT.pack "*** ERROR: 'Import' is not supported in interpreter mode"
+evalAST _ _ (Import _) = Left $ DT.pack
+    "*** ERROR: 'Import' is not supported in interpreter mode"
 
 lookupEnv :: Env -> DT.Text -> Maybe Ast
 lookupEnv [] _ = Nothing
@@ -85,7 +89,8 @@ evalASTEnv _ env (ASymbol s) = case lookupEnv env s of
     Nothing -> Left $ DT.pack "*** ERROR: Undefined symbol: " <> s
 evalASTEnv _ env (Lambda params body) = Right $ Closure params body env
 evalASTEnv _ _ (Closure p b e) = Right $ Closure p b e
-evalASTEnv ftable env (Define name body) = evalAST ftable env (Define name body)
+evalASTEnv ftable env (Define name body) = evalAST ftable env
+    (Define name body)
 evalASTEnv ftable env (DefineFun name params body) =
     evalAST ftable env (DefineFun name params body)
 evalASTEnv ftable env (Call f args) = evalAST ftable env (Call f args)

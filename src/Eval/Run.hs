@@ -17,7 +17,8 @@ import qualified Data.Text as DT
 astFromSexpr :: SExpr -> Either DT.Text Ast
 astFromSexpr sexpr = case sexprToAST sexpr of
     Right a  -> Right a
-    Left err -> Left $ DT.pack $ "Syntax error: could not convert SExpr to AST: " ++ DT.unpack err
+    Left err -> Left $ DT.pack $
+        "Syntax error: could not convert SExpr to AST: " ++ DT.unpack err
 
 processDefine :: FuncTable -> Env -> Ast ->
     Either DT.Text (FuncTable, Env, Maybe Ast)

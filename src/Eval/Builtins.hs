@@ -66,24 +66,41 @@ builtinModulo [AInteger x, AInteger y] =
 builtinModulo args = Left $ DT.pack $ "*** ERROR: 'mod' expects two " ++
     "integers, got: " ++ show args
 
+mathOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+mathOps =
+    [ (DT.pack "+", builtinAddition)
+    , (DT.pack "-", builtinSubtraction)
+    , (DT.pack "*", builtinMultiplication)
+    , (DT.pack "div", builtinDivision)
+    , (DT.pack "mod", builtinModulo)
+    ]
+
+logicOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+logicOps =
+    [ (DT.pack "eq?", builtinEq)
+    , (DT.pack "<", builtinLowerThan)
+    , (DT.pack ">", builtinGreaterThan)
+    ]
+
+listOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+listOps =
+    [ (DT.pack "list", builtinList)
+    , (DT.pack "cons", builtinCons)
+    , (DT.pack "car", builtinCar)
+    , (DT.pack "cdr", builtinCdr)
+    , (DT.pack "list?", builtinIsList)
+    , (DT.pack "append", builtinAppend)
+    , (DT.pack "length", builtinLength)
+    ]
+
+builtinsTable :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+builtinsTable = mathOps ++ logicOps ++ listOps
+
 execBuiltin :: DT.Text -> [Ast] -> Either DT.Text Ast
-execBuiltin op args
-    | op == DT.pack "eq?" = builtinEq args
-    | op == DT.pack "<" = builtinLowerThan args
-    | op == DT.pack ">" = builtinGreaterThan args
-    | op == DT.pack "+" = builtinAddition args
-    | op == DT.pack "-" = builtinSubtraction args
-    | op == DT.pack "*" = builtinMultiplication args
-    | op == DT.pack "div" = builtinDivision args
-    | op == DT.pack "mod" = builtinModulo args
-    | op == DT.pack "list" = builtinList args
-    | op == DT.pack "cons" = builtinCons args
-    | op == DT.pack "car" = builtinCar args
-    | op == DT.pack "cdr" = builtinCdr args
-    | op == DT.pack "list?" = builtinIsList args
-    | op == DT.pack "append" = builtinAppend args
-    | op == DT.pack "length" = builtinLength args
-    | otherwise = Left $ DT.pack $ "*** ERROR: Unknown builtin: " ++ DT.unpack op
+execBuiltin op args = case lookup op builtinsTable of
+    Just func -> func args
+    Nothing   -> Left $ DT.pack $
+        "*** ERROR: Unknown builtin: " ++ DT.unpack op
 
 builtinList :: [Ast] -> Either DT.Text Ast
 builtinList as = Right $ listToAst as
@@ -101,7 +118,8 @@ builtinCar [lst] = do
     case xs of
         (h:_) -> Right h
         [] -> Left $ DT.pack "*** ERROR: 'car' called on empty list"
-builtinCar args = Left $ DT.pack $ "*** ERROR: 'car' expects one arg, got: " ++ show args
+builtinCar args = Left $ DT.pack $
+    "*** ERROR: 'car' expects one arg, got: " ++ show args
 
 builtinCdr :: [Ast] -> Either DT.Text Ast
 builtinCdr [lst] = do
@@ -109,7 +127,8 @@ builtinCdr [lst] = do
     case xs of
         (_:ts) -> Right $ listToAst ts
         [] -> Left $ DT.pack "*** ERROR: 'cdr' called on empty list"
-builtinCdr args = Left $ DT.pack $ "*** ERROR: 'cdr' expects one arg, got: " ++ show args
+builtinCdr args = Left $ DT.pack $
+    "*** ERROR: 'cdr' expects one arg, got: " ++ show args
 
 builtinIsList :: [Ast] -> Either DT.Text Ast
 builtinIsList [x] = case x of

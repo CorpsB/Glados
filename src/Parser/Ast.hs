@@ -14,7 +14,8 @@ import qualified Data.Text as DT
 
 extractParam :: SExpr -> Either DT.Text DT.Text
 extractParam (SSymbol s) = Right s
-extractParam _           = Left $ DT.pack "*** ERROR: Parameters must be symbols"
+extractParam _           = Left $ DT.pack
+    "*** ERROR: Parameters must be symbols"
 
 sexprToAST :: SExpr -> Either DT.Text Ast
 sexprToAST (SInteger n) = Right $ AInteger (fitInteger n)
@@ -28,7 +29,8 @@ sexprToAST (List (SSymbol lmb : List params : body : []))
         b  <- sexprToAST body
         Right $ Lambda ps b
 sexprToAST (List (SSymbol lmb : _))
-    | lmb == DT.pack "lambda" = Left $ DT.pack "*** ERROR: Invalid 'lambda' expression"
+    | lmb == DT.pack "lambda" = Left $ DT.pack
+        "*** ERROR: Invalid 'lambda' expression"
 sexprToAST (List (SSymbol def : SSymbol name : body : []))
     | def == DT.pack "define" = do
         b <- sexprToAST body
@@ -39,7 +41,8 @@ sexprToAST (List (SSymbol def : List (SSymbol name : params) : body : []))
         b  <- sexprToAST body
         Right $ DefineFun name ps b
 sexprToAST (List (SSymbol def : _))
-    | def == DT.pack "define" = Left $ DT.pack "*** ERROR: Invalid 'define' expression"
+    | def == DT.pack "define" = Left $ DT.pack
+        "*** ERROR: Invalid 'define' expression"
 sexprToAST (List (SSymbol i : cond : th : el : []))
     | i == DT.pack "if" = do
         c <- sexprToAST cond
@@ -50,4 +53,5 @@ sexprToAST (List (h:q)) = do
     h2 <- sexprToAST h
     q2 <- mapM sexprToAST q
     Right $ Call h2 q2
-sexprToAST other = Left $ DT.pack $ "*** ERROR: Invalid expressions: " ++ show other
+sexprToAST other = Left $ DT.pack $
+    "*** ERROR: Invalid expressions: " ++ show other
