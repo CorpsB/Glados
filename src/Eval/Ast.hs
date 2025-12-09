@@ -43,6 +43,7 @@ execExprCall ft env func args = evalAST ft env func >>= \res ->
 evalAST :: FuncTable -> Env -> Ast -> Either String Ast
 evalAST _ _ (AInteger n) = Right $ AInteger n
 evalAST _ _ (ABool b) = Right $ ABool b
+evalAST _ _ (AList l) = Right $ AList l
 evalAST _ env (ASymbol s) = case lookupEnv env s of
     Just v -> Right v
     Nothing -> Left $ "*** ERROR: Undefined symbol: " ++ s
@@ -71,6 +72,7 @@ lookupEnv ((k,v):xs) key
 evalASTEnv :: FuncTable -> Env -> Ast -> Either String Ast
 evalASTEnv _ _ (AInteger n) = Right $ AInteger n
 evalASTEnv _ _ (ABool b) = Right $ ABool b
+evalASTEnv _ _ (AList l) = Right $ AList l
 evalASTEnv _ env (ASymbol s) = case lookupEnv env s of
     Just v -> Right v
     Nothing -> Left $ "*** ERROR: Undefined symbol: " ++ s

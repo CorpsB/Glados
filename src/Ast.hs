@@ -21,4 +21,5 @@ data Ast
     | Call Ast [Ast]
     | Lambda [String] Ast
     | Closure [String] Ast Env
+    | AList [Ast]
     deriving Show
