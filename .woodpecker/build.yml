@@ -1,11 +1,11 @@
 kind: pipeline
-name: Functional tests
+name: Build test
 
 depends_on:
-  - build
-  
+  - coding-style
+
 steps:
-  - name: Basic tests
+  - name: Build (On push)
     when:
       - event: push
     image: haskell:9.10.3
@@ -13,13 +13,16 @@ steps:
       - /var/lib/woodpecker/stack:/root/.stack
     commands:
       - make
-      - ./test/Functional/test.sh
+      - make clean
+      - make fclean
+      - make re
 
-steps:
-  - name: Basic tests
+  - name: Build (On PR)
     when:
       - event: pull_request
     image: haskell:9.10.3
     commands:
       - make
-      - ./test/Functional/test.sh
+      - make clean
+      - make fclean
+      - make re

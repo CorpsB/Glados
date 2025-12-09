@@ -3,6 +3,8 @@ name: Coding-style checker
 
 when:
   - event: [push, pull_request]
+depends_on:
+  - mainProtection
 
 steps:
   - name: coding-style checker

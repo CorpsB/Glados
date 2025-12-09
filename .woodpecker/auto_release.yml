@@ -1,6 +1,10 @@
 when:
   - event: push
-    branch: preprod
+    branch: main
+
+depends_on:
+  - coverage
+  - functional_test
 
 clone:
   git:
