@@ -41,7 +41,18 @@ printAst (ABool False) = putStrLn "#f"
 printAst (ASymbol s) = putStrLn s
 printAst (Closure _ _ _) = putStrLn "#\\<procedure\\>"
 printAst (Lambda _ _) = putStrLn "#<lambda>"
+printAst (AList xs) = putStrLn $ "(" ++ unwords (map showAst xs) ++ ")"
 printAst other = putStrLn (show other)
+
+showAst :: Ast -> String
+showAst (AInteger i) = show $ intValueToInt i
+showAst (ABool True) = "#t"
+showAst (ABool False) = "#f"
+showAst (ASymbol s) = s
+showAst (AList xs) = "(" ++ unwords (map showAst xs) ++ ")"
+showAst (Closure _ _ _) = "#\\<procedure\\>"
+showAst (Lambda _ _) = "#<lambda>"
+showAst other = show other
 
 tryEval :: FuncTable -> Env -> String -> Either String (FuncTable, Env, Maybe Ast)
 tryEval ft env input = case parseLispLine input of
