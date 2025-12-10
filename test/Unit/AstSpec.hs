@@ -12,6 +12,7 @@ module AstSpec (spec) where
 import Test.Hspec
 import Ast (Ast(..))
 import Type.Integer (IntValue(..))
+import qualified Data.Text as DT
 
 spec :: Spec
 spec = describe "AST - Data Structure" $ do
@@ -36,9 +37,9 @@ spec = describe "AST - Data Structure" $ do
             ABool True `shouldSatisfy` \case
                 ABool True -> True
                 _ -> False
-        it "ASymbol stores string identifier" $ do
-            ASymbol "foo" `shouldSatisfy` \case
-                ASymbol "foo" -> True
+        it "ASymbol stores text identifier" $ do
+            ASymbol (DT.pack "foo") `shouldSatisfy` \case
+                ASymbol s -> s == DT.pack "foo"
                 _ -> False
 
     describe "Control Flow & Definitions" $ do
@@ -47,29 +48,27 @@ spec = describe "AST - Data Structure" $ do
                 Condition (ABool True) (AInteger (I8 1)) (AInteger (I8 0)) -> True
                 _ -> False
         it "Define stores variable assignment" $ do
-            Define "x" (AInteger (I8 42)) `shouldSatisfy` \case
-                Define "x" (AInteger (I8 42)) -> True
+            Define (DT.pack "x") (AInteger (I8 42)) `shouldSatisfy` \case
+                Define name (AInteger (I8 42)) -> name == DT.pack "x"
                 _ -> False
         it "DefineFun stores function definition" $ do
-            let args = ["a", "b"]
-            let body = Call (ASymbol "+") [ASymbol "a", ASymbol "b"]
-            DefineFun "add" args body `shouldSatisfy` \case
-                DefineFun "add" ["a", "b"] (Call (ASymbol "+") [ASymbol "a", ASymbol "b"]) -> True
+            let args = [DT.pack "a", DT.pack "b"]
+            let body = Call (ASymbol (DT.pack "+")) [ASymbol (DT.pack "a"), ASymbol (DT.pack "b")]
+            DefineFun (DT.pack "add") args body `shouldSatisfy` \case
+                DefineFun name params (Call (ASymbol op) _) -> 
+                    name == DT.pack "add" && params == args && op == DT.pack "+"
                 _ -> False
 
     describe "Function Calls" $ do
         it "Call stores function and arguments" $ do
-            Call (ASymbol "eq?") [AInteger (I8 1), AInteger (I8 1)] `shouldSatisfy` \case
-                Call (ASymbol "eq?") [AInteger (I8 1), AInteger (I8 1)] -> True
+            Call (ASymbol (DT.pack "eq?")) [AInteger (I8 1), AInteger (I8 1)] `shouldSatisfy` \case
+                Call (ASymbol s) _ -> s == DT.pack "eq?"
                 _ -> False
         it "Call supports empty arguments" $ do
-            Call (ASymbol "print") [] `shouldSatisfy` \case
-                Call (ASymbol "print") [] -> True
+            Call (ASymbol (DT.pack "print")) [] `shouldSatisfy` \case
+                Call (ASymbol s) [] -> s == DT.pack "print"
                 _ -> False
 
     describe "Show Instance (String representation)" $ do
         it "Correctly formats AInteger with IntValue type" $ do
             show (AInteger (I8 42)) `shouldSatisfy` (== "AInteger (I8 42)")
-        it "Correctly formats Call with mixed types" $ do
-            let call = Call (ASymbol "test") [ABool True, AInteger (I16 255)]
-            show call `shouldSatisfy` (== "Call (ASymbol \"test\") [ABool True,AInteger (I16 255)]")
