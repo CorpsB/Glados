@@ -1,20 +1,24 @@
 kind: pipeline
 name: Push Unitary Tests (On push)
 
-when:
-  - event: push
+depends_on:
+  - build
 
 steps:
-  - name: make
+  - name: Unit test (On push)
+    when:
+      - event: push
     image: haskell:9.10.3
     volumes:
       - /var/lib/woodpecker/stack:/root/.stack
     commands:
       - make test
+      - ./tools/coverage_test.sh
 
-  - name: coverage-check
+  - name: Unit test (On PR)
+    when:
+      - event: pull_request
     image: haskell:9.10.3
-    volumes:
-      - /var/lib/woodpecker/stack:/root/.stack
     commands:
+      - make test
       - ./tools/coverage_test.sh
