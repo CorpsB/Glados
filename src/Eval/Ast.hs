@@ -60,7 +60,8 @@ evalAST _ _ (Closure p b e) = Right $ Closure p b e
 evalAST ftable env (Define name body) = do
     b2 <- evalAST ftable env body
     Right $ Define name b2
-evalAST _ _ (DefineFun name params body) = Right $ DefineFun name params body
+evalAST _ _ (DefineFun name params ret body) =
+    Right $ DefineFun name params ret body
 evalAST ftable env (Condition cond th el) = do
     c <- evalAST ftable env cond
     chosen <- execCondition c th el
@@ -91,8 +92,8 @@ evalASTEnv _ env (Lambda params body) = Right $ Closure params body env
 evalASTEnv _ _ (Closure p b e) = Right $ Closure p b e
 evalASTEnv ftable env (Define name body) = evalAST ftable env
     (Define name body)
-evalASTEnv ftable env (DefineFun name params body) =
-    evalAST ftable env (DefineFun name params body)
+evalASTEnv ftable env (DefineFun name params ret body) = 
+    evalAST ftable env (DefineFun name params ret body)
 evalASTEnv ftable env (Call f args) = evalAST ftable env (Call f args)
 evalASTEnv ftable env (Condition c t e) = evalAST ftable env (Condition c t e)
 evalASTEnv ftable env (Import i) = evalAST ftable env (Import i)

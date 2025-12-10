@@ -39,7 +39,8 @@ sexprToAST (List (SSymbol def : List (SSymbol name : params) : body : []))
     | def == DT.pack "define" = do
         ps <- mapM extractParam params
         b  <- sexprToAST body
-        Right $ DefineFun name ps b
+        let argsTyped = map (\p -> (p, DT.pack "Any")) ps
+        Right $ DefineFun name argsTyped (DT.pack "Any") b
 sexprToAST (List (SSymbol def : _))
     | def == DT.pack "define" = Left $ DT.pack
         "*** ERROR: Invalid 'define' expression"

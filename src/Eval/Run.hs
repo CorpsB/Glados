@@ -29,8 +29,9 @@ processDefine ftable env (Define name body) = do
             let recClosure = Closure params b ((name, recClosure) : cenv) in
             Right (ftable, (name, recClosure) : env, Nothing)
         _ -> Right (ftable, (name, val) : env, Nothing)
-processDefine ftable env (DefineFun name params body) =
-    case registerFunction ftable name params body of
+processDefine ftable env (DefineFun name argsWithType _ body) =
+    let paramNames = map fst argsWithType 
+    in case registerFunction ftable name paramNames body of
         Left err        -> Left err
         Right up_ftable -> Right (up_ftable, env, Nothing)
 processDefine _ _ _ = Left $ DT.pack "processDefine called with non-define AST"
