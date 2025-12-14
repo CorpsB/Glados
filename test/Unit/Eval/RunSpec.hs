@@ -49,7 +49,7 @@ spec = describe "Eval.Run - Comprehensive Test Suite (target: 100% coverage)" $ 
     describe "processDefine (non-closure branch) - env propagation & ftable preserved" $ do
         it "processDefine: define simple integer places (name, AInteger) at head of returned env and preserves rest of env" $ do
             let initialEnv = [(DT.pack "pre", AInteger (I8 99))]
-            let ast = Define (DT.pack "x") (AInteger (I8 10))
+            let ast = Define (DT.pack "x") (DT.pack "int") (AInteger (I8 10))
             processDefine ([] :: FuncTable) initialEnv ast `shouldSatisfy` \case
                 Right (ft', env', Nothing) ->
                     null ft' &&
@@ -63,7 +63,7 @@ spec = describe "Eval.Run - Comprehensive Test Suite (target: 100% coverage)" $ 
         it "processDefine: uses provided FuncTable during body evaluation (ft argument to evalAST) - observable via body call" $ do
             let ftWithGetTen = [(DT.pack "getTen", [], AInteger (I8 10))]
             let body = Call (ASymbol (DT.pack "getTen")) []
-            let ast = Define (DT.pack "res") body
+            let ast = Define (DT.pack "res") (DT.pack "undefined") body
             processDefine ftWithGetTen [] ast `shouldSatisfy` \case
                 Right (ft', env', Nothing) ->
                     isJust (find (\(n,_,_) -> n == DT.pack "getTen") ft')
@@ -73,20 +73,20 @@ spec = describe "Eval.Run - Comprehensive Test Suite (target: 100% coverage)" $ 
     describe "processDefine (closure branch) - recursive closure formation & env/ftable retention" $ do
         it "processDefine: when body is Lambda, create recursive closure containing self in its cenv" $ do
             let body = Lambda [DT.pack "a"] (ASymbol (DT.pack "a"))
-            let ast = Define (DT.pack "f") body
+            let ast = Define (DT.pack "add") (DT.pack "Any") body
             processDefine ([] :: FuncTable) [] ast `shouldSatisfy` \case
                 Right (ft', env', Nothing) ->
                     null ft' &&
-                    case find (\(k,_) -> k == DT.pack "f") env' of
+                    case find (\(k,_) -> k == DT.pack "add") env' of
                         Just (_, Closure params b cenv) ->
                             params == [DT.pack "a"]
                             && case b of ASymbol s -> s == DT.pack "a"; _ -> False
-                            && isJust (find (\(k', _) -> k' == DT.pack "f") cenv)
+                            && isJust (find (\(k', _) -> k' == DT.pack "add") cenv)
                         _ -> False
                 _ -> False
         it "processDefine: closure stored at head of env and ftable from input preserved" $ do
             let body = Lambda [] (AInteger (I8 1))
-            let ast = Define (DT.pack "g") body
+            let ast = Define (DT.pack "g") (DT.pack "Any") body
             let initialFT = [(DT.pack "some", [], AInteger (I8 0))]
             processDefine initialFT [] ast `shouldSatisfy` \case
                 Right (ft', envReturned, Nothing) ->
@@ -105,7 +105,8 @@ spec = describe "Eval.Run - Comprehensive Test Suite (target: 100% coverage)" $ 
                         _ -> False
                 _ -> False
         it "processDefine: the recursive closure's cenv contains a closure which itself contains 'g' in its cenv (deep recursive witness)" $ do
-            let ast = Define (DT.pack "g") (Lambda [] (AInteger (I8 1)))
+            let body = Lambda [] (AInteger (I8 1))
+            let ast = Define (DT.pack "g") (DT.pack "Any") body
             processDefine ([] :: FuncTable) [] ast `shouldSatisfy` \case
                 Right (_ft, envOut, Nothing) ->
                     case find (\(k,_) -> k == DT.pack "g") envOut of
@@ -121,18 +122,21 @@ spec = describe "Eval.Run - Comprehensive Test Suite (target: 100% coverage)" $ 
         it "DefineFun success: returns updated FuncTable with the new function entry and preserves env argument" $ do
             let envBefore = [(DT.pack "x", AInteger (I8 11))]
             let body = Call (ASymbol (DT.pack "+")) [ASymbol (DT.pack "a"), ASymbol (DT.pack "b")]
-            let ast = DefineFun (DT.pack "add") [DT.pack "a", DT.pack "b"] body
+            let args = [(DT.pack "a", DT.pack "Any"), (DT.pack "b", DT.pack "Any")]
+            let ret  = DT.pack "Any"
+            let ast = DefineFun (DT.pack "add") args ret body
             processDefine ([] :: FuncTable) envBefore ast `shouldSatisfy` \case
                 Right (ft', env', Nothing) ->
                     case env' of
-                        [(k, AInteger (I8 11))] -> k == DT.pack "x" && case ft' of
-                            (n, ps, bdy) : _ -> n == DT.pack "add" && ps == [DT.pack "a",DT.pack "b"] && case bdy of Call (ASymbol s) _ -> s == DT.pack "+"; _ -> False
-                            _ -> False
+                        [(k, AInteger (I8 11))] -> k == DT.pack "x" && 
+                            case ft' of
+                                (n, ps, bdy) : _ -> n == DT.pack "add" && ps == [DT.pack "a",DT.pack "b"] && case bdy of Call (ASymbol s) _ -> s == DT.pack "+"; _ -> False
+                                _ -> False
                         _ -> False
                 _ -> False
         it "DefineFun failure if function already exists -> Left error with exact message" $ do
             let existingFT = [(DT.pack "dup", [DT.pack "x"], AInteger (I8 0))]
-            let ast = DefineFun (DT.pack "dup") [DT.pack "x"] (AInteger (I8 1))
+            let ast = DefineFun (DT.pack "dup") [(DT.pack "x", DT.pack "Any")] (DT.pack "Any") (AInteger (I8 1))
             processDefine existingFT [] ast `shouldSatisfy` \case
                 Left err -> err == DT.pack "*** ERROR: Function already exists: dup"
                 _ -> False

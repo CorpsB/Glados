@@ -34,11 +34,11 @@ extractParam _           = Left $ DT.pack
 --
 -- Handles recursively:
 -- * Integers and Symbols
--- * Booleans (@#t@, @#f@)
--- * Lambdas (@lambda (args) body@)
--- * Definitions (@define name val@ or @define (func args) body@)
--- * Conditions (@if cond then else@)
--- * Function calls (@(func arg1 arg2)@)
+-- * Booleans (#t, #f)
+-- * Lambdas (lambda (args) body)
+-- * Definitions (define name val or define (func args) body)
+-- * Conditions (if cond then else)
+-- * Function calls ((func arg1 arg2))
 sexprToAST :: SExpr -> Either DT.Text Ast
 sexprToAST (SInteger n) = Right $ AInteger (fitInteger n)
 sexprToAST (SSymbol s)

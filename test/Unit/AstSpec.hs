@@ -48,14 +48,14 @@ spec = describe "AST - Data Structure" $ do
                 Condition (ABool True) (AInteger (I8 1)) (AInteger (I8 0)) -> True
                 _ -> False
         it "Define stores variable assignment" $ do
-            Define (DT.pack "x") (AInteger (I8 42)) `shouldSatisfy` \case
-                Define name (AInteger (I8 42)) -> name == DT.pack "x"
+            Define (DT.pack "x") (DT.pack "int") (AInteger (I8 42)) `shouldSatisfy` \case
+                Define name _type (AInteger (I8 42)) -> name == DT.pack "x"
                 _ -> False
         it "DefineFun stores function definition" $ do
-            let args = [DT.pack "a", DT.pack "b"]
+            let args = [(DT.pack "a", DT.pack "int"), (DT.pack "b", DT.pack "int")]
             let body = Call (ASymbol (DT.pack "+")) [ASymbol (DT.pack "a"), ASymbol (DT.pack "b")]
-            DefineFun (DT.pack "add") args body `shouldSatisfy` \case
-                DefineFun name params (Call (ASymbol op) _) -> 
+            DefineFun (DT.pack "add") args (DT.pack "int") body `shouldSatisfy` \case
+                DefineFun name params _ret (Call (ASymbol op) _) -> 
                     name == DT.pack "add" && params == args && op == DT.pack "+"
                 _ -> False
 

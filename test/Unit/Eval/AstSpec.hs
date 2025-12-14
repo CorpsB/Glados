@@ -14,6 +14,10 @@ import Ast (Ast(..))
 import Type.Integer (IntValue(..))
 import Eval.Ast (evalAST, evalASTEnv)
 import qualified Data.Text as DT
+import Data.List (isInfixOf)
+
+p :: String -> DT.Text
+p = DT.pack
 
 spec :: Spec
 spec = describe "Eval - AST Comprehensive Test Suite (100% Coverage)" $ do
@@ -53,6 +57,10 @@ spec = describe "Eval - AST Comprehensive Test Suite (100% Coverage)" $ do
             evalAST [] [] (ASymbol (DT.pack "unknown")) `shouldSatisfy` \case
                 Left err -> err == DT.pack "*** ERROR: Undefined symbol: unknown"
                 _ -> False
+        it "evalAST: AList returns itself" $ do
+            evalAST [] [] (AList []) `shouldSatisfy` \case Right (AList []) -> True; _ -> False
+        it "evalAST: AVoid returns itself" $ do
+            evalAST [] [] AVoid `shouldSatisfy` \case Right AVoid -> True; _ -> False
 
     describe "1b. Atomic Values via evalASTEnv (Direct Coverage)" $ do
         it "evalASTEnv: Handles Integer directly" $ do
@@ -68,18 +76,18 @@ spec = describe "Eval - AST Comprehensive Test Suite (100% Coverage)" $ do
             evalASTEnv [] [] (ASymbol (DT.pack "z")) `shouldSatisfy` \case
                 Left _ -> True; _ -> False
         it "DefineFun: Returns structure as is (no evaluation)" $ do
-            evalAST [] [] (DefineFun (DT.pack "f") [DT.pack "args"] (AInteger (I8 0))) `shouldSatisfy` \case
-                Right (DefineFun name _ (AInteger (I8 0))) -> name == DT.pack "f"
+            evalAST [] [] (DefineFun (DT.pack "f") [(DT.pack "args", DT.pack "Any")] (DT.pack "Void") (AInteger (I8 0))) `shouldSatisfy` \case
+                Right (DefineFun name _ _ (AInteger (I8 0))) -> name == DT.pack "f"
                 _ -> False
 
     describe "2. Definitions and Lambda Structures" $ do
         it "Define: Evaluates body and returns Define structure" $ do
-            evalAST [] [] (Define (DT.pack "x") (Call (ASymbol (DT.pack "+")) [AInteger (I8 1), AInteger (I8 1)])) `shouldSatisfy` \case
-                Right (Define name (AInteger (I8 2))) -> name == DT.pack "x"
+            evalAST [] [] (Define (DT.pack "x") (DT.pack "int") (Call (ASymbol (DT.pack "+")) [AInteger (I8 1), AInteger (I8 1)])) `shouldSatisfy` \case
+                Right (Define name _ (AInteger (I8 2))) -> name == DT.pack "x"
                 _ -> False
         it "DefineFun: Returns structure as is (no evaluation)" $ do
-            evalAST [] [] (DefineFun (DT.pack "f") [DT.pack "args"] (AInteger (I8 0))) `shouldSatisfy` \case
-                Right (DefineFun name _ (AInteger (I8 0))) -> name == DT.pack "f"
+            evalAST [] [] (DefineFun (DT.pack "f") [(DT.pack "args", DT.pack "Any")] (DT.pack "Void") (AInteger (I8 0))) `shouldSatisfy` \case
+                Right (DefineFun name _ _ (AInteger (I8 0))) -> name == DT.pack "f"
                 _ -> False
         it "Lambda: Evaluates to Closure capturing CURRENT environment (params/body/env checked)" $ do
             let localEnv = [(DT.pack "local", AInteger (I8 1))]
@@ -91,10 +99,21 @@ spec = describe "Eval - AST Comprehensive Test Suite (100% Coverage)" $ do
                 _ -> False
         it "Closure: Evaluates to itself (p, b and e components)" $ do
             evalAST [] [] closureSpy `shouldSatisfy` \case
-                Right (Closure p b e) ->
-                    p == [DT.pack "a"]
+                Right (Closure params b e) ->
+                    params == [DT.pack "a"]
                     && case b of Call (ASymbol s) [] -> s == DT.pack "getHundred"; _ -> False
                     && case e of [(k, AInteger (I8 42))] -> k == DT.pack "captured"; _ -> False
+                _ -> False
+
+        it "Define: Preserves typeVar" $ do
+            evalAST [] [] (Define (p "x") (p "int") (AInteger (I8 1))) `shouldSatisfy` \case
+                Right (Define _ t _) -> t == p "int"
+                _ -> False
+        
+        it "DefineFun: Preserves ret type" $ do
+            let args = [(p "a", p "int")]
+            evalAST [] [] (DefineFun (p "f") args (p "void") (AInteger (I8 0))) `shouldSatisfy` \case
+                Right (DefineFun _ _ r _) -> r == p "void"
                 _ -> False
 
     describe "3. Conditions Logic" $ do
@@ -187,8 +206,8 @@ spec = describe "Eval - AST Comprehensive Test Suite (100% Coverage)" $ do
 
     describe "6. Deep Data Propagation (Recursion & State)" $ do
         it "Define propagates FT/Env to body evaluation (evalASTEnv -> evalAST uses ftable/env)" $ do
-            evalAST ftSpy envSpy (Define (DT.pack "x") (Call (ASymbol (DT.pack "getEnvVar")) [])) `shouldSatisfy` \case
-                Right (Define name (AInteger (I16 999))) -> name == DT.pack "x"
+            evalAST ftSpy envSpy (Define (DT.pack "x") (DT.pack "Any") (Call (ASymbol (DT.pack "getEnvVar")) [])) `shouldSatisfy` \case
+                Right (Define name _ (AInteger (I16 999))) -> name == DT.pack "x"
                 _ -> False
         it "Condition propagates FT/Env to sub-expressions" $ do
             let c = Call (ASymbol (DT.pack "getTrue")) []
@@ -203,14 +222,14 @@ spec = describe "Eval - AST Comprehensive Test Suite (100% Coverage)" $ do
 
     describe "7. evalASTEnv Delegation Logic (explicit argument coverage)" $ do
         it "Delegates Define (evalASTEnv passes ftable/env to evalAST for body)" $ do
-            evalASTEnv ftSpy envSpy (Define (DT.pack "x") (Call (ASymbol (DT.pack "getEnvVar")) [])) `shouldSatisfy` \case
-                Right (Define name (AInteger (I16 999))) -> name == DT.pack "x"
+            evalASTEnv ftSpy envSpy (Define (DT.pack "x") (DT.pack "Any") (Call (ASymbol (DT.pack "getEnvVar")) [])) `shouldSatisfy` \case
+                Right (Define name _ (AInteger (I16 999))) -> name == DT.pack "x"
                 _ -> False
         it "Delegates DefineFun and preserves params & body arguments" $ do
-            let params = [DT.pack "a",DT.pack "b"]
+            let params = [(DT.pack "a", DT.pack "Any"), (DT.pack "b", DT.pack "Any")]
             let body = Call (ASymbol (DT.pack "getHundred")) []
-            evalASTEnv ftSpy envSpy (DefineFun (DT.pack "f") params body) `shouldSatisfy` \case
-                Right (DefineFun name ps _) ->
+            evalASTEnv ftSpy envSpy (DefineFun (DT.pack "f") params (DT.pack "Void") body) `shouldSatisfy` \case
+                Right (DefineFun name ps _ _) ->
                     name == DT.pack "f" && ps == params
                 _ -> False
             evalASTEnv ftSpy envSpy body `shouldSatisfy` \case
@@ -232,8 +251,31 @@ spec = describe "Eval - AST Comprehensive Test Suite (100% Coverage)" $ do
         it "evalASTEnv: closure identity (p, b and e) for an existing Closure" $ do
             let cl = Closure [DT.pack "p"] (ASymbol (DT.pack "bodySym")) [(DT.pack "p", AInteger (I8 5))]
             evalASTEnv [] [] cl `shouldSatisfy` \case
-                Right (Closure p b e) ->
-                    p == [DT.pack "p"]
+                Right (Closure params b e) ->
+                    params == [DT.pack "p"]
                     && case b of ASymbol s -> s == DT.pack "bodySym"; _ -> False
                     && case e of [(k, AInteger (I8 5))] -> k == DT.pack "p"; _ -> False
                 _ -> False
+    
+    describe "Missing Coverage Targets" $ do
+
+        it "evalAST: Import returns specific error" $ do
+            evalAST [] [] (Import (p "lib")) `shouldSatisfy` \case
+                Left err -> "Import' is not supported" `isInfixOf` DT.unpack err
+                _ -> False
+
+        it "evalASTEnv: Import returns specific error (via delegation)" $ do
+            evalASTEnv [] [] (Import (p "lib")) `shouldSatisfy` \case
+                Left err -> "Import' is not supported" `isInfixOf` DT.unpack err
+                _ -> False
+
+        it "lookupEnv: Finds variable deeper in env (recursion check)" $ do
+            let deepEnv = [(p "a", AInteger (I8 1)), (p "b", AInteger (I8 2)), (p "target", AInteger (I8 99))]
+            evalAST [] deepEnv (ASymbol (p "target")) `shouldSatisfy` \case
+                Right (AInteger (I8 99)) -> True
+                _ -> False
+        
+        it "evalASTEnv: AList returns itself" $ do
+            evalASTEnv [] [] (AList []) `shouldSatisfy` \case Right (AList []) -> True; _ -> False
+        it "evalASTEnv: AVoid returns itself" $ do
+            evalASTEnv [] [] AVoid `shouldSatisfy` \case Right AVoid -> True; _ -> False
