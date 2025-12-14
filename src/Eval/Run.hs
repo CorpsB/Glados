@@ -22,7 +22,7 @@ astFromSexpr sexpr = case sexprToAST sexpr of
 
 processDefine :: FuncTable -> Env -> Ast ->
     Either DT.Text (FuncTable, Env, Maybe Ast)
-processDefine ftable env (Define name body) = do
+processDefine ftable env (Define name _type body) = do
     val <- evalAST ftable env body
     case val of
         Closure params b cenv ->

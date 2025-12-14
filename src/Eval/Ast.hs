@@ -57,9 +57,9 @@ evalAST _ env (ASymbol s) = case lookupEnv env s of
     Nothing -> Left $ DT.pack "*** ERROR: Undefined symbol: " <> s
 evalAST _ env (Lambda params body) = Right $ Closure params body env
 evalAST _ _ (Closure p b e) = Right $ Closure p b e
-evalAST ftable env (Define name body) = do
+evalAST ftable env (Define name typeVar body) = do
     b2 <- evalAST ftable env body
-    Right $ Define name b2
+    Right $ Define name typeVar b2
 evalAST _ _ (DefineFun name params ret body) =
     Right $ DefineFun name params ret body
 evalAST ftable env (Condition cond th el) = do
@@ -90,8 +90,8 @@ evalASTEnv _ env (ASymbol s) = case lookupEnv env s of
     Nothing -> Left $ DT.pack "*** ERROR: Undefined symbol: " <> s
 evalASTEnv _ env (Lambda params body) = Right $ Closure params body env
 evalASTEnv _ _ (Closure p b e) = Right $ Closure p b e
-evalASTEnv ftable env (Define name body) = evalAST ftable env
-    (Define name body)
+evalASTEnv ftable env (Define name typeVar body) = evalAST ftable env
+    (Define name typeVar body)
 evalASTEnv ftable env (DefineFun name params ret body) = 
     evalAST ftable env (DefineFun name params ret body)
 evalASTEnv ftable env (Call f args) = evalAST ftable env (Call f args)

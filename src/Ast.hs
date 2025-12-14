@@ -18,7 +18,7 @@ data Ast
     | ASymbol DT.Text
     | AVoid
     | Condition Ast Ast Ast
-    | Define DT.Text Ast
+    | Define DT.Text DT.Text Ast
     | DefineFun DT.Text [(DT.Text, DT.Text)] DT.Text Ast-- (define f [a,b] exec)
     | Call Ast [Ast]
     | Lambda [DT.Text] Ast
