@@ -79,6 +79,9 @@ test-suite glados-unit
       AstSpec
       Parser.AstSpec
       Parser.ParserISLTest
+      Parser.StatementSpec
+      Parser.LexerSpec
+      Parser.ExpressionSpec
       Type.IntegerSpec
       Utils.ListSpec
       LispTest
