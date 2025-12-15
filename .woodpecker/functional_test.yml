@@ -3,7 +3,13 @@ name: Functional tests
 
 depends_on:
   - build
-  
+
+when:
+  event: [push, pull_request]
+  branch:
+    exclude:
+      - gh-pages
+
 steps:
   - name: Basic tests
     when:

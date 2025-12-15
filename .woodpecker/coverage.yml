@@ -4,6 +4,12 @@ name: Push Unitary Tests (On push)
 depends_on:
   - build
 
+when:
+  event: [push, pull_request]
+  branch:
+    exclude:
+      - gh-pages
+
 steps:
   - name: Unit test (On push)
     when:
