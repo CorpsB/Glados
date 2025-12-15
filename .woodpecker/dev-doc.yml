@@ -36,9 +36,18 @@ steps:
     commands:
       - set -eu
       - rm -rf out
-      - git clone --depth 1 --branch gh-pages "https://x-access-token:$${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" out \
-        || (git clone --depth 1 "https://x-access-token:$${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" out && cd out && git checkout --orphan gh-pages)
+      - |
+        if ! git clone --depth 1 --branch gh-pages \
+            "https://x-access-token:$${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" out
+        then
+          git clone --depth 1 \
+            "https://x-access-token:$${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" out
+          cd out
+          git checkout --orphan gh-pages
+        fi
       - cd out
+      - git config user.name "Woodpecker CI"
+      - git config user.email "ci@glados"
       - rm -rf ./*
       - cp -r ../site/* ./
       - touch .nojekyll
