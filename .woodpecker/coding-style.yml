@@ -9,7 +9,6 @@ when:
   branch:
     exclude:
       - gh-pages
-      - Feat/Documentation
 
 steps:
   - name: coding-style checker
