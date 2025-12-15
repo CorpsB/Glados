@@ -1,6 +1,6 @@
 when:
-  - event: push
-    branch: Feat/Documentation
+  event: push
+  branch: Feat/Documentation
 
 depends_on:
   - coverage
@@ -16,10 +16,13 @@ steps:
   - name: build_docs
     image: haskell:9.6
     commands:
+      - set -eu
+      - cabal update
       - make doc
       - rm -rf site
       - mkdir -p site
-      - DOC_DIR=./dist-newstyle/build/x86_64-linux/*/glados-0.1.0.0/doc/html/glados/Utils-List.html
+      - DOC_DIR="$(find dist-newstyle -type d -path "*/doc/html/glados" | head -n 1)"
+      - test -n "$DOC_DIR"
       - cp -r "$DOC_DIR"/* site/
       - test -f site/index.html
 
@@ -40,5 +43,5 @@ steps:
       - cp -r ../site/* ./
       - touch .nojekyll
       - git add -A
-      - git commit -m "📝 publish ${CI_COMMIT_SHA}" || exit 0
+      - git commit -m "publish ${CI_COMMIT_SHA}" || exit 0
       - git push origin gh-pages
