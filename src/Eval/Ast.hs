@@ -5,7 +5,6 @@
 -- AST
 -}
 
-
 {-|
 Module      : Eval.Ast
 Description : AST evaluator for the Glados interpreter.
