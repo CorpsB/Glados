@@ -5,7 +5,7 @@ depends_on:
   - mainProtection
 
 when:
-  - event: [push, pull_request]
+  event: [push, pull_request]
   branch:
     exclude:
       - gh-pages
