@@ -10,6 +10,9 @@ import qualified Eval.RunSpec
 import qualified Compiler.EncoderSpec
 import qualified AstSpec
 import qualified Parser.ParserISLTest
+import qualified Parser.StatementSpec
+import qualified Parser.LexerSpec
+import qualified Parser.ExpressionSpec
 import qualified Parser.AstSpec
 import qualified LispTest
 import qualified Type.IntegerSpec
@@ -28,6 +31,9 @@ spec = do
   Compiler.EncoderSpec.spec
   AstSpec.spec
   Parser.ParserISLTest.spec
+  Parser.StatementSpec.spec
+  Parser.LexerSpec.spec
+  Parser.ExpressionSpec.spec
   Parser.AstSpec.spec
   Type.IntegerSpec.spec
   Utils.ListSpec.spec
