@@ -1,6 +1,6 @@
 when:
   event: push
-  branch: Feat/Documentation
+  branch: preprod
 
 depends_on:
   - coverage
