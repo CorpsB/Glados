@@ -26,6 +26,7 @@ library
       Eval.Builtins
       Eval.Conditions
       Eval.Functions
+      Compiler.Encoder
       Type.Integer
       Parser.Ast
       Utils.List
@@ -34,6 +35,8 @@ library
       base >= 4.7 && < 5
     , megaparsec
     , parser-combinators
+    , bytestring
+    , text
   default-language:    Haskell2010
   ghc-options:
     -Wall
@@ -71,6 +74,7 @@ test-suite glados-unit
       Eval.FunctionsSpec
       Eval.AstSpec
       Eval.RunSpec
+      Compiler.EncoderSpec
       AstSpec
       Parser.AstSpec
       Parser.ParserISLTest
@@ -84,6 +88,8 @@ test-suite glados-unit
     , silently
     , megaparsec
     , parser-combinators
+    , bytestring
+    , text
   ghc-options:
     -Wall
     -Wcompat

@@ -7,6 +7,7 @@ import qualified Eval.ConditionsSpec
 import qualified Eval.FunctionsSpec
 import qualified Eval.AstSpec
 import qualified Eval.RunSpec
+import qualified Compiler.EncoderSpec
 import qualified AstSpec
 import qualified Parser.ParserISLTest
 import qualified Parser.AstSpec
@@ -24,6 +25,7 @@ spec = do
   Eval.FunctionsSpec.spec
   Eval.RunSpec.spec
   Eval.AstSpec.spec
+  Compiler.EncoderSpec.spec
   AstSpec.spec
   Parser.ParserISLTest.spec
   Parser.AstSpec.spec
