@@ -7,12 +7,14 @@
 
 module Lisp (SExpr(..), getSymbol, getInteger, getList) where
 
+import qualified Data.Text as DT
+
 data SExpr = SInteger Int
-    | SSymbol String
+    | SSymbol DT.Text
     | List [SExpr]
     deriving Show
 
-getSymbol :: SExpr -> Maybe String
+getSymbol :: SExpr -> Maybe DT.Text
 getSymbol (SSymbol s) = Just s
 getSymbol _ = Nothing
 

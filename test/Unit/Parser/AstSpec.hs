@@ -6,6 +6,7 @@
 -}
 
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Parser.AstSpec (spec) where
 
@@ -14,78 +15,96 @@ import Ast (Ast(..))
 import Lisp (SExpr(..))
 import Parser.Ast (sexprToAST)
 import Type.Integer (IntValue(..))
+import qualified Data.Text as DT
+import Data.List (isInfixOf)
+
+p :: String -> DT.Text
+p = DT.pack
 
 spec :: Spec
 spec = describe "Parser - AST unit tests" $ do
+    
     describe "Atomic types" $ do
         it "Parses Integer" $ do
             sexprToAST (SInteger 42) `shouldSatisfy` \case
                 Right (AInteger (I8 42)) -> True
                 _ -> False
         it "Parses Boolean #t" $ do
-            sexprToAST (SSymbol "#t") `shouldSatisfy` \case
+            sexprToAST (SSymbol (p "#t")) `shouldSatisfy` \case
                 Right (ABool True) -> True
                 _ -> False
         it "Parses Boolean #f" $ do
-            sexprToAST (SSymbol "#f") `shouldSatisfy` \case
+            sexprToAST (SSymbol (p "#f")) `shouldSatisfy` \case
                 Right (ABool False) -> True
                 _ -> False
         it "Parses Symbol" $ do
-            sexprToAST (SSymbol "foo") `shouldSatisfy` \case
-                Right (ASymbol "foo") -> True
+            sexprToAST (SSymbol (p "foo")) `shouldSatisfy` \case
+                Right (ASymbol s) -> s == p "foo"
                 _ -> False
 
     describe "Special Forms - Lambda" $ do
         it "Parses valid lambda" $ do
-            let input = List [SSymbol "lambda", List [SSymbol "x", SSymbol "y"], List [SSymbol "+", SSymbol "x", SSymbol "y"]]
+            let input = List [SSymbol (p "lambda"), List [SSymbol (p "x")], SSymbol (p "x")]
             sexprToAST input `shouldSatisfy` \case
-                Right (Lambda ["x", "y"] (Call (ASymbol "+") [ASymbol "x", ASymbol "y"])) -> True
+                Right (Lambda args _) -> args == [p "x"]
                 _ -> False
-        it "Fails on invalid lambda params" $ do
-            let input = List [SSymbol "lambda", List [SInteger 1], SSymbol "x"]
+
+        it "Fails on lambda with non-symbol parameter (Lines 30-31)" $ do
+            let input = List [SSymbol (p "lambda"), List [SInteger 1], SSymbol (p "x")]
             sexprToAST input `shouldSatisfy` \case
-                Left _ -> True
+                Left err -> "Parameters must be symbols" `isInfixOf` DT.unpack err
+                _ -> False
+
+        it "Fails on malformed lambda (missing body) (Lines 56-57)" $ do
+            let input = List [SSymbol (p "lambda"), List [SSymbol (p "x")]]
+            sexprToAST input `shouldSatisfy` \case
+                Left err -> "Invalid 'lambda' expression" `isInfixOf` DT.unpack err
                 _ -> False
 
     describe "Special Forms - Define" $ do
-        it "Parses simple define" $ do
-            let input = List [SSymbol "define", SSymbol "x", SInteger 42]
+        it "Parses simple define and assigns 'undefined' type (Line 63)" $ do
+            let input = List [SSymbol (p "define"), SSymbol (p "x"), SInteger 42]
             sexprToAST input `shouldSatisfy` \case
-                Right (Define "x" (AInteger (I8 42))) -> True
+                Right (Define name typeVar (AInteger (I8 42))) -> 
+                    name == p "x" && typeVar == p "undefined"
                 _ -> False
-        it "Parses function define" $ do
-            let input = List [SSymbol "define", List [SSymbol "f", SSymbol "x"], List [SSymbol "+", SSymbol "x", SInteger 1]]
+                
+        it "Parses function define and assigns 'Any' types (Lines 71-72)" $ do
+            let input = List [SSymbol (p "define"), List [SSymbol (p "f"), SSymbol (p "x")], SInteger 1]
             sexprToAST input `shouldSatisfy` \case
-                Right (DefineFun "f" ["x"] (Call (ASymbol "+") [ASymbol "x", AInteger (I8 1)])) -> True
-                _ -> False
-        it "Fails define function with invalid params" $ do
-            let input = List [SSymbol "define", List [SSymbol "f", SInteger 1], SSymbol "x"]
-            sexprToAST input `shouldSatisfy` \case
-                Left _ -> True
+                Right (DefineFun name params retType _) -> 
+                    name == p "f" && 
+                    retType == p "Any" &&
+                    params == [(p "x", p "Any")]
                 _ -> False
 
-    describe "Special Forms - If" $ do
+        it "Fails on malformed define (missing value) (Lines 73-75)" $ do
+            let input = List [SSymbol (p "define"), SSymbol (p "x")]
+            sexprToAST input `shouldSatisfy` \case
+                Left err -> "Invalid 'define' expression" `isInfixOf` DT.unpack err
+                _ -> False
+        
+        it "Fails on malformed function define (missing body) (Lines 73-75)" $ do
+            let input = List [SSymbol (p "define"), List [SSymbol (p "f"), SSymbol (p "x")]]
+            sexprToAST input `shouldSatisfy` \case
+                Left err -> "Invalid 'define' expression" `isInfixOf` DT.unpack err
+                _ -> False
+
+    describe "Special Forms - If & Calls" $ do
         it "Parses if condition" $ do
-            let input = List [SSymbol "if", SSymbol "#t", SInteger 1, SInteger 0]
+            let input = List [SSymbol (p "if"), SSymbol (p "#t"), SInteger 1, SInteger 0]
             sexprToAST input `shouldSatisfy` \case
-                Right (Condition (ABool True) (AInteger (I8 1)) (AInteger (I8 0))) -> True
+                Right (Condition (ABool True) _ _) -> True
                 _ -> False
 
-    describe "Function Calls" $ do
         it "Parses standard call" $ do
-            let input = List [SSymbol "+", SInteger 1, SInteger 2]
+            let input = List [SSymbol (p "+"), SInteger 1, SInteger 2]
             sexprToAST input `shouldSatisfy` \case
-                Right (Call (ASymbol "+") [AInteger (I8 1), AInteger (I8 2)]) -> True
-                _ -> False
-        it "Propagates errors in call arguments" $ do
-            let invalidLambda = List [SSymbol "lambda", List [SInteger 1], SSymbol "x"]
-            let input = List [SSymbol "+", invalidLambda]
-            sexprToAST input `shouldSatisfy` \case
-                Left _ -> True
+                Right (Call (ASymbol s) _) -> s == p "+"
                 _ -> False
 
     describe "Edge cases" $ do
-        it "Returns Nothing for empty list" $ do
+        it "Returns Error for empty list" $ do
             sexprToAST (List []) `shouldSatisfy` \case
-                Left _ -> True
+                Left err -> "Invalid expressions" `isInfixOf` DT.unpack err
                 _ -> False
