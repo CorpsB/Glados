@@ -7,7 +7,10 @@ depends_on:
 steps:
   - name: Basic tests
     when:
-      - event: push
+      event: push
+      branch:
+        exclude:
+          - gh-pages
     image: haskell:9.10.3
     volumes:
       - /var/lib/woodpecker/stack:/root/.stack
@@ -17,7 +20,10 @@ steps:
 
   - name: Basic tests
     when:
-      - event: pull_request
+      event: pull_request
+      branch:
+        exclude:
+          - gh-pages
     image: haskell:9.10.3
     commands:
       - make

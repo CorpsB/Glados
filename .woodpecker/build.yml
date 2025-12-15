@@ -22,7 +22,7 @@ steps:
 
   - name: Build (On PR)
     when:
-      event: push
+      event: pull_request
       branch:
         exclude:
           - gh-pages

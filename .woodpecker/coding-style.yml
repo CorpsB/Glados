@@ -1,10 +1,15 @@
 kind: pipeline
 name: Coding-style checker
 
-when:
-  - event: [push, pull_request]
 depends_on:
   - mainProtection
+
+when:
+  - event: [push, pull_request]
+  branch:
+    exclude:
+      - gh-pages
+      - Feat/Documentation
 
 steps:
   - name: coding-style checker
