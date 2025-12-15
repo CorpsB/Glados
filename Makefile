@@ -5,7 +5,7 @@
 ## Makefile
 ##
 
-.PHONY: all test clean re
+.PHONY: all test clean re doc
 
 all:
 	stack build
@@ -28,3 +28,6 @@ re:
 
 test:
 	stack test --coverage
+
+doc:
+	cabal haddock --haddock-all
