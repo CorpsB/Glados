@@ -52,13 +52,7 @@ steps:
       - git config user.email "ci@glados"
       - rm -rf ./*
       - cp -r ../site/* ./
-      - rm -rf .woodpecker/auto_release.yml
-      - rm -rf .woodpecker/build.yml
-      - rm -rf .woodpecker/coding-style.yml
-      - rm -rf .woodpecker/coverage.yml
-      - rm -rf .woodpecker/dev-doc.yml
-      - rm -rf .woodpecker/functional_test.yml
-      - rm -rf .woodpecker/release.yml
+      - rm -rf .woodpecker/*.yml
       - touch .nojekyll
       - git add -A
       - git commit -m "publish ${CI_COMMIT_SHA}" || exit 0
