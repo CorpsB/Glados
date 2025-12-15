@@ -1,0 +1,44 @@
+when:
+  - event: push
+    branch: Feat/Documentation
+
+depends_on:
+  - coverage
+  - functional_test
+
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      tags: true
+
+steps:
+  - name: build_docs
+    image: haskell:9.6
+    commands:
+      - make doc
+      - rm -rf site
+      - mkdir -p site
+      - DOC_DIR=./dist-newstyle/build/x86_64-linux/*/glados-0.1.0.0/doc/html/glados/Utils-List.html
+      - cp -r "$DOC_DIR"/* site/
+      - test -f site/index.html
+
+  - name: deploy_gh_pages
+    image: alpine/git
+    environment:
+      GIT_AUTHOR_NAME: "Woodpecker CI"
+      GIT_AUTHOR_EMAIL: "ci@glados"
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - set -eu
+      - rm -rf out
+      - git clone --depth 1 --branch gh-pages "https://x-access-token:$${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" out \
+        || (git clone --depth 1 "https://x-access-token:$${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" out && cd out && git checkout --orphan gh-pages)
+      - cd out
+      - rm -rf ./*
+      - cp -r ../site/* ./
+      - touch .nojekyll
+      - git add -A
+      - git commit -m "📝 publish ${CI_COMMIT_SHA}" || exit 0
+      - git push origin gh-pages
