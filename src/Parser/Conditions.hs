@@ -17,7 +17,8 @@ to avoid circular dependencies with Parser.Statement.
 -}
 module Parser.Conditions (
     pIf,
-    pWhile
+    pWhile,
+    pFor
 ) where
 
 import Text.Megaparsec
@@ -70,3 +71,27 @@ pWhile pBlockParam = do
     cond <- parens pExpr
     body <- pBlockParam
     return (While cond body)
+
+-- | Specific parser for updating a for loop (e.g. i = i + 1)
+-- Note: Does not consume a trailing semicolon.
+pForUpdate :: Parser Ast
+pForUpdate = try (do
+    name <- pIdentifier
+    _ <- symbol (DT.pack "=")
+    val <- pExpr
+    return (Define name (DT.pack "auto") val))
+    <|> pExpr
+
+-- | Parse a for loop.
+-- Syntax: for (init; cond; update) { body }
+pFor :: Parser Ast -> Parser Ast -> Parser Ast
+pFor pVarDefParam pBlockParam = do
+    _ <- pKeyword (DT.pack "for")
+    (initStmt, cond, updateStmt) <- parens $ do
+        initS <- try pVarDefParam <|> (pExpr <* semicolon)
+        condS <- pExpr
+        _ <- semicolon
+        updateS <- pForUpdate
+        return (initS, condS, updateS)
+    body <- pBlockParam
+    return (For initStmt cond updateStmt body)

@@ -26,6 +26,7 @@ data Ast
     | AList [Ast]
     | Import DT.Text
     | While Ast Ast
+    | For Ast Ast Ast Ast
     deriving Show
 
 showAst :: Ast -> String

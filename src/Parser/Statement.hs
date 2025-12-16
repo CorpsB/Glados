@@ -25,7 +25,7 @@ import AST.Ast (Ast(..))
 import Parser.Lexer
 import Parser.Expression (pExpr)
 import Data.Void (Void)
-import Parser.Conditions (pIf, pWhile)
+import Parser.Conditions (pIf, pWhile, pFor)
 
 -- | Parse a list type syntax (e.g., [int]).
 --
@@ -125,6 +125,7 @@ pStatement :: Parser Ast
 pStatement = choice
     [ try (pIf pVarDef pBlock)
     , try (pWhile pBlock)
+    , try (pFor pVarDef pBlock)
     , pFunc
     , pReturn
     , try pVarDef 

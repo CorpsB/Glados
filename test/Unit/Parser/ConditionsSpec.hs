@@ -77,3 +77,14 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
             parseALL (p code) `shouldSatisfy` \case
                 Right [While (ABool True) AVoid] -> True
                 _ -> False
+
+    describe "Loops: For" $ do
+        
+        it "Parses a standard for loop" $ do
+            let code = "for (i = 0; i < 10; i = i + 1) { print(i); }"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [For initS cond updateS _] -> 
+                    case (initS, cond, updateS) of
+                        (Define _ _ _, Call (ASymbol op) _, Define _ _ _) -> op == p "<"
+                        _ -> False
+                _ -> False
