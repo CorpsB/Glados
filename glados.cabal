@@ -16,21 +16,22 @@ library
   hs-source-dirs:
       src
   exposed-modules:
-      Coucou
-      Ast
-      Lisp
-      Parser.Coucou
-      Eval.Coucou
-      Eval.Run
-      Eval.Ast
-      Eval.Builtins
-      Eval.Conditions
-      Eval.Functions
+      Z_old.Main
+      Z_old.Src.Ast
+      Z_old.Src.Lisp
+      Z_old.Src.Eval.Run
+      Z_old.Src.Eval.Ast
+      Z_old.Src.Eval.Builtins
+      Z_old.Src.Eval.Conditions
+      Z_old.Src.Eval.Functions
+      Z_old.Src.Type.Integer
+      Z_old.Src.Parser.Ast
+      Z_old.Src.Utils.List
+      Z_old.Src.Parser.ParserISL
+      AST.Ast
+      Common.Type.Integer
+      Common.Utils.List
       Compiler.Encoder
-      Type.Integer
-      Parser.Ast
-      Utils.List
-      Parser.ParserISL
       Parser.Lexer
       Parser.Expression
       Parser.Statement
@@ -73,21 +74,21 @@ test-suite glados-unit
   main-is:             Spec.hs
   default-language:    Haskell2010
   other-modules:
-      Eval.BuiltinsSpec
-      Eval.ConditionsSpec
-      Eval.FunctionsSpec
-      Eval.AstSpec
-      Eval.RunSpec
+      Z_old.Eval.BuiltinsSpec
+      Z_old.Eval.ConditionsSpec
+      Z_old.Eval.FunctionsSpec
+      Z_old.Eval.AstSpec
+      Z_old.Eval.RunSpec
+      Z_old.Parser.AstSpec
+      Z_old.Parser.ParserISLTest
+      Z_old.Type.IntegerSpec
+      Z_old.Utils.ListSpec
+      Z_old.LispTest
       Compiler.EncoderSpec
       AstSpec
-      Parser.AstSpec
-      Parser.ParserISLTest
       Parser.StatementSpec
       Parser.LexerSpec
       Parser.ExpressionSpec
-      Type.IntegerSpec
-      Utils.ListSpec
-      LispTest
   build-depends:
       base >= 4.7 && < 5
     , glados

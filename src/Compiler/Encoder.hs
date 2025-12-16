@@ -26,6 +26,5 @@ encodeBool True  = B.word8 1
 encodeBool False = B.word8 0
 
 encodeString :: String -> B.Builder
-encodeString = (lengthPrefix <> B.byteString) . TE.encodeUtf8 . T.pack
-    where
-        lengthPrefix = B.int32BE . fromIntegral . BS.length
+encodeString = ((B.int32BE . fromIntegral . BS.length)
+    <> B.byteString) . TE.encodeUtf8 . T.pack

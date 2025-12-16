@@ -21,7 +21,7 @@ module Parser.Statement (parseALL, pStatement) where
 
 import Text.Megaparsec
 import qualified Data.Text as DT
-import Ast (Ast(..))
+import AST.Ast (Ast(..))
 import Parser.Lexer
 import Parser.Expression (pExpr)
 import Data.Void (Void)
