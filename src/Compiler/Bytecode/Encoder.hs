@@ -5,7 +5,7 @@
 -- Encoder.hs
 -}
 
-module Compiler.Encoder (encodeInt32BE, encodeWord8,
+module Compiler.Bytecode.Encoder (encodeInt32BE, encodeWord8,
     encodeBool, encodeString) where
 
 import qualified Data.ByteString.Builder as B
