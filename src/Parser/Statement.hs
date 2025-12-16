@@ -25,6 +25,7 @@ import AST.Ast (Ast(..))
 import Parser.Lexer
 import Parser.Expression (pExpr)
 import Data.Void (Void)
+import Parser.Conditions (pIf)
 
 -- | Parse a list type syntax (e.g., [int]).
 --
@@ -73,14 +74,13 @@ pReturn = do
 
 -- | Parse a block of code enclosed in braces.
 --
--- Returns the result of the last statement in the block (implicit return).
--- Fails if the block is empty.
+-- Returns an AList containing all statements, or AVoid if the block is empty.
 pBlock :: Parser Ast
 pBlock = braces $ do
     stmts <- many pStatement
     case stmts of
-        [] -> fail "Empty function body not supported yet"
-        xs -> return (last xs)
+        [] -> return AVoid
+        xs -> return (AList xs)
 
 -- | Parse a function definition.
 --
@@ -98,29 +98,32 @@ pFunc = do
     body <- pBlock
     return (DefineFun name args retType body)
 
--- | Parse a variable definition.
+-- | Parse a variable definition (declaration or assignment).
 --
--- Syntax: name: type = value;
--- The type annotation is optional and defaults to "undefined" if omitted.
+-- Syntax: name: type = value; or name = value;
+-- The type annotation is optional and defaults to "auto" if omitted.
 pVarDef :: Parser Ast
 pVarDef = do
     name <- pIdentifier
-    varType <- option (DT.pack "undefined") (symbol (DT.pack ":") >> pType)
+    varType <- optional (symbol (DT.pack ":") >> pType)
     _ <- symbol (DT.pack "=")
     val <- pExpr
     _ <- semicolon
-    return (Define name varType val)
+    let finalType = maybe (DT.pack "auto") id varType
+    return (Define name finalType val)
 
 -- | Parse a single statement.
 --
 -- Attempts to parse in order:
--- 1. Function definition
--- 2. Return statement
--- 3. Variable definition (requires 'try' due to ambiguity with expressions)
--- 4. Standalone expression (ending with semicolon)
+-- 1. Conditional statements (if/else) - using dependency injection
+-- 2. Function definition
+-- 3. Return statement
+-- 4. Variable definition (requires 'try' due to ambiguity with expressions)
+-- 5. Standalone expression (ending with semicolon)
 pStatement :: Parser Ast
 pStatement = choice
-    [ pFunc
+    [ try (pIf pVarDef pBlock) -- Injecting pVarDef and pBlock into pIf
+    , pFunc
     , pReturn
     , try pVarDef 
     , pExpr <* semicolon 

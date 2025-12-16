@@ -15,14 +15,12 @@ import Parser.Statement (parseALL)
 import AST.Ast (Ast(..))
 import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
-import Data.List (isInfixOf)
-import Text.Megaparsec.Error (errorBundlePretty)
 
 p :: String -> DT.Text
 p = DT.pack
 
 spec :: Spec
-spec = describe "Parser C-Style - Statement & Expression" $ do
+spec = describe "Parser - Statement & Expression" $ do
 
     describe "Literals & Types" $ do
         
@@ -58,17 +56,16 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
 
     describe "Edge Cases & Error Handling (Coverage Target)" $ do
 
-        it "Fails on empty function body with specific error message" $ do
+        it "Parses empty function body (returns AVoid)" $ do
             let code = "func fail() {}"
             parseALL (p code) `shouldSatisfy` \case
-                Left err -> 
-                    "Empty function body not supported yet" `isInfixOf` errorBundlePretty err
+                Right [DefineFun _ _ _ AVoid] -> True
                 _ -> False
 
-        it "Returns the last statement of a block" $ do
+        it "Returns a list of statements for a block" $ do
             let code = "func last() { 1; 2; 3; }"
             parseALL (p code) `shouldSatisfy` \case
-                Right [DefineFun _ _ _ (AInteger (I8 3))] -> True
+                Right [DefineFun _ _ _ (AList [AInteger (I8 1), AInteger (I8 2), AInteger (I8 3)])] -> True
                 _ -> False
 
         it "Triggers parse error (covers parseALL error formatting)" $ do
@@ -79,11 +76,11 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
 
     describe "Variable Definitions" $ do
 
-        it "Parses untyped assignment (defaults to undefined)" $ do
+        it "Parses untyped assignment (defaults to auto)" $ do
             let code = "x = 10;"
             parseALL (p code) `shouldSatisfy` \case
                 Right [Define name typeVar (AInteger (I8 10))] -> 
-                    name == p "x" && typeVar == p "undefined"
+                    name == p "x" && typeVar == p "auto"
                 _ -> False
 
         it "Parses typed assignment (int)" $ do
@@ -163,24 +160,4 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
             let code = "ret 42;"
             parseALL (p code) `shouldSatisfy` \case
                 Right [AInteger (I8 42)] -> True
-                _ -> False
-
-    describe "Coverage & Edge Cases" $ do
-
-        it "Fails on empty function body (Empty function body not supported yet)" $ do
-            let code = "func fail() {}"
-            parseALL (p code) `shouldSatisfy` \case
-                Left _ -> True
-                _ -> False
-
-        it "Returns the last statement of a block (return (last xs))" $ do
-            let code = "func last() { 1; 2; 3; }"
-            parseALL (p code) `shouldSatisfy` \case
-                Right [DefineFun _ _ _ (AInteger (I8 3))] -> True
-                _ -> False
-
-        it "Triggers parse error to cover parseALL error handling" $ do
-            let code = "func ("
-            parseALL (p code) `shouldSatisfy` \case
-                Left _ -> True
                 _ -> False
