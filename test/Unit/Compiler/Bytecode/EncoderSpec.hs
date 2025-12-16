@@ -8,10 +8,10 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Compiler.EncoderSpec (spec) where
+module Compiler.Bytecode.EncoderSpec (spec) where
 
 import Test.Hspec
-import Compiler.Encoder (encodeInt32BE, encodeWord8, encodeBool, encodeString)
+import Compiler.Bytecode.Encoder (encodeInt32BE, encodeWord8, encodeBool, encodeString)
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LBS
 import Data.Word (Word8)

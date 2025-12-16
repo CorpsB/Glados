@@ -5,7 +5,7 @@ import Test.Hspec
 import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
 import qualified Parser.ExpressionSpec
-import qualified Compiler.EncoderSpec
+import qualified Compiler.Bytecode.EncoderSpec
 import qualified AstSpec
 
 import qualified Z_old.Eval.BuiltinsSpec
@@ -38,4 +38,4 @@ spec = do
     Parser.StatementSpec.spec
     Parser.LexerSpec.spec
     Parser.ExpressionSpec.spec
-    Compiler.EncoderSpec.spec
+    Compiler.Bytecode.EncoderSpec.spec

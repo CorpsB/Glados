@@ -88,7 +88,7 @@ test-suite glados-unit
       Z_old.Type.IntegerSpec
       Z_old.Utils.ListSpec
       Z_old.LispTest
-      Compiler.EncoderSpec
+      Compiler.Bytecode.EncoderSpec
       AstSpec
       Parser.StatementSpec
       Parser.LexerSpec
