@@ -88,3 +88,47 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
                         (Define _ _ _, Call (ASymbol op) _, Define _ _ _) -> op == p "<"
                         _ -> False
                 _ -> False
+
+    describe "Loops: For" $ do
+        
+        it "Parses a standard for loop (init; cond; step)" $ do
+            let code = "for (i = 0; i < 10; i = i + 1) { print(i); }"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [For initS cond updateS body] -> 
+                    case (initS, cond, updateS, body) of
+                        (Define _ _ _, Call (ASymbol op) _, Define _ _ _, AList _) -> op == p "<"
+                        _ -> False
+                _ -> False
+
+        it "Parses a for loop with boolean logic in condition" $ do
+            let code = "for (i = 0; i < 10 && running; i = i + 1) { }"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [For _ cond _ _] -> 
+                    case cond of
+                        Call (ASymbol op) _ -> op == p "&&"
+                        _ -> False
+                _ -> False
+
+        it "Parses a for loop with multiplication update" $ do
+            let code = "for (n = 1; n < 100; n = n * 2) { print(n); }"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [For _ _ updateS _] -> 
+                    case updateS of
+                        Define _ _ (Call (ASymbol op) _) -> op == p "*"
+                        _ -> False
+                _ -> False
+
+        it "Parses a for loop with boolean flag initialization" $ do
+            let code = "for (ok = True; ok; ok = False) { run_once(); }"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [For initS cond _ _] -> 
+                    case (initS, cond) of
+                        (Define _ _ (ABool True), ASymbol _) -> True
+                        _ -> False
+                _ -> False
+
+        it "Parses a for loop with empty body" $ do
+            let code = "for (i=0; i<10; i=i+1) {}"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [For _ _ _ AVoid] -> True
+                _ -> False

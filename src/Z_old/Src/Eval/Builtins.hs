@@ -31,6 +31,16 @@ builtinGreaterThan [AInteger x, AInteger y] =
 builtinGreaterThan args = Left $ DT.pack $ "*** ERROR: '>' expects two " ++
     "integers, got: " ++ show args
 
+builtinAnd :: [Ast] -> Either DT.Text Ast
+builtinAnd [ABool x, ABool y] = Right $ ABool (x && y)
+builtinAnd args = Left $ DT.pack $ "*** ERROR: '&&' expects two " ++
+    "booleans, got: " ++ show args
+
+builtinOr :: [Ast] -> Either DT.Text Ast
+builtinOr [ABool x, ABool y] = Right $ ABool (x || y)
+builtinOr args = Left $ DT.pack $ "*** ERROR: '||' expects two " ++
+    "booleans, got: " ++ show args
+
 builtinAddition :: [Ast] -> Either DT.Text Ast
 builtinAddition [AInteger x, AInteger y] =
     Right $ AInteger (fromInt64 (toInt64 x + toInt64 y))
@@ -80,6 +90,8 @@ logicOps =
     [ (DT.pack "eq?", builtinEq)
     , (DT.pack "<", builtinLowerThan)
     , (DT.pack ">", builtinGreaterThan)
+    , (DT.pack "&&", builtinAnd)
+    , (DT.pack "||", builtinOr)
     ]
 
 listOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]

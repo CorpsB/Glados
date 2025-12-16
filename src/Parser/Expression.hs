@@ -132,11 +132,24 @@ comparisonOps =
     , InfixL (binary (DT.pack ">")   <$ symbol (DT.pack ">"))
     ]
 
+-- | Table for logical AND operator (&&).
+-- It has higher precedence than OR but lower than comparison operators.
+logicalAndOps :: [Operator Parser Ast]
+logicalAndOps =
+    [ InfixL (binary (DT.pack "&&") <$ symbol (DT.pack "&&")) ]
+
+-- | Table for logical OR operator (||).
+-- It has the lowest precedence among logical operators.
+logicalOrOps :: [Operator Parser Ast]
+logicalOrOps =
+    [ InfixL (binary (DT.pack "||") <$ symbol (DT.pack "||")) ]
+
 -- | Combined operator table for expression parsing.
 --
--- Defines the precedence order: Multiplicative > Additive > Comparison.
+-- Defines the precedence order: Multiplicative > Additive > Comparison > AND > OR.
 opTable :: [[Operator Parser Ast]]
-opTable = [multiplicativeOps, additiveOps, comparisonOps]
+opTable = [multiplicativeOps, additiveOps, comparisonOps,
+    logicalAndOps, logicalOrOps]
 
 -- | Main expression parser.
 --
