@@ -66,6 +66,8 @@ evalAST ftable env (Condition cond th el) = do
     c <- evalAST ftable env cond
     chosen <- execCondition c th el
     evalAST ftable env chosen
+evalAST _ _ (While _ _) = Left $ DT.pack
+    "*** ERROR: 'While' loop evaluation not yet implemented"
 evalAST ftable env (Call func args) = do
     evalArgs <- traverse (evalASTEnv ftable env) args
     case func of
@@ -96,4 +98,5 @@ evalASTEnv ftable env (DefineFun name params ret body) =
     evalAST ftable env (DefineFun name params ret body)
 evalASTEnv ftable env (Call f args) = evalAST ftable env (Call f args)
 evalASTEnv ftable env (Condition c t e) = evalAST ftable env (Condition c t e)
+evalASTEnv ftable env (While c b) = evalAST ftable env (While c b)
 evalASTEnv ftable env (Import i) = evalAST ftable env (Import i)

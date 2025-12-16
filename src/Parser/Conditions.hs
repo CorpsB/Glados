@@ -11,11 +11,13 @@ Description : Parser for control flow structures.
 Stability   : stable
 This module defines parsers for control flow:
 - Conditional statements (if/else)
+- Iteration statements (while)
 Note: Parsers in this module often require 'pBlock' and 'pVarDef' as arguments
 to avoid circular dependencies with Parser.Statement.
 -}
 module Parser.Conditions (
-    pIf
+    pIf,
+    pWhile
 ) where
 
 import Text.Megaparsec
@@ -57,3 +59,14 @@ pIf pVarDefParam pBlockParam = do
     thenBlock <- pBlockParam
     elseBlock <- pElseBranch pVarDefParam pBlockParam
     return $ buildIfAst initStmt cond thenBlock elseBlock
+
+-- | Parse a while loop.
+--
+-- Syntax: while (condition) { body }
+-- The body parsing relies on the injected 'pBlockParam'.
+pWhile :: Parser Ast -> Parser Ast
+pWhile pBlockParam = do
+    _ <- pKeyword (DT.pack "while")
+    cond <- parens pExpr
+    body <- pBlockParam
+    return (While cond body)

@@ -60,3 +60,20 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
                             name == p "x" && typeVar == p "auto"
                         _ -> False
                 _ -> False
+    
+    describe "Loops: While" $ do
+        
+        it "Parses a simple while loop" $ do
+            let code = "while (x < 10) { x = x + 1; }"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [While cond body] -> 
+                    case (cond, body) of
+                        (Call (ASymbol op) _, AList _) -> op == p "<"
+                        _ -> False
+                _ -> False
+
+        it "Parses while(true) infinite loop" $ do
+            let code = "while (True) {}"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [While (ABool True) AVoid] -> True
+                _ -> False

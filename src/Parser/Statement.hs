@@ -25,7 +25,7 @@ import AST.Ast (Ast(..))
 import Parser.Lexer
 import Parser.Expression (pExpr)
 import Data.Void (Void)
-import Parser.Conditions (pIf)
+import Parser.Conditions (pIf, pWhile)
 
 -- | Parse a list type syntax (e.g., [int]).
 --
@@ -115,14 +115,16 @@ pVarDef = do
 -- | Parse a single statement.
 --
 -- Attempts to parse in order:
--- 1. Conditional statements (if/else) - using dependency injection
--- 2. Function definition
--- 3. Return statement
--- 4. Variable definition (requires 'try' due to ambiguity with expressions)
--- 5. Standalone expression (ending with semicolon)
+-- 1. Conditional statements (if/else)
+-- 2. Loop statements (while)
+-- 3. Function definition
+-- 4. Return statement
+-- 5. Variable definition
+-- 6. Standalone expression
 pStatement :: Parser Ast
 pStatement = choice
-    [ try (pIf pVarDef pBlock) -- Injecting pVarDef and pBlock into pIf
+    [ try (pIf pVarDef pBlock)
+    , try (pWhile pBlock)
     , pFunc
     , pReturn
     , try pVarDef 
