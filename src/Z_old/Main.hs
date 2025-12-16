@@ -67,7 +67,8 @@ runFromFile = do
         Left perr -> hPutStrLn stderr ("Parse error: " ++ show perr) >>
             exitWith (ExitFailure 84)
         Right sexprs -> case processMany [] [] sexprs of
-            Left err     -> hPutStrLn stderr (DT.unpack err) >> exitWith (ExitFailure 84)
+            Left err     -> hPutStrLn stderr (DT.unpack err) >>
+                exitWith (ExitFailure 84)
             Right values -> mapM_ printAst values
 
 handleEOF :: IOException -> IO String
@@ -75,11 +76,9 @@ handleEOF _ = exitWith ExitSuccess
 
 processReplLine :: FuncTable -> Env -> String -> IO ()
 processReplLine ft env line = case tryEval ft env line of
-    Left err -> do
-        hPutStrLn stderr (DT.unpack err) 
+    Left err -> hPutStrLn stderr (DT.unpack err) >>
         repl ft env
-    Right (newFt, newEnv, res) -> do
-        mapM_ printAst res
+    Right (newFt, newEnv, res) -> mapM_ printAst res >>
         repl newFt newEnv
 
 repl :: FuncTable -> Env -> IO ()
@@ -94,7 +93,6 @@ useMain :: IO ()
 useMain = do
     isTerm <- hIsTerminalDevice stdin
     if isTerm
-        then do
-            hSetBuffering stdout NoBuffering
+        then hSetBuffering stdout NoBuffering >>
             repl [] []
         else runFromFile
