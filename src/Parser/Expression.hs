@@ -22,8 +22,8 @@ import Text.Megaparsec
 import Text.Megaparsec.Char (char, string)
 import Control.Monad.Combinators.Expr
 import qualified Data.Text as DT
-import Ast (Ast(..))
-import Type.Integer (fitInteger, IntValue(..))
+import AST.Ast (Ast(..))
+import Z_old.Src.Type.Integer (fitInteger, IntValue(..))
 import qualified Text.Megaparsec.Char.Lexer as L
 import Parser.Lexer
 

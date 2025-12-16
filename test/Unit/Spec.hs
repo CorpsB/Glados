@@ -2,39 +2,40 @@ module Main (main) where
 
 import Test.Hspec
 
-import qualified Eval.BuiltinsSpec
-import qualified Eval.ConditionsSpec
-import qualified Eval.FunctionsSpec
-import qualified Eval.AstSpec
-import qualified Eval.RunSpec
-import qualified Compiler.EncoderSpec
-import qualified AstSpec
-import qualified Parser.ParserISLTest
 import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
 import qualified Parser.ExpressionSpec
-import qualified Parser.AstSpec
-import qualified LispTest
-import qualified Type.IntegerSpec
-import qualified Utils.ListSpec
+import qualified Compiler.EncoderSpec
+import qualified AstSpec
+
+import qualified Z_old.Eval.BuiltinsSpec
+import qualified Z_old.Eval.ConditionsSpec
+import qualified Z_old.Eval.FunctionsSpec
+import qualified Z_old.Eval.AstSpec
+import qualified Z_old.Eval.RunSpec
+import qualified Z_old.Parser.ParserISLTest
+import qualified Z_old.Parser.AstSpec
+import qualified Z_old.LispTest
+import qualified Z_old.Type.IntegerSpec
+import qualified Z_old.Utils.ListSpec
 
 main :: IO ()
 main = hspec spec
 
 spec :: Spec
 spec = do
-  Eval.BuiltinsSpec.spec
-  Eval.ConditionsSpec.spec
-  Eval.FunctionsSpec.spec
-  Eval.RunSpec.spec
-  Eval.AstSpec.spec
-  Compiler.EncoderSpec.spec
-  AstSpec.spec
-  Parser.ParserISLTest.spec
-  Parser.StatementSpec.spec
-  Parser.LexerSpec.spec
-  Parser.ExpressionSpec.spec
-  Parser.AstSpec.spec
-  Type.IntegerSpec.spec
-  Utils.ListSpec.spec
-  LispTest.spec
+    Z_old.Eval.BuiltinsSpec.spec
+    Z_old.Eval.ConditionsSpec.spec
+    Z_old.Eval.FunctionsSpec.spec
+    Z_old.Eval.RunSpec.spec
+    Z_old.Eval.AstSpec.spec
+    Z_old.Parser.ParserISLTest.spec
+    Z_old.Parser.AstSpec.spec
+    Z_old.Type.IntegerSpec.spec
+    Z_old.Utils.ListSpec.spec
+    Z_old.LispTest.spec
+    AstSpec.spec
+    Parser.StatementSpec.spec
+    Parser.LexerSpec.spec
+    Parser.ExpressionSpec.spec
+    Compiler.EncoderSpec.spec

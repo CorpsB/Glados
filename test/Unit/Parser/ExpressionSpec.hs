@@ -13,8 +13,8 @@ module Parser.ExpressionSpec (spec) where
 import Test.Hspec
 import Text.Megaparsec (parse)
 import Parser.Expression (pExpr)
-import Ast (Ast(..))
-import Type.Integer (IntValue(..))
+import AST.Ast (Ast(..))
+import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 import Data.Void (Void)
 import Text.Megaparsec.Error (ParseErrorBundle)

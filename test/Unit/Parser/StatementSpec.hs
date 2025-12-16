@@ -12,8 +12,8 @@ module Parser.StatementSpec (spec) where
 
 import Test.Hspec
 import Parser.Statement (parseALL)
-import Ast (Ast(..))
-import Type.Integer (IntValue(..))
+import AST.Ast (Ast(..))
+import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 import Data.List (isInfixOf)
 import Text.Megaparsec.Error (errorBundlePretty)
