@@ -2,6 +2,10 @@ module Main (main) where
 
 import Test.Hspec
 
+import qualified Compiler.InstructionSpec
+import qualified Compiler.PsInstructionSpec
+import qualified Compiler.CompilerStateSpec
+
 import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
 import qualified Parser.ExpressionSpec
@@ -39,3 +43,6 @@ spec = do
     Parser.LexerSpec.spec
     Parser.ExpressionSpec.spec
     Compiler.Bytecode.EncoderSpec.spec
+    Compiler.InstructionSpec.spec
+    Compiler.PsInstructionSpec.spec
+    Compiler.CompilerStateSpec.spec
