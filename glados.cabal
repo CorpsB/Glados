@@ -95,6 +95,9 @@ test-suite glados-unit
       Parser.StatementSpec
       Parser.LexerSpec
       Parser.ExpressionSpec
+      Compiler.InstructionSpec
+      Compiler.PsInstructionSpec
+      Compiler.CompilerStateSpec
   build-depends:
       base >= 4.7 && < 5
     , glados
