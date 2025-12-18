@@ -161,3 +161,28 @@ spec = describe "Parser - Statement & Expression" $ do
             parseALL (p code) `shouldSatisfy` \case
                 Right [AInteger (I8 42)] -> True
                 _ -> False
+
+    describe "Unary Operators (Increment/Decrement)" $ do
+        
+        it "Parses ++x as x = x + 1" $ do
+            let code = "++x;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define name _ (Call (ASymbol op) _)] -> 
+                    name == p "x" && op == p "+"
+                _ -> False
+
+        it "Parses --y as y = y - 1" $ do
+            let code = "--y;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define name _ (Call (ASymbol op) _)] -> 
+                    name == p "y" && op == p "-"
+                _ -> False
+
+        it "Parses ++ inside an expression (complex)" $ do
+            let code = "z = ++x * 2;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (Call _ [incrX, _])] -> 
+                    case incrX of
+                        Define x _ _ -> x == p "x"
+                        _ -> False
+                _ -> False

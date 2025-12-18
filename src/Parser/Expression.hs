@@ -112,6 +112,13 @@ pTerm = choice
 binary :: DT.Text -> (Ast -> Ast -> Ast)
 binary name = \a b -> Call (ASymbol name) [a, b]
 
+sugarSyntOps :: [Operator Parser Ast]
+sugarSyntOps =
+    [ Prefix (prefix (DT.pack "!") <$ symbol (DT.pack "!"))
+    , Prefix (incrementOps <$ symbol (DT.pack "++"))
+    , Prefix (decrementOps <$ symbol (DT.pack "--"))
+    ]
+
 -- | Table of multiplicative operators (*, /, %).
 multiplicativeOps :: [Operator Parser Ast]
 multiplicativeOps =
@@ -147,15 +154,21 @@ logicalOrOps :: [Operator Parser Ast]
 logicalOrOps =
     [ InfixL (binary (DT.pack "||") <$ symbol (DT.pack "||")) ]
 
-notOps :: [Operator Parser Ast]
-notOps =
-    [ Prefix (prefix (DT.pack "!") <$ symbol (DT.pack "!")) ]
+incrementOps :: Ast -> Ast
+incrementOps (ASymbol name) = 
+    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "+")) [ASymbol name, AInteger (fitInteger 1)])
+incrementOps other = Call (ASymbol (DT.pack "++")) [other]
+
+decrementOps :: Ast -> Ast
+decrementOps (ASymbol name) = 
+    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "-")) [ASymbol name, AInteger (fitInteger 1)])
+decrementOps other = Call (ASymbol (DT.pack "--")) [other]
 
 -- | Combined operator table for expression parsing.
 --
 -- Defines the precedence order: Multiplicative > Additive > Comparison > AND > OR.
 opTable :: [[Operator Parser Ast]]
-opTable = [notOps, multiplicativeOps, additiveOps, comparisonOps,
+opTable = [sugarSyntOps, multiplicativeOps, additiveOps, comparisonOps,
     logicalAndOps, logicalOrOps]
 
 -- | Main expression parser.
