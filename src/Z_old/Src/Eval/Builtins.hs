@@ -41,6 +41,11 @@ builtinOr [ABool x, ABool y] = Right $ ABool (x || y)
 builtinOr args = Left $ DT.pack $ "*** ERROR: '||' expects two " ++
     "booleans, got: " ++ show args
 
+builtinNot :: [Ast] -> Either DT.Text Ast
+builtinNot [ABool x] = Right $ ABool (not x)
+builtinNot args = Left $ DT.pack $ "*** ERROR: '!' expects one " ++
+    "boolean, got: " ++ show args
+
 builtinAddition :: [Ast] -> Either DT.Text Ast
 builtinAddition [AInteger x, AInteger y] =
     Right $ AInteger (fromInt64 (toInt64 x + toInt64 y))
@@ -103,6 +108,7 @@ listOps =
     , (DT.pack "list?", builtinIsList)
     , (DT.pack "append", builtinAppend)
     , (DT.pack "length", builtinLength)
+    , (DT.pack "!", builtinNot)
     ]
 
 builtinsTable :: [(DT.Text, [Ast] -> Either DT.Text Ast)]

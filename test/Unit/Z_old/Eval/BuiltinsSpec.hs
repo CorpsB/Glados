@@ -298,3 +298,24 @@ spec = describe "Builtins Coverage 100%" $ do
                 execBuiltin (DT.pack "||") [ABool True] `shouldSatisfy` \case
                     Left _ -> True
                     _ -> False
+        
+        describe "NOT (!)" $ do
+            it "Returns False when operand is True" $ do
+                execBuiltin (DT.pack "!") [ABool True] `shouldSatisfy` \case
+                    Right (ABool False) -> True
+                    _ -> False
+
+            it "Returns True when operand is False" $ do
+                execBuiltin (DT.pack "!") [ABool False] `shouldSatisfy` \case
+                    Right (ABool True) -> True
+                    _ -> False
+
+            it "Fails with invalid argument count" $ do
+                execBuiltin (DT.pack "!") [ABool True, ABool False] `shouldSatisfy` \case
+                    Left _ -> True
+                    _ -> False
+
+            it "Fails with non-boolean argument" $ do
+                execBuiltin (DT.pack "!") [AInteger (I8 1)] `shouldSatisfy` \case
+                    Left _ -> True
+                    _ -> False

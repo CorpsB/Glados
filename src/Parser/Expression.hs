@@ -27,6 +27,9 @@ import Z_old.Src.Type.Integer (fitInteger, IntValue(..))
 import qualified Text.Megaparsec.Char.Lexer as L
 import Parser.Lexer
 
+prefix :: DT.Text -> (Ast -> Ast)
+prefix name = \a -> Call (ASymbol name) [a]
+
 -- | Parse a decimal integer.
 --
 -- Uses 'fitInteger' to automatically determine the smallest fitting
@@ -144,11 +147,15 @@ logicalOrOps :: [Operator Parser Ast]
 logicalOrOps =
     [ InfixL (binary (DT.pack "||") <$ symbol (DT.pack "||")) ]
 
+notOps :: [Operator Parser Ast]
+notOps =
+    [ Prefix (prefix (DT.pack "!") <$ symbol (DT.pack "!")) ]
+
 -- | Combined operator table for expression parsing.
 --
 -- Defines the precedence order: Multiplicative > Additive > Comparison > AND > OR.
 opTable :: [[Operator Parser Ast]]
-opTable = [multiplicativeOps, additiveOps, comparisonOps,
+opTable = [notOps, multiplicativeOps, additiveOps, comparisonOps,
     logicalAndOps, logicalOrOps]
 
 -- | Main expression parser.
