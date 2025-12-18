@@ -27,5 +27,5 @@ steps:
         - glados
 
       note: |        
-        Commit:  ${CI_COMMIT_SHA}
-        Author:  ${CI_COMMIT_AUTHOR}
+        Commit: ${CI_COMMIT_SHA}
+        Author: ${CI_COMMIT_AUTHOR}
