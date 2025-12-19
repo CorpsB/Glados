@@ -1,9 +1,15 @@
-{-# LANGUAGE LambdaCase #-}
+{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- InstructionSpec
+-}
 
 module Compiler.InstructionSpec (spec) where
 
 import Test.Hspec
 import Data.Word (Word8)
+import Data.List (sort, isPrefixOf)
 
 import Compiler.Instruction
   ( Instruction(..)
@@ -15,83 +21,167 @@ import Compiler.Instruction
 
 import Common.Type.Integer (IntValue(..))
 
-isTypeBool :: Word8 -> Bool
-isTypeBool = \case
-  0x00 -> True
-  _    -> False
+-- Helper
+shouldOpcode :: Instruction -> Word8 -> Expectation
+shouldOpcode inst expected = getInstCode inst `shouldBe` expected
 
-isTypeI8 :: Word8 -> Bool
-isTypeI8 = \case
-  0x01 -> True
-  _    -> False
+allImmediates :: [Immediate]
+allImmediates =
+  [ ImmBool True
+  , ImmBool False
+  , ImmInt (I8 0)
+  , ImmInt (UI8 0)
+  , ImmInt (I16 0)
+  , ImmInt (UI16 0)
+  , ImmInt (I32 0)
+  , ImmInt (UI32 0)
+  , ImmInt (I64 0)
+  , ImmInt (UI64 0)
+  ]
 
-isOpcodePush :: Word8 -> Bool
-isOpcodePush = \case
-  0x01 -> True
-  _    -> False
+allInstructions :: [Instruction]
+allInstructions =
+  [ Push (ImmBool True)
+  , Push (ImmInt (I8 42))
+  , Pop, Dup, Swap
+  , Add, Sub, Mul, Div, Mod
+  , Eq, Lt, Le, Not, And, Or
+  , Jump 0, JumpIfFalse 0, JumpIfTrue 0
+  , Call 0, TailCall 0, CallIndirect, Ret
+  , LoadLocal 0, StoreLocal 0
+  , LoadGlobal 0, StoreGlobal 0
+  , LoadCapture 0, StoreCapture 0
+  , MakeClosure 0 0, GetFuncAddr 0
+  , Cast 0x00
+  , Print, Halt
+  , CheckStack 0
+  , Nop
+  ]
 
-isOpcodeAdd :: Word8 -> Bool
-isOpcodeAdd = \case
-  0x10 -> True
-  _    -> False
-
-isOpcodeJump :: Word8 -> Bool
-isOpcodeJump = \case
-  0x30 -> True
-  _    -> False
+instrCtorName :: Instruction -> String
+instrCtorName inst = case inst of
+  Push _        -> "Push"
+  Pop           -> "Pop"
+  Dup           -> "Dup"
+  Swap          -> "Swap"
+  Add           -> "Add"
+  Sub           -> "Sub"
+  Mul           -> "Mul"
+  Div           -> "Div"
+  Mod           -> "Mod"
+  Eq            -> "Eq"
+  Lt            -> "Lt"
+  Le            -> "Le"
+  Not           -> "Not"
+  And           -> "And"
+  Or            -> "Or"
+  Jump _        -> "Jump"
+  JumpIfFalse _ -> "JumpIfFalse"
+  JumpIfTrue _  -> "JumpIfTrue"
+  Call _        -> "Call"
+  TailCall _    -> "TailCall"
+  CallIndirect  -> "CallIndirect"
+  Ret           -> "Ret"
+  LoadLocal _   -> "LoadLocal"
+  StoreLocal _  -> "StoreLocal"
+  LoadGlobal _  -> "LoadGlobal"
+  StoreGlobal _ -> "StoreGlobal"
+  LoadCapture _ -> "LoadCapture"
+  StoreCapture _-> "StoreCapture"
+  MakeClosure _ _ -> "MakeClosure"
+  GetFuncAddr _ -> "GetFuncAddr"
+  Cast _        -> "Cast"
+  Print         -> "Print"
+  Halt          -> "Halt"
+  CheckStack _  -> "CheckStack"
+  Nop           -> "Nop"
 
 spec :: Spec
-spec = describe "Compiler.Instruction (with meaningful alternatives)" $ do
+spec = describe "Compiler.Instruction (coverage + exact spec mapping)" $ do
 
-  describe "immediateToTypeID" $ do
-    it "ImmBool maps to bool TypeID (match branch)" $ do
-      isTypeBool (immediateToTypeID (ImmBool True)) `shouldBe` True
-
-    it "ImmInt is NOT bool TypeID (non-match branch)" $ do
-      isTypeBool (immediateToTypeID (ImmInt (I8 1))) `shouldBe` False
-
-    it "ImmInt I8 maps to 0x01 (match branch)" $ do
-      isTypeI8 (immediateToTypeID (ImmInt (I8 1))) `shouldBe` True
-
-    it "ImmBool is NOT I8 TypeID (non-match branch)" $ do
-      isTypeI8 (immediateToTypeID (ImmBool False)) `shouldBe` False
+  describe "immediateToTypeID (ASM_SPEC)" $ do
+    it "maps all Immediate variants to the correct TypeID byte" $ do
+      immediateToTypeID (ImmBool True)  `shouldBe` 0x00
+      immediateToTypeID (ImmBool False) `shouldBe` 0x00
+      immediateToTypeID (ImmInt (I8  1))   `shouldBe` 0x01
+      immediateToTypeID (ImmInt (UI8 1))   `shouldBe` 0x02
+      immediateToTypeID (ImmInt (I16 1))   `shouldBe` 0x03
+      immediateToTypeID (ImmInt (UI16 1))  `shouldBe` 0x04
+      immediateToTypeID (ImmInt (I32 1))   `shouldBe` 0x05
+      immediateToTypeID (ImmInt (UI32 1))  `shouldBe` 0x06
+      immediateToTypeID (ImmInt (I64 1))   `shouldBe` 0x07
+      immediateToTypeID (ImmInt (UI64 1))  `shouldBe` 0x08
 
   describe "immediateSize" $ do
-    it "Bool payload is 1 byte" $
+    it "returns the right payload size for every Immediate" $ do
+      immediateSize (ImmBool True)  `shouldBe` 1
       immediateSize (ImmBool False) `shouldBe` 1
+      immediateSize (ImmInt (I8  0))   `shouldBe` 1
+      immediateSize (ImmInt (UI8 0))   `shouldBe` 1
+      immediateSize (ImmInt (I16 0))   `shouldBe` 2
+      immediateSize (ImmInt (UI16 0))  `shouldBe` 2
+      immediateSize (ImmInt (I32 0))   `shouldBe` 4
+      immediateSize (ImmInt (UI32 0))  `shouldBe` 4
+      immediateSize (ImmInt (I64 0))   `shouldBe` 8
+      immediateSize (ImmInt (UI64 0))  `shouldBe` 8
 
-    it "Int sizes are correct" $ do
-      immediateSize (ImmInt (I8 0))   `shouldBe` 1
-      immediateSize (ImmInt (UI8 0))  `shouldBe` 1
-      immediateSize (ImmInt (I16 0))  `shouldBe` 2
-      immediateSize (ImmInt (UI16 0)) `shouldBe` 2
-      immediateSize (ImmInt (I32 0))  `shouldBe` 4
-      immediateSize (ImmInt (UI32 0)) `shouldBe` 4
-      immediateSize (ImmInt (I64 0))  `shouldBe` 8
-      immediateSize (ImmInt (UI64 0)) `shouldBe` 8
+  describe "getInstCode (EXHAUSTIVE exact opcodes)" $ do
+    it "maps every instruction constructor to the opcode byte defined by ASM_SPEC" $ do
+      shouldOpcode (Push (ImmBool True)) 0x01
+      shouldOpcode Pop                  0x02
+      shouldOpcode Dup                  0x03
+      shouldOpcode Swap                 0x04
+      shouldOpcode Add 0x10
+      shouldOpcode Sub 0x11
+      shouldOpcode Mul 0x12
+      shouldOpcode Div 0x13
+      shouldOpcode Mod 0x14
+      shouldOpcode Eq  0x20
+      shouldOpcode Lt  0x21
+      shouldOpcode Not 0x22
+      shouldOpcode And 0x23
+      shouldOpcode Or  0x24
+      shouldOpcode Le  0x25
+      shouldOpcode (Jump 0)          0x30
+      shouldOpcode (Jump 999)        0x30
+      shouldOpcode (JumpIfFalse 7)   0x31
+      shouldOpcode (JumpIfFalse 123) 0x31
+      shouldOpcode (JumpIfTrue 9)    0x32
+      shouldOpcode (JumpIfTrue 456)  0x32
+      shouldOpcode (Call 0)        0x40
+      shouldOpcode (Call 999)      0x40
+      shouldOpcode (TailCall 0)    0x41
+      shouldOpcode (TailCall 555)  0x41
+      shouldOpcode CallIndirect    0x42
+      shouldOpcode Ret             0x43
+      shouldOpcode (LoadLocal 0)    0x50
+      shouldOpcode (StoreLocal 0)   0x51
+      shouldOpcode (LoadGlobal 0)   0x52
+      shouldOpcode (StoreGlobal 0)  0x53
+      shouldOpcode (LoadCapture 0)  0x54
+      shouldOpcode (StoreCapture 0) 0x55
+      shouldOpcode (MakeClosure 0 0) 0x60
+      shouldOpcode (GetFuncAddr 0)   0x61
+      shouldOpcode (Cast 0x00)       0x80
+      shouldOpcode (Cast 0x05)       0x80
+      shouldOpcode Print           0x70
+      shouldOpcode Halt            0x71
+      shouldOpcode (CheckStack 0)  0xFE
+      shouldOpcode (CheckStack 3)  0xFE
+      shouldOpcode Nop             0xFF
 
-  describe "getInstCode" $ do
-    it "Push opcode matches (match branch)" $ do
-      isOpcodePush (getInstCode (Push (ImmBool True))) `shouldBe` True
+  describe "Derived instances (Eq / Ord / Show) - cover ALL ctors" $ do
+    it "Eq: every constructor equals itself (and Immediate too)" $ do
+      mapM_ (\x -> x `shouldBe` x) allInstructions
+      mapM_ (\i -> i `shouldBe` i) allImmediates
 
-    it "Add is NOT Push opcode (non-match branch)" $ do
-      isOpcodePush (getInstCode Add) `shouldBe` False
+    it "Ord: compare x x = EQ for all constructors + sort produces non-decreasing order" $ do
+      mapM_ (\x -> compare x x `shouldBe` EQ) allInstructions
+      mapM_ (\i -> compare i i `shouldBe` EQ) allImmediates
+      let xs = sort allInstructions
+      and (zipWith (<=) xs (drop 1 xs)) `shouldBe` True
 
-    it "Add opcode matches (match branch)" $ do
-      isOpcodeAdd (getInstCode Add) `shouldBe` True
-
-    it "Sub is NOT Add opcode (non-match branch)" $ do
-      isOpcodeAdd (getInstCode Sub) `shouldBe` False
-
-    it "Jump opcode matches (match branch)" $ do
-      isOpcodeJump (getInstCode (Jump 12)) `shouldBe` True
-
-    it "JumpIfFalse is NOT Jump opcode (non-match branch)" $ do
-      isOpcodeJump (getInstCode (JumpIfFalse 12)) `shouldBe` False
-
-  describe "Existing exact opcode tests (still useful)" $ do
-    it "Exact opcodes sanity (a few)" $ do
-      getInstCode (Push (ImmBool True)) `shouldBe` 0x01
-      getInstCode Add                   `shouldBe` 0x10
-      getInstCode (Jump 0)              `shouldBe` 0x30
-      getInstCode Halt                  `shouldBe` 0x71
+    it "Show: non-empty and starts with the constructor name for every instruction" $ do
+      mapM_ (\x -> show x `shouldSatisfy` (not . null)) allInstructions
+      mapM_ (\x -> instrCtorName x `isPrefixOf` show x `shouldBe` True) allInstructions
+      mapM_ (\i -> show i `shouldSatisfy` (not . null)) allImmediates
