@@ -5,6 +5,7 @@ import Test.Hspec
 import qualified Compiler.InstructionSpec
 import qualified Compiler.PsInstructionSpec
 import qualified Compiler.CompilerStateSpec
+import qualified Compiler.ASM.CompilerMonadSpec
 
 import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
@@ -46,3 +47,4 @@ spec = do
     Compiler.InstructionSpec.spec
     Compiler.PsInstructionSpec.spec
     Compiler.CompilerStateSpec.spec
+    Compiler.ASM.CompilerMonadSpec.spec
