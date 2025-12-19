@@ -19,11 +19,14 @@ module Compiler.ASM.CompilerMonad
     , emitJumpIfTrueToLabel
     , emitCallToLabel
     , generateUniqueLabel
+    , defineSymbol
     ) where
 
 import Control.Monad.State
 import Data.Text (Text, pack)
 import Data.Sequence ((|>))
+import qualified Data.Map.Strict as Map
+
 import Compiler.CompilerState (CompilerState(..))
 import Compiler.PsInstruction (PsInstruction(..))
 import Compiler.Instruction (Instruction)
@@ -171,3 +174,29 @@ generateUniqueLabel prefixName = do
     currentState <- get
     put $ currentState { csLabelCnt = (csLabelCnt currentState) + 1 }
     return $ prefixName <> pack "_" <> pack (show (csLabelCnt currentState))
+
+-- | Defines a new global symbol and allocates an index for it.
+--
+-- @args
+--   - name: The name of the symbol to define.
+--
+-- @details
+--   Checks if the symbol is already defined in 'csSymbols'. If it is, returns
+--   an error. Otherwise, allocates the current 'csNextIndex', inserts the
+--   symbol into the map, and increments the index counter.
+--
+-- @return
+--   The allocated index (Int) or an error (Left Text).
+--
+defineSymbol :: Text -> CompilerMonad Int
+defineSymbol name = do
+    s <- get
+    if Map.member name (csSymbols s)
+        then lift $ Left (pack "Symbol already defined: " <> name)
+        else do
+            let idx = csNextIndex s
+            put s { 
+                csSymbols = Map.insert name idx (csSymbols s), 
+                csNextIndex = idx + 1 
+            }
+            return idx
