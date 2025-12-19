@@ -32,6 +32,8 @@ library
       Common.Type.Integer
       Common.Utils.List
       Compiler.ASM.CompilerMonad
+      Compiler.ASM.Compiler
+      Compiler.ASM.AstToAsm
       Compiler.Bytecode.Encoder
       Compiler.CompilerState
       Compiler.Instruction

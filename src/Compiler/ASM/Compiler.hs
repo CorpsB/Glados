@@ -38,22 +38,12 @@ compileIf :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Ast -> CompilerMonad ()
 compileIf compileFn cond thenBranch elseBranch = do
     lElse <- generateUniqueLabel (pack "else")
     lEnd  <- generateUniqueLabel (pack "endif")
-
-    -- Compile condition
     compileFn cond
-    
-    -- Jump to Else if False
     emitJumpIfFalseToLabel lElse
-
-    -- Compile Then branch
     compileFn thenBranch
     emitJumpToLabel lEnd
-
-    -- Compile Else branch
     emitLabelDefinition lElse
     compileFn elseBranch
-
-    -- End label
     emitLabelDefinition lEnd
 
 -- | Compiles a variable definition.

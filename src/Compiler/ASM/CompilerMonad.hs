@@ -193,10 +193,9 @@ defineSymbol name = do
     s <- get
     if Map.member name (csSymbols s)
         then lift $ Left (pack "Symbol already defined: " <> name)
-        else do
-            let idx = csNextIndex s
+        else
+            let idx = csNextIndex s in
             put s { 
                 csSymbols = Map.insert name idx (csSymbols s), 
                 csNextIndex = idx + 1 
-            }
-            return idx
+            } >> return idx

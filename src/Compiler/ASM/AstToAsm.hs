@@ -96,8 +96,7 @@ astSymbolToAsm name = do
 --   2. Calls the runtime builtin "list" to construct the list object.
 --
 astListToAsm :: (Ast -> CompilerMonad ()) -> [Ast] -> CompilerMonad ()
-astListToAsm compileFn elements = do
-    mapM_ compileFn elements
+astListToAsm compileFn elements = mapM_ compileFn elements >>
     emitCallToLabel (pack "list")
 
 -- | Compiles a function call (Builtin or User-defined).
@@ -117,15 +116,6 @@ astCallToAsm :: (Ast -> CompilerMonad ()) -> Ast -> [Ast] -> CompilerMonad ()
 astCallToAsm compileFn callee args = case callee of
     ASymbol name -> 
         case Map.lookup name builtinMap of
-            -- Case A: It is a Builtin
-            Just instr -> do
-                mapM_ compileFn args
-                emitInstruction instr
-
-            -- Case B: It is a User Function
-            Nothing -> do
-                mapM_ compileFn args
-                emitCallToLabel name
-
-    -- Case C: Complex expression call (not supported yet)
+            Just instr -> mapM_ compileFn args >> emitInstruction instr
+            Nothing -> mapM_ compileFn args >> emitCallToLabel name
     _ -> lift $ Left (pack "Error: Higher calls are not supported yet.")
