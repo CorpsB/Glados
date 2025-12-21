@@ -21,6 +21,8 @@ module Parser.Statement (parseALL, pStatement) where
 
 import Text.Megaparsec
 import qualified Data.Text as DT
+import Text.Megaparsec.Char (char)
+import qualified Text.Megaparsec.Char.Lexer as L
 import AST.Ast (Ast(..))
 import Parser.Lexer
 import Parser.Expression (pExpr)
@@ -167,27 +169,42 @@ pStruct = do
     fields <- braces (many pStructField)
     return (Struct name fields)
 
--- | Parse a single statement.
---
--- Attempts to parse in order:
--- 1. Conditional statements (if/else)
--- 2. Loop statements (while)
--- 3. Function definition
--- 4. Structure parsing
--- 5. Return statement
--- 6. Variable definition
--- 7. Standalone expression
-pStatement :: Parser Ast
-pStatement = choice
+pImportPath :: Parser DT.Text
+pImportPath = lexeme $ do
+    _ <- char '"'
+    content <- manyTill L.charLiteral (char '"')
+    return (DT.pack content)
+
+pImport :: Parser Ast
+pImport = do
+    _ <- pKeyword (DT.pack "import")
+    path <- pImportPath
+    _ <- semicolon
+    return (Import path)
+
+pControlFlow :: [Parser Ast]
+pControlFlow =
     [ try (pIf pVarDef pBlock)
     , try (pWhile pBlock)
     , try (pFor pVarDef pBlock)
+    ]
+
+pDeclarations :: [Parser Ast]
+pDeclarations =
+    [ pImport
     , pStruct
     , pFunc
-    , pReturn
+    ]
+
+pBasic:: [Parser Ast]
+pBasic =
+    [ pReturn
     , try pVarDef 
     , pExpr <* semicolon 
     ]
+
+pStatement :: Parser Ast
+pStatement = choice (pControlFlow ++ pDeclarations ++ pBasic)
 
 -- | Main entry point for the parser.
 --

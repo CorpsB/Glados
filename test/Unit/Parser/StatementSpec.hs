@@ -405,3 +405,17 @@ spec = describe "Parser - Statement & Expression" $ do
                         Just (Call (ASymbol s) _) -> s == p "+"
                         _ -> False)
                 _ -> False
+    
+    describe "Import Statements" $ do
+        
+        it "Parses import statement" $ do
+            let code = "import \"std/math.gld\";"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Import path] -> path == p "std/math.gld"
+                _ -> False
+
+        it "Parses import with complex path" $ do
+            let code = "import \"../lib/utils_v2.gld\";"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Import path] -> path == p "../lib/utils_v2.gld"
+                _ -> False
