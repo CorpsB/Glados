@@ -81,6 +81,19 @@ builtinModulo [AInteger x, AInteger y] =
 builtinModulo args = Left $ DT.pack $ "*** ERROR: 'mod' expects two " ++
     "integers, got: " ++ show args
 
+builtinNth :: [Ast] -> Either DT.Text Ast
+builtinNth [AList list, AInteger index] =
+    let idx = fromIntegral (toInt64 index)
+    in if idx >= 0 && idx < length list
+       then Right (list !! idx)
+       else Left $ DT.pack $ "*** ERROR: Index out of bounds: " ++ show idx
+builtinNth [AList _, val] = Left $ DT.pack $
+    "*** ERROR: 'nth' expects an integer index, got: " ++ show val
+builtinNth [val, _] = Left $ DT.pack $
+    "*** ERROR: 'nth' expects a list, got: " ++ show val
+builtinNth args = Left $ DT.pack $
+    "*** ERROR: 'nth' expects list and index, got: " ++ show args
+
 mathOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
 mathOps =
     [ (DT.pack "+", builtinAddition)
@@ -97,19 +110,27 @@ logicOps =
     , (DT.pack ">", builtinGreaterThan)
     , (DT.pack "&&", builtinAnd)
     , (DT.pack "||", builtinOr)
+    , (DT.pack "!", builtinNot)
+    ]
+
+listCreationOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+listCreationOps =
+    [ (DT.pack "list", builtinList)
+    , (DT.pack "cons", builtinCons)
+    , (DT.pack "append", builtinAppend)
+    ]
+
+listQueryOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+listQueryOps =
+    [ (DT.pack "car", builtinCar)
+    , (DT.pack "cdr", builtinCdr)
+    , (DT.pack "list?", builtinIsList)
+    , (DT.pack "length", builtinLength)
+    , (DT.pack "nth", builtinNth)
     ]
 
 listOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
-listOps =
-    [ (DT.pack "list", builtinList)
-    , (DT.pack "cons", builtinCons)
-    , (DT.pack "car", builtinCar)
-    , (DT.pack "cdr", builtinCdr)
-    , (DT.pack "list?", builtinIsList)
-    , (DT.pack "append", builtinAppend)
-    , (DT.pack "length", builtinLength)
-    , (DT.pack "!", builtinNot)
-    ]
+listOps = listCreationOps ++ listQueryOps
 
 builtinsTable :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
 builtinsTable = mathOps ++ logicOps ++ listOps

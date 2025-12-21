@@ -39,6 +39,13 @@ pInteger = (lexeme $ do
     val <- L.decimal
     return (AInteger (fitInteger val))) <?> "integer"
 
+pIndexSuffix :: Parser (Ast -> Ast)
+pIndexSuffix = do
+    _ <- symbol (DT.pack "[")
+    indexExpr <- pExpr
+    _ <- symbol (DT.pack "]")
+    return (\arr -> Call (ASymbol (DT.pack "nth")) [arr, indexExpr])
+
 -- | Parse a boolean literal (True or False).
 pBool :: Parser Ast
 pBool = lexeme (choice
@@ -95,8 +102,8 @@ pVarOrCall = do
 --
 -- A term is the basic unit of an expression, such as literals,
 -- variables, function calls, or parenthesized sub-expressions.
-pTerm :: Parser Ast
-pTerm = choice
+pTermBase :: Parser Ast
+pTermBase = choice
     [ parens pExpr
     , pInteger
     , pBool
@@ -105,6 +112,12 @@ pTerm = choice
     , pListLiteral
     , pVarOrCall
     ]
+
+pTerm :: Parser Ast
+pTerm = do
+    base <- pTermBase
+    suffixes <- many pIndexSuffix
+    return (foldl (\acc f -> f acc) base suffixes)
 
 -- | Helper to create a binary operator AST node.
 --
@@ -168,10 +181,10 @@ decrementOps other = Call (ASymbol (DT.pack "--")) [other]
 
 -- | Combined operator table for expression parsing.
 --
--- Defines the precedence order: Multiplicative > Additive > Comparison > AND > OR.
+-- Defines the precedence order: Access ([]) > Unaire (!) > Math > Comparaison > AND > OR
 opTable :: [[Operator Parser Ast]]
-opTable = [sugarSyntOps, multiplicativeOps, additiveOps, comparisonOps,
-    logicalAndOps, logicalOrOps]
+opTable = [sugarSyntOps, multiplicativeOps, additiveOps,
+    comparisonOps, logicalAndOps, logicalOrOps]
 
 -- | Main expression parser.
 --

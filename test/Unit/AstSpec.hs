@@ -6,11 +6,12 @@
 -}
 
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module AstSpec (spec) where
 
 import Test.Hspec
-import AST.Ast (Ast(..))
+import AST.Ast (Ast(..), showAst, printAst)
 import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 
@@ -72,3 +73,36 @@ spec = describe "AST - Data Structure" $ do
     describe "Show Instance (String representation)" $ do
         it "Correctly formats AInteger with IntValue type" $ do
             show (AInteger (I8 42)) `shouldSatisfy` (== "AInteger (I8 42)")
+    
+    describe "Display Functions (Coverage)" $ do
+        
+        describe "showAst" $ do
+            it "Formats Integers" $ do
+                showAst (AInteger (I8 42)) `shouldSatisfy` (== "42")
+
+            it "Formats Booleans" $ do
+                showAst (ABool True) `shouldSatisfy` (== "#t")
+                showAst (ABool False) `shouldSatisfy` (== "#f")
+
+            it "Formats Symbols" $ do
+                showAst (ASymbol (DT.pack "sym")) `shouldSatisfy` (== "sym")
+
+            it "Formats Lists (S-Expressions style)" $ do
+                let list = AList [ASymbol (DT.pack "define"), ASymbol (DT.pack "x")]
+                showAst list `shouldSatisfy` (== "(define x)")
+
+            it "Formats Closures" $ do
+                let closure = Closure [] AVoid []
+                showAst closure `shouldSatisfy` (== "#\\<procedure\\>")
+
+            it "Formats Lambdas" $ do
+                let lambda = Lambda [] AVoid
+                showAst lambda `shouldSatisfy` (== "#<lambda>")
+
+            it "Formats other nodes using default Show (Fallback)" $ do
+                let node = Define (DT.pack "x") (DT.pack "int") (AInteger (I8 1))
+                showAst node `shouldSatisfy` (== show node)
+
+        describe "printAst" $ do
+            it "Executes without error (IO coverage)" $ do
+                printAst (AInteger (I8 42)) `shouldReturn` ()

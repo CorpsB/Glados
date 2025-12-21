@@ -126,6 +126,36 @@ spec = describe "Parser - Statement & Expression" $ do
                     func == p "add" && arg1 == p "x"
                 _ -> False
 
+    describe "Logic Operators" $ do
+
+        it "Parses logical AND (&&)" $ do
+            let code = "a && b;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Call (ASymbol op) [ASymbol a, ASymbol b]] -> 
+                    op == p "&&" && a == p "a" && b == p "b"
+                _ -> False
+
+        it "Parses logical OR (||)" $ do
+            let code = "a || b;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Call (ASymbol op) [ASymbol a, ASymbol b]] -> 
+                    op == p "||" && a == p "a" && b == p "b"
+                _ -> False
+
+        it "Parses unary NOT (!)" $ do
+            let code = "!x;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Call (ASymbol op) [ASymbol x]] -> 
+                    op == p "!" && x == p "x"
+                _ -> False
+
+        it "Respects logic precedence (! before &&)" $ do
+            let code = "!a && b;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Call (ASymbol opAnd) [Call (ASymbol opNot) [ASymbol a], ASymbol b]] -> 
+                    opAnd == p "&&" && opNot == p "!" && a == p "a" && b == p "b"
+                _ -> False
+
     describe "Function Definitions" $ do
 
         it "Parses simple function with return type" $ do
@@ -187,6 +217,19 @@ spec = describe "Parser - Statement & Expression" $ do
                         _ -> False
                 _ -> False
     
+        it "Parses ++ on non-variable (literal) as a function call" $ do
+            let code = "++5;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Call (ASymbol op) [AInteger (I8 5)]] -> op == p "++"
+                _ -> False
+
+        it "Parses -- on expression as a function call" $ do
+            let code = "--(x + 1);"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Call (ASymbol op) [Call (ASymbol plus) _]] -> 
+                    op == p "--" && plus == p "+"
+                _ -> False
+
     describe "Compound Assignment Operators" $ do
         
         it "Parses += as addition (x = x + 5)" $ do
@@ -223,4 +266,38 @@ spec = describe "Parser - Statement & Expression" $ do
                     name == p "w" && 
                     (case op of ASymbol s -> s == p "div"; _ -> False) &&
                     (case arg1 of ASymbol s -> s == p "w"; _ -> False)
+                _ -> False
+
+    describe "Array Indexing (Postfix)" $ do
+        
+        it "Parses simple indexing: arr[0]" $ do
+            let code = "x = arr[0];"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (Call nthOp [arrArg, idxArg])] -> 
+                    (case nthOp of ASymbol s -> s == p "nth"; _ -> False) &&
+                    (case arrArg of ASymbol s -> s == p "arr"; _ -> False) &&
+                    (case idxArg of AInteger (I8 0) -> True; _ -> False)
+                _ -> False
+
+        it "Parses nested indexing: matrix[x][y]" $ do
+            let code = "val = matrix[x][y];"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (Call nthOuter [innerCall, idxY])] -> 
+                    (case nthOuter of ASymbol s -> s == p "nth"; _ -> False) &&
+                    (case idxY of ASymbol s -> s == p "y"; _ -> False) &&
+                    (case innerCall of 
+                        Call nthInner [matrixArg, idxX] ->
+                            (case nthInner of ASymbol s -> s == p "nth"; _ -> False) &&
+                            (case matrixArg of ASymbol s -> s == p "matrix"; _ -> False) &&
+                            (case idxX of ASymbol s -> s == p "x"; _ -> False)
+                        _ -> False)
+                _ -> False
+
+        it "Parses indexing on expression: [1, 2][0]" $ do
+            let code = "first = [1, 2][0];"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (Call nthOp [listArg, idxArg])] -> 
+                    (case nthOp of ASymbol s -> s == p "nth"; _ -> False) &&
+                    (case listArg of AList _ -> True; _ -> False) &&
+                    (case idxArg of AInteger (I8 0) -> True; _ -> False)
                 _ -> False
