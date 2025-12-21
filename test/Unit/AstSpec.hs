@@ -14,6 +14,10 @@ import Test.Hspec
 import AST.Ast (Ast(..), showAst, printAst)
 import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
+import Data.List (isInfixOf)
+
+p :: String -> DT.Text
+p = DT.pack
 
 spec :: Spec
 spec = describe "AST - Data Structure" $ do
@@ -105,4 +109,17 @@ spec = describe "AST - Data Structure" $ do
 
         describe "printAst" $ do
             it "Executes without error (IO coverage)" $ do
+                printAst (AInteger (I8 42)) `shouldReturn` ()
+
+        describe "Coverage: Display Functions" $ do
+        
+            it "showAst: Formats all types" $ do
+                showAst (AInteger (I8 1)) `shouldSatisfy` (== "1")
+                showAst (ABool True) `shouldSatisfy` (== "#t")
+                showAst (ASymbol (p "s")) `shouldSatisfy` (== "s")
+                showAst (Closure [] AVoid []) `shouldSatisfy` (== "#\\<procedure\\>")
+                showAst (Lambda [] AVoid) `shouldSatisfy` (== "#<lambda>")
+                showAst (Define (p "x") (p "int") (AInteger (I8 1))) `shouldSatisfy` (\s -> "Define" `isInfixOf` s)
+
+            it "printAst: Executes IO" $ do
                 printAst (AInteger (I8 42)) `shouldReturn` ()

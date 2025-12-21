@@ -332,3 +332,51 @@ spec = describe "Builtins Coverage 100%" $ do
                 execBuiltin (p "update") [list, AInteger (I8 5), AInteger (I8 99)] `shouldSatisfy` \case
                     Left err -> "Index out of bounds" `isInfixOf` DT.unpack err
                     _ -> False
+
+        describe "Coverage: Error Handling on Builtins" $ do
+        
+            describe "Argument Count Mismatches" $ do
+                it "eq? fails with 1 arg" $ do
+                    execBuiltin (p "eq?") [AInteger (I8 1)] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "&& fails with 1 arg" $ do
+                    execBuiltin (p "&&") [ABool True] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "|| fails with 1 arg" $ do
+                    execBuiltin (p "||") [ABool True] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "! fails with 2 args" $ do
+                    execBuiltin (p "!") [ABool True, ABool False] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "+ fails with 1 arg" $ do
+                    execBuiltin (p "+") [AInteger (I8 1)] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "div fails with 1 arg" $ do
+                    execBuiltin (p "div") [AInteger (I8 1)] `shouldSatisfy` \case Left _ -> True; _ -> False
+
+            describe "List Functions Edge Cases" $ do
+                
+                it "nth: Index out of bounds" $ do
+                    let l = AList [AInteger (I8 1)]
+                    execBuiltin (p "nth") [l, AInteger (I8 5)] `shouldSatisfy` \case 
+                        Left err -> "Index out of bounds" `isInfixOf` DT.unpack err
+                        _ -> False
+                
+                it "nth: Invalid index type" $ do
+                    let l = AList []
+                    execBuiltin (p "nth") [l, ABool True] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "nth: First arg not a list" $ do
+                    execBuiltin (p "nth") [AInteger (I8 1), AInteger (I8 0)] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "nth: Argument count" $ do
+                    execBuiltin (p "nth") [AList []] `shouldSatisfy` \case Left _ -> True; _ -> False
+
+                it "update: Argument count mismatch" $ do
+                    execBuiltin (p "update") [AList [], AInteger (I8 0)] `shouldSatisfy` \case 
+                        Left err -> "expects [list, index, value]" `isInfixOf` DT.unpack err
+                        _ -> False
+                
+                it "update: Index out of bounds" $ do
+                    let l = AList [AInteger (I8 1)]
+                    execBuiltin (p "update") [l, AInteger (I8 5), AInteger (I8 9)] `shouldSatisfy` \case 
+                        Left err -> "Index out of bounds" `isInfixOf` DT.unpack err
+                        _ -> False
+
+                it "length: Success on valid list" $ do
+                    execBuiltin (p "length") [AList [AInteger (I8 1), AInteger (I8 2)]] `shouldSatisfy` \case
+                        Right (AInteger (I8 2)) -> True
+                        _ -> False
