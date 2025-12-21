@@ -189,7 +189,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses return statement" $ do
             let code = "ret 42;"
             parseALL (p code) `shouldSatisfy` \case
-                Right [AInteger (I8 42)] -> True
+                Right [Return (AInteger (I8 42))] -> True
                 _ -> False
 
     describe "Unary Operators (Increment/Decrement)" $ do

@@ -72,7 +72,7 @@ pReturn = do
     _ <- pKeyword (DT.pack "ret")
     val <- pExpr
     _ <- semicolon
-    return val
+    return (Return val)
 
 -- | Parse a block of code enclosed in braces.
 --
