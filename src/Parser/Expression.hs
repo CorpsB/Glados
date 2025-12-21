@@ -82,6 +82,13 @@ pListLiteral = (do
     _ <- symbol (DT.pack "]")
     return (AList exprs)) <?> "list"
 
+pMemberSuffix :: Parser (Ast -> Ast)
+pMemberSuffix = do
+    _ <- symbol (DT.pack ".")
+    fieldName <- pIdentifier
+    let fieldNameAst = AList (map (AInteger . IChar) (DT.unpack fieldName))
+    return (\obj -> Call (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
+
 -- | Parse a variable or a function call.
 --
 -- Distinguishes between the two by checking for parentheses after the identifier:
@@ -116,7 +123,7 @@ pTermBase = choice
 pTerm :: Parser Ast
 pTerm = do
     base <- pTermBase
-    suffixes <- many pIndexSuffix
+    suffixes <- many (choice [pIndexSuffix, pMemberSuffix])
     return (foldl (\acc f -> f acc) base suffixes)
 
 -- | Helper to create a binary operator AST node.

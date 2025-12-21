@@ -355,3 +355,34 @@ spec = describe "Parser - Statement & Expression" $ do
             parseALL (p code) `shouldSatisfy` \case
                 Right [Struct name fields] -> name == p "Empty" && null fields
                 _ -> False
+
+    describe "Struct Member Access (Dot Operator)" $ do
+        
+        it "Parses simple member access: p.x" $ do
+            let code = "val = p.x;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (Call getField [objArg, fieldArg])] -> 
+                    (case getField of ASymbol s -> s == p "get_field"; _ -> False) &&
+                    (case objArg of ASymbol s -> s == p "p"; _ -> False) &&
+                    (case fieldArg of AList [AInteger (IChar 'x')] -> True; _ -> False)
+                _ -> False
+
+        it "Parses nested access: user.profile.id" $ do
+            let code = "id = user.profile.id;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (Call outerGet [innerCall, _])] -> 
+                    (case outerGet of ASymbol s -> s == p "get_field"; _ -> False) &&
+                    (case innerCall of 
+                        Call innerGet [userArg, _] ->
+                            (case innerGet of ASymbol s -> s == p "get_field"; _ -> False) &&
+                            (case userArg of ASymbol s -> s == p "user"; _ -> False)
+                        _ -> False)
+                _ -> False
+
+        it "Parses mixed array and member access: users[0].name" $ do
+            let code = "name = users[0].name;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (Call getField [nthCall, _])] -> 
+                    (case getField of ASymbol s -> s == p "get_field"; _ -> False) &&
+                    (case nthCall of Call (ASymbol nth) _ -> nth == p "nth"; _ -> False)
+                _ -> False
