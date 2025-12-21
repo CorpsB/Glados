@@ -101,6 +101,8 @@ test-suite glados-unit
       Compiler.PsInstructionSpec
       Compiler.CompilerStateSpec
       Compiler.ASM.CompilerMonadSpec
+      Compiler.ASM.CompilerSpec
+      Compiler.ASM.AstToAsmSpec
   build-depends:
       base >= 4.7 && < 5
     , glados

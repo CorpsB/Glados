@@ -6,6 +6,8 @@ import qualified Compiler.InstructionSpec
 import qualified Compiler.PsInstructionSpec
 import qualified Compiler.CompilerStateSpec
 import qualified Compiler.ASM.CompilerMonadSpec
+import qualified Compiler.ASM.AstToAsmSpec
+import qualified Compiler.ASM.CompilerSpec
 
 import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
@@ -48,3 +50,5 @@ spec = do
     Compiler.PsInstructionSpec.spec
     Compiler.CompilerStateSpec.spec
     Compiler.ASM.CompilerMonadSpec.spec
+    Compiler.ASM.AstToAsmSpec.spec
+    Compiler.ASM.CompilerSpec.spec
