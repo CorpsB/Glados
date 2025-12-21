@@ -186,3 +186,41 @@ spec = describe "Parser - Statement & Expression" $ do
                         Define x _ _ -> x == p "x"
                         _ -> False
                 _ -> False
+    
+    describe "Compound Assignment Operators" $ do
+        
+        it "Parses += as addition (x = x + 5)" $ do
+            let code = "x += 5;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define name _ (Call op [arg1, _])] -> 
+                    name == p "x" && 
+                    (case op of ASymbol s -> s == p "+"; _ -> False) &&
+                    (case arg1 of ASymbol s -> s == p "x"; _ -> False)
+                _ -> False
+
+        it "Parses -= as subtraction (y -= 2)" $ do
+            let code = "y -= 2;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define name _ (Call op [arg1, _])] -> 
+                    name == p "y" && 
+                    (case op of ASymbol s -> s == p "-"; _ -> False) &&
+                    (case arg1 of ASymbol s -> s == p "y"; _ -> False)
+                _ -> False
+
+        it "Parses *= as multiplication (z *= 10)" $ do
+            let code = "z *= 10;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define name _ (Call op [arg1, _])] -> 
+                    name == p "z" && 
+                    (case op of ASymbol s -> s == p "*"; _ -> False) &&
+                    (case arg1 of ASymbol s -> s == p "z"; _ -> False)
+                _ -> False
+
+        it "Parses /= as division (w /= 2)" $ do
+            let code = "w /= 2;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define name _ (Call op [arg1, _])] -> 
+                    name == p "w" && 
+                    (case op of ASymbol s -> s == p "div"; _ -> False) &&
+                    (case arg1 of ASymbol s -> s == p "w"; _ -> False)
+                _ -> False

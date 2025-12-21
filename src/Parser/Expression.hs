@@ -156,12 +156,14 @@ logicalOrOps =
 
 incrementOps :: Ast -> Ast
 incrementOps (ASymbol name) = 
-    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "+")) [ASymbol name, AInteger (fitInteger 1)])
+    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "+"))
+        [ASymbol name, AInteger (fitInteger 1)])
 incrementOps other = Call (ASymbol (DT.pack "++")) [other]
 
 decrementOps :: Ast -> Ast
 decrementOps (ASymbol name) = 
-    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "-")) [ASymbol name, AInteger (fitInteger 1)])
+    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "-"))
+        [ASymbol name, AInteger (fitInteger 1)])
 decrementOps other = Call (ASymbol (DT.pack "--")) [other]
 
 -- | Combined operator table for expression parsing.

@@ -98,6 +98,18 @@ pFunc = do
     body <- pBlock
     return (DefineFun name args retType body)
 
+makeOpCall :: DT.Text -> DT.Text -> Ast -> Ast
+makeOpCall op name expr = Call (ASymbol op) [ASymbol name, expr]
+
+pAssignOp :: DT.Text -> Parser (Ast -> Ast)
+pAssignOp name = choice
+    [ (\e -> e) <$ symbol (DT.pack "=")
+    , makeOpCall (DT.pack "+") name <$ symbol (DT.pack "+=")
+    , makeOpCall (DT.pack "-") name <$ symbol (DT.pack "-=")
+    , makeOpCall (DT.pack "*") name <$ symbol (DT.pack "*=")
+    , makeOpCall (DT.pack "div") name <$ symbol (DT.pack "/=")
+    ]
+
 -- | Parse a variable definition (declaration or assignment).
 --
 -- Syntax: name: type = value; or name = value;
@@ -106,11 +118,11 @@ pVarDef :: Parser Ast
 pVarDef = do
     name <- pIdentifier
     varType <- optional (symbol (DT.pack ":") >> pType)
-    _ <- symbol (DT.pack "=")
+    makeValue <- pAssignOp name
     val <- pExpr
     _ <- semicolon
     let finalType = maybe (DT.pack "auto") id varType
-    return (Define name finalType val)
+    return (Define name finalType (makeValue val))
 
 -- | Parse a single statement.
 --
