@@ -28,6 +28,7 @@ data Ast
     | While Ast Ast
     | For Ast Ast Ast Ast
     | Struct DT.Text [(DT.Text, DT.Text)]
+    | New DT.Text [(DT.Text, Ast)]
     deriving Show
 
 showAst :: Ast -> String

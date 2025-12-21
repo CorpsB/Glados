@@ -105,13 +105,28 @@ pVarOrCall = do
         , return (ASymbol name)
         ]
 
+pFieldInit :: Parser (DT.Text, Ast)
+pFieldInit = do
+    name <- pIdentifier
+    _ <- symbol (DT.pack ":")
+    val <- pExpr
+    return (name, val)
+
+pNew :: Parser Ast
+pNew = do
+    _ <- pKeyword (DT.pack "new")
+    className <- pIdentifier
+    fields <- braces (pFieldInit `sepBy` comma)
+    return (New className fields)
+
 -- | Parse a term in an expression.
 --
 -- A term is the basic unit of an expression, such as literals,
 -- variables, function calls, or parenthesized sub-expressions.
 pTermBase :: Parser Ast
 pTermBase = choice
-    [ parens pExpr
+    [ try pNew
+    , parens pExpr
     , pInteger
     , pBool
     , pChar

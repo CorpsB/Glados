@@ -386,3 +386,22 @@ spec = describe "Parser - Statement & Expression" $ do
                     (case getField of ASymbol s -> s == p "get_field"; _ -> False) &&
                     (case nthCall of Call (ASymbol nth) _ -> nth == p "nth"; _ -> False)
                 _ -> False
+
+    describe "Struct Instantiation (new)" $ do
+        
+        it "Parses simple instantiation" $ do
+            let code = "p = new Point { x: 10, y: 20 };"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (New name fields)] -> 
+                    name == p "Point" && length fields == 2
+                _ -> False
+
+        it "Parses instantiation with expressions" $ do
+            let code = "c = new Circle { r: 5 + 5, origin: p };"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define _ _ (New name fields)] -> 
+                    name == p "Circle" &&
+                    (case lookup (p "r") fields of
+                        Just (Call (ASymbol s) _) -> s == p "+"
+                        _ -> False)
+                _ -> False

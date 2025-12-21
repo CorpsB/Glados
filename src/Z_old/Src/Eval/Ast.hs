@@ -78,6 +78,11 @@ evalAST ftable env (Call func args) = do
         _ -> execExprCall ftable env func evalArgs
 evalAST _ _ (Import _) = Left $ DT.pack
     "*** ERROR: 'Import' is not supported in interpreter mode"
+evalAST ftable env (New name fields) = do
+    evaluatedFields <- mapM (\(fName, fExpr) -> do
+        val <- evalAST ftable env fExpr
+        return (fName, val)) fields
+    Right (New name evaluatedFields)
 
 lookupEnv :: Env -> DT.Text -> Maybe Ast
 lookupEnv [] _ = Nothing
@@ -106,3 +111,4 @@ evalASTEnv ftable env (Condition c t e) = evalAST ftable env (Condition c t e)
 evalASTEnv ftable env (While c b) = evalAST ftable env (While c b)
 evalASTEnv ftable env (For i c u b) = evalAST ftable env (For i c u b)
 evalASTEnv ftable env (Import i) = evalAST ftable env (Import i)
+evalASTEnv ftable env (New name fields) = evalAST ftable env (New name fields)
