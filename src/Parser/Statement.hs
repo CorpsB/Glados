@@ -110,6 +110,36 @@ pAssignOp name = choice
     , makeOpCall (DT.pack "div") name <$ symbol (DT.pack "/=")
     ]
 
+buildUpdateChain :: DT.Text -> [Ast] -> Ast -> Ast
+buildUpdateChain name indices finalVal =
+        foldUpdate (ASymbol name) indices finalVal
+    where
+        foldUpdate base [idx] val = 
+            Call (ASymbol (DT.pack "update")) [base, idx, val]
+        foldUpdate base (idx:rest) val =
+            let inner = Call (ASymbol (DT.pack "nth")) [base, idx]
+                newVal = foldUpdate inner rest val
+            in Call (ASymbol (DT.pack "update")) [base, idx, newVal]
+        foldUpdate _ [] _ = error "Should not happen in buildUpdateChain"
+
+
+pSimpleDef :: DT.Text -> Parser Ast
+pSimpleDef name = do
+    varType <- optional (symbol (DT.pack ":") >> pType)
+    makeValue <- pAssignOp name
+    val <- pExpr
+    _ <- semicolon
+    let finalType = maybe (DT.pack "auto") id varType
+    return (Define name finalType (makeValue val))
+
+pArrayUpdate :: DT.Text -> [Ast] -> Parser Ast
+pArrayUpdate name indices = do
+    _ <- symbol (DT.pack "=")
+    val <- pExpr
+    _ <- semicolon
+    let updateExpr = buildUpdateChain name indices val
+    return (Define name (DT.pack "auto") updateExpr)
+
 -- | Parse a variable definition (declaration or assignment).
 --
 -- Syntax: name: type = value; or name = value;
@@ -117,12 +147,10 @@ pAssignOp name = choice
 pVarDef :: Parser Ast
 pVarDef = do
     name <- pIdentifier
-    varType <- optional (symbol (DT.pack ":") >> pType)
-    makeValue <- pAssignOp name
-    val <- pExpr
-    _ <- semicolon
-    let finalType = maybe (DT.pack "auto") id varType
-    return (Define name finalType (makeValue val))
+    indices <- many (symbol (DT.pack "[") *> pExpr <* symbol (DT.pack "]"))
+    if null indices
+        then pSimpleDef name
+        else pArrayUpdate name indices
 
 -- | Parse a single statement.
 --

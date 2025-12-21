@@ -94,6 +94,19 @@ builtinNth [val, _] = Left $ DT.pack $
 builtinNth args = Left $ DT.pack $
     "*** ERROR: 'nth' expects list and index, got: " ++ show args
 
+builtinUpdate :: [Ast] -> Either DT.Text Ast
+builtinUpdate [AList list, AInteger index, val] =
+    let idx = fromIntegral (toInt64 index)
+    in if idx >= 0 && idx < length list
+       then let (left, right) = splitAt idx list
+            in case right of
+                (_:rest) -> Right (AList (left ++ [val] ++ rest))
+                [] -> Left $ DT.pack
+                    "*** ERROR: Index out of bounds (logic error)"
+       else Left $ DT.pack $ "*** ERROR: Index out of bounds: " ++ show idx
+builtinUpdate args = Left $ DT.pack $
+    "*** ERROR: 'update' expects [list, index, value], got: " ++ show args
+
 mathOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
 mathOps =
     [ (DT.pack "+", builtinAddition)
@@ -118,6 +131,7 @@ listCreationOps =
     [ (DT.pack "list", builtinList)
     , (DT.pack "cons", builtinCons)
     , (DT.pack "append", builtinAppend)
+    , (DT.pack "update", builtinUpdate)
     ]
 
 listQueryOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]

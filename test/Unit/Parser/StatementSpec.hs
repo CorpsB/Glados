@@ -301,3 +301,33 @@ spec = describe "Parser - Statement & Expression" $ do
                     (case listArg of AList _ -> True; _ -> False) &&
                     (case idxArg of AInteger (I8 0) -> True; _ -> False)
                 _ -> False
+    
+    describe "Array Modification" $ do
+        
+        it "Parses array assignment: arr[0] = 5" $ do
+            let code = "arr[0] = 5;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define name _ (Call updateOp [arrArg, idxArg, valArg])] -> 
+                    name == p "arr" &&
+                    (case updateOp of ASymbol s -> s == p "update"; _ -> False) &&
+                    (case arrArg of ASymbol s -> s == p "arr"; _ -> False) &&
+                    (case idxArg of AInteger (I8 0) -> True; _ -> False) &&
+                    (case valArg of AInteger (I8 5) -> True; _ -> False)
+                _ -> False
+
+        it "Parses nested array assignment: mat[1][2] = 9" $ do
+            let code = "mat[1][2] = 9;"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Define name _ (Call outerUpdate [matArg, idx1, innerUpdate])] -> 
+                    name == p "mat" &&
+                    (case outerUpdate of ASymbol s -> s == p "update"; _ -> False) &&
+                    (case matArg of ASymbol s -> s == p "mat"; _ -> False) &&
+                    (case idx1 of AInteger (I8 1) -> True; _ -> False) &&
+                    (case innerUpdate of 
+                        Call innerOp [nthCall, idx2, valArg] ->
+                            (case innerOp of ASymbol s -> s == p "update"; _ -> False) &&
+                            (case nthCall of Call (ASymbol nth) _ -> nth == p "nth"; _ -> False) &&
+                            (case idx2 of AInteger (I8 2) -> True; _ -> False) &&
+                            (case valArg of AInteger (I8 9) -> True; _ -> False)
+                        _ -> False)
+                _ -> False

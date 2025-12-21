@@ -319,3 +319,16 @@ spec = describe "Builtins Coverage 100%" $ do
                 execBuiltin (DT.pack "!") [AInteger (I8 1)] `shouldSatisfy` \case
                     Left _ -> True
                     _ -> False
+
+        describe "List Modification (update)" $ do
+            it "Updates value at index" $ do
+                let list = AList [AInteger (I8 1), AInteger (I8 2), AInteger (I8 3)]
+                execBuiltin (p "update") [list, AInteger (I8 1), AInteger (I8 99)] `shouldSatisfy` \case
+                    Right (AList [AInteger (I8 1), AInteger (I8 99), AInteger (I8 3)]) -> True
+                    _ -> False
+
+            it "Returns error on index out of bounds" $ do
+                let list = AList [AInteger (I8 1)]
+                execBuiltin (p "update") [list, AInteger (I8 5), AInteger (I8 99)] `shouldSatisfy` \case
+                    Left err -> "Index out of bounds" `isInfixOf` DT.unpack err
+                    _ -> False
