@@ -27,8 +27,23 @@ import Z_old.Src.Type.Integer (fitInteger, IntValue(..))
 import qualified Text.Megaparsec.Char.Lexer as L
 import Parser.Lexer
 
+-- | Helper to create a prefix unary operator AST node.
+--
+-- Wraps the operand in a function call (e.g., !x -> Call "!" [x]).
 prefix :: DT.Text -> (Ast -> Ast)
 prefix name = \a -> Call (ASymbol name) [a]
+
+-- | Parse a structure member access suffix.
+--
+-- Example: .field
+-- Returns a function that wraps the preceding expression in a 'get_field' call.
+-- The field name is converted to a list of characters string for the AST.
+pMemberSuffix :: Parser (Ast -> Ast)
+pMemberSuffix = do
+    _ <- symbol (DT.pack ".")
+    fieldName <- pIdentifier
+    let fieldNameAst = AList (map (AInteger . IChar) (DT.unpack fieldName))
+    return (\obj -> Call (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
 
 -- | Parse a decimal integer.
 --
@@ -39,6 +54,10 @@ pInteger = (lexeme $ do
     val <- L.decimal
     return (AInteger (fitInteger val))) <?> "integer"
 
+-- | Parse an array index suffix.
+--
+-- Example: [i]
+-- Returns a function that wraps the preceding expression in a 'nth' call.
 pIndexSuffix :: Parser (Ast -> Ast)
 pIndexSuffix = do
     _ <- symbol (DT.pack "[")
@@ -82,13 +101,6 @@ pListLiteral = (do
     _ <- symbol (DT.pack "]")
     return (AList exprs)) <?> "list"
 
-pMemberSuffix :: Parser (Ast -> Ast)
-pMemberSuffix = do
-    _ <- symbol (DT.pack ".")
-    fieldName <- pIdentifier
-    let fieldNameAst = AList (map (AInteger . IChar) (DT.unpack fieldName))
-    return (\obj -> Call (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
-
 -- | Parse a variable or a function call.
 --
 -- Distinguishes between the two by checking for parentheses after the identifier:
@@ -105,6 +117,9 @@ pVarOrCall = do
         , return (ASymbol name)
         ]
 
+-- | Parse a field initialization within a 'new' expression.
+--
+-- Syntax: fieldName: value
 pFieldInit :: Parser (DT.Text, Ast)
 pFieldInit = do
     name <- pIdentifier
@@ -112,6 +127,9 @@ pFieldInit = do
     val <- pExpr
     return (name, val)
 
+-- | Parse a structure instantiation.
+--
+-- Syntax: new ClassName { field1: val1, ... }
 pNew :: Parser Ast
 pNew = do
     _ <- pKeyword (DT.pack "new")
@@ -135,6 +153,10 @@ pTermBase = choice
     , pVarOrCall
     ]
 
+-- | Parse a term followed by optional suffixes.
+--
+-- Handles chaining of array indexing and member access.
+-- Example: arr[0].x parses 'arr', then applies '[0]', then applies '.x'.
 pTerm :: Parser Ast
 pTerm = do
     base <- pTermBase
@@ -147,6 +169,9 @@ pTerm = do
 binary :: DT.Text -> (Ast -> Ast -> Ast)
 binary name = \a b -> Call (ASymbol name) [a, b]
 
+-- | Table of syntactic sugar prefix operators.
+--
+-- Includes logical NOT (!), increment (++), and decrement (--).
 sugarSyntOps :: [Operator Parser Ast]
 sugarSyntOps =
     [ Prefix (prefix (DT.pack "!") <$ symbol (DT.pack "!"))
@@ -189,12 +214,22 @@ logicalOrOps :: [Operator Parser Ast]
 logicalOrOps =
     [ InfixL (binary (DT.pack "||") <$ symbol (DT.pack "||")) ]
 
+-- | Handle the increment operator (++).
+--
+-- If applied to a variable (ASymbol), transforms it into an assignment:
+-- x = x + 1 (using 'auto' type inference).
+-- Otherwise, treats it as a standard function call to "++".
 incrementOps :: Ast -> Ast
 incrementOps (ASymbol name) = 
     Define name (DT.pack "auto") (Call (ASymbol (DT.pack "+"))
         [ASymbol name, AInteger (fitInteger 1)])
 incrementOps other = Call (ASymbol (DT.pack "++")) [other]
 
+-- | Handle the decrement operator (--).
+--
+-- If applied to a variable (ASymbol), transforms it into an assignment:
+-- x = x - 1 (using 'auto' type inference).
+-- Otherwise, treats it as a standard function call to "--".
 decrementOps :: Ast -> Ast
 decrementOps (ASymbol name) = 
     Define name (DT.pack "auto") (Call (ASymbol (DT.pack "-"))

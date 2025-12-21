@@ -100,9 +100,17 @@ pFunc = do
     body <- pBlock
     return (DefineFun name args retType body)
 
+-- | Helper to construct a binary operator call for compound assignments.
+--
+-- Used for +=, -=, *=, /= to transform 'x += 1' into 'x = x + 1'.
 makeOpCall :: DT.Text -> DT.Text -> Ast -> Ast
 makeOpCall op name expr = Call (ASymbol op) [ASymbol name, expr]
 
+-- | Parse assignment operators and return a transformation function.
+--
+-- Supports:
+-- * Standard assignment (=) -> returns identity
+-- * Compound assignment (+=, -=, *=, /=) -> returns transformation logic
 pAssignOp :: DT.Text -> Parser (Ast -> Ast)
 pAssignOp name = choice
     [ (\e -> e) <$ symbol (DT.pack "=")
@@ -112,6 +120,10 @@ pAssignOp name = choice
     , makeOpCall (DT.pack "div") name <$ symbol (DT.pack "/=")
     ]
 
+-- | Recursively constructs a chain of 'update' and 'nth' calls.
+--
+-- This handles nested array modification (e.g., matrices).
+-- Transforms `arr[i][j] = val` into a nested update structure.
 buildUpdateChain :: DT.Text -> [Ast] -> Ast -> Ast
 buildUpdateChain name indices finalVal =
         foldUpdate (ASymbol name) indices finalVal
@@ -124,7 +136,10 @@ buildUpdateChain name indices finalVal =
             in Call (ASymbol (DT.pack "update")) [base, idx, newVal]
         foldUpdate _ [] _ = error "Should not happen in buildUpdateChain"
 
-
+-- | Parse a standard variable definition or assignment.
+--
+-- Handles optional type annotation.
+-- Example: x: int = 10; OR x = 10;
 pSimpleDef :: DT.Text -> Parser Ast
 pSimpleDef name = do
     varType <- optional (symbol (DT.pack ":") >> pType)
@@ -134,6 +149,10 @@ pSimpleDef name = do
     let finalType = maybe (DT.pack "auto") id varType
     return (Define name finalType (makeValue val))
 
+-- | Parse an array element assignment.
+--
+-- Example: x[0] = 10; OR matrix[1][2] = 5;
+-- Uses 'buildUpdateChain' to generate the AST.
 pArrayUpdate :: DT.Text -> [Ast] -> Parser Ast
 pArrayUpdate name indices = do
     _ <- symbol (DT.pack "=")
@@ -154,6 +173,9 @@ pVarDef = do
         then pSimpleDef name
         else pArrayUpdate name indices
 
+-- | Parse a single field definition within a structure.
+--
+-- Syntax: fieldName: type;
 pStructField :: Parser (DT.Text, DT.Text)
 pStructField = do
     name <- pIdentifier
@@ -162,6 +184,9 @@ pStructField = do
     _ <- semicolon
     return (name, fType)
 
+-- | Parse a structure definition.
+--
+-- Syntax: struct Name { fields... }
 pStruct :: Parser Ast
 pStruct = do
     _ <- pKeyword (DT.pack "struct")
@@ -169,12 +194,18 @@ pStruct = do
     fields <- braces (many pStructField)
     return (Struct name fields)
 
+-- | Parse the file path string for an import.
+--
+-- Expects a string enclosed in double quotes.
 pImportPath :: Parser DT.Text
 pImportPath = lexeme $ do
     _ <- char '"'
     content <- manyTill L.charLiteral (char '"')
     return (DT.pack content)
 
+-- | Parse an import directive.
+--
+-- Syntax: import "path/to/file";
 pImport :: Parser Ast
 pImport = do
     _ <- pKeyword (DT.pack "import")
@@ -182,6 +213,7 @@ pImport = do
     _ <- semicolon
     return (Import path)
 
+-- | Group of control flow parsers (If, While, For).
 pControlFlow :: [Parser Ast]
 pControlFlow =
     [ try (pIf pVarDef pBlock)
@@ -189,6 +221,7 @@ pControlFlow =
     , try (pFor pVarDef pBlock)
     ]
 
+-- | Group of top-level declaration parsers (Import, Struct, Func).
 pDeclarations :: [Parser Ast]
 pDeclarations =
     [ pImport
@@ -196,6 +229,7 @@ pDeclarations =
     , pFunc
     ]
 
+-- | Group of basic statement parsers (Return, Variable, Expression).
 pBasic:: [Parser Ast]
 pBasic =
     [ pReturn
@@ -203,6 +237,10 @@ pBasic =
     , pExpr <* semicolon 
     ]
 
+-- | Main statement parser.
+--
+-- Aggregates all statement types (control flow, declarations, basic instructions)
+-- into a single choice. This is the top-level parser for a line of code.
 pStatement :: Parser Ast
 pStatement = choice (pControlFlow ++ pDeclarations ++ pBasic)
 
