@@ -331,3 +331,27 @@ spec = describe "Parser - Statement & Expression" $ do
                             (case valArg of AInteger (I8 9) -> True; _ -> False)
                         _ -> False)
                 _ -> False
+    
+    describe "Struct Definitions" $ do
+        
+        it "Parses a simple struct definition" $ do
+            let code = "struct Point { x: int; y: int; }"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Struct name fields] -> 
+                    name == p "Point" &&
+                    fields == [(p "x", p "int"), (p "y", p "int")]
+                _ -> False
+
+        it "Parses a struct with mixed types" $ do
+            let code = "struct User { id: int; active: bool; name: [char]; }"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Struct name fields] -> 
+                    name == p "User" &&
+                    fields == [(p "id", p "int"), (p "active", p "bool"), (p "name", p "[char]")]
+                _ -> False
+
+        it "Parses an empty struct" $ do
+            let code = "struct Empty {}"
+            parseALL (p code) `shouldSatisfy` \case
+                Right [Struct name fields] -> name == p "Empty" && null fields
+                _ -> False

@@ -27,6 +27,7 @@ data Ast
     | Import DT.Text
     | While Ast Ast
     | For Ast Ast Ast Ast
+    | Struct DT.Text [(DT.Text, DT.Text)]
     deriving Show
 
 showAst :: Ast -> String

@@ -152,20 +152,37 @@ pVarDef = do
         then pSimpleDef name
         else pArrayUpdate name indices
 
+pStructField :: Parser (DT.Text, DT.Text)
+pStructField = do
+    name <- pIdentifier
+    _ <- colon
+    fType <- pType
+    _ <- semicolon
+    return (name, fType)
+
+pStruct :: Parser Ast
+pStruct = do
+    _ <- pKeyword (DT.pack "struct")
+    name <- pIdentifier
+    fields <- braces (many pStructField)
+    return (Struct name fields)
+
 -- | Parse a single statement.
 --
 -- Attempts to parse in order:
 -- 1. Conditional statements (if/else)
 -- 2. Loop statements (while)
 -- 3. Function definition
--- 4. Return statement
--- 5. Variable definition
--- 6. Standalone expression
+-- 4. Structure parsing
+-- 5. Return statement
+-- 6. Variable definition
+-- 7. Standalone expression
 pStatement :: Parser Ast
 pStatement = choice
     [ try (pIf pVarDef pBlock)
     , try (pWhile pBlock)
     , try (pFor pVarDef pBlock)
+    , pStruct
     , pFunc
     , pReturn
     , try pVarDef 
