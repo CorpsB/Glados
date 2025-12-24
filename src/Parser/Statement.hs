@@ -21,10 +21,13 @@ module Parser.Statement (parseALL, pStatement) where
 
 import Text.Megaparsec
 import qualified Data.Text as DT
+import Text.Megaparsec.Char (char)
+import qualified Text.Megaparsec.Char.Lexer as L
 import AST.Ast (Ast(..))
 import Parser.Lexer
 import Parser.Expression (pExpr)
 import Data.Void (Void)
+import Parser.Conditions (pIf, pWhile, pFor)
 
 -- | Parse a list type syntax (e.g., [int]).
 --
@@ -69,18 +72,17 @@ pReturn = do
     _ <- pKeyword (DT.pack "ret")
     val <- pExpr
     _ <- semicolon
-    return val
+    return (Return val)
 
 -- | Parse a block of code enclosed in braces.
 --
--- Returns the result of the last statement in the block (implicit return).
--- Fails if the block is empty.
+-- Returns an AList containing all statements, or AVoid if the block is empty.
 pBlock :: Parser Ast
 pBlock = braces $ do
     stmts <- many pStatement
     case stmts of
-        [] -> fail "Empty function body not supported yet"
-        xs -> return (last xs)
+        [] -> return AVoid
+        xs -> return (AList xs)
 
 -- | Parse a function definition.
 --
@@ -98,33 +100,149 @@ pFunc = do
     body <- pBlock
     return (DefineFun name args retType body)
 
--- | Parse a variable definition.
+-- | Helper to construct a binary operator call for compound assignments.
 --
--- Syntax: name: type = value;
--- The type annotation is optional and defaults to "undefined" if omitted.
-pVarDef :: Parser Ast
-pVarDef = do
-    name <- pIdentifier
-    varType <- option (DT.pack "undefined") (symbol (DT.pack ":") >> pType)
+-- Used for +=, -=, *=, /= to transform 'x += 1' into 'x = x + 1'.
+makeOpCall :: DT.Text -> DT.Text -> Ast -> Ast
+makeOpCall op name expr = Call (ASymbol op) [ASymbol name, expr]
+
+-- | Parse assignment operators and return a transformation function.
+--
+-- Supports:
+-- * Standard assignment (=) -> returns identity
+-- * Compound assignment (+=, -=, *=, /=) -> returns transformation logic
+pAssignOp :: DT.Text -> Parser (Ast -> Ast)
+pAssignOp name = choice
+    [ (\e -> e) <$ symbol (DT.pack "=")
+    , makeOpCall (DT.pack "+") name <$ symbol (DT.pack "+=")
+    , makeOpCall (DT.pack "-") name <$ symbol (DT.pack "-=")
+    , makeOpCall (DT.pack "*") name <$ symbol (DT.pack "*=")
+    , makeOpCall (DT.pack "div") name <$ symbol (DT.pack "/=")
+    ]
+
+-- | Recursively constructs a chain of 'update' and 'nth' calls.
+--
+-- This handles nested array modification (e.g., matrices).
+-- Transforms `arr[i][j] = val` into a nested update structure.
+buildUpdateChain :: DT.Text -> [Ast] -> Ast -> Ast
+buildUpdateChain name indices finalVal =
+        foldUpdate (ASymbol name) indices finalVal
+    where
+        foldUpdate base [idx] val = 
+            Call (ASymbol (DT.pack "update")) [base, idx, val]
+        foldUpdate base (idx:rest) val =
+            let inner = Call (ASymbol (DT.pack "nth")) [base, idx]
+                newVal = foldUpdate inner rest val
+            in Call (ASymbol (DT.pack "update")) [base, idx, newVal]
+        foldUpdate _ [] _ = error "Should not happen in buildUpdateChain"
+
+-- | Parse a standard variable definition or assignment.
+--
+-- Handles optional type annotation.
+-- Example: x: int = 10; OR x = 10;
+pSimpleDef :: DT.Text -> Parser Ast
+pSimpleDef name = do
+    varType <- optional (symbol (DT.pack ":") >> pType)
+    makeValue <- pAssignOp name
+    val <- pExpr
+    _ <- semicolon
+    let finalType = maybe (DT.pack "auto") id varType
+    return (Define name finalType (makeValue val))
+
+-- | Parse an array element assignment.
+--
+-- Example: x[0] = 10; OR matrix[1][2] = 5;
+-- Uses 'buildUpdateChain' to generate the AST.
+pArrayUpdate :: DT.Text -> [Ast] -> Parser Ast
+pArrayUpdate name indices = do
     _ <- symbol (DT.pack "=")
     val <- pExpr
     _ <- semicolon
-    return (Define name varType val)
+    let updateExpr = buildUpdateChain name indices val
+    return (Define name (DT.pack "auto") updateExpr)
 
--- | Parse a single statement.
+-- | Parse a variable definition (declaration or assignment).
 --
--- Attempts to parse in order:
--- 1. Function definition
--- 2. Return statement
--- 3. Variable definition (requires 'try' due to ambiguity with expressions)
--- 4. Standalone expression (ending with semicolon)
-pStatement :: Parser Ast
-pStatement = choice
-    [ pFunc
-    , pReturn
+-- Syntax: name: type = value; or name = value;
+-- The type annotation is optional and defaults to "auto" if omitted.
+pVarDef :: Parser Ast
+pVarDef = do
+    name <- pIdentifier
+    indices <- many (symbol (DT.pack "[") *> pExpr <* symbol (DT.pack "]"))
+    if null indices
+        then pSimpleDef name
+        else pArrayUpdate name indices
+
+-- | Parse a single field definition within a structure.
+--
+-- Syntax: fieldName: type;
+pStructField :: Parser (DT.Text, DT.Text)
+pStructField = do
+    name <- pIdentifier
+    _ <- colon
+    fType <- pType
+    _ <- semicolon
+    return (name, fType)
+
+-- | Parse a structure definition.
+--
+-- Syntax: struct Name { fields... }
+pStruct :: Parser Ast
+pStruct = do
+    _ <- pKeyword (DT.pack "struct")
+    name <- pIdentifier
+    fields <- braces (many pStructField)
+    return (Struct name fields)
+
+-- | Parse the file path string for an import.
+--
+-- Expects a string enclosed in double quotes.
+pImportPath :: Parser DT.Text
+pImportPath = lexeme $ do
+    _ <- char '"'
+    content <- manyTill L.charLiteral (char '"')
+    return (DT.pack content)
+
+-- | Parse an import directive.
+--
+-- Syntax: import "path/to/file";
+pImport :: Parser Ast
+pImport = do
+    _ <- pKeyword (DT.pack "import")
+    path <- pImportPath
+    _ <- semicolon
+    return (Import path)
+
+-- | Group of control flow parsers (If, While, For).
+pControlFlow :: [Parser Ast]
+pControlFlow =
+    [ try (pIf pVarDef pBlock)
+    , try (pWhile pBlock)
+    , try (pFor pVarDef pBlock)
+    ]
+
+-- | Group of top-level declaration parsers (Import, Struct, Func).
+pDeclarations :: [Parser Ast]
+pDeclarations =
+    [ pImport
+    , pStruct
+    , pFunc
+    ]
+
+-- | Group of basic statement parsers (Return, Variable, Expression).
+pBasic:: [Parser Ast]
+pBasic =
+    [ pReturn
     , try pVarDef 
     , pExpr <* semicolon 
     ]
+
+-- | Main statement parser.
+--
+-- Aggregates all statement types (control flow, declarations, basic instructions)
+-- into a single choice. This is the top-level parser for a line of code.
+pStatement :: Parser Ast
+pStatement = choice (pControlFlow ++ pDeclarations ++ pBasic)
 
 -- | Main entry point for the parser.
 --

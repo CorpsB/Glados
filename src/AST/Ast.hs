@@ -25,6 +25,11 @@ data Ast
     | Closure [DT.Text] Ast Env
     | AList [Ast]
     | Import DT.Text
+    | While Ast Ast
+    | For Ast Ast Ast Ast
+    | Struct DT.Text [(DT.Text, DT.Text)]
+    | New DT.Text [(DT.Text, Ast)]
+    | Return Ast
     deriving Show
 
 showAst :: Ast -> String

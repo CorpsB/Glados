@@ -244,3 +244,139 @@ spec = describe "Builtins Coverage 100%" $ do
             execBuiltin (p "what?") [] `shouldSatisfy` \case 
                 Left err -> "Unknown builtin" `isInfixOf` DT.unpack err
                 _ -> False
+
+    describe "Logical Operators" $ do
+
+        describe "AND (&&)" $ do
+            it "Returns True when both operands are True" $ do
+                execBuiltin (DT.pack "&&") [ABool True, ABool True] `shouldSatisfy` \case
+                    Right (ABool True) -> True
+                    _ -> False
+
+            it "Returns False when first operand is False" $ do
+                execBuiltin (DT.pack "&&") [ABool False, ABool True] `shouldSatisfy` \case
+                    Right (ABool False) -> True
+                    _ -> False
+
+            it "Returns False when second operand is False" $ do
+                execBuiltin (DT.pack "&&") [ABool True, ABool False] `shouldSatisfy` \case
+                    Right (ABool False) -> True
+                    _ -> False
+
+            it "Returns False when both operands are False" $ do
+                execBuiltin (DT.pack "&&") [ABool False, ABool False] `shouldSatisfy` \case
+                    Right (ABool False) -> True
+                    _ -> False
+
+            it "Fails with invalid arguments (non-boolean)" $ do
+                execBuiltin (DT.pack "&&") [AInteger (I8 1), ABool True] `shouldSatisfy` \case
+                    Left _ -> True
+                    _ -> False
+
+        describe "OR (||)" $ do
+            it "Returns True when first operand is True" $ do
+                execBuiltin (DT.pack "||") [ABool True, ABool False] `shouldSatisfy` \case
+                    Right (ABool True) -> True
+                    _ -> False
+
+            it "Returns True when second operand is True" $ do
+                execBuiltin (DT.pack "||") [ABool False, ABool True] `shouldSatisfy` \case
+                    Right (ABool True) -> True
+                    _ -> False
+
+            it "Returns True when both operands are True" $ do
+                execBuiltin (DT.pack "||") [ABool True, ABool True] `shouldSatisfy` \case
+                    Right (ABool True) -> True
+                    _ -> False
+
+            it "Returns False when both operands are False" $ do
+                execBuiltin (DT.pack "||") [ABool False, ABool False] `shouldSatisfy` \case
+                    Right (ABool False) -> True
+                    _ -> False
+
+            it "Fails with argument count mismatch" $ do
+                execBuiltin (DT.pack "||") [ABool True] `shouldSatisfy` \case
+                    Left _ -> True
+                    _ -> False
+        
+        describe "NOT (!)" $ do
+            it "Returns False when operand is True" $ do
+                execBuiltin (DT.pack "!") [ABool True] `shouldSatisfy` \case
+                    Right (ABool False) -> True
+                    _ -> False
+
+            it "Returns True when operand is False" $ do
+                execBuiltin (DT.pack "!") [ABool False] `shouldSatisfy` \case
+                    Right (ABool True) -> True
+                    _ -> False
+
+            it "Fails with invalid argument count" $ do
+                execBuiltin (DT.pack "!") [ABool True, ABool False] `shouldSatisfy` \case
+                    Left _ -> True
+                    _ -> False
+
+            it "Fails with non-boolean argument" $ do
+                execBuiltin (DT.pack "!") [AInteger (I8 1)] `shouldSatisfy` \case
+                    Left _ -> True
+                    _ -> False
+
+        describe "List Modification (update)" $ do
+            it "Updates value at index" $ do
+                let list = AList [AInteger (I8 1), AInteger (I8 2), AInteger (I8 3)]
+                execBuiltin (p "update") [list, AInteger (I8 1), AInteger (I8 99)] `shouldSatisfy` \case
+                    Right (AList [AInteger (I8 1), AInteger (I8 99), AInteger (I8 3)]) -> True
+                    _ -> False
+
+            it "Returns error on index out of bounds" $ do
+                let list = AList [AInteger (I8 1)]
+                execBuiltin (p "update") [list, AInteger (I8 5), AInteger (I8 99)] `shouldSatisfy` \case
+                    Left err -> "Index out of bounds" `isInfixOf` DT.unpack err
+                    _ -> False
+
+        describe "Coverage: Error Handling on Builtins" $ do
+        
+            describe "Argument Count Mismatches" $ do
+                it "eq? fails with 1 arg" $ do
+                    execBuiltin (p "eq?") [AInteger (I8 1)] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "&& fails with 1 arg" $ do
+                    execBuiltin (p "&&") [ABool True] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "|| fails with 1 arg" $ do
+                    execBuiltin (p "||") [ABool True] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "! fails with 2 args" $ do
+                    execBuiltin (p "!") [ABool True, ABool False] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "+ fails with 1 arg" $ do
+                    execBuiltin (p "+") [AInteger (I8 1)] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "div fails with 1 arg" $ do
+                    execBuiltin (p "div") [AInteger (I8 1)] `shouldSatisfy` \case Left _ -> True; _ -> False
+
+            describe "List Functions Edge Cases" $ do
+                
+                it "nth: Index out of bounds" $ do
+                    let l = AList [AInteger (I8 1)]
+                    execBuiltin (p "nth") [l, AInteger (I8 5)] `shouldSatisfy` \case 
+                        Left err -> "Index out of bounds" `isInfixOf` DT.unpack err
+                        _ -> False
+                
+                it "nth: Invalid index type" $ do
+                    let l = AList []
+                    execBuiltin (p "nth") [l, ABool True] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "nth: First arg not a list" $ do
+                    execBuiltin (p "nth") [AInteger (I8 1), AInteger (I8 0)] `shouldSatisfy` \case Left _ -> True; _ -> False
+                it "nth: Argument count" $ do
+                    execBuiltin (p "nth") [AList []] `shouldSatisfy` \case Left _ -> True; _ -> False
+
+                it "update: Argument count mismatch" $ do
+                    execBuiltin (p "update") [AList [], AInteger (I8 0)] `shouldSatisfy` \case 
+                        Left err -> "expects [list, index, value]" `isInfixOf` DT.unpack err
+                        _ -> False
+                
+                it "update: Index out of bounds" $ do
+                    let l = AList [AInteger (I8 1)]
+                    execBuiltin (p "update") [l, AInteger (I8 5), AInteger (I8 9)] `shouldSatisfy` \case 
+                        Left err -> "Index out of bounds" `isInfixOf` DT.unpack err
+                        _ -> False
+
+                it "length: Success on valid list" $ do
+                    execBuiltin (p "length") [AList [AInteger (I8 1), AInteger (I8 2)]] `shouldSatisfy` \case
+                        Right (AInteger (I8 2)) -> True
+                        _ -> False

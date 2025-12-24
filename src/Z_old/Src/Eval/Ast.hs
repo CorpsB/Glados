@@ -62,10 +62,15 @@ evalAST ftable env (Define name typeVar body) = do
     Right $ Define name typeVar b2
 evalAST _ _ (DefineFun name params ret body) =
     Right $ DefineFun name params ret body
+evalAST _ _ (Struct name fields) = Right $ Struct name fields
 evalAST ftable env (Condition cond th el) = do
     c <- evalAST ftable env cond
     chosen <- execCondition c th el
     evalAST ftable env chosen
+evalAST _ _ (While _ _) = Left $ DT.pack
+    "*** ERROR: 'While' loop evaluation not yet implemented"
+evalAST _ _ (For _ _ _ _) = Left $ DT.pack
+    "*** ERROR: 'For' loop evaluation not yet implemented"
 evalAST ftable env (Call func args) = do
     evalArgs <- traverse (evalASTEnv ftable env) args
     case func of
@@ -73,6 +78,14 @@ evalAST ftable env (Call func args) = do
         _ -> execExprCall ftable env func evalArgs
 evalAST _ _ (Import _) = Left $ DT.pack
     "*** ERROR: 'Import' is not supported in interpreter mode"
+evalAST ftable env (Return val) = do
+    r <- evalAST ftable env val
+    Right (Return r)
+evalAST ftable env (New name fields) = do
+    evaluatedFields <- mapM (\(fName, fExpr) -> do
+        val <- evalAST ftable env fExpr
+        return (fName, val)) fields
+    Right (New name evaluatedFields)
 
 lookupEnv :: Env -> DT.Text -> Maybe Ast
 lookupEnv [] _ = Nothing
@@ -94,6 +107,12 @@ evalASTEnv ftable env (Define name typeVar body) = evalAST ftable env
     (Define name typeVar body)
 evalASTEnv ftable env (DefineFun name params ret body) = 
     evalAST ftable env (DefineFun name params ret body)
+evalASTEnv ftable env (Struct name fields) =
+    evalAST ftable env (Struct name fields)
 evalASTEnv ftable env (Call f args) = evalAST ftable env (Call f args)
 evalASTEnv ftable env (Condition c t e) = evalAST ftable env (Condition c t e)
+evalASTEnv ftable env (While c b) = evalAST ftable env (While c b)
+evalASTEnv ftable env (For i c u b) = evalAST ftable env (For i c u b)
+evalASTEnv ftable env (Return val) = evalAST ftable env (Return val)
 evalASTEnv ftable env (Import i) = evalAST ftable env (Import i)
+evalASTEnv ftable env (New name fields) = evalAST ftable env (New name fields)
