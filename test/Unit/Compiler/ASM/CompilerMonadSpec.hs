@@ -66,13 +66,13 @@ spec = describe "Compiler.ASM.CompilerMonad (coverage maximale)" $ do
   describe "Label Generation" $ do
     it "generateUniqueLabel increments counter and returns unique labels" $ do
       let action = do
+            l0 <- generateUniqueLabel "label"
             l1 <- generateUniqueLabel "label"
-            l2 <- generateUniqueLabel "label"
-            return (l1, l2)
+            return (l0, l1)
 
-      let ((l1, l2), st) = expectRight (runStateT action createCompilerState)
+      let ((l0, l1), st) = expectRight (runStateT action createCompilerState)
+      l0 `shouldBe` "label_0"
       l1 `shouldBe` "label_1"
-      l2 `shouldBe` "label_2"
       csLabelCnt st `shouldBe` 2
 
   describe "Symbol Management" $ do
@@ -119,7 +119,7 @@ spec = describe "Compiler.ASM.CompilerMonad (coverage maximale)" $ do
       Map.size (csSymbols st) `shouldBe` 1
       Seq.length (csCode st) `shouldBe` 8
       Seq.index (csCode st) 7 `shouldBe` Real Halt
-      Seq.index (csCode st) 3 `shouldBe` LabelDef "loop_1"
+      Seq.index (csCode st) 3 `shouldBe` LabelDef "loop_0"
 
   describe "Error Branch Coverage" $ do
     it "propagates Left from the underlying Either layer" $ do

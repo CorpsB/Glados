@@ -41,7 +41,7 @@ builtinMap = Map.fromList
     , (pack "*", Mul)
     , (pack "div", Div)
     , (pack "mod", Mod)
-    , (pack "eq?", Eq)
+    , (pack "==", Eq)
     , (pack "<", Lt)
     , (pack "<=", Le)
     ]

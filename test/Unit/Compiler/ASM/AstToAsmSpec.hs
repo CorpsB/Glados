@@ -25,6 +25,7 @@ import Compiler.ASM.CompilerMonad (CompilerMonad)
 import Compiler.CompilerState (CompilerState(..), createCompilerState)
 import Compiler.Instruction (Instruction(..), Immediate(..))
 import Compiler.PsInstruction (PsInstruction(..))
+import Data.Maybe (listToMaybe)
 
 expectRight :: Either e a -> a
 expectRight (Right x) = x
@@ -88,8 +89,8 @@ spec = describe "Compiler.ASM.AstToAsm (coverage maximale++)" $ do
     it "forces evaluation of builtins pairs" $ do
       let rendered = map (\(n, i) -> (T.unpack n, show i)) builtins
       length rendered `shouldBe` 8
-      fst (head rendered) `shouldBe` "+"
-      snd (last rendered) `shouldBe` "Le"
+      fmap fst (listToMaybe rendered) `shouldBe` Just "+"
+      fmap snd (listToMaybe (reverse rendered)) `shouldBe` Just "Le"
 
   describe "astIntToAsm" $ do
     it "convertit un Int en instruction PUSH I64" $ do
