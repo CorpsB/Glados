@@ -13,6 +13,7 @@ Stability : stable
 module Compiler.CompilerState
     ( CompilerState(..)
     , SymTable
+    , ScopeType(..)
     , createCompilerState
     ) where
 
@@ -23,30 +24,45 @@ import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Text (Text)
 
--- | Symbol table mapping textual names to local indices.
+-- | Defines the memory scope of a variable.
 --
 -- @details
---   SymTable stores mapping commonly used by the compiler to resolve local
---   variables to their index within a function frame. Keys are 'Text' names
---   and values are 'Int' indices.
+--   This enumeration is used in the symbol table to determine which
+--   VM instruction (LOAD_GLOBAL, LOAD_LOCAL, or LOAD_CAPTURE) should be
+--   emitted when a symbol is referenced.
 --
-type SymTable = Map Text Int
+data ScopeType 
+    = ScopeGlobal   -- ^ Global variable (LOAD_GLOBAL)
+    | ScopeLocal    -- ^ Local argument or variable (LOAD_LOCAL)
+    | ScopeCapture  -- ^ Variable captured by a closure (LOAD_CAPTURE)
+    deriving (Show, Eq)
 
--- | Compiler state (kept simple and strict to avoid accidental thunks)
+-- | Symbol table mapping textual names to their scope and index.
 --
 -- @details
---   The CompilerState stores the accumulated pseudo-instructions, local symbol
---   mapping, next index to allocate for locals, and an internal counter for
---   generating unique labels.
+--   SymTable stores the mapping required to resolve variable names to
+--   concrete memory indices. It now includes the 'ScopeType' to distinguish
+--   between globals, locals, and captures.
+--
+type SymTable = Map Text (ScopeType, Int)
+
+-- | Compiler state holding code buffers and symbol information.
+--
+-- @details
+--   The CompilerState maintains two code buffers: 'csCode' for the current
+--   block being compiled (e.g., main or current function body) and 'csFuncs'
+--   for accumulating the code of defined functions and lambdas that will be
+--   appended at the end of the binary.
 --
 -- @return
 --   N/A (this documents the type)
 --
 data CompilerState = CompilerState
-    { csCode      :: (Seq PsInstruction)  -- ^ Generated code (in natural order)
-    , csSymbols   :: SymTable          -- ^ Local variable mapping
-    , csNextIndex :: Int               -- ^ Next available local index
-    , csLabelCnt  :: Int               -- ^ Counter for unique label generation
+    { csCode      :: (Seq PsInstruction) -- ^ Generated code (in natural order)
+    , csFuncs     :: Seq PsInstruction   -- ^ Compiled functions' buffer
+    , csSymbols   :: SymTable            -- ^ Local variable mapping
+    , csNextIndex :: Int                 -- ^ Next available local index
+    , csLabelCnt  :: Int                 -- ^ Counter for unique label generation
     } deriving (Show, Eq)
 
 -- | Initial, empty compiler state.
@@ -61,6 +77,7 @@ data CompilerState = CompilerState
 createCompilerState :: CompilerState
 createCompilerState = CompilerState
     { csCode = Seq.empty
+    , csFuncs = Seq.empty
     , csSymbols = Map.empty
     , csNextIndex = 0
     , csLabelCnt = 0

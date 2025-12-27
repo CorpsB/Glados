@@ -20,14 +20,18 @@ module Compiler.ASM.CompilerMonad
     , emitCallToLabel
     , generateUniqueLabel
     , defineSymbol
+    , registerSymbol
+    , compileInIsolatedFunctionScope
+    , appendPseudoInstruction
     ) where
 
 import Control.Monad.State
 import Data.Text (Text, pack)
-import Data.Sequence ((|>))
+import Data.Sequence ((|>), (><))
 import qualified Data.Map.Strict as Map
+import qualified Data.Sequence as Seq
 
-import Compiler.CompilerState (CompilerState(..))
+import Compiler.CompilerState (CompilerState(..), ScopeType(..))
 import Compiler.PsInstruction (PsInstruction(..))
 import Compiler.Instruction (Instruction)
 
@@ -37,9 +41,6 @@ import Compiler.Instruction (Instruction)
 --   CompilerMonad is a stateful monad carrying the 'CompilerState' and allowing
 --   early failure using 'Either Text'. It is responsible for emitting pseudo-
 --   instructions, managing labels, and updating compiler state consistently.
---
--- @return
---   A monadic computation producing a value of type @a@ or a compilation error.
 --
 type CompilerMonad a = StateT CompilerState (Either Text) a
 
@@ -196,6 +197,62 @@ defineSymbol name = do
         else
             let idx = csNextIndex s in
             put s { 
-                csSymbols = Map.insert name idx (csSymbols s), 
+                csSymbols = Map.insert name (ScopeGlobal, idx) (csSymbols s), 
                 csNextIndex = idx + 1 
             } >> return idx
+
+-- | Manually registers a symbol in the symbol table without code generation.
+--
+-- @args
+--   - name: Name of the symbol
+--   - scopeType: The scope type (Local, Global, or Capture)
+--   - idx: The specific memory index to assign
+--
+-- @details
+--   This function is used to populate the symbol table with function arguments
+--   and captured variables before compiling a function body. If the scope is
+--   'ScopeLocal', it also updates 'csNextIndex' to avoid collision.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+registerSymbol :: Text -> ScopeType -> Int -> CompilerMonad ()
+registerSymbol name scopeType idx = do
+    s <- get
+    let newSymbols = Map.insert name (scopeType, idx) (csSymbols s)
+    case scopeType of
+        ScopeLocal -> put $ s { 
+            csSymbols = newSymbols, 
+            csNextIndex = max (csNextIndex s) (idx + 1) 
+        }
+        _ -> put $ s { csSymbols = newSymbols }
+
+-- | Compiles an action within an isolated function scope.
+--
+-- @args
+--   - compileAction: The monadic action to compile the function body.
+--
+-- @details
+--   This function creates an isolated environment (empty code buffer, empty
+--   symbol table, reset index) to compile a function or lambda. Once compiled,
+--   the generated code is moved to the 'csFuncs' buffer of the parent state,
+--   ensuring function code is stored separately and not executed inline.
+--   Nested lambdas found during compilation are also preserved.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileInIsolatedFunctionScope :: CompilerMonad () -> CompilerMonad ()
+compileInIsolatedFunctionScope compileAction = do
+    outerState <- get
+    put $ outerState 
+        { csCode = Seq.empty
+        , csSymbols = Map.empty
+        , csNextIndex = 0
+        }
+    compileAction
+    innerState <- get
+    put $ outerState 
+        { csFuncs = (csFuncs outerState) >< (csCode innerState) >< (csFuncs innerState)
+        , csLabelCnt = csLabelCnt innerState
+        }

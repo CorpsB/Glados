@@ -7,21 +7,23 @@
 
 module Z_old.Src.Eval.Ast (evalAST, evalASTEnv) where
 
-import AST.Ast (Ast(..), Env)
+import Z_old.Src.Ast (OldAst(..), OldEnv)
 import Z_old.Src.Eval.Builtins (execBuiltin)
 import Z_old.Src.Eval.Conditions (execCondition)
 import Z_old.Src.Eval.Functions (getFunction, FuncTable)
 import Z_old.Src.Utils.List (sameLength)
 import qualified Data.Text as DT
 
-applyClosure :: FuncTable -> Env -> [DT.Text] -> Ast -> [Ast] -> Either DT.Text Ast
+applyClosure :: FuncTable -> OldEnv -> [DT.Text] -> OldAst -> [OldAst] ->
+    Either DT.Text OldAst
 applyClosure ftable cEnv params body args
     | sameLength params args =
         evalASTEnv ftable (zip params args ++ cEnv) body
     | otherwise = Left $ DT.pack
         "*** ERROR: Argument length mismatch in lambda call"
 
-execUserFunc :: FuncTable -> Env -> DT.Text -> [Ast] -> DT.Text -> Either DT.Text Ast
+execUserFunc :: FuncTable -> OldEnv -> DT.Text -> [OldAst] -> DT.Text ->
+    Either DT.Text OldAst
 execUserFunc ft env op args err = case getFunction ft op of
     Just (p, b) | sameLength p args ->
         evalASTEnv ft (zip p args ++ env) b
@@ -29,7 +31,8 @@ execUserFunc ft env op args err = case getFunction ft op of
         "*** ERROR: Argument length mismatch for function " <> op
     Nothing -> Left err
 
-execNamedCall :: FuncTable -> Env -> DT.Text -> [Ast] -> Either DT.Text Ast
+execNamedCall :: FuncTable -> OldEnv -> DT.Text -> [OldAst] ->
+    Either DT.Text OldAst
 execNamedCall ft env op args = case execBuiltin op args of
     Right r -> Right r
     Left builtinErr -> 
@@ -41,13 +44,14 @@ execNamedCall ft env op args = case execBuiltin op args of
                     "*** ERROR: Unknown func: " <> op)
         else Left builtinErr
 
-execExprCall :: FuncTable -> Env -> Ast -> [Ast] -> Either DT.Text Ast
+execExprCall :: FuncTable -> OldEnv -> OldAst -> [OldAst] ->
+    Either DT.Text OldAst
 execExprCall ft env func args = evalAST ft env func >>= \res ->
     case res of
         Closure p b cEnv -> applyClosure ft cEnv p b args
         _ -> Left $ DT.pack "*** ERROR: Attempt to call a non-function"
 
-evalAST :: FuncTable -> Env -> Ast -> Either DT.Text Ast
+evalAST :: FuncTable -> OldEnv -> OldAst -> Either DT.Text OldAst
 evalAST _ _ (AInteger n) = Right $ AInteger n
 evalAST _ _ (ABool b) = Right $ ABool b
 evalAST _ _ (AList l) = Right $ AList l
@@ -74,13 +78,13 @@ evalAST ftable env (Call func args) = do
 evalAST _ _ (Import _) = Left $ DT.pack
     "*** ERROR: 'Import' is not supported in interpreter mode"
 
-lookupEnv :: Env -> DT.Text -> Maybe Ast
+lookupEnv :: OldEnv -> DT.Text -> Maybe OldAst
 lookupEnv [] _ = Nothing
 lookupEnv ((k,v):xs) key
     | k == key  = Just v
     | otherwise = lookupEnv xs key
 
-evalASTEnv :: FuncTable -> Env -> Ast -> Either DT.Text Ast
+evalASTEnv :: FuncTable -> OldEnv -> OldAst -> Either DT.Text OldAst
 evalASTEnv _ _ (AInteger n) = Right $ AInteger n
 evalASTEnv _ _ (ABool b) = Right $ ABool b
 evalASTEnv _ _ (AList l) = Right $ AList l
@@ -88,7 +92,8 @@ evalASTEnv _ _ AVoid = Right AVoid
 evalASTEnv _ env (ASymbol s) = case lookupEnv env s of
     Just v -> Right v
     Nothing -> Left $ DT.pack "*** ERROR: Undefined symbol: " <> s
-evalASTEnv _ env (Lambda params body) = Right $ Closure params body env
+evalASTEnv _ env (Lambda params body) =
+    Right $ Closure params body env
 evalASTEnv _ _ (Closure p b e) = Right $ Closure p b e
 evalASTEnv ftable env (Define name typeVar body) = evalAST ftable env
     (Define name typeVar body)

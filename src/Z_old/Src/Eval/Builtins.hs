@@ -7,49 +7,49 @@
 
 module Z_old.Src.Eval.Builtins (execBuiltin) where
 
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..))
 import Z_old.Src.Type.Integer (toInt64, fromInt64)
 import Z_old.Src.Utils.List (astToList, listToAst)
 import Control.Monad (foldM)
 import qualified Data.Text as DT
 
-builtinEq :: [Ast] -> Either DT.Text Ast
+builtinEq :: [OldAst] -> Either DT.Text OldAst
 builtinEq [AInteger x, AInteger y] = Right $ ABool (toInt64 x == toInt64 y)
 builtinEq [ABool x, ABool y] = Right $ ABool (x == y)
 builtinEq args = Left $ DT.pack $ "*** ERROR: 'eq?' expects two " ++
     "integers or two booleans, got: " ++ show args
 
-builtinLowerThan :: [Ast] -> Either DT.Text Ast
+builtinLowerThan :: [OldAst] -> Either DT.Text OldAst
 builtinLowerThan [AInteger x, AInteger y] =
     Right $ ABool (toInt64 x < toInt64 y)
 builtinLowerThan args = Left $ DT.pack $ "*** ERROR: '<' expects two " ++
     "integers, got: " ++ show args
 
-builtinGreaterThan :: [Ast] -> Either DT.Text Ast
+builtinGreaterThan :: [OldAst] -> Either DT.Text OldAst
 builtinGreaterThan [AInteger x, AInteger y] =
     Right $ ABool (toInt64 x > toInt64 y)
 builtinGreaterThan args = Left $ DT.pack $ "*** ERROR: '>' expects two " ++
     "integers, got: " ++ show args
 
-builtinAddition :: [Ast] -> Either DT.Text Ast
+builtinAddition :: [OldAst] -> Either DT.Text OldAst
 builtinAddition [AInteger x, AInteger y] =
     Right $ AInteger (fromInt64 (toInt64 x + toInt64 y))
 builtinAddition args = Left $ DT.pack $ "*** ERROR: '+' expects two " ++
     "integers, got: " ++ show args
 
-builtinSubtraction :: [Ast] -> Either DT.Text Ast
+builtinSubtraction :: [OldAst] -> Either DT.Text OldAst
 builtinSubtraction [AInteger x, AInteger y] =
     Right $ AInteger (fromInt64 (toInt64 x - toInt64 y))
 builtinSubtraction args = Left $ DT.pack $ "*** ERROR: '-' expects two " ++
     "integers, got: " ++ show args
 
-builtinMultiplication :: [Ast] -> Either DT.Text Ast
+builtinMultiplication :: [OldAst] -> Either DT.Text OldAst
 builtinMultiplication [AInteger x, AInteger y] =
     Right $ AInteger (fromInt64 (toInt64 x * toInt64 y))
 builtinMultiplication args = Left $ DT.pack $ "*** ERROR: '*' expects two " ++
     "integers, got: " ++ show args
 
-builtinDivision :: [Ast] -> Either DT.Text Ast
+builtinDivision :: [OldAst] -> Either DT.Text OldAst
 builtinDivision [AInteger _, AInteger y]
     | toInt64 y == 0 = Left $ DT.pack "*** ERROR: 'div' division by zero"
 builtinDivision [AInteger x, AInteger y] =
@@ -58,7 +58,7 @@ builtinDivision args =
     Left $ DT.pack $ "*** ERROR: 'div' expects two " ++
     "integers, got: " ++ show args
 
-builtinModulo :: [Ast] -> Either DT.Text Ast
+builtinModulo :: [OldAst] -> Either DT.Text OldAst
 builtinModulo [AInteger _, AInteger y]
     | toInt64 y == 0 = Left $ DT.pack "*** ERROR: 'mod' division by zero"
 builtinModulo [AInteger x, AInteger y] =
@@ -66,7 +66,7 @@ builtinModulo [AInteger x, AInteger y] =
 builtinModulo args = Left $ DT.pack $ "*** ERROR: 'mod' expects two " ++
     "integers, got: " ++ show args
 
-mathOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+mathOps :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
 mathOps =
     [ (DT.pack "+", builtinAddition)
     , (DT.pack "-", builtinSubtraction)
@@ -75,14 +75,14 @@ mathOps =
     , (DT.pack "mod", builtinModulo)
     ]
 
-logicOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+logicOps :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
 logicOps =
     [ (DT.pack "eq?", builtinEq)
     , (DT.pack "<", builtinLowerThan)
     , (DT.pack ">", builtinGreaterThan)
     ]
 
-listOps :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+listOps :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
 listOps =
     [ (DT.pack "list", builtinList)
     , (DT.pack "cons", builtinCons)
@@ -93,26 +93,26 @@ listOps =
     , (DT.pack "length", builtinLength)
     ]
 
-builtinsTable :: [(DT.Text, [Ast] -> Either DT.Text Ast)]
+builtinsTable :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
 builtinsTable = mathOps ++ logicOps ++ listOps
 
-execBuiltin :: DT.Text -> [Ast] -> Either DT.Text Ast
+execBuiltin :: DT.Text -> [OldAst] -> Either DT.Text OldAst
 execBuiltin op args = case lookup op builtinsTable of
     Just func -> func args
     Nothing   -> Left $ DT.pack $
         "*** ERROR: Unknown builtin: " ++ DT.unpack op
 
-builtinList :: [Ast] -> Either DT.Text Ast
+builtinList :: [OldAst] -> Either DT.Text OldAst
 builtinList as = Right $ listToAst as
 
-builtinCons :: [Ast] -> Either DT.Text Ast
+builtinCons :: [OldAst] -> Either DT.Text OldAst
 builtinCons [v, lst] = do
     xs <- astToList lst
     Right $ listToAst (v : xs)
 builtinCons args =
     Left $ DT.pack $ "*** ERROR: 'cons' expects two args, got: " ++ show args
 
-builtinCar :: [Ast] -> Either DT.Text Ast
+builtinCar :: [OldAst] -> Either DT.Text OldAst
 builtinCar [lst] = do
     xs <- astToList lst
     case xs of
@@ -121,7 +121,7 @@ builtinCar [lst] = do
 builtinCar args = Left $ DT.pack $
     "*** ERROR: 'car' expects one arg, got: " ++ show args
 
-builtinCdr :: [Ast] -> Either DT.Text Ast
+builtinCdr :: [OldAst] -> Either DT.Text OldAst
 builtinCdr [lst] = do
     xs <- astToList lst
     case xs of
@@ -130,21 +130,21 @@ builtinCdr [lst] = do
 builtinCdr args = Left $ DT.pack $
     "*** ERROR: 'cdr' expects one arg, got: " ++ show args
 
-builtinIsList :: [Ast] -> Either DT.Text Ast
+builtinIsList :: [OldAst] -> Either DT.Text OldAst
 builtinIsList [x] = case x of
     AList _ -> Right $ ABool True
     _ -> Right $ ABool False
 builtinIsList args =
     Left $ DT.pack $ "*** ERROR: 'list?' expects one arg, got: " ++ show args
 
-builtinAppend :: [Ast] -> Either DT.Text Ast
+builtinAppend :: [OldAst] -> Either DT.Text OldAst
 builtinAppend args = do
     concatenated <- foldM (\buf a -> do
         xs <- astToList a
         Right $ buf ++ xs) [] args
     Right $ listToAst concatenated
 
-builtinLength :: [Ast] -> Either DT.Text Ast
+builtinLength :: [OldAst] -> Either DT.Text OldAst
 builtinLength [lst] = do
     xs <- astToList lst
     Right $ AInteger (fromInt64 (fromIntegral (length xs)))

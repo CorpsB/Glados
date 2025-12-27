@@ -16,7 +16,7 @@ into structured AST nodes.
 -}
 module Z_old.Src.Parser.Ast (sexprToAST) where
 
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..))
 import Z_old.Src.Lisp (SExpr(..))
 import Z_old.Src.Type.Integer (fitInteger)
 import qualified Data.Text as DT
@@ -39,7 +39,7 @@ extractParam _           = Left $ DT.pack
 -- * Definitions (define name val or define (func args) body)
 -- * Conditions (if cond then else)
 -- * Function calls ((func arg1 arg2))
-sexprToAST :: SExpr -> Either DT.Text Ast
+sexprToAST :: SExpr -> Either DT.Text OldAst
 sexprToAST (SInteger n) = Right $ AInteger (fitInteger n)
 sexprToAST (SSymbol s)
     | s == DT.pack "#t" = Right $ ABool True

@@ -96,7 +96,7 @@ pFunc = do
             Just t  -> t
             Nothing -> DT.pack "Void"
     body <- pBlock
-    return (DefineFun name args retType body)
+    return (ADefineFunc name args retType body)
 
 -- | Parse a variable definition.
 --
@@ -109,7 +109,7 @@ pVarDef = do
     _ <- symbol (DT.pack "=")
     val <- pExpr
     _ <- semicolon
-    return (Define name varType val)
+    return (ASetVar name varType val)
 
 -- | Parse a single statement.
 --

@@ -84,7 +84,7 @@ pVarOrCall = do
     choice
         [ do
             args <- parens (pExpr `sepBy` comma)
-            return (Call (ASymbol name) args)
+            return (ACall (ASymbol name) args)
         , return (ASymbol name)
         ]
 
@@ -107,7 +107,7 @@ pTerm = choice
 --
 -- Transforms an infix operator string (e.g., "+") into a 'Call' AST node.
 binary :: DT.Text -> (Ast -> Ast -> Ast)
-binary name = \a b -> Call (ASymbol name) [a, b]
+binary name = \a b -> ACall (ASymbol name) [a, b]
 
 -- | Table of multiplicative operators (*, /, %).
 multiplicativeOps :: [Operator Parser Ast]
