@@ -7,10 +7,10 @@
 
 {-# LANGUAGE LambdaCase #-}
 
-module AstSpec (spec) where
+module Z_old.AstSpec (spec) where
 
 import Test.Hspec
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..))
 import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 
@@ -43,30 +43,30 @@ spec = describe "AST - Data Structure" $ do
                 _ -> False
 
     describe "Control Flow & Definitions" $ do
-        it "AIf stores if/then/else with integers" $ do
-            AIf (ABool True) (AInteger (I8 1)) (AInteger (I8 0)) `shouldSatisfy` \case
-                AIf (ABool True) (AInteger (I8 1)) (AInteger (I8 0)) -> True
+        it "Condition stores if/then/else with integers" $ do
+            Condition (ABool True) (AInteger (I8 1)) (AInteger (I8 0)) `shouldSatisfy` \case
+                Condition (ABool True) (AInteger (I8 1)) (AInteger (I8 0)) -> True
                 _ -> False
-        it "ASetVar stores variable assignment" $ do
-            ASetVar (DT.pack "x") (DT.pack "int") (AInteger (I8 42)) `shouldSatisfy` \case
-                ASetVar name _type (AInteger (I8 42)) -> name == DT.pack "x"
+        it "Define stores variable assignment" $ do
+            Define (DT.pack "x") (DT.pack "int") (AInteger (I8 42)) `shouldSatisfy` \case
+                Define name _type (AInteger (I8 42)) -> name == DT.pack "x"
                 _ -> False
-        it "ADefineFunc stores function definition" $ do
+        it "DefineFun stores function definition" $ do
             let args = [(DT.pack "a", DT.pack "int"), (DT.pack "b", DT.pack "int")]
-            let body = ACall (ASymbol (DT.pack "+")) [ASymbol (DT.pack "a"), ASymbol (DT.pack "b")]
-            ADefineFunc (DT.pack "add") args (DT.pack "int") body `shouldSatisfy` \case
-                ADefineFunc name params _ret (ACall (ASymbol op) _) -> 
+            let body = Call (ASymbol (DT.pack "+")) [ASymbol (DT.pack "a"), ASymbol (DT.pack "b")]
+            DefineFun (DT.pack "add") args (DT.pack "int") body `shouldSatisfy` \case
+                DefineFun name params _ret (Call (ASymbol op) _) -> 
                     name == DT.pack "add" && params == args && op == DT.pack "+"
                 _ -> False
 
     describe "Function Calls" $ do
-        it "ACall stores function and arguments" $ do
-            ACall (ASymbol (DT.pack "eq?")) [AInteger (I8 1), AInteger (I8 1)] `shouldSatisfy` \case
-                ACall (ASymbol s) _ -> s == DT.pack "eq?"
+        it "Call stores function and arguments" $ do
+            Call (ASymbol (DT.pack "eq?")) [AInteger (I8 1), AInteger (I8 1)] `shouldSatisfy` \case
+                Call (ASymbol s) _ -> s == DT.pack "eq?"
                 _ -> False
-        it "ACall supports empty arguments" $ do
-            ACall (ASymbol (DT.pack "print")) [] `shouldSatisfy` \case
-                ACall (ASymbol s) [] -> s == DT.pack "print"
+        it "Call supports empty arguments" $ do
+            Call (ASymbol (DT.pack "print")) [] `shouldSatisfy` \case
+                Call (ASymbol s) [] -> s == DT.pack "print"
                 _ -> False
 
     describe "Show Instance (String representation)" $ do

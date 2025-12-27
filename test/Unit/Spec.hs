@@ -13,7 +13,6 @@ import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
 import qualified Parser.ExpressionSpec
 import qualified Compiler.Bytecode.EncoderSpec
-import qualified AstSpec
 
 import qualified Z_old.Eval.BuiltinsSpec
 import qualified Z_old.Eval.ConditionsSpec
@@ -23,6 +22,7 @@ import qualified Z_old.Eval.RunSpec
 import qualified Z_old.Parser.ParserISLTest
 import qualified Z_old.Parser.AstSpec
 import qualified Z_old.LispTest
+import qualified Z_old.AstSpec
 import qualified Z_old.Type.IntegerSpec
 import qualified Z_old.Utils.ListSpec
 
@@ -41,7 +41,7 @@ spec = do
     Z_old.Type.IntegerSpec.spec
     Z_old.Utils.ListSpec.spec
     Z_old.LispTest.spec
-    AstSpec.spec
+    Z_old.AstSpec.spec
     Parser.StatementSpec.spec
     Parser.LexerSpec.spec
     Parser.ExpressionSpec.spec
