@@ -128,10 +128,10 @@ compileSetVar compileFn name body = do
 compileDefineFun :: (Ast -> CompilerMonad ()) -> Text -> [Text] -> Ast -> CompilerMonad ()
 compileDefineFun compileFn name args body = do
     ulabel <- generateUniqueLabel (pack "fun_" <> name)
-    compileInIsolatedFunctionScope $ do
-        emitLabelDefinition ulabel
-        zipWithM_ (\arg idx -> registerSymbol arg ScopeLocal idx) args [0..]
-        compileFn body
+    compileInIsolatedFunctionScope $
+        emitLabelDefinition ulabel >>
+        zipWithM_ (\arg idx -> registerSymbol arg ScopeLocal idx) args [0..] >>
+        compileFn body >>
         emitInstruction Ret
     return ()
 
@@ -157,10 +157,9 @@ compileDefineLambda compileFn params body = do
     let fvars = Set.toList (getLambdaFreeVariables (ADefineLambda params body))
     mapM_ astSymbolToAsm fvars
     ulabel <- generateUniqueLabel (pack "lambda")
-    compileInIsolatedFunctionScope $ do
-        emitLabelDefinition ulabel
-        zipWithM_ (\p i -> registerSymbol p ScopeLocal i) params [0..]
-        zipWithM_ (\c i -> registerSymbol c ScopeCapture i) fvars [0..]
-        compileFn body
-        emitInstruction Ret
+    compileInIsolatedFunctionScope $
+        emitLabelDefinition ulabel >>
+        zipWithM_ (\p i -> registerSymbol p ScopeLocal i) params [0..] >>
+        zipWithM_ (\c i -> registerSymbol c ScopeCapture i) fvars [0..] >>
+        compileFn body >> emitInstruction Ret
     appendPseudoInstruction (MakeClosureLabel ulabel (length fvars))

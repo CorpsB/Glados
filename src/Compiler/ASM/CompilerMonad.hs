@@ -246,13 +246,9 @@ compileInIsolatedFunctionScope :: CompilerMonad () -> CompilerMonad ()
 compileInIsolatedFunctionScope compileAction = do
     outerState <- get
     put $ outerState 
-        { csCode = Seq.empty
-        , csSymbols = Map.empty
-        , csNextIndex = 0
-        }
+        { csCode = Seq.empty, csSymbols = Map.empty, csNextIndex = 0 }
     compileAction
     innerState <- get
     put $ outerState 
-        { csFuncs = (csFuncs outerState) >< (csCode innerState) >< (csFuncs innerState)
-        , csLabelCnt = csLabelCnt innerState
-        }
+        { csFuncs = (csFuncs outerState) >< (csCode innerState) ><
+        (csFuncs innerState), csLabelCnt = csLabelCnt innerState }
