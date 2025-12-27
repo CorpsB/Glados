@@ -10,7 +10,7 @@
 module Z_old.Eval.AstSpec (spec) where
 
 import Test.Hspec
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..))
 import Z_old.Src.Type.Integer (IntValue(..))
 import Z_old.Src.Eval.Ast (evalAST, evalASTEnv)
 import qualified Data.Text as DT

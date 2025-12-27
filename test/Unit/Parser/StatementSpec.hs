@@ -68,7 +68,7 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
         it "Returns the last statement of a block" $ do
             let code = "func last() { 1; 2; 3; }"
             parseALL (p code) `shouldSatisfy` \case
-                Right [DefineFun _ _ _ (AInteger (I8 3))] -> True
+                Right [ADefineFunc _ _ _ (AInteger (I8 3))] -> True
                 _ -> False
 
         it "Triggers parse error (covers parseALL error formatting)" $ do
@@ -82,28 +82,28 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
         it "Parses untyped assignment (defaults to undefined)" $ do
             let code = "x = 10;"
             parseALL (p code) `shouldSatisfy` \case
-                Right [Define name typeVar (AInteger (I8 10))] -> 
+                Right [ASetVar name typeVar (AInteger (I8 10))] -> 
                     name == p "x" && typeVar == p "undefined"
                 _ -> False
 
         it "Parses typed assignment (int)" $ do
             let code = "y: int = 20;"
             parseALL (p code) `shouldSatisfy` \case
-                Right [Define name typeVar (AInteger (I8 20))] -> 
+                Right [ASetVar name typeVar (AInteger (I8 20))] -> 
                     name == p "y" && typeVar == p "int"
                 _ -> False
 
         it "Parses specific types (int8, uint64)" $ do
             let code = "z: int8 = 100;"
             parseALL (p code) `shouldSatisfy` \case
-                Right [Define name typeVar _] -> 
+                Right [ASetVar name typeVar _] -> 
                     name == p "z" && typeVar == p "int8"
                 _ -> False
 
         it "Parses list types ([char])" $ do
             let code = "str: [char] = \"hello\";"
             parseALL (p code) `shouldSatisfy` \case
-                Right [Define name typeVar _] -> 
+                Right [ASetVar name typeVar _] -> 
                     name == p "str" && typeVar == p "[char]"
                 _ -> False
 
@@ -112,20 +112,20 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
         it "Parses binary operations (+)" $ do
             let code = "1 + 2;"
             parseALL (p code) `shouldSatisfy` \case
-                Right [Call (ASymbol op) [AInteger (I8 1), AInteger (I8 2)]] -> op == p "+"
+                Right [ACall (ASymbol op) [AInteger (I8 1), AInteger (I8 2)]] -> op == p "+"
                 _ -> False
 
         it "Respects precedence (* before +)" $ do
             let code = "1 + 2 * 3;"
             parseALL (p code) `shouldSatisfy` \case
-                Right [Call (ASymbol opPlus) [AInteger (I8 1), Call (ASymbol opMul) [AInteger (I8 2), AInteger (I8 3)]]] -> 
+                Right [ACall (ASymbol opPlus) [AInteger (I8 1), ACall (ASymbol opMul) [AInteger (I8 2), AInteger (I8 3)]]] -> 
                     opPlus == p "+" && opMul == p "*"
                 _ -> False
 
         it "Parses function calls in expressions" $ do
             let code = "add(x, 5);"
             parseALL (p code) `shouldSatisfy` \case
-                Right [Call (ASymbol func) [ASymbol arg1, AInteger (I8 5)]] -> 
+                Right [ACall (ASymbol func) [ASymbol arg1, AInteger (I8 5)]] -> 
                     func == p "add" && arg1 == p "x"
                 _ -> False
 
@@ -134,7 +134,7 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
         it "Parses simple function with return type" $ do
             let code = "func add(a: int, b: int) -> int { ret a + b; }"
             parseALL (p code) `shouldSatisfy` \case
-                Right [DefineFun name args retType _body] -> 
+                Right [ADefineFunc name args retType _body] -> 
                     name == p "add" &&
                     args == [(p "a", p "int"), (p "b", p "int")] &&
                     retType == p "int"
@@ -143,7 +143,7 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
         it "Parses function without return type (implicit Void)" $ do
             let code = "func main() { ret 0; }"
             parseALL (p code) `shouldSatisfy` \case
-                Right [DefineFun name args retType _] -> 
+                Right [ADefineFunc name args retType _] -> 
                     name == p "main" &&
                     args == [] &&
                     retType == p "Void"
@@ -152,7 +152,7 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
         it "Parses function with complex arguments" $ do
             let code = "func printList(lst: [char]) -> void { ret 0; }"
             parseALL (p code) `shouldSatisfy` \case
-                Right [DefineFun _ args retType _] -> 
+                Right [ADefineFunc _ args retType _] -> 
                     args == [(p "lst", p "[char]")] &&
                     retType == p "void"
                 _ -> False
@@ -176,7 +176,7 @@ spec = describe "Parser C-Style - Statement & Expression" $ do
         it "Returns the last statement of a block (return (last xs))" $ do
             let code = "func last() { 1; 2; 3; }"
             parseALL (p code) `shouldSatisfy` \case
-                Right [DefineFun _ _ _ (AInteger (I8 3))] -> True
+                Right [ADefineFunc _ _ _ (AInteger (I8 3))] -> True
                 _ -> False
 
         it "Triggers parse error to cover parseALL error handling" $ do

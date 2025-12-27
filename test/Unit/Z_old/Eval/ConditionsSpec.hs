@@ -12,7 +12,7 @@ module Z_old.Eval.ConditionsSpec (spec) where
 
 import Test.Hspec
 import Z_old.Src.Eval.Conditions (execCondition)
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..))
 import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 import Data.List (isInfixOf)

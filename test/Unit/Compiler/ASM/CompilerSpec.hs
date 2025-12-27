@@ -19,7 +19,7 @@ import qualified Data.Text as T
 
 import AST.Ast (Ast(..))
 import qualified Common.Type.Integer as Common
-import Compiler.ASM.Compiler (compileIf, compileDefine)
+import Compiler.ASM.Compiler (compileIf, compileSetVar)
 import Compiler.ASM.CompilerMonad (CompilerMonad, defineSymbol, emitInstruction)
 import Compiler.CompilerState (CompilerState(..), createCompilerState)
 import Compiler.Instruction (Instruction(..), Immediate(..))
@@ -114,10 +114,10 @@ spec = describe "Compiler.ASM.Compiler (coverage maximale)" $ do
       err `shouldBe` "Symbol already defined: var1"
 
   describe "High-level compilation helpers" $ do
-    it "compileDefine stocke la valeur et incrémente l'état global" $ do
+    it "compileSetVar stocke la valeur et incrémente l'état global" $ do
       let action = do
-            compileDefine compileLiteral "x" (AInteger (Legacy.I32 7))
-            compileDefine compileLiteral "y" (ABool True)
+            compileSetVar compileLiteral "x" (AInteger (Legacy.I32 7))
+            compileSetVar compileLiteral "y" (ABool True)
       let st = expectRight (execCompiler action)
 
       csSymbols st `shouldBe` Map.fromList [("x", 0), ("y", 1)]
@@ -130,10 +130,10 @@ spec = describe "Compiler.ASM.Compiler (coverage maximale)" $ do
         , Real (StoreGlobal 1)
         ]
 
-    it "compileDefine échoue si on redéfinit le même symbole" $ do
+    it "compileSetVar échoue si on redéfinit le même symbole" $ do
       let action = do
-            compileDefine compileLiteral "x" (AInteger (Legacy.I32 1))
-            compileDefine compileLiteral "x" (AInteger (Legacy.I32 2))
+            compileSetVar compileLiteral "x" (AInteger (Legacy.I32 1))
+            compileSetVar compileLiteral "x" (AInteger (Legacy.I32 2))
       let err = expectLeft (execCompiler action)
       err `shouldBe` "Symbol already defined: x"
 
