@@ -17,11 +17,10 @@ import qualified Data.Sequence as Seq
 import qualified Data.Text as T
 import qualified Data.Map.Strict as Map
 
-import Compiler.CompilerState (CompilerState(..), createCompilerState)
+import Compiler.CompilerState (CompilerState(..), ScopeType(..), createCompilerState)
 import Compiler.PsInstruction (PsInstruction(..))
-import Compiler.Instruction (Instruction(..), Immediate(..))
+import Compiler.Instruction (Instruction(..))
 import Compiler.ASM.CompilerMonad
-import Common.Type.Integer (IntValue(..))
 
 expectRight :: Either e a -> a
 expectRight (Right x) = x
@@ -31,98 +30,127 @@ expectLeft :: Either e a -> e
 expectLeft (Left e)  = e
 expectLeft (Right _) = error "Expected Left, got Right"
 
-execCM :: CompilerMonad a -> Either T.Text CompilerState
-execCM action = snd <$> runStateT action createCompilerState
+runCM :: CompilerMonad a -> CompilerState -> Either T.Text (a, CompilerState)
+runCM = runStateT
 
 spec :: Spec
-spec = describe "Compiler.ASM.CompilerMonad (coverage maximale)" $ do
+spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
+  describe "Helpers coverage" $ do
+    it "expectRight / expectLeft cover both branches + throw branches" $ do
+      expectRight (Right (1 :: Int) :: Either T.Text Int) `shouldBe` 1
+      expectLeft (Left ("e" :: T.Text) :: Either T.Text Int) `shouldBe` "e"
+      evaluate (expectRight (Left ("boom" :: T.Text) :: Either T.Text Int)) `shouldThrow` anyErrorCall
+      evaluate (expectLeft (Right (2 :: Int) :: Either T.Text Int)) `shouldThrow` anyErrorCall
 
-  describe "Spec helpers coverage" $ do
-    it "expectRight throws on Left" $ do
-      evaluate (expectRight (Left ("boom" :: T.Text) :: Either T.Text Int))
-        `shouldThrow` anyErrorCall
+  describe "appendPseudoInstruction + basic emitters" $ do
+    it "appendPseudoInstruction appends into csCode" $ do
+      let (_, st) = expectRight (runCM (appendPseudoInstruction (LabelDef "L")) createCompilerState)
+      csCode st `shouldBe` Seq.singleton (LabelDef "L")
 
-    it "expectLeft throws on Right" $ do
-      evaluate (expectLeft (Right (123 :: Int) :: Either T.Text Int))
-        `shouldThrow` anyErrorCall
+    it "emitInstruction wraps in Real" $ do
+      let (_, st) = expectRight (runCM (emitInstruction Halt) createCompilerState)
+      csCode st `shouldBe` Seq.singleton (Real Halt)
 
-  describe "Individual Instruction Emitters" $ do
-    it "emitJumpToLabel emits JumpLabel" $ do
-      let st = expectRight (execCM (emitJumpToLabel "L1"))
-      csCode st `shouldBe` Seq.singleton (JumpLabel "L1")
+    it "emitLabelDefinition / emitJump* / emitCallToLabel all append expected PsInstruction" $ do
+      let action = do
+            emitLabelDefinition "A"
+            emitJumpToLabel "B"
+            emitJumpIfFalseToLabel "C"
+            emitJumpIfTrueToLabel "D"
+            emitCallToLabel "E"
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe` Seq.fromList
+        [ LabelDef "A"
+        , JumpLabel "B"
+        , JumpIfFalseLabel "C"
+        , JumpIfTrueLabel "D"
+        , CallLabel "E"
+        ]
 
-    it "emitJumpIfFalseToLabel emits JumpIfFalseLabel" $ do
-      let st = expectRight (execCM (emitJumpIfFalseToLabel "L2"))
-      csCode st `shouldBe` Seq.singleton (JumpIfFalseLabel "L2")
-
-    it "emitJumpIfTrueToLabel emits JumpIfTrueLabel" $ do
-      let st = expectRight (execCM (emitJumpIfTrueToLabel "L3"))
-      csCode st `shouldBe` Seq.singleton (JumpIfTrueLabel "L3")
-
-    it "emitCallToLabel emits CallLabel" $ do
-      let st = expectRight (execCM (emitCallToLabel "func"))
-      csCode st `shouldBe` Seq.singleton (CallLabel "func")
-
-  describe "Label Generation" $ do
-    it "generateUniqueLabel increments counter and returns unique labels" $ do
+  describe "generateUniqueLabel" $ do
+    it "increments csLabelCnt and returns unique labels" $ do
       let action = do
             l0 <- generateUniqueLabel "label"
             l1 <- generateUniqueLabel "label"
-            return (l0, l1)
-
-      let ((l0, l1), st) = expectRight (runStateT action createCompilerState)
+            pure (l0, l1)
+      let ((l0, l1), st) = expectRight (runCM action createCompilerState)
       l0 `shouldBe` "label_0"
       l1 `shouldBe` "label_1"
       csLabelCnt st `shouldBe` 2
 
-  describe "Symbol Management" $ do
-    it "defineSymbol assigns indices and increments csNextIndex" $ do
+  describe "defineSymbol" $ do
+    it "allocates ScopeGlobal indices and increments csNextIndex" $ do
       let action = do
-            i1 <- defineSymbol "varA"
-            i2 <- defineSymbol "varB"
-            return (i1, i2)
-
-      let ((i1, i2), st) = expectRight (runStateT action createCompilerState)
-      i1 `shouldBe` 0
-      i2 `shouldBe` 1
+            i0 <- defineSymbol "varA"
+            i1 <- defineSymbol "varB"
+            pure (i0, i1)
+      let ((i0, i1), st) = expectRight (runCM action createCompilerState)
+      i0 `shouldBe` 0
+      i1 `shouldBe` 1
       csNextIndex st `shouldBe` 2
-      Map.lookup "varA" (csSymbols st) `shouldBe` Just 0
-      Map.lookup "varB" (csSymbols st) `shouldBe` Just 1
+      Map.lookup "varA" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0)
+      Map.lookup "varB" (csSymbols st) `shouldBe` Just (ScopeGlobal, 1)
 
-    it "defineSymbol fails if symbol already exists" $ do
+    it "fails if already defined" $ do
       let action = do
             _ <- defineSymbol "conflict"
             _ <- defineSymbol "conflict"
-            return ()
-
-      let err = expectLeft (execCM action)
+            pure ()
+      let err = expectLeft (runStateT action createCompilerState)
       err `shouldBe` "Symbol already defined: conflict"
 
-  describe "Complex Scenario (State Integrity)" $ do
-    it "maintains consistency through a mixed sequence of operations" $ do
+  describe "registerSymbol (all branches)" $ do
+    it "ScopeLocal adjusts csNextIndex to max(old, idx+1)" $ do
       let action = do
-            emitLabelDefinition "start"
-            idx <- defineSymbol "x"
-            emitInstruction (Push (ImmInt (I32 100)))
-            emitInstruction (StoreGlobal idx)
-            lbl <- generateUniqueLabel "loop"
-            emitLabelDefinition lbl
-            emitJumpIfFalseToLabel "end"
-            emitJumpToLabel lbl
-            emitLabelDefinition "end"
+            registerSymbol "x" ScopeLocal 0
+            registerSymbol "y" ScopeLocal 3
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csNextIndex st `shouldBe` 4
+      Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeLocal, 0)
+      Map.lookup "y" (csSymbols st) `shouldBe` Just (ScopeLocal, 3)
+
+    it "ScopeGlobal adjusts csNextIndex similarly" $ do
+      let action = do
+            registerSymbol "g" ScopeGlobal 10
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csNextIndex st `shouldBe` 11
+      Map.lookup "g" (csSymbols st) `shouldBe` Just (ScopeGlobal, 10)
+
+    it "ScopeCapture does NOT touch csNextIndex" $ do
+      let st0 = createCompilerState { csNextIndex = 7 }
+      let (_, st) = expectRight (runCM (registerSymbol "c" ScopeCapture 2) st0)
+      csNextIndex st `shouldBe` 7
+      Map.lookup "c" (csSymbols st) `shouldBe` Just (ScopeCapture, 2)
+
+  describe "compileInIsolatedFunctionScope" $ do
+    it "moves isolated csCode into outer csFuncs, restores outer csCode, and merges nested csFuncs too" $ do
+      let action = do
             emitInstruction Halt
-            return ()
+            compileInIsolatedFunctionScope $ do
+              emitLabelDefinition "inner"
+              emitInstruction Nop
+              compileInIsolatedFunctionScope $ do
+                emitLabelDefinition "nested"
+                emitInstruction Ret
+              emitInstruction Ret
+            emitInstruction Halt
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe` Seq.fromList [Real Halt, Real Halt]
+      csFuncs st `shouldBe` Seq.fromList
+        [ LabelDef "inner"
+        , Real Nop
+        , Real Ret
+        , LabelDef "nested"
+        , Real Ret
+        ]
 
-      let ((), st) = expectRight (runStateT action createCompilerState)
-      csNextIndex st `shouldBe` 1
-      csLabelCnt st `shouldBe` 1
-      Map.size (csSymbols st) `shouldBe` 1
-      Seq.length (csCode st) `shouldBe` 8
-      Seq.index (csCode st) 7 `shouldBe` Real Halt
-      Seq.index (csCode st) 3 `shouldBe` LabelDef "loop_0"
+    it "propagates Left from isolated scope" $ do
+      let action = compileInIsolatedFunctionScope (lift (Left "Manual Error") :: CompilerMonad ())
+      let err = expectLeft (runStateT action createCompilerState)
+      err `shouldBe` "Manual Error"
 
-  describe "Error Branch Coverage" $ do
-    it "propagates Left from the underlying Either layer" $ do
+  describe "Underlying Either error propagation" $ do
+    it "lift Left bubbles up" $ do
       let action = (lift (Left "Manual Error") :: CompilerMonad ())
       let err = expectLeft (runStateT action createCompilerState)
       err `shouldBe` "Manual Error"
