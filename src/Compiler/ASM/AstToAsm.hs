@@ -16,6 +16,7 @@ module Compiler.ASM.AstToAsm
     , astSymbolToAsm
     , astListToAsm
     , astCallToAsm
+    , builtinMap
     ) where
 
 import Control.Monad.State (get, lift)

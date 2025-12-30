@@ -21,10 +21,11 @@ module Compiler.ASM.Compiler
 import Data.Text (Text, pack)
 import Data.Set (Set)
 import qualified Data.Set as Set
+import qualified Data.Map.Strict as Map
 import Control.Monad (zipWithM_)
 
 import Compiler.ASM.CompilerMonad
-import Compiler.ASM.AstToAsm (astSymbolToAsm)
+import Compiler.ASM.AstToAsm (astSymbolToAsm, builtinMap)
 import Compiler.Instruction (Instruction(..))
 import Compiler.PsInstruction (PsInstruction(..))
 import Compiler.CompilerState (ScopeType(..))
@@ -40,12 +41,15 @@ import AST.Ast (Ast(..))
 --   For a Lambda, free vars are (body_free_vars - parameters).
 --   For a Define, the defined name is excluded from the body's free vars.
 --   This function is critical for determining closure captures.
+--   Built-in operators (like +, -, *) are excluded from free variables.
 --
 -- @return
 --   A Set of Text representing the names of free variables.
 --
 getLambdaFreeVariables :: Ast -> Set Text
-getLambdaFreeVariables (ASymbol s) = Set.singleton s
+getLambdaFreeVariables (ASymbol s)
+    | Map.member s builtinMap = Set.empty
+    | otherwise = Set.singleton s
 getLambdaFreeVariables (AInteger _) = Set.empty
 getLambdaFreeVariables (ABool _) = Set.empty
 getLambdaFreeVariables (ADefineLambda params body) =

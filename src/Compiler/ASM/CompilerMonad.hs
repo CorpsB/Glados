@@ -211,7 +211,8 @@ defineSymbol name = do
 -- @details
 --   This function is used to populate the symbol table with function arguments
 --   and captured variables before compiling a function body. If the scope is
---   'ScopeLocal', it also updates 'csNextIndex' to avoid collision.
+--   'ScopeLocal' or 'ScopeGlobal', it also updates 'csNextIndex' to avoid 
+--   collision. 'ScopeCapture' does not affect the index.
 --
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
@@ -221,11 +222,11 @@ registerSymbol name scopeType idx = do
     s <- get
     let newSymbols = Map.insert name (scopeType, idx) (csSymbols s)
     case scopeType of
-        ScopeLocal -> put $ s { 
+        ScopeCapture -> put $ s { csSymbols = newSymbols }
+        _ -> put $ s { 
             csSymbols = newSymbols, 
             csNextIndex = max (csNextIndex s) (idx + 1) 
         }
-        _ -> put $ s { csSymbols = newSymbols }
 
 -- | Compiles an action within an isolated function scope.
 --
