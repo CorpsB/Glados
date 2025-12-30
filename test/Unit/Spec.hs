@@ -9,6 +9,7 @@ import qualified Compiler.ASM.CompilerMonadSpec
 import qualified Compiler.ASM.AstToAsmSpec
 import qualified Compiler.ASM.CompilerSpec
 
+import qualified AST.AstSpec
 import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
 import qualified Parser.ExpressionSpec
@@ -42,6 +43,7 @@ spec = do
     Z_old.Utils.ListSpec.spec
     Z_old.LispTest.spec
     Z_old.AstSpec.spec
+    AST.AstSpec.spec
     Parser.StatementSpec.spec
     Parser.LexerSpec.spec
     Parser.ExpressionSpec.spec

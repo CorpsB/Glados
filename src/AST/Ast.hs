@@ -107,7 +107,7 @@ data Ast
       -- ^ Represents an explicit return statement.
       --   @param Ast The expression to return.
 
-    deriving Show
+    deriving (Show, Eq)
 
 showAst :: Ast -> String
 showAst (AInteger i) = Prelude.show $ intValueToInt i
