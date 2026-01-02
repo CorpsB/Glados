@@ -27,6 +27,24 @@ import Z_old.Src.Type.Integer (fitInteger, IntValue(..))
 import qualified Text.Megaparsec.Char.Lexer as L
 import Parser.Lexer
 
+-- | Helper to create a prefix unary operator AST node.
+--
+-- Wraps the operand in a function call (e.g., !x -> Call "!" [x]).
+prefix :: DT.Text -> (Ast -> Ast)
+prefix name = \a -> Call (ASymbol name) [a]
+
+-- | Parse a structure member access suffix.
+--
+-- Example: .field
+-- Returns a function that wraps the preceding expression in a 'get_field' call.
+-- The field name is converted to a list of characters string for the AST.
+pMemberSuffix :: Parser (Ast -> Ast)
+pMemberSuffix = do
+    _ <- symbol (DT.pack ".")
+    fieldName <- pIdentifier
+    let fieldNameAst = AList (map (AInteger . IChar) (DT.unpack fieldName))
+    return (\obj -> Call (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
+
 -- | Parse a decimal integer.
 --
 -- Uses 'fitInteger' to automatically determine the smallest fitting
@@ -35,6 +53,17 @@ pInteger :: Parser Ast
 pInteger = (lexeme $ do
     val <- L.decimal
     return (AInteger (fitInteger val))) <?> "integer"
+
+-- | Parse an array index suffix.
+--
+-- Example: [i]
+-- Returns a function that wraps the preceding expression in a 'nth' call.
+pIndexSuffix :: Parser (Ast -> Ast)
+pIndexSuffix = do
+    _ <- symbol (DT.pack "[")
+    indexExpr <- pExpr
+    _ <- symbol (DT.pack "]")
+    return (\arr -> Call (ASymbol (DT.pack "nth")) [arr, indexExpr])
 
 -- | Parse a boolean literal (True or False).
 pBool :: Parser Ast
@@ -88,13 +117,34 @@ pVarOrCall = do
         , return (ASymbol name)
         ]
 
+-- | Parse a field initialization within a 'new' expression.
+--
+-- Syntax: fieldName: value
+pFieldInit :: Parser (DT.Text, Ast)
+pFieldInit = do
+    name <- pIdentifier
+    _ <- symbol (DT.pack ":")
+    val <- pExpr
+    return (name, val)
+
+-- | Parse a structure instantiation.
+--
+-- Syntax: new ClassName { field1: val1, ... }
+pNew :: Parser Ast
+pNew = do
+    _ <- pKeyword (DT.pack "new")
+    className <- pIdentifier
+    fields <- braces (pFieldInit `sepBy` comma)
+    return (New className fields)
+
 -- | Parse a term in an expression.
 --
 -- A term is the basic unit of an expression, such as literals,
 -- variables, function calls, or parenthesized sub-expressions.
-pTerm :: Parser Ast
-pTerm = choice
-    [ parens pExpr
+pTermBase :: Parser Ast
+pTermBase = choice
+    [ try pNew
+    , parens pExpr
     , pInteger
     , pBool
     , pChar
@@ -103,11 +153,31 @@ pTerm = choice
     , pVarOrCall
     ]
 
+-- | Parse a term followed by optional suffixes.
+--
+-- Handles chaining of array indexing and member access.
+-- Example: arr[0].x parses 'arr', then applies '[0]', then applies '.x'.
+pTerm :: Parser Ast
+pTerm = do
+    base <- pTermBase
+    suffixes <- many (choice [pIndexSuffix, pMemberSuffix])
+    return (foldl (\acc f -> f acc) base suffixes)
+
 -- | Helper to create a binary operator AST node.
 --
 -- Transforms an infix operator string (e.g., "+") into a 'Call' AST node.
 binary :: DT.Text -> (Ast -> Ast -> Ast)
 binary name = \a b -> ACall (ASymbol name) [a, b]
+
+-- | Table of syntactic sugar prefix operators.
+--
+-- Includes logical NOT (!), increment (++), and decrement (--).
+sugarSyntOps :: [Operator Parser Ast]
+sugarSyntOps =
+    [ Prefix (prefix (DT.pack "!") <$ symbol (DT.pack "!"))
+    , Prefix (incrementOps <$ symbol (DT.pack "++"))
+    , Prefix (decrementOps <$ symbol (DT.pack "--"))
+    ]
 
 -- | Table of multiplicative operators (*, /, %).
 multiplicativeOps :: [Operator Parser Ast]
@@ -132,11 +202,46 @@ comparisonOps =
     , InfixL (binary (DT.pack ">")   <$ symbol (DT.pack ">"))
     ]
 
+-- | Table for logical AND operator (&&).
+-- It has higher precedence than OR but lower than comparison operators.
+logicalAndOps :: [Operator Parser Ast]
+logicalAndOps =
+    [ InfixL (binary (DT.pack "&&") <$ symbol (DT.pack "&&")) ]
+
+-- | Table for logical OR operator (||).
+-- It has the lowest precedence among logical operators.
+logicalOrOps :: [Operator Parser Ast]
+logicalOrOps =
+    [ InfixL (binary (DT.pack "||") <$ symbol (DT.pack "||")) ]
+
+-- | Handle the increment operator (++).
+--
+-- If applied to a variable (ASymbol), transforms it into an assignment:
+-- x = x + 1 (using 'auto' type inference).
+-- Otherwise, treats it as a standard function call to "++".
+incrementOps :: Ast -> Ast
+incrementOps (ASymbol name) = 
+    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "+"))
+        [ASymbol name, AInteger (fitInteger 1)])
+incrementOps other = Call (ASymbol (DT.pack "++")) [other]
+
+-- | Handle the decrement operator (--).
+--
+-- If applied to a variable (ASymbol), transforms it into an assignment:
+-- x = x - 1 (using 'auto' type inference).
+-- Otherwise, treats it as a standard function call to "--".
+decrementOps :: Ast -> Ast
+decrementOps (ASymbol name) = 
+    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "-"))
+        [ASymbol name, AInteger (fitInteger 1)])
+decrementOps other = Call (ASymbol (DT.pack "--")) [other]
+
 -- | Combined operator table for expression parsing.
 --
--- Defines the precedence order: Multiplicative > Additive > Comparison.
+-- Defines the precedence order: Access ([]) > Unaire (!) > Math > Comparaison > AND > OR
 opTable :: [[Operator Parser Ast]]
-opTable = [multiplicativeOps, additiveOps, comparisonOps]
+opTable = [sugarSyntOps, multiplicativeOps, additiveOps,
+    comparisonOps, logicalAndOps, logicalOrOps]
 
 -- | Main expression parser.
 --

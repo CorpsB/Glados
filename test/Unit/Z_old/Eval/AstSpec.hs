@@ -279,3 +279,70 @@ spec = describe "Eval - AST Comprehensive Test Suite (100% Coverage)" $ do
             evalASTEnv [] [] (AList []) `shouldSatisfy` \case Right (AList []) -> True; _ -> False
         it "evalASTEnv: AVoid returns itself" $ do
             evalASTEnv [] [] AVoid `shouldSatisfy` \case Right AVoid -> True; _ -> False
+
+    describe "Coverage: Special Forms & Control Flow (Eval)" $ do
+        
+        it "evalAST: Struct definition returns itself" $ do
+            let s = Struct (p "Point") [(p "x", p "int")]
+            evalAST [] [] s `shouldSatisfy` \case
+                Right (Struct name _) -> name == p "Point"
+                _ -> False
+
+        it "evalAST: New evaluates its fields recursively" $ do
+            let input = New (p "Point") [(p "x", Call (ASymbol (p "+")) [AInteger (I8 1), AInteger (I8 1)])]
+            evalAST [] [] input `shouldSatisfy` \case
+                Right (New name fields) -> 
+                    name == p "Point" &&
+                    case lookup (p "x") fields of
+                        Just (AInteger (I8 2)) -> True
+                        _ -> False
+                _ -> False
+
+        it "evalAST: Return evaluates its value and preserves the Return wrapper" $ do
+            let input = Return (Call (ASymbol (p "+")) [AInteger (I8 10), AInteger (I8 32)])
+            evalAST [] [] input `shouldSatisfy` \case
+                Right (Return (AInteger (I8 42))) -> True
+                _ -> False
+
+        it "evalASTEnv: Delegates Struct, New, Return, Import" $ do
+            evalASTEnv [] [] (Struct (p "S") []) `shouldSatisfy` \case Right (Struct _ _) -> True; _ -> False
+            evalASTEnv [] [] (New (p "N") [])    `shouldSatisfy` \case Right (New _ _) -> True; _ -> False
+            evalASTEnv [] [] (Return (AInteger (I8 0))) `shouldSatisfy` \case Right (Return _) -> True; _ -> False
+            evalASTEnv [] [] (Import (p "file")) `shouldSatisfy` \case Left _ -> True; _ -> False
+
+        it "evalAST: While loops return 'not implemented' error" $ do
+             evalAST [] [] (While (ABool True) AVoid) `shouldSatisfy` \case
+                Left err -> (DT.pack "not yet implemented") `DT.isInfixOf` err
+                _ -> False
+
+        it "evalAST: For loops return 'not implemented' error" $ do
+             evalAST [] [] (For AVoid AVoid AVoid AVoid) `shouldSatisfy` \case
+                Left err -> (DT.pack "not yet implemented") `DT.isInfixOf` err
+                _ -> False
+        
+    describe "Coverage: Control Flow & Structures" $ do
+        
+        it "evalAST: Struct evaluates to itself" $ do
+            let s = Struct (p "Point") []
+            evalAST [] [] s `shouldSatisfy` \case Right (Struct _ _) -> True; _ -> False
+
+        it "evalAST: Return evaluates content and wraps it" $ do
+            let r = Return (Call (ASymbol (p "+")) [AInteger (I8 1), AInteger (I8 1)])
+            evalAST [] [] r `shouldSatisfy` \case Right (Return (AInteger (I8 2))) -> True; _ -> False
+
+        it "evalAST: New evaluates fields recursively" $ do
+            let n = New (p "P") [(p "x", Call (ASymbol (p "+")) [AInteger (I8 1), AInteger (I8 2)])]
+            evalAST [] [] n `shouldSatisfy` \case 
+                Right (New _ fields) -> case lookup (p "x") fields of Just (AInteger (I8 3)) -> True; _ -> False
+                _ -> False
+
+        it "evalAST: While returns not implemented" $ do
+            evalAST [] [] (While (ABool True) AVoid) `shouldSatisfy` \case Left _ -> True; _ -> False
+        it "evalAST: For returns not implemented" $ do
+            evalAST [] [] (For AVoid AVoid AVoid AVoid) `shouldSatisfy` \case Left _ -> True; _ -> False
+
+        it "evalASTEnv: Delegates execution correctly" $ do
+            evalASTEnv [] [] (Struct (p "S") []) `shouldSatisfy` \case Right _ -> True; _ -> False
+            evalASTEnv [] [] (Return (AInteger (I8 1))) `shouldSatisfy` \case Right _ -> True; _ -> False
+            evalASTEnv [] [] (New (p "N") []) `shouldSatisfy` \case Right _ -> True; _ -> False
+            evalASTEnv [] [] (Import (p "f")) `shouldSatisfy` \case Left _ -> True; _ -> False

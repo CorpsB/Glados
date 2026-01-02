@@ -41,6 +41,7 @@ library
       Parser.Lexer
       Parser.Expression
       Parser.Statement
+      Parser.Conditions
   build-depends:
       base >= 4.7 && < 5
     , megaparsec
@@ -68,6 +69,7 @@ executable glados
   build-depends:
       base >= 4.7 && < 5
     , glados
+    , megaparsec
     , text
   default-language:    Haskell2010
   ghc-options:
@@ -98,6 +100,7 @@ test-suite glados-unit
       Parser.StatementSpec
       Parser.LexerSpec
       Parser.ExpressionSpec
+      Parser.ConditionsSpec
       Compiler.InstructionSpec
       Compiler.PsInstructionSpec
       Compiler.CompilerStateSpec

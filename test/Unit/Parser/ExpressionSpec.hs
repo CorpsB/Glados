@@ -102,3 +102,17 @@ spec = describe "Parser.Expression - Full Coverage" $ do
             parseExpr "foo(1)" `shouldSatisfy` \case
                 Right (ACall (ASymbol s) _) -> s == p "foo"
                 _ -> False
+
+    describe "Coverage: Parser Helpers" $ do
+        
+        it "Triggers incrementOps fallback (non-symbol argument)" $ do
+            let code = "++5"
+            parseExpr code `shouldSatisfy` \case
+                Right (Call (ASymbol op) [AInteger (I8 5)]) -> op == p "++"
+                _ -> False
+
+        it "Triggers decrementOps fallback (non-symbol argument)" $ do
+            let code = "--(x+1)"
+            parseExpr code `shouldSatisfy` \case
+                Right (Call (ASymbol op) _) -> op == p "--"
+                _ -> False

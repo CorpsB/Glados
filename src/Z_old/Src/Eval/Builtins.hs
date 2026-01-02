@@ -31,6 +31,21 @@ builtinGreaterThan [AInteger x, AInteger y] =
 builtinGreaterThan args = Left $ DT.pack $ "*** ERROR: '>' expects two " ++
     "integers, got: " ++ show args
 
+builtinAnd :: [OldAst] -> Either DT.Text OldAst
+builtinAnd [ABool x, ABool y] = Right $ ABool (x && y)
+builtinAnd args = Left $ DT.pack $ "*** ERROR: '&&' expects two " ++
+    "booleans, got: " ++ show args
+
+builtinOr :: [OldAst] -> Either DT.Text OldAst
+builtinOr [ABool x, ABool y] = Right $ ABool (x || y)
+builtinOr args = Left $ DT.pack $ "*** ERROR: '||' expects two " ++
+    "booleans, got: " ++ show args
+
+builtinNot :: [OldAst] -> Either DT.Text OldAst
+builtinNot [ABool x] = Right $ ABool (not x)
+builtinNot args = Left $ DT.pack $ "*** ERROR: '!' expects one " ++
+    "boolean, got: " ++ show args
+
 builtinAddition :: [OldAst] -> Either DT.Text OldAst
 builtinAddition [AInteger x, AInteger y] =
     Right $ AInteger (fromInt64 (toInt64 x + toInt64 y))
@@ -66,6 +81,32 @@ builtinModulo [AInteger x, AInteger y] =
 builtinModulo args = Left $ DT.pack $ "*** ERROR: 'mod' expects two " ++
     "integers, got: " ++ show args
 
+builtinNth :: [OldAst] -> Either DT.Text OldAst
+builtinNth [AList list, AInteger index] =
+    let idx = fromIntegral (toInt64 index)
+    in if idx >= 0 && idx < length list
+       then Right (list !! idx)
+       else Left $ DT.pack $ "*** ERROR: Index out of bounds: " ++ show idx
+builtinNth [AList _, val] = Left $ DT.pack $
+    "*** ERROR: 'nth' expects an integer index, got: " ++ show val
+builtinNth [val, _] = Left $ DT.pack $
+    "*** ERROR: 'nth' expects a list, got: " ++ show val
+builtinNth args = Left $ DT.pack $
+    "*** ERROR: 'nth' expects list and index, got: " ++ show args
+
+builtinUpdate :: [OldAst] -> Either DT.Text OldAst
+builtinUpdate [AList list, AInteger index, val] =
+    let idx = fromIntegral (toInt64 index)
+    in if idx >= 0 && idx < length list
+       then let (left, right) = splitAt idx list
+            in case right of
+                (_:rest) -> Right (AList (left ++ [val] ++ rest))
+                [] -> Left $ DT.pack
+                    "*** ERROR: Index out of bounds (logic error)"
+       else Left $ DT.pack $ "*** ERROR: Index out of bounds: " ++ show idx
+builtinUpdate args = Left $ DT.pack $
+    "*** ERROR: 'update' expects [list, index, value], got: " ++ show args
+
 mathOps :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
 mathOps =
     [ (DT.pack "+", builtinAddition)
@@ -80,18 +121,30 @@ logicOps =
     [ (DT.pack "eq?", builtinEq)
     , (DT.pack "<", builtinLowerThan)
     , (DT.pack ">", builtinGreaterThan)
+    , (DT.pack "&&", builtinAnd)
+    , (DT.pack "||", builtinOr)
+    , (DT.pack "!", builtinNot)
+    ]
+
+listCreationOps :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
+listCreationOps =
+    [ (DT.pack "list", builtinList)
+    , (DT.pack "cons", builtinCons)
+    , (DT.pack "append", builtinAppend)
+    , (DT.pack "update", builtinUpdate)
+    ]
+
+listQueryOps :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
+listQueryOps =
+    [ (DT.pack "car", builtinCar)
+    , (DT.pack "cdr", builtinCdr)
+    , (DT.pack "list?", builtinIsList)
+    , (DT.pack "length", builtinLength)
+    , (DT.pack "nth", builtinNth)
     ]
 
 listOps :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
-listOps =
-    [ (DT.pack "list", builtinList)
-    , (DT.pack "cons", builtinCons)
-    , (DT.pack "car", builtinCar)
-    , (DT.pack "cdr", builtinCdr)
-    , (DT.pack "list?", builtinIsList)
-    , (DT.pack "append", builtinAppend)
-    , (DT.pack "length", builtinLength)
-    ]
+listOps = listCreationOps ++ listQueryOps
 
 builtinsTable :: [(DT.Text, [OldAst] -> Either DT.Text OldAst)]
 builtinsTable = mathOps ++ logicOps ++ listOps
