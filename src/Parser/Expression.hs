@@ -31,7 +31,7 @@ import Parser.Lexer
 --
 -- Wraps the operand in a function call (e.g., !x -> Call "!" [x]).
 prefix :: DT.Text -> (Ast -> Ast)
-prefix name = \a -> Call (ASymbol name) [a]
+prefix name = \a -> ACall (ASymbol name) [a]
 
 -- | Parse a structure member access suffix.
 --
@@ -43,7 +43,7 @@ pMemberSuffix = do
     _ <- symbol (DT.pack ".")
     fieldName <- pIdentifier
     let fieldNameAst = AList (map (AInteger . IChar) (DT.unpack fieldName))
-    return (\obj -> Call (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
+    return (\obj -> ACall (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
 
 -- | Parse a decimal integer.
 --
@@ -63,7 +63,7 @@ pIndexSuffix = do
     _ <- symbol (DT.pack "[")
     indexExpr <- pExpr
     _ <- symbol (DT.pack "]")
-    return (\arr -> Call (ASymbol (DT.pack "nth")) [arr, indexExpr])
+    return (\arr -> ACall (ASymbol (DT.pack "nth")) [arr, indexExpr])
 
 -- | Parse a boolean literal (True or False).
 pBool :: Parser Ast
@@ -113,7 +113,7 @@ pVarOrCall = do
     choice
         [ do
             args <- parens (pExpr `sepBy` comma)
-            return (Call (ASymbol name) args)
+            return (ACall (ASymbol name) args)
         , return (ASymbol name)
         ]
 
@@ -135,7 +135,7 @@ pNew = do
     _ <- pKeyword (DT.pack "new")
     className <- pIdentifier
     fields <- braces (pFieldInit `sepBy` comma)
-    return (New className fields)
+    return (ASetStruct className fields)
 
 -- | Parse a term in an expression.
 --
@@ -167,7 +167,7 @@ pTerm = do
 --
 -- Transforms an infix operator string (e.g., "+") into a 'Call' AST node.
 binary :: DT.Text -> (Ast -> Ast -> Ast)
-binary name = \a b -> Call (ASymbol name) [a, b]
+binary name = \a b -> ACall (ASymbol name) [a, b]
 
 -- | Table of syntactic sugar prefix operators.
 --
@@ -221,9 +221,9 @@ logicalOrOps =
 -- Otherwise, treats it as a standard function call to "++".
 incrementOps :: Ast -> Ast
 incrementOps (ASymbol name) = 
-    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "+"))
+    ASetVar name (DT.pack "auto") (ACall (ASymbol (DT.pack "+"))
         [ASymbol name, AInteger (fitInteger 1)])
-incrementOps other = Call (ASymbol (DT.pack "++")) [other]
+incrementOps other = ACall (ASymbol (DT.pack "++")) [other]
 
 -- | Handle the decrement operator (--).
 --
@@ -232,9 +232,9 @@ incrementOps other = Call (ASymbol (DT.pack "++")) [other]
 -- Otherwise, treats it as a standard function call to "--".
 decrementOps :: Ast -> Ast
 decrementOps (ASymbol name) = 
-    Define name (DT.pack "auto") (Call (ASymbol (DT.pack "-"))
+    ASetVar name (DT.pack "auto") (ACall (ASymbol (DT.pack "-"))
         [ASymbol name, AInteger (fitInteger 1)])
-decrementOps other = Call (ASymbol (DT.pack "--")) [other]
+decrementOps other = ACall (ASymbol (DT.pack "--")) [other]
 
 -- | Combined operator table for expression parsing.
 --

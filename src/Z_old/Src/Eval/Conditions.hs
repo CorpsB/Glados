@@ -7,11 +7,11 @@
 
 module Z_old.Src.Eval.Conditions (execCondition) where
 
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..))
 import Z_old.Src.Type.Integer (intValueEq)
 import qualified Data.Text as DT
 
-execCondition :: Ast -> Ast -> Ast -> Either DT.Text Ast
+execCondition :: OldAst -> OldAst -> OldAst -> Either DT.Text OldAst
 execCondition (ABool True) th _ = Right th
 execCondition (ABool False) _ el = Right el
 execCondition (AInteger i) _ el | intValueEq i 0 = Right el

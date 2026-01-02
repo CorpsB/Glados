@@ -31,7 +31,13 @@ library
       AST.Ast
       Common.Type.Integer
       Common.Utils.List
-      Compiler.Encoder
+      Compiler.ASM.CompilerMonad
+      Compiler.ASM.Compiler
+      Compiler.ASM.AstToAsm
+      Compiler.Bytecode.Encoder
+      Compiler.CompilerState
+      Compiler.Instruction
+      Compiler.PsInstruction
       Parser.Lexer
       Parser.Expression
       Parser.Statement
@@ -42,6 +48,8 @@ library
     , parser-combinators
     , bytestring
     , text
+    , containers
+    , mtl
   default-language:    Haskell2010
   ghc-options:
     -Wall
@@ -86,12 +94,19 @@ test-suite glados-unit
       Z_old.Type.IntegerSpec
       Z_old.Utils.ListSpec
       Z_old.LispTest
-      Compiler.EncoderSpec
-      AstSpec
+      Z_old.AstSpec
+      AST.AstSpec
       Parser.StatementSpec
       Parser.LexerSpec
       Parser.ExpressionSpec
       Parser.ConditionsSpec
+      Compiler.Bytecode.EncoderSpec
+      Compiler.InstructionSpec
+      Compiler.PsInstructionSpec
+      Compiler.CompilerStateSpec
+      Compiler.ASM.CompilerMonadSpec
+      Compiler.ASM.CompilerSpec
+      Compiler.ASM.AstToAsmSpec
   build-depends:
       base >= 4.7 && < 5
     , glados
@@ -101,6 +116,9 @@ test-suite glados-unit
     , parser-combinators
     , bytestring
     , text
+    , containers
+    , transformers
+    , mtl
   ghc-options:
     -Wall
     -Wcompat

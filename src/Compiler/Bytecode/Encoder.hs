@@ -20,7 +20,7 @@ Supported encodings:
 - Booleans (encoded as 0 or 1)
 - UTF-8 strings with length prefix
 -}
-module Compiler.Encoder
+module Compiler.Bytecode.Encoder
     ( encodeInt32BE
     , encodeWord8
     , encodeBool
