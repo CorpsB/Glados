@@ -36,6 +36,7 @@ library
       Parser.Expression
       Parser.Statement
       Parser.Conditions
+      Compiler.Instruction
   build-depends:
       base >= 4.7 && < 5
     , megaparsec
@@ -87,6 +88,7 @@ test-suite glados-unit
       Z_old.Utils.ListSpec
       Z_old.LispTest
       Compiler.EncoderSpec
+      Compiler.InstructionSpec
       AstSpec
       Parser.StatementSpec
       Parser.LexerSpec

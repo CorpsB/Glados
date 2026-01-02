@@ -7,6 +7,7 @@ import qualified Parser.LexerSpec
 import qualified Parser.ExpressionSpec
 import qualified Parser.ConditionsSpec
 import qualified Compiler.EncoderSpec
+import qualified Compiler.InstructionSpec
 import qualified AstSpec
 
 import qualified Z_old.Eval.BuiltinsSpec
@@ -41,3 +42,4 @@ spec = do
     Parser.ExpressionSpec.spec
     Parser.ConditionsSpec.spec
     Compiler.EncoderSpec.spec
+    Compiler.InstructionSpec.spec
