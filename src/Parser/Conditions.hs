@@ -45,7 +45,7 @@ pElseBranch pVarDefParam pBlockParam = option AVoid $ do
 -- Handles the optional initialization wrapper.
 buildIfAst :: Maybe Ast -> Ast -> Ast -> Ast -> Ast
 buildIfAst initStmt cond thenB elseB =
-    let ifNode = Condition cond thenB elseB
+    let ifNode = AIf cond thenB elseB
     in case initStmt of
         Just initInstr -> AList [initInstr, ifNode]
         Nothing        -> ifNode
@@ -70,7 +70,7 @@ pWhile pBlockParam = do
     _ <- pKeyword (DT.pack "while")
     cond <- parens pExpr
     body <- pBlockParam
-    return (While cond body)
+    return (AWhile cond body)
 
 -- | Specific parser for updating a for loop (e.g. i = i + 1)
 -- Note: Does not consume a trailing semicolon.
@@ -79,7 +79,7 @@ pForUpdate = try (do
     name <- pIdentifier
     _ <- symbol (DT.pack "=")
     val <- pExpr
-    return (Define name (DT.pack "auto") val))
+    return (ASetVar name (DT.pack "auto") val))
     <|> pExpr
 
 -- | Parse a for loop.
@@ -94,4 +94,4 @@ pFor pVarDefParam pBlockParam = do
         updateS <- pForUpdate
         return (initS, condS, updateS)
     body <- pBlockParam
-    return (For initStmt cond updateStmt body)
+    return (AFor initStmt cond updateStmt body)

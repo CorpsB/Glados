@@ -11,7 +11,7 @@
 module Z_old.AstSpec (spec) where
 
 import Test.Hspec
-import Z_old.Src.Ast (OldAst(..))
+import Z_old.Src.Ast (OldAst(..), showAst, printAst)
 import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 import Data.List (isInfixOf)

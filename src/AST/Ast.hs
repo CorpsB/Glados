@@ -65,7 +65,7 @@ data Ast
       --   @param Text The type of the variable.
       --   @param Ast The value assigned to the variable.
 
-    | ASetStruct DT.Text [(DT.Text, DT.Text)]
+    | ASetStruct DT.Text [(DT.Text, Ast)]
       -- ^ Represents a structure definition statement wrapper.
       --   @param ADefineStruct The structure definition node.
 

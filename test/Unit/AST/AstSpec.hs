@@ -45,8 +45,8 @@ spec = describe "AST.Ast (structure only)" $ do
     let setVarAst = ASetVar "x" "Int" (AInteger (I8 1))
     setVarAst `shouldBe` ASetVar "x" "Int" (AInteger (I8 1))
 
-    let setStructAst = ASetStruct "Point" [("x","Int")]
-    setStructAst `shouldBe` ASetStruct "Point" [("x","Int")]
+    let setStructAst = ASetStruct "Point" [("x", AInteger (I8 2))]
+    setStructAst `shouldBe` ASetStruct "Point" [("x", AInteger (I8 2))]
 
     let env :: Env
         env = [("a", AInteger (I32 0))]

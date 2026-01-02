@@ -108,11 +108,11 @@ spec = describe "Parser.Expression - Full Coverage" $ do
         it "Triggers incrementOps fallback (non-symbol argument)" $ do
             let code = "++5"
             parseExpr code `shouldSatisfy` \case
-                Right (Call (ASymbol op) [AInteger (I8 5)]) -> op == p "++"
+                Right (ACall (ASymbol op) [AInteger (I8 5)]) -> op == p "++"
                 _ -> False
 
         it "Triggers decrementOps fallback (non-symbol argument)" $ do
             let code = "--(x+1)"
             parseExpr code `shouldSatisfy` \case
-                Right (Call (ASymbol op) _) -> op == p "--"
+                Right (ACall (ASymbol op) _) -> op == p "--"
                 _ -> False

@@ -96,11 +96,11 @@ test-suite glados-unit
       Z_old.LispTest
       Z_old.AstSpec
       AST.AstSpec
-      Compiler.Bytecode.EncoderSpec
       Parser.StatementSpec
       Parser.LexerSpec
       Parser.ExpressionSpec
       Parser.ConditionsSpec
+      Compiler.Bytecode.EncoderSpec
       Compiler.InstructionSpec
       Compiler.PsInstructionSpec
       Compiler.CompilerStateSpec
