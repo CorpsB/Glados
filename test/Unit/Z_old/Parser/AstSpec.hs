@@ -11,7 +11,7 @@
 module Z_old.Parser.AstSpec (spec) where
 
 import Test.Hspec
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..))
 import Z_old.Src.Lisp (SExpr(..))
 import Z_old.Src.Parser.Ast (sexprToAST)
 import Z_old.Src.Type.Integer (IntValue(..))

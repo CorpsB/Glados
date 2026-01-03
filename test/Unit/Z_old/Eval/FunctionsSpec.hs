@@ -12,16 +12,16 @@ module Z_old.Eval.FunctionsSpec (spec) where
 import Test.Hspec
 import Z_old.Src.Eval.Functions
 import Z_old.Src.Type.Integer (IntValue(..))
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..), OldEnv)
 import qualified Data.Text as DT
 
-mockEvalSuccess :: FuncTable -> Env -> Ast -> Either DT.Text Ast
+mockEvalSuccess :: FuncTable -> OldEnv -> OldAst -> Either DT.Text OldAst
 mockEvalSuccess _ _ _ = Right (AInteger (I16 1000))
 
-mockEvalFail :: FuncTable -> Env -> Ast -> Either DT.Text Ast
+mockEvalFail :: FuncTable -> OldEnv -> OldAst -> Either DT.Text OldAst
 mockEvalFail _ _ _ = Left (DT.pack "Mock Error")
 
-spyForceAll :: FuncTable -> Env -> Ast -> Either DT.Text Ast
+spyForceAll :: FuncTable -> OldEnv -> OldAst -> Either DT.Text OldAst
 spyForceAll ft env body =
     if null ft then Left (DT.pack "Spy Error: Ftable is empty!")
     else

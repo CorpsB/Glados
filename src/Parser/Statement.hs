@@ -72,7 +72,7 @@ pReturn = do
     _ <- pKeyword (DT.pack "ret")
     val <- pExpr
     _ <- semicolon
-    return (Return val)
+    return (AReturn val)
 
 -- | Parse a block of code enclosed in braces.
 --
@@ -98,13 +98,13 @@ pFunc = do
             Just t  -> t
             Nothing -> DT.pack "Void"
     body <- pBlock
-    return (DefineFun name args retType body)
+    return (ADefineFunc name args retType body)
 
 -- | Helper to construct a binary operator call for compound assignments.
 --
 -- Used for +=, -=, *=, /= to transform 'x += 1' into 'x = x + 1'.
 makeOpCall :: DT.Text -> DT.Text -> Ast -> Ast
-makeOpCall op name expr = Call (ASymbol op) [ASymbol name, expr]
+makeOpCall op name expr = ACall (ASymbol op) [ASymbol name, expr]
 
 -- | Parse assignment operators and return a transformation function.
 --
@@ -129,11 +129,11 @@ buildUpdateChain name indices finalVal =
         foldUpdate (ASymbol name) indices finalVal
     where
         foldUpdate base [idx] val = 
-            Call (ASymbol (DT.pack "update")) [base, idx, val]
+            ACall (ASymbol (DT.pack "update")) [base, idx, val]
         foldUpdate base (idx:rest) val =
-            let inner = Call (ASymbol (DT.pack "nth")) [base, idx]
+            let inner = ACall (ASymbol (DT.pack "nth")) [base, idx]
                 newVal = foldUpdate inner rest val
-            in Call (ASymbol (DT.pack "update")) [base, idx, newVal]
+            in ACall (ASymbol (DT.pack "update")) [base, idx, newVal]
         foldUpdate _ [] _ = error "Should not happen in buildUpdateChain"
 
 -- | Parse a standard variable definition or assignment.
@@ -147,7 +147,7 @@ pSimpleDef name = do
     val <- pExpr
     _ <- semicolon
     let finalType = maybe (DT.pack "auto") id varType
-    return (Define name finalType (makeValue val))
+    return (ASetVar name finalType (makeValue val))
 
 -- | Parse an array element assignment.
 --
@@ -159,7 +159,7 @@ pArrayUpdate name indices = do
     val <- pExpr
     _ <- semicolon
     let updateExpr = buildUpdateChain name indices val
-    return (Define name (DT.pack "auto") updateExpr)
+    return (ASetVar name (DT.pack "auto") updateExpr)
 
 -- | Parse a variable definition (declaration or assignment).
 --
@@ -192,7 +192,7 @@ pStruct = do
     _ <- pKeyword (DT.pack "struct")
     name <- pIdentifier
     fields <- braces (many pStructField)
-    return (Struct name fields)
+    return (ADefineStruct name fields)
 
 -- | Parse the file path string for an import.
 --
@@ -211,7 +211,7 @@ pImport = do
     _ <- pKeyword (DT.pack "import")
     path <- pImportPath
     _ <- semicolon
-    return (Import path)
+    return (AImport path)
 
 -- | Group of control flow parsers (If, While, For).
 pControlFlow :: [Parser Ast]

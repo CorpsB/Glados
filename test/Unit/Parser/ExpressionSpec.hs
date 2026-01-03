@@ -54,32 +54,32 @@ spec = describe "Parser.Expression - Full Coverage" $ do
         
         it "Parses Division (/ -> div)" $ do
             parseExpr "10 / 2" `shouldSatisfy` \case
-                Right (Call (ASymbol op) [AInteger (I8 10), AInteger (I8 2)]) -> op == p "div"
+                Right (ACall (ASymbol op) [AInteger (I8 10), AInteger (I8 2)]) -> op == p "div"
                 _ -> False
 
         it "Parses Modulo (% -> mod)" $ do
             parseExpr "10 % 3" `shouldSatisfy` \case
-                Right (Call (ASymbol op) [AInteger (I8 10), AInteger (I8 3)]) -> op == p "mod"
+                Right (ACall (ASymbol op) [AInteger (I8 10), AInteger (I8 3)]) -> op == p "mod"
                 _ -> False
 
         it "Parses Subtraction (-)" $ do
             parseExpr "10 - 5" `shouldSatisfy` \case
-                Right (Call (ASymbol op) [AInteger (I8 10), AInteger (I8 5)]) -> op == p "-"
+                Right (ACall (ASymbol op) [AInteger (I8 10), AInteger (I8 5)]) -> op == p "-"
                 _ -> False
 
         it "Parses Equality (== -> eq?)" $ do
             parseExpr "1 == 1" `shouldSatisfy` \case
-                Right (Call (ASymbol op) [AInteger (I8 1), AInteger (I8 1)]) -> op == p "eq?"
+                Right (ACall (ASymbol op) [AInteger (I8 1), AInteger (I8 1)]) -> op == p "eq?"
                 _ -> False
 
         it "Parses Less Than (<)" $ do
             parseExpr "1 < 2" `shouldSatisfy` \case
-                Right (Call (ASymbol op) [AInteger (I8 1), AInteger (I8 2)]) -> op == p "<"
+                Right (ACall (ASymbol op) [AInteger (I8 1), AInteger (I8 2)]) -> op == p "<"
                 _ -> False
         
         it "Parses Greater Than (>)" $ do
             parseExpr "2 > 1" `shouldSatisfy` \case
-                Right (Call (ASymbol op) [AInteger (I8 2), AInteger (I8 1)]) -> op == p ">"
+                Right (ACall (ASymbol op) [AInteger (I8 2), AInteger (I8 1)]) -> op == p ">"
                 _ -> False
 
     describe "Other Types (Strings, Chars, Lists)" $ do
@@ -98,9 +98,9 @@ spec = describe "Parser.Expression - Full Coverage" $ do
                 Right (AList _) -> True
                 _ -> False
         
-        it "Parses Function Call" $ do
+        it "Parses Function ACall" $ do
             parseExpr "foo(1)" `shouldSatisfy` \case
-                Right (Call (ASymbol s) _) -> s == p "foo"
+                Right (ACall (ASymbol s) _) -> s == p "foo"
                 _ -> False
 
     describe "Coverage: Parser Helpers" $ do
@@ -108,11 +108,11 @@ spec = describe "Parser.Expression - Full Coverage" $ do
         it "Triggers incrementOps fallback (non-symbol argument)" $ do
             let code = "++5"
             parseExpr code `shouldSatisfy` \case
-                Right (Call (ASymbol op) [AInteger (I8 5)]) -> op == p "++"
+                Right (ACall (ASymbol op) [AInteger (I8 5)]) -> op == p "++"
                 _ -> False
 
         it "Triggers decrementOps fallback (non-symbol argument)" $ do
             let code = "--(x+1)"
             parseExpr code `shouldSatisfy` \case
-                Right (Call (ASymbol op) _) -> op == p "--"
+                Right (ACall (ASymbol op) _) -> op == p "--"
                 _ -> False

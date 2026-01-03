@@ -16,7 +16,7 @@ import Data.Maybe (isJust)
 import Z_old.Src.Eval.Run (processSExpr, astFromSexpr, processDefine, processCallOrEval)
 import Z_old.Src.Eval.Functions (FuncTable)
 import Z_old.Src.Lisp (SExpr(..))
-import AST.Ast (Ast(..))
+import Z_old.Src.Ast (OldAst(..))
 import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 
