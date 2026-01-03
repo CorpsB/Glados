@@ -16,13 +16,18 @@ module Compiler.Instruction
     , immediateToTypeID
     , immediateSize
     , getInstCode
+    , instructionSize
+    , serializeInstruction
     ) where
 
 import Data.Word (Word8)
 import Common.Type.Integer (IntValue(..))
+import Data.Int (Int32)
+import qualified Data.ByteString.Builder as B
+import Compiler.Bytecode.Encoder (encodeInt32BE, encodeWord8, encodeBool)
 
 -- | Immediate values pushed by PUSH.
--- 
+--
 -- @details
 --   Immediate represents the different immediate payloads that can be encoded
 --   after a PUSH opcode. The TypeID encoding follows ASM_SPEC.md (version 0x02).
@@ -200,80 +205,48 @@ getInstCode Print                = 0x70
 getInstCode Halt                 = 0x71
 getInstCode (CheckStack _)       = 0xFE
 getInstCode Nop                  = 0xFF
-{-
--- EPITECH PROJECT, 2026
--- Glados
--- File description:
--- Instruction
--}
 
-{-# LANGUAGE DeriveGeneric #-}
-module Compiler.Instruction (
-    Instruction(..),
-    instructionSize,
-    serializeInstruction
-) where
 
-import Data.Int (Int32)
-import Data.Word (Word8)
-import qualified Data.ByteString.Builder as B
-import Compiler.Encoder (encodeInt32BE, encodeWord8, encodeBool)
-
--- | Compiler-side VM Instruction set
--- Each constructor matches a primitive VM instruction.
-data Instruction
-    = Push Int32
-    | PushBool Bool
-    | Add
-    | Sub
-    | Jump Int32
-    | JumpIfFalse Int32
-    | Load Int32
-    | Store Int32
-    | Call Int32
-    | Ret
-    | MakeClosure Int32 Int32
-    | Halt
-    deriving (Show, Eq)
-
--- | Returns the size in bytes of the encoded instruction
 instructionSize :: Instruction -> Int
-instructionSize (Push _) = 1 + 4
-instructionSize (PushBool _) = 1 + 1
-instructionSize Add = 1
-instructionSize Sub = 1
-instructionSize (Jump _) = 1 + 4
-instructionSize (JumpIfFalse _) = 1 + 4
-instructionSize (Load _) = 1 + 4
-instructionSize (Store _) = 1 + 4
-instructionSize (Call _) = 1 + 4
-instructionSize Ret = 1
-instructionSize (MakeClosure _ _) = 1 + 4 + 4
-instructionSize Halt = 1
+instructionSize (Push (ImmInt (I32 _))) = 1 + 4
+instructionSize (Push (ImmBool _))      = 1 + 1
+instructionSize Pop                     = 1
+instructionSize Dup                     = 1
+instructionSize Swap                    = 1
+instructionSize Add                     = 1
+instructionSize Sub                     = 1
+instructionSize (Jump off)              = 1 + 4
+instructionSize (JumpIfFalse off)       = 1 + 4
+instructionSize (Call off)              = 1 + 4
+instructionSize Ret                     = 1
+instructionSize (MakeClosure addr n)    = 1 + 4 + 4
+instructionSize Halt                    = 1
 
--- | Serializes an instruction to a Builder
 serializeInstruction :: Instruction -> B.Builder
-serializeInstruction (Push n) =
+serializeInstruction (Push (ImmInt (I32 n))) =
     encodeWord8 0x01 <> encodeInt32BE n
-serializeInstruction (PushBool b) =
+serializeInstruction (Push (ImmBool b)) =
     encodeWord8 0x02 <> encodeBool b
-serializeInstruction Add =
+serializeInstruction Pop =
     encodeWord8 0x03
-serializeInstruction Sub =
+serializeInstruction Dup =
     encodeWord8 0x04
+serializeInstruction Swap =
+    encodeWord8 0x05
+serializeInstruction Add =
+    encodeWord8 0x06
+serializeInstruction Sub =
+    encodeWord8 0x07
 serializeInstruction (Jump addr) =
-    encodeWord8 0x05 <> encodeInt32BE addr
-serializeInstruction (JumpIfFalse a) =
-    encodeWord8 0x06 <> encodeInt32BE a
-serializeInstruction (Load i) =
-    encodeWord8 0x07 <> encodeInt32BE i
-serializeInstruction (Store i) =
-    encodeWord8 0x08 <> encodeInt32BE i
+    encodeWord8 0x08 <> encodeInt32BE (fromIntegral addr)
+serializeInstruction (JumpIfFalse addr) =
+    encodeWord8 0x09 <> encodeInt32BE (fromIntegral addr)
 serializeInstruction (Call addr) =
-    encodeWord8 0x09 <> encodeInt32BE addr
+    encodeWord8 0x0A <> encodeInt32BE (fromIntegral addr)
 serializeInstruction Ret =
-    encodeWord8 0x0A
-serializeInstruction (MakeClosure a c) =
-    encodeWord8 0x0B <> encodeInt32BE a <> encodeInt32BE c
+    encodeWord8 0x0B
+serializeInstruction (MakeClosure addr n) =
+    encodeWord8 0x0C <> encodeInt32BE (fromIntegral addr)
+                     <> encodeInt32BE (fromIntegral n)
 serializeInstruction Halt =
     encodeWord8 0xFF

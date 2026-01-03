@@ -10,6 +10,8 @@ module Compiler.InstructionSpec (spec) where
 import Test.Hspec
 import Data.Word (Word8)
 import Data.List (sort, isPrefixOf)
+import qualified Data.ByteString.Builder as B
+import qualified Data.ByteString.Lazy as LBS
 
 import Compiler.Instruction
     ( Instruction(..)
@@ -17,7 +19,10 @@ import Compiler.Instruction
     , immediateToTypeID
     , immediateSize
     , getInstCode
+    , instructionSize
+    , serializeInstruction
     )
+
 
 import Common.Type.Integer (IntValue(..))
 
@@ -192,68 +197,79 @@ spec = describe "Compiler.Instruction (coverage + exact spec mapping)" $ do
             mapM_ (\x -> (instrCtorName x `isPrefixOf` show x) `shouldBe` True) allInstructions
             mapM_ (\i -> show i `shouldSatisfy` (not . null)) allImmediates
             mapM_ (\i -> (immCtorName i `isPrefixOf` show i) `shouldBe` True) allImmediates
-{-# LANGUAGE OverloadedStrings #-}
-module Compiler.InstructionSpec (spec) where
 
-import Test.Hspec
-import Compiler.Instruction
-import qualified Data.ByteString.Builder as B
-import qualified Data.ByteString.Lazy as LBS
+    describe "serializeInstruction (Instruction)" $ do
+        it "Push (ImmInt (I32 5)): opcode + int32" $ do
+            let bytes = runBuilder (serializeInstruction (Push (ImmInt (I32 5))))
+            bytes `shouldBe` [1,0,0,0,5]
+        it "Push (ImmBool True): opcode + bool" $ do
+            let bytes = runBuilder (serializeInstruction (Push (ImmBool True)))
+            bytes `shouldBe` [2,1]
+        it "Push (ImmBool False): opcode + bool" $ do
+            let bytes = runBuilder (serializeInstruction (Push (ImmBool False)))
+            bytes `shouldBe` [2,0]
+        it "Pop: opcode only" $ do
+            let bytes = runBuilder (serializeInstruction Pop)
+            bytes `shouldBe` [3]
+        it "Dup: opcode only" $ do
+            let bytes = runBuilder (serializeInstruction Dup)
+            bytes `shouldBe` [4]
+        it "Swap: opcode only" $ do
+            let bytes = runBuilder (serializeInstruction Swap)
+            bytes `shouldBe` [5]
+        it "Add: opcode only" $ do
+            let bytes = runBuilder (serializeInstruction Add)
+            bytes `shouldBe` [6]
+        it "Sub: opcode only" $ do
+            let bytes = runBuilder (serializeInstruction Sub)
+            bytes `shouldBe` [7]
+        it "Jump 42: opcode + int32" $ do
+            let bytes = runBuilder (serializeInstruction (Jump 42))
+            bytes `shouldBe` [8,0,0,0,42]
+        it "JumpIfFalse 99: opcode + int32" $ do
+            let bytes = runBuilder (serializeInstruction (JumpIfFalse 99))
+            bytes `shouldBe` [9,0,0,0,99]
+        it "Call 55: opcode + int32" $ do
+            let bytes = runBuilder (serializeInstruction (Call 55))
+            bytes `shouldBe` [10,0,0,0,55]
+        it "Ret: opcode only" $ do
+            let bytes = runBuilder (serializeInstruction Ret)
+            bytes `shouldBe` [11]
+        it "MakeClosure 7 2: opcode + int32 + int32" $ do
+            let bytes = runBuilder (serializeInstruction (MakeClosure 7 2))
+            bytes `shouldBe` [12,0,0,0,7,0,0,0,2]
+        it "Halt: opcode only" $ do
+            let bytes = runBuilder (serializeInstruction Halt)
+            bytes `shouldBe` [255]
+    describe "instructionSize (Instruction)" $ do
+        it "Push (ImmInt (I32 5)): correct size" $ do
+            length (runBuilder (serializeInstruction (Push (ImmInt (I32 5))))) `shouldBe` instructionSize (Push (ImmInt (I32 5)))
+        it "Push (ImmBool True): correct size" $ do
+            length (runBuilder (serializeInstruction (Push (ImmBool True)))) `shouldBe` instructionSize (Push (ImmBool True))
+        it "Push (ImmBool False): correct size" $ do
+            length (runBuilder (serializeInstruction (Push (ImmBool False)))) `shouldBe` instructionSize (Push (ImmBool False))
+        it "Pop: correct size" $ do
+            length (runBuilder (serializeInstruction Pop)) `shouldBe` instructionSize Pop
+        it "Dup: correct size" $ do
+            length (runBuilder (serializeInstruction Dup)) `shouldBe` instructionSize Dup
+        it "Swap: correct size" $ do
+            length (runBuilder (serializeInstruction Swap)) `shouldBe` instructionSize Swap
+        it "Add: correct size" $ do
+            length (runBuilder (serializeInstruction Add)) `shouldBe` instructionSize Add
+        it "Sub: correct size" $ do
+            length (runBuilder (serializeInstruction Sub)) `shouldBe` instructionSize Sub
+        it "Jump 42: correct size" $ do
+            length (runBuilder (serializeInstruction (Jump 42))) `shouldBe` instructionSize (Jump 42)
+        it "JumpIfFalse 99: correct size" $ do
+            length (runBuilder (serializeInstruction (JumpIfFalse 99))) `shouldBe` instructionSize (JumpIfFalse 99)
+        it "Call 55: correct size" $ do
+            length (runBuilder (serializeInstruction (Call 55))) `shouldBe` instructionSize (Call 55)
+        it "Ret: correct size" $ do
+            length (runBuilder (serializeInstruction Ret)) `shouldBe` instructionSize Ret
+        it "MakeClosure 7 2: correct size" $ do
+            length (runBuilder (serializeInstruction (MakeClosure 7 2))) `shouldBe` instructionSize (MakeClosure 7 2)
+        it "Halt: correct size" $ do
+            length (runBuilder (serializeInstruction Halt)) `shouldBe` instructionSize Halt
 
 runBuilder :: B.Builder -> [Int]
 runBuilder b = map fromEnum $ LBS.unpack (B.toLazyByteString b)
-
-spec :: Spec
-spec = describe "Compiler.Instruction" $ do
-    it "Push 5: opcode + int32" $ do
-        let bytes = runBuilder (serializeInstruction (Push 5))
-        bytes `shouldBe` [1,0,0,0,5]
-        length bytes `shouldBe` instructionSize (Push 5)
-    it "PushBool True: opcode + bool" $ do
-        let bytes = runBuilder (serializeInstruction (PushBool True))
-        bytes `shouldBe` [2,1]
-        length bytes `shouldBe` instructionSize (PushBool True)
-    it "PushBool False: opcode + bool" $ do
-        let bytes = runBuilder (serializeInstruction (PushBool False))
-        bytes `shouldBe` [2,0]
-        length bytes `shouldBe` instructionSize (PushBool False)
-    it "Add: opcode only" $ do
-        let bytes = runBuilder (serializeInstruction Add)
-        bytes `shouldBe` [3]
-        length bytes `shouldBe` instructionSize Add
-    it "Sub: opcode only" $ do
-        let bytes = runBuilder (serializeInstruction Sub)
-        bytes `shouldBe` [4]
-        length bytes `shouldBe` instructionSize Sub
-    it "Jump 42: opcode + int32" $ do
-        let bytes = runBuilder (serializeInstruction (Jump 42))
-        bytes `shouldBe` [5,0,0,0,42]
-        length bytes `shouldBe` instructionSize (Jump 42)
-    it "JumpIfFalse 99: opcode + int32" $ do
-        let bytes = runBuilder (serializeInstruction (JumpIfFalse 99))
-        bytes `shouldBe` [6,0,0,0,99]
-        length bytes `shouldBe` instructionSize (JumpIfFalse 99)
-    it "Load 123: opcode + int32" $ do
-        let bytes = runBuilder (serializeInstruction (Load 123))
-        bytes `shouldBe` [7,0,0,0,123]
-        length bytes `shouldBe` instructionSize (Load 123)
-    it "Store 77: opcode + int32" $ do
-        let bytes = runBuilder (serializeInstruction (Store 77))
-        bytes `shouldBe` [8,0,0,0,77]
-        length bytes `shouldBe` instructionSize (Store 77)
-    it "Call 55: opcode + int32" $ do
-        let bytes = runBuilder (serializeInstruction (Call 55))
-        bytes `shouldBe` [9,0,0,0,55]
-        length bytes `shouldBe` instructionSize (Call 55)
-    it "Ret: opcode only" $ do
-        let bytes = runBuilder (serializeInstruction Ret)
-        bytes `shouldBe` [10]
-        length bytes `shouldBe` instructionSize Ret
-    it "MakeClosure 7 2: opcode + int32 + int32" $ do
-        let bytes = runBuilder (serializeInstruction (MakeClosure 7 2))
-        bytes `shouldBe` [11,0,0,0,7,0,0,0,2]
-        length bytes `shouldBe` instructionSize (MakeClosure 7 2)
-    it "Halt: opcode only" $ do
-        let bytes = runBuilder (serializeInstruction Halt)
-        bytes `shouldBe` [255]
-        length bytes `shouldBe` instructionSize Halt
