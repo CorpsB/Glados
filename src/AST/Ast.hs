@@ -69,13 +69,6 @@ data Ast
       -- ^ Represents a structure definition statement wrapper.
       --   @param ADefineStruct The structure definition node.
 
-    | ASetClosure [DT.Text] Ast Env
-      -- ^ Represents a Closure (function with captured environment).
-      --   Usually generated during evaluation or static analysis phases.
-      --   @param [Text] The parameters.
-      --   @param Ast The body.
-      --   @param Env The captured environment/context.
-
     | ACall Ast [Ast]
       -- ^ Represents a function call (Application).
       --   @param Ast The callee (function expression or symbol).
@@ -115,7 +108,6 @@ showAst (ABool True) = "#t"
 showAst (ABool False) = "#f"
 showAst (ASymbol s) = DT.unpack s
 showAst (AList xs) = "(" ++ Prelude.unwords (Prelude.map showAst xs) ++ ")"
-showAst (ASetClosure _ _ _) = "#\\<procedure\\>"
 showAst (ADefineLambda _ _) = "#<lambda>"
 showAst other = Prelude.show other
 -- TO DO: add new AST lines

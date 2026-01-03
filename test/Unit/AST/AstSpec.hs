@@ -48,11 +48,6 @@ spec = describe "AST.Ast (structure only)" $ do
     let setStructAst = ASetStruct "Point" [("x", AInteger (I8 2))]
     setStructAst `shouldBe` ASetStruct "Point" [("x", AInteger (I8 2))]
 
-    let env :: Env
-        env = [("a", AInteger (I32 0))]
-    let setClosureAst = ASetClosure ["x"] (ASymbol "x") env
-    setClosureAst `shouldBe` ASetClosure ["x"] (ASymbol "x") [("a", AInteger (I32 0))]
-
     let callAst = ACall (ASymbol "f") [AInteger (I32 1)]
     callAst `shouldBe` ACall (ASymbol "f") [AInteger (I32 1)]
 
