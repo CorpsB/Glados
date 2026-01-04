@@ -163,8 +163,7 @@ pLambda = do
 -- variables, function calls, or parenthesized sub-expressions.
 pTermBase :: Parser Ast
 pTermBase = choice
-    [ try pNew
-    , try pLambda
+    [ try pNew, try pLambda
     , parens pExpr
     , pInteger
     , pBool
