@@ -11,7 +11,8 @@ Description : High-level code generation (Flow control, Definitions, Calls).
 Stability : experimental
 -}
 module Compiler.ASM.Compiler 
-    ( compileIf
+    ( compileAst
+    , compileIf
     , compileFor
     , compileWhile
     , compileSetVar
@@ -32,7 +33,13 @@ import Control.Monad (zipWithM_, forM_)
 import Control.Monad.State (lift)
 
 import Compiler.ASM.CompilerMonad
-import Compiler.ASM.AstToAsm (astSymbolToAsm, builtinMap)
+import Compiler.ASM.AstToAsm
+    ( builtinMap
+    , astSymbolToAsm
+    , astBoolToAsm
+    , astListToAsm
+    , astCallToAsm
+    )
 import Compiler.Instruction (Instruction(..))
 import Compiler.PsInstruction (PsInstruction(..))
 import Compiler.CompilerState (ScopeType(..))
@@ -323,3 +330,37 @@ compileDefineLambda compileFn params body = do
 --
 compileDefineStruct :: Text -> [(Text, Text)] -> CompilerMonad ()
 compileDefineStruct name fields = defineStruct name (map fst fields)
+
+-- | Main Dispatcher Function: Compiles any AST node.
+--
+-- @args
+--   - ast: The AST node to compile.
+--
+-- @details
+--   This is the central router of the compiler. It pattern-matches on the AST
+--   constructors and delegates to the appropriate specific compilation function.
+--   It passes itself ('compileAst') recursively to handle nested expressions.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+-- TODO : compileAst (AInteger i) = astIntToAsm (intValueToInt i)
+compileAst :: Ast -> CompilerMonad ()
+compileAst (AInteger _) = return ()
+compileAst (ABool b) = astBoolToAsm b
+compileAst (ASymbol s) = astSymbolToAsm s
+compileAst AVoid = return ()
+compileAst (AList xs) = astListToAsm compileAst xs
+compileAst (ADefineFunc name args _ body) =
+    compileDefineFun compileAst name (map fst args) body
+compileAst (ADefineLambda params body) =
+    compileDefineLambda compileAst params body
+compileAst (ADefineStruct name fields) = compileDefineStruct name fields
+compileAst (ASetVar name _ body) = compileSetVar compileAst name body
+compileAst (ASetStruct name fields) = compileSetStruct compileAst name fields
+compileAst (AIf cond t f) = compileIf compileAst cond t f
+compileAst (AWhile cond body) = compileWhile compileAst cond body
+compileAst (AFor i cond body u) = compileFor compileAst i cond body u
+compileAst (ACall func args) = astCallToAsm compileAst func args
+compileAst (AReturn expr) = compileAst expr >> emitInstruction Ret
+compileAst (AImport _) = return ()
