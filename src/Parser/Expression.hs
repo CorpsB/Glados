@@ -65,6 +65,15 @@ pIndexSuffix = do
     _ <- symbol (DT.pack "]")
     return (\arr -> ACall (ASymbol (DT.pack "nth")) [arr, indexExpr])
 
+-- | Parse a function call suffix.
+--
+-- Example: (arg1, arg2)
+-- Returns a function that wraps the preceding expression in a 'ACall' node.
+pCallSuffix :: Parser (Ast -> Ast)
+pCallSuffix = do
+    args <- parens (pExpr `sepBy` comma)
+    return (\func -> ACall func args)
+
 -- | Parse a boolean literal (True or False).
 pBool :: Parser Ast
 pBool = lexeme (choice
@@ -137,13 +146,24 @@ pNew = do
     fields <- braces (pFieldInit `sepBy` comma)
     return (ASetStruct className fields)
 
+-- | Parse lambda
+--
+-- Syntax: lambda (arg1, arg2)
+pLambda :: Parser Ast
+pLambda = do
+    _ <- pKeyword (DT.pack "lambda")
+    args <- parens (pIdentifier `sepBy` comma)
+    _ <- optional (symbol (DT.pack "->")) 
+    body <- pExpr
+    return (ADefineLambda args body)
+
 -- | Parse a term in an expression.
 --
 -- A term is the basic unit of an expression, such as literals,
 -- variables, function calls, or parenthesized sub-expressions.
 pTermBase :: Parser Ast
 pTermBase = choice
-    [ try pNew
+    [ try pNew, try pLambda
     , parens pExpr
     , pInteger
     , pBool
@@ -160,7 +180,7 @@ pTermBase = choice
 pTerm :: Parser Ast
 pTerm = do
     base <- pTermBase
-    suffixes <- many (choice [pIndexSuffix, pMemberSuffix])
+    suffixes <- many (choice [try pCallSuffix, pIndexSuffix, pMemberSuffix])
     return (foldl (\acc f -> f acc) base suffixes)
 
 -- | Helper to create a binary operator AST node.
