@@ -65,6 +65,42 @@ getLambdaFreeVariables (AIf cond t e) =
 getLambdaFreeVariables (AList e) = Set.unions (map getLambdaFreeVariables e)
 getLambdaFreeVariables _ = Set.empty
 
+-- | Helper function for Tail Call Optimization
+--
+-- @args
+--   - compileFn: The standard compilation function for non-tail expressions.
+--   - ast: The AST node to compile in tail position.
+--
+-- @details
+--   Detects if the expression is a function call. If so, emits 'TailCallLabel'
+--   (TCO). If it is a control structure (If, List), it propagates the tail
+--   context recursively. Otherwise, compiles normally and emits 'Ret'.
+--
+compileTail :: (Ast -> CompilerMonad ()) -> Ast -> CompilerMonad ()
+compileTail compileFn (ACall func args) = case func of
+    ASymbol name -> case Map.lookup name builtinMap of
+        Just instr -> mapM_ compileFn args >>
+            emitInstruction instr >> emitInstruction Ret
+        Nothing -> mapM_ compileFn args >>
+            appendPseudoInstruction (TailCallLabel name)
+    _ -> compileFn func >> mapM_ compileFn args >>
+        emitInstruction CallIndirect >> emitInstruction Ret
+compileTail compileFn (AIf cond t e) = do
+    lElse <- generateUniqueLabel (pack "else")
+    lEnd  <- generateUniqueLabel (pack "endif")
+    compileFn cond
+    emitJumpIfFalseToLabel lElse
+    compileTail compileFn t
+    emitJumpToLabel lEnd
+    emitLabelDefinition lElse
+    compileTail compileFn e
+    emitLabelDefinition lEnd
+compileTail compileFn (AList exprs)
+    | null exprs = emitInstruction Ret
+    | otherwise = mapM_ compileFn (init exprs) >>
+        compileTail compileFn (last exprs)
+compileTail compileFn other = compileFn other >> emitInstruction Ret
+
 -- | Compiles a conditional expression (If-Then-Else).
 --
 -- @args
@@ -159,11 +195,11 @@ compileDefineLambda :: (Ast -> CompilerMonad ()) -> [Text] -> Ast ->
     CompilerMonad ()
 compileDefineLambda compileFn params body = do
     let fvars = Set.toList (getLambdaFreeVariables (ADefineLambda params body))
+    let ncaptures = length fvars
     mapM_ astSymbolToAsm fvars
     ulabel <- generateUniqueLabel (pack "lambda")
-    compileInIsolatedFunctionScope $
-        emitLabelDefinition ulabel >>
-        zipWithM_ (\p i -> registerSymbol p ScopeLocal i) params [0..] >>
+    compileInIsolatedFunctionScope $ emitLabelDefinition ulabel >>
         zipWithM_ (\c i -> registerSymbol c ScopeCapture i) fvars [0..] >>
-        compileFn body >> emitInstruction Ret
-    appendPseudoInstruction (MakeClosureLabel ulabel (length fvars))
+        zipWithM_ (\p i -> registerSymbol p ScopeLocal (
+            ncaptures + i)) params [0..] >> compileTail compileFn body
+    appendPseudoInstruction (MakeClosureLabel ulabel ncaptures)
