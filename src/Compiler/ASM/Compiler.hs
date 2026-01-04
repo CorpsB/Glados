@@ -12,11 +12,15 @@ Stability : experimental
 -}
 module Compiler.ASM.Compiler 
     ( compileIf
+    , compileFor
+    , compileWhile
     , compileSetVar
     , compileSetStruct
     , compileDefineFun
     , compileDefineLambda
     , compileDefineStruct
+    , compileTail
+    , compileLoop
     , getLambdaFreeVariables
     ) where
 
@@ -130,6 +134,75 @@ compileIf compileFn cond thenBranch elseBranch = do
     emitJumpToLabel lEnd
     emitLabelDefinition lElse
     compileFn elseBranch
+    emitLabelDefinition lEnd
+
+-- | Helper function to compile the common logic of loops.
+--
+-- @args
+--   - compileFn: The recursive compilation function.
+--   - cond: The condition AST.
+--   - body: The body AST.
+--   - lEnd: The label to jump to if the condition is false.
+--
+-- @details
+--   Compiles the condition, emits the jump-if-false check, and compiles the body.
+--   This sequence is shared between While and For loops.
+--
+compileLoop :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Text -> CompilerMonad ()
+compileLoop compileFn cond body lEnd = do
+    compileFn cond
+    emitJumpIfFalseToLabel lEnd
+    compileFn body
+
+-- | Compiles a While loop.
+--
+-- @args
+--   - compileFn: The recursive compilation function.
+--   - cond: The loop condition AST.
+--   - body: The loop body AST.
+--
+-- @details
+--   Generates start and end labels. Uses 'compileLoop' for the core logic
+--   and handles the looping jump back to start.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileWhile :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> CompilerMonad ()
+compileWhile compileFn cond body = do
+    lStart <- generateUniqueLabel (pack "while_start")
+    lEnd   <- generateUniqueLabel (pack "while_end")
+    emitLabelDefinition lStart
+    compileLoop compileFn cond body lEnd
+    emitJumpToLabel lStart
+    emitLabelDefinition lEnd
+
+-- | Compiles a For loop.
+--
+-- @args
+--   - compileFn: The recursive compilation function.
+--   - initAst: The initialization AST (executed once).
+--   - cond: The loop condition AST.
+--   - body: The loop body AST.
+--   - updateAst: The update/increment AST (executed after each iteration).
+--
+-- @details
+--   Compiles the initialization step first. Then uses 'compileLoop' for the
+--   condition and body. Finally, compiles the update step before jumping back.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileFor :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Ast -> Ast ->
+    CompilerMonad ()
+compileFor compileFn initAst cond body updateAst = do
+    lStart <- generateUniqueLabel (pack "for_start")
+    lEnd   <- generateUniqueLabel (pack "for_end")
+    compileFn initAst
+    emitLabelDefinition lStart
+    compileLoop compileFn cond body lEnd
+    compileFn updateAst
+    emitJumpToLabel lStart
     emitLabelDefinition lEnd
 
 -- | Compiles a variable definition.
