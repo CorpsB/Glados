@@ -13,8 +13,10 @@ Stability : experimental
 module Compiler.ASM.Compiler 
     ( compileIf
     , compileSetVar
+    , compileSetStruct
     , compileDefineFun
     , compileDefineLambda
+    , compileDefineStruct
     , getLambdaFreeVariables
     ) where
 
@@ -22,7 +24,8 @@ import Data.Text (Text, pack)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
-import Control.Monad (zipWithM_)
+import Control.Monad (zipWithM_, forM_)
+import Control.Monad.State (lift)
 
 import Compiler.ASM.CompilerMonad
 import Compiler.ASM.AstToAsm (astSymbolToAsm, builtinMap)
@@ -149,6 +152,33 @@ compileSetVar compileFn name body = do
     idx <- defineSymbol name
     emitInstruction (StoreGlobal idx)
 
+-- | Compiles a structure instantiation.
+--
+-- @args
+--   - compileFn: The recursive compilation function.
+--   - name: The name of the structure to instantiate.
+--   - assignedFields: The list of (Field Name, Value AST) pairs.
+--
+-- @details
+--   Retrieves the structure definition from 'CompilerState' using 'getStructDefinition'.
+--   Reorders the provided values to match the definition order, compiles them
+--   (pushing to stack), and emits a 'BuildStruct' instruction.
+--   Returns an error if the struct is undefined or fields mismatch.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileSetStruct :: (Ast -> CompilerMonad ()) -> Text -> [(Text, Ast)] ->
+    CompilerMonad ()
+compileSetStruct compileFn name assignedFields = do
+    defFields <- getStructDefinition name
+    forM_ defFields $ \fName ->
+        case Map.lookup fName (Map.fromList assignedFields) of
+            Just valAst -> compileFn valAst
+            Nothing -> lift $ Left (pack (
+                "Missing field in struct instantiation: " ++ show fName))
+    emitInstruction (BuildStruct (length defFields))
+
 -- | Compiles a named function definition.
 --
 -- @args
@@ -203,3 +233,20 @@ compileDefineLambda compileFn params body = do
         zipWithM_ (\p i -> registerSymbol p ScopeLocal (
             ncaptures + i)) params [0..] >> compileTail compileFn body
     appendPseudoInstruction (MakeClosureLabel ulabel ncaptures)
+
+-- | Registers a structure definition.
+--
+-- @args
+--   - name: The name of the structure.
+--   - fields: The list of (Field Name, Field Type) pairs.
+--
+-- @details
+--   Updates the 'CompilerState' to store the list of field names in order.
+--   No bytecode is emitted for a structure definition (it is a compile-time
+--   metadata operation).
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileDefineStruct :: Text -> [(Text, Text)] -> CompilerMonad ()
+compileDefineStruct name fields = defineStruct name (map fst fields)

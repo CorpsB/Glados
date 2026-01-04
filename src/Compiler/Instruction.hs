@@ -135,6 +135,7 @@ data Instruction
     -- 7. Closures & Types
     | MakeClosure Int Int     -- ^ 0x60 MAKE_CLOSURE [addr] [n_captures]
     | GetFuncAddr Int         -- ^ 0x61 GET_FUNC_ADDR [id]
+    | BuildStruct Int         -- ^ 0x62 BUILD_STRUCT [n_fields]
     | Cast Word8              -- ^ 0x80 CAST [TypeID]
 
     -- 8. System / Debug
@@ -194,6 +195,7 @@ getInstCode (StoreCapture _)     = 0x55
 
 getInstCode (MakeClosure _ _)    = 0x60
 getInstCode (GetFuncAddr _)      = 0x61
+getInstCode (BuildStruct _)      = 0x62
 getInstCode (Cast _)             = 0x80
 
 getInstCode Print                = 0x70
