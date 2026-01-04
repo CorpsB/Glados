@@ -36,6 +36,7 @@ import Compiler.ASM.CompilerMonad
 import Compiler.ASM.AstToAsm
     ( builtinMap
     , astSymbolToAsm
+    , astIntToAsm
     , astBoolToAsm
     , astListToAsm
     , astCallToAsm
@@ -156,9 +157,9 @@ compileIf compileFn cond thenBranch elseBranch = do
 --   This sequence is shared between While and For loops.
 --
 compileLoop :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Text -> CompilerMonad ()
-compileLoop compileFn cond body lEnd = do
-    compileFn cond
-    emitJumpIfFalseToLabel lEnd
+compileLoop compileFn cond body lEnd =
+    compileFn cond >>
+    emitJumpIfFalseToLabel lEnd >>
     compileFn body
 
 -- | Compiles a While loop.
@@ -344,9 +345,8 @@ compileDefineStruct name fields = defineStruct name (map fst fields)
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
 --
--- TODO : compileAst (AInteger i) = astIntToAsm (intValueToInt i)
 compileAst :: Ast -> CompilerMonad ()
-compileAst (AInteger _) = return ()
+compileAst (AInteger i) = astIntToAsm i
 compileAst (ABool b) = astBoolToAsm b
 compileAst (ASymbol s) = astSymbolToAsm s
 compileAst AVoid = return ()

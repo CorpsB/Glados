@@ -22,7 +22,6 @@ module Compiler.ASM.AstToAsm
 import Control.Monad.State (get, lift)
 import Data.Text (Text, pack)
 import qualified Data.Map.Strict as Map
-import Data.Int (Int64)
 
 import Compiler.ASM.CompilerMonad
     ( CompilerMonad
@@ -47,21 +46,21 @@ builtinMap = Map.fromList
     , (pack "<=", Le)
     ]
 
--- | Converts a native Haskell Int to a PUSH instruction.
+-- | Pushes an Integer AST value directly to the stack.
 --
 -- @args
---   - n: The integer to convert.
+--   - val: The IntValue from the AST.
 --
 -- @details
---   Converts the Int to Int64 (safe default) and emits a Push instruction.
+--   Since the AST construction (Parser) already uses 'fitInteger' to determine
+--   the optimal storage size (I8, I16, etc.), we simply wrap the value in
+--   an 'ImmInt' and emit the PUSH instruction.
 --
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
 --
-astIntToAsm :: Int -> CompilerMonad ()
-astIntToAsm n = 
-    let int64Val = I64 (fromIntegral n :: Int64)
-    in emitInstruction (Push (ImmInt int64Val))
+astIntToAsm :: IntValue -> CompilerMonad ()
+astIntToAsm v = emitInstruction (Push (ImmInt v))
 
 -- | Converts a native Haskell Bool to a PUSH instruction.
 --

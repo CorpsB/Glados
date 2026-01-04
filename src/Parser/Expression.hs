@@ -22,8 +22,10 @@ import Text.Megaparsec
 import Text.Megaparsec.Char (char, string)
 import Control.Monad.Combinators.Expr
 import qualified Data.Text as DT
+import Data.Char (ord)
+
 import AST.Ast (Ast(..))
-import Z_old.Src.Type.Integer (fitInteger, IntValue(..))
+import Common.Type.Integer (fitInteger, IntValue(..))
 import qualified Text.Megaparsec.Char.Lexer as L
 import Parser.Lexer
 
@@ -42,7 +44,8 @@ pMemberSuffix :: Parser (Ast -> Ast)
 pMemberSuffix = do
     _ <- symbol (DT.pack ".")
     fieldName <- pIdentifier
-    let fieldNameAst = AList (map (AInteger . IChar) (DT.unpack fieldName))
+    let fieldNameAst = AList (map (AInteger . IChar . fromIntegral . ord)
+                       (DT.unpack fieldName))
     return (\obj -> ACall (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
 
 -- | Parse a decimal integer.
@@ -79,7 +82,8 @@ pString :: Parser Ast
 pString = (lexeme $ do
     _ <- char '"'
     content <- manyTill L.charLiteral (char '"')
-    return $ AList (map (AInteger . IChar) content)) <?> "string"
+    return $ AList (map (AInteger . IChar . fromIntegral . ord)
+        content)) <?> "string"
 
 -- | Parse a character literal enclosed in single quotes.
 --
@@ -89,7 +93,7 @@ pChar = (lexeme $ do
     _ <- char '\''
     c <- L.charLiteral
     _ <- char '\''
-    return (AInteger (IChar c))) <?> "character"
+    return (AInteger (IChar (fromIntegral (ord c))))) <?> "character"
 
 -- | Parse a list literal enclosed in brackets.
 --

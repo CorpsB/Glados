@@ -5,12 +5,10 @@
 -- Ast
 -}
 
-module AST.Ast (Ast(..), Env, showAst, printAst) where
+module AST.Ast (Ast(..), showAst, printAst) where
 
-import Z_old.Src.Type.Integer (IntValue(..), intValueToInt)
+import Common.Type.Integer (IntValue(..), intValueToInt)
 import Data.Text as DT
-
-type Env = [(DT.Text, Ast)]
 
 -- | Abstract Syntax Tree (AST) definition for the GLADOS language.
 --
