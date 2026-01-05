@@ -29,7 +29,7 @@ data VMState = VMState
     { bytecode :: BS.ByteString
       -- ^ The read-only byte array containing the compiled machine code.
 
-    , programIndex :: Int
+    , bytecodeIndex :: Int
       -- ^ The current index in 'bytecode'.
       --   When a function is called, this value (plus offset) becomes the 
       --   'callbackIndex' in the pushed CallSnapshot.
@@ -73,8 +73,8 @@ type VirtualMachine a = StateT VMState IO a
 createVMState :: BS.ByteString -> VMState
 createVMState code = VMState
     { bytecode        = code
-    , programIndex    = 0
-    , valueStack      = V.empty
+    , bytecodeIndex   = 0
+    , vStack          = V.empty
     , baseVStackIndex = 0
     , snapshotStack   = []
     , globalEnv       = V.replicate 1024 (undefined)

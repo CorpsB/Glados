@@ -5,9 +5,9 @@
 -- VM Call Frame
 -}
 
-module VM.CallSnapshot (
-    CallSnapshot(..)
-) where
+module VM.CallSnapshot
+    ( CallSnapshot(..)
+    ) where
 
 import Data.Vector (Vector)
 import VM.VMValue (VMValue)
