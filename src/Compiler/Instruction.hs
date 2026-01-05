@@ -207,6 +207,19 @@ getInstCode (CheckStack _)       = 0xFE
 getInstCode Nop                  = 0xFF
 
 
+-- | Computes the size in bytes of a given instruction, including its payload.
+--
+-- @args
+--   - instr: the 'Instruction' whose size is to be computed
+--
+-- @details
+--   Returns the total number of bytes required to encode the instruction,
+--   including opcode and any immediate or address payloads. Used for offset
+--   calculations and binary serialization.
+--
+-- @return
+--   The instruction size in bytes as 'Int'.
+--
 instructionSize :: Instruction -> Int
 instructionSize (Push (ImmInt (I32 _))) = 1 + 4
 instructionSize (Push (ImmBool _))      = 1 + 1
@@ -222,6 +235,19 @@ instructionSize Ret                     = 1
 instructionSize (MakeClosure addr n)    = 1 + 4 + 4
 instructionSize Halt                    = 1
 
+-- | Serializes an 'Instruction' to a 'Builder' for binary encoding.
+--
+-- @args
+--   - instr: the 'Instruction' to serialize
+--
+-- @details
+--   Converts the instruction into its binary representation using the
+--   appropriate opcode and payload encoding. Used for writing bytecode
+--   to output files or buffers.
+--
+-- @return
+--   The encoded instruction as a 'Builder'.
+--
 serializeInstruction :: Instruction -> B.Builder
 serializeInstruction (Push (ImmInt (I32 n))) =
     encodeWord8 0x01 <> encodeInt32BE n
