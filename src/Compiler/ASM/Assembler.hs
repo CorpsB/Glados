@@ -51,11 +51,11 @@ buildHeader size =
 pseudoSize :: PsInstruction -> Int
 pseudoSize (LabelDef _) = 0
 pseudoSize (Real inst)  = instructionSize inst
-pseudoSize (JumpLabel _)        = 5
+pseudoSize (JumpLabel _) = 5
 pseudoSize (JumpIfFalseLabel _) = 5
-pseudoSize (JumpIfTrueLabel _)  = 5
-pseudoSize (CallLabel _)        = 5
-pseudoSize (TailCallLabel _)    = 5
+pseudoSize (JumpIfTrueLabel _) = 5
+pseudoSize (CallLabel _) = 5
+pseudoSize (TailCallLabel _) = 5
 pseudoSize (GetFuncAddrLabel _) = 5
 pseudoSize (MakeClosureLabel _ _) = 9
 
@@ -63,23 +63,23 @@ instructionSize :: Instruction -> Int
 instructionSize inst = 1 + payloadSize inst
 
 payloadSize :: Instruction -> Int
-payloadSize (Push imm)       = 1 + immediateSize imm
-payloadSize (Jump _)         = 4
-payloadSize (JumpIfFalse _)  = 4
-payloadSize (JumpIfTrue _)   = 4
-payloadSize (Call _)         = 4
-payloadSize (TailCall _)     = 4
-payloadSize (LoadLocal _)    = 4
-payloadSize (StoreLocal _)   = 4
-payloadSize (LoadGlobal _)   = 4
-payloadSize (StoreGlobal _)  = 4
-payloadSize (LoadCapture _)  = 4
+payloadSize (Push imm) = 1 + immediateSize imm
+payloadSize (Jump _)  = 4
+payloadSize (JumpIfFalse _) = 4
+payloadSize (JumpIfTrue _) = 4
+payloadSize (Call _) = 4
+payloadSize (TailCall _) = 4
+payloadSize (LoadLocal _) = 4
+payloadSize (StoreLocal _) = 4
+payloadSize (LoadGlobal _) = 4
+payloadSize (StoreGlobal _) = 4
+payloadSize (LoadCapture _) = 4
 payloadSize (StoreCapture _) = 4
 payloadSize (MakeClosure _ _) = 8
-payloadSize (GetFuncAddr _)  = 4
-payloadSize (Cast _)         = 1
-payloadSize (CheckStack _)   = 4
-payloadSize _                = 0
+payloadSize (GetFuncAddr _) = 4
+payloadSize (Cast _) = 1
+payloadSize (CheckStack _) = 4
+payloadSize _ = 0
 
 buildLabelMap :: [PsInstruction] -> LabelMap
 buildLabelMap insts = snd $ foldl accumulate (0, Map.empty) insts
@@ -97,31 +97,31 @@ serializeInstruction inst =
 serializePayload :: Instruction -> B.Builder
 serializePayload (Push imm) = 
     encodeWord8 (immediateToTypeID imm) <> serializeImmediate imm
-serializePayload (Jump off)         = encodeInt32BE (fromIntegral off)
-serializePayload (JumpIfFalse off)  = encodeInt32BE (fromIntegral off)
-serializePayload (JumpIfTrue off)   = encodeInt32BE (fromIntegral off)
-serializePayload (Call off)         = encodeInt32BE (fromIntegral off)
-serializePayload (TailCall off)     = encodeInt32BE (fromIntegral off)
-serializePayload (LoadLocal idx)    = encodeInt32BE (fromIntegral idx)
-serializePayload (StoreLocal idx)   = encodeInt32BE (fromIntegral idx)
-serializePayload (LoadGlobal idx)   = encodeInt32BE (fromIntegral idx)
-serializePayload (StoreGlobal idx)  = encodeInt32BE (fromIntegral idx)
-serializePayload (LoadCapture idx)  = encodeInt32BE (fromIntegral idx)
+serializePayload (Jump off) = encodeInt32BE (fromIntegral off)
+serializePayload (JumpIfFalse off) = encodeInt32BE (fromIntegral off)
+serializePayload (JumpIfTrue off) = encodeInt32BE (fromIntegral off)
+serializePayload (Call off) = encodeInt32BE (fromIntegral off)
+serializePayload (TailCall off) = encodeInt32BE (fromIntegral off)
+serializePayload (LoadLocal idx) = encodeInt32BE (fromIntegral idx)
+serializePayload (StoreLocal idx) = encodeInt32BE (fromIntegral idx)
+serializePayload (LoadGlobal idx) = encodeInt32BE (fromIntegral idx)
+serializePayload (StoreGlobal idx) = encodeInt32BE (fromIntegral idx)
+serializePayload (LoadCapture idx) = encodeInt32BE (fromIntegral idx)
 serializePayload (StoreCapture idx) = encodeInt32BE (fromIntegral idx)
 serializePayload (MakeClosure off n) = 
     encodeInt32BE (fromIntegral off) <> encodeInt32BE (fromIntegral n)
-serializePayload (GetFuncAddr off)  = encodeInt32BE (fromIntegral off)
-serializePayload (Cast typeId)      = encodeWord8 typeId
-serializePayload (CheckStack n)     = encodeInt32BE (fromIntegral n)
-serializePayload _                  = mempty
+serializePayload (GetFuncAddr off) = encodeInt32BE (fromIntegral off)
+serializePayload (Cast typeId) = encodeWord8 typeId
+serializePayload (CheckStack n) = encodeInt32BE (fromIntegral n)
+serializePayload _ = mempty
 
 serializeImmediate :: Immediate -> B.Builder
-serializeImmediate (ImmBool b)       = encodeBool b
-serializeImmediate (ImmInt (I8 i))   = B.int8 i
-serializeImmediate (ImmInt (UI8 i))  = B.word8 i
-serializeImmediate (ImmInt (I16 i))  = B.int16BE i
+serializeImmediate (ImmBool b) = encodeBool b
+serializeImmediate (ImmInt (I8 i)) = B.int8 i
+serializeImmediate (ImmInt (UI8 i)) = B.word8 i
+serializeImmediate (ImmInt (I16 i)) = B.int16BE i
 serializeImmediate (ImmInt (UI16 i)) = B.word16BE i
-serializeImmediate (ImmInt (I32 i))  = B.int32BE i
+serializeImmediate (ImmInt (I32 i)) = B.int32BE i
 serializeImmediate (ImmInt (UI32 i)) = B.word32BE i
-serializeImmediate (ImmInt (I64 i))  = B.int64BE i
+serializeImmediate (ImmInt (I64 i)) = B.int64BE i
 serializeImmediate (ImmInt (UI64 i)) = B.word64BE i
