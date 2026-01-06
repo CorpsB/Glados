@@ -1,0 +1,237 @@
+{-# LANGUAGE LambdaCase #-}
+
+module AST.Semantics.CheckSpec (spec) where
+
+import Test.Hspec
+import AST.Semantics.Check
+import AST.Semantics.Type
+import AST.Ast (Ast(..))
+import Z_old.Src.Type.Integer (fitInteger)
+import qualified Data.Text as DT
+import qualified Data.Map.Strict as Map
+import qualified Data.List
+
+p :: String -> DT.Text
+p = DT.pack
+
+isInfixOfStr :: String -> String -> Bool
+isInfixOfStr needle haystack = needle `Data.List.isInfixOf` haystack
+
+spec :: Spec
+spec = describe "Semantic Checker Coverage" $ do
+
+    let env = CheckEnv 
+            (Map.fromList [ 
+                (p "i", TyInt), 
+                (p "b", TyBool),
+                (p "v", TyVoid),
+                (p "auto_var", TyAuto),
+                (p "l1", TyList TyInt),
+                (p "l2", TyList TyBool),
+                (p "s1", TyStruct (p "A")),
+                (p "s2", TyStruct (p "B")),
+                (p "f1", TyFunc [TyInt] TyVoid),
+                (p "f2", TyFunc [TyInt, TyInt] TyVoid),
+                (p "f3", TyFunc [TyBool] TyVoid),
+                (p "f4", TyFunc [TyInt] TyInt)
+            ]) Map.empty
+
+    describe "checkExpr Basic" $ do
+        it "Literals" $ do
+            checkExpr env (AInteger (fitInteger 1)) `shouldSatisfy` \case Right TyInt -> True; _ -> False
+            checkExpr env (ABool True) `shouldSatisfy` \case Right TyBool -> True; _ -> False
+            checkExpr env AVoid `shouldSatisfy` \case Right TyVoid -> True; _ -> False
+
+        it "Variables" $ do
+            checkExpr env (ASymbol (p "i")) `shouldSatisfy` \case Right TyInt -> True; _ -> False
+            checkExpr env (ASymbol (p "undef")) `shouldSatisfy` \case Left _ -> True; _ -> False
+
+        it "Unsupported Expression (Default case)" $ do
+            checkExpr env (AImport (p "lib")) `shouldSatisfy` \case Left msg -> "supported" `isInfixOfStr` msg; _ -> False
+
+    describe "areTypesCompatible" $ do
+        it "Primitives: TyInt == TyInt" $ do
+            let expr = AIf (ABool True) (ASymbol (p "i")) (ASymbol (p "i"))
+            checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
+
+        it "Primitives: TyBool == TyBool" $ do
+            let expr = AIf (ABool True) (ASymbol (p "b")) (ASymbol (p "b"))
+            checkExpr env expr `shouldSatisfy` \case Right TyBool -> True; _ -> False
+
+        it "Primitives: TyVoid == TyVoid" $ do
+            let expr = AIf (ABool True) (ASymbol (p "v")) (ASymbol (p "v"))
+            checkExpr env expr `shouldSatisfy` \case Right TyVoid -> True; _ -> False
+        
+        it "Primitives: TyAuto == TyAuto" $ do
+            let expr = AIf (ABool True) (ASymbol (p "auto_var")) (ASymbol (p "auto_var"))
+            checkExpr env expr `shouldSatisfy` \case Right TyAuto -> True; _ -> False
+
+        it "Lists: Recursion Success" $ do
+            let expr = AIf (ABool True) (ASymbol (p "l1")) (ASymbol (p "l1"))
+            checkExpr env expr `shouldSatisfy` \case Right (TyList TyInt) -> True; _ -> False
+
+        it "Lists: Recursion Failure" $ do
+            let expr = AIf (ABool True) (ASymbol (p "l1")) (ASymbol (p "l2"))
+            checkExpr env expr `shouldSatisfy` \case Left _ -> True; _ -> False
+
+        it "Structs: Success" $ do
+            let expr = AIf (ABool True) (ASymbol (p "s1")) (ASymbol (p "s1"))
+            checkExpr env expr `shouldSatisfy` \case Right (TyStruct _) -> True; _ -> False
+
+        it "Structs: Failure" $ do
+            let expr = AIf (ABool True) (ASymbol (p "s1")) (ASymbol (p "s2"))
+            checkExpr env expr `shouldSatisfy` \case Left _ -> True; _ -> False
+
+        it "Funcs: Success" $ do
+            let expr = AIf (ABool True) (ASymbol (p "f1")) (ASymbol (p "f1"))
+            checkExpr env expr `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Funcs: Failure (Length)" $ do
+            let expr = AIf (ABool True) (ASymbol (p "f1")) (ASymbol (p "f2"))
+            checkExpr env expr `shouldSatisfy` \case Left _ -> True; _ -> False
+
+        it "Funcs: Failure (Args Types)" $ do
+            let expr = AIf (ABool True) (ASymbol (p "f1")) (ASymbol (p "f3"))
+            checkExpr env expr `shouldSatisfy` \case Left _ -> True; _ -> False
+
+        it "Funcs: Failure (Return Type)" $ do
+            let expr = AIf (ABool True) (ASymbol (p "f1")) (ASymbol (p "f4"))
+            checkExpr env expr `shouldSatisfy` \case Left _ -> True; _ -> False
+
+    describe "checkStmt Coverage" $ do
+        it "ASetVar: Auto Type" $ do
+            let stmt = ASetVar (p "x") (p "auto") (AInteger (fitInteger 1))
+            checkStmt emptyEnv stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "ASetVar: Explicit Compatible" $ do
+            let stmt = ASetVar (p "x") (p "int") (AInteger (fitInteger 1))
+            checkStmt emptyEnv stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "ASetVar: Explicit Incompatible" $ do
+            let stmt = ASetVar (p "x") (p "bool") (AInteger (fitInteger 1))
+            checkStmt emptyEnv stmt `shouldSatisfy` \case Left msg -> "declared as" `isInfixOfStr` msg; _ -> False
+
+        it "ASetVar: Expression Error propagation" $ do
+            let stmt = ASetVar (p "x") (p "int") (ASymbol (p "unknown_var"))
+            checkStmt emptyEnv stmt `shouldSatisfy` \case Left msg -> "Undefined" `isInfixOfStr` msg; _ -> False
+
+        it "Unknown Statement" $ do
+            checkStmt emptyEnv (AImport (p "file")) `shouldSatisfy` \case Right _ -> True; _ -> False
+
+    describe "checkAst" $ do
+        it "Sequence Success (Empty)" $ do
+            checkAst [] `shouldSatisfy` \case Right () -> True; _ -> False
+
+        it "Sequence Immediate Failure (Type Mismatch)" $ do
+            let ast = [ ASetVar (p "x") (p "bool") (AInteger (fitInteger 1)) ]
+            checkAst ast `shouldSatisfy` \case 
+                Left err -> "assigned int" `isInfixOfStr` err 
+                _ -> False
+
+        it "Sequence Failure due to empty environment (Undefined Var)" $ do
+            let ast = [ ASetVar (p "x") (p "int") (ASymbol (p "unknown_var")) ]
+            checkAst ast `shouldSatisfy` \case
+                Left err -> "Undefined variable" `isInfixOfStr` err
+                _ -> False
+
+        it "Sequence Failure Mid-stream" $ do
+            let ast = [ ASetVar (p "x") (p "int") (AInteger (fitInteger 1))
+                      , ASetVar (p "y") (p "bool") (AInteger (fitInteger 1))
+                      ]
+            checkAst ast `shouldSatisfy` \case 
+                Left err -> "assigned int" `isInfixOfStr` err
+                _ -> False
+        
+        it "Sequence Full Success" $ do
+            let ast = [ ASetVar (p "x") (p "int") (AInteger (fitInteger 1))
+                      , ASetVar (p "y") (p "int") (AInteger (fitInteger 2))
+                      ]
+            checkAst ast `shouldSatisfy` \case Right () -> True; _ -> False
+    
+    describe "Detailed Error Messages" $ do
+        it "If branches type mismatch message" $ do
+            let expr = AIf (ABool True) (AInteger (fitInteger 1)) (ABool False)
+            checkExpr emptyEnv expr `shouldSatisfy`
+                \case Left msg -> "different types" `isInfixOfStr` msg && "int" `isInfixOfStr` msg && "bool" `isInfixOfStr` msg
+                      _ -> False
+
+        it "Variable assignment error message" $ do
+            let stmt = ASetVar (p "myVar") (p "bool") (AInteger (fitInteger 1))
+            checkStmt emptyEnv stmt `shouldSatisfy`
+                \case Left msg -> "myVar" `isInfixOfStr` msg && "declared as bool" `isInfixOfStr` msg && "assigned int" `isInfixOfStr` msg
+                      _ -> False
+    
+    describe "Extra checkExpr Scenarios" $ do
+        it "Defined symbol lookup" $ do
+            let envLocal = emptyEnv { envVars = Map.fromList [(p "x", TyInt)] }
+            checkExpr envLocal (ASymbol (p "x")) `shouldSatisfy` \case Right TyInt -> True; _ -> False
+
+        it "If condition not boolean" $ do
+            let expr = AIf (AInteger (fitInteger 1))
+                           (AInteger (fitInteger 2))
+                           (AInteger (fitInteger 3))
+            checkExpr emptyEnv expr `shouldSatisfy`
+                \case Left msg -> "must be boolean" `isInfixOfStr` msg
+                      _        -> False
+
+        it "If branches incompatible" $ do
+            let expr = AIf (ABool True)
+                           (AInteger (fitInteger 1))
+                           (ABool False)
+            checkExpr emptyEnv expr `shouldSatisfy`
+                \case Left msg -> "different types" `isInfixOfStr` msg
+                      _        -> False
+
+    describe "Extra checkStmt Scenarios" $ do
+        it "SetVar auto accepts any type" $ do
+            let stmt = ASetVar (p "x") (p "auto") (AInteger (fitInteger 1))
+            checkStmt emptyEnv stmt `shouldSatisfy`
+                \case Right envLocal ->
+                        case Map.lookup (p "x") (envVars envLocal) of
+                            Just TyInt -> True
+                            _ -> False
+                      _ -> False
+
+        it "SetVar incompatible type" $ do
+            let stmt = ASetVar (p "x") (p "bool") (AInteger (fitInteger 1))
+            checkStmt emptyEnv stmt `shouldSatisfy`
+                \case Left msg -> "but assigned" `isInfixOfStr` msg
+                      _        -> False
+
+        it "SetVar compatible type" $ do
+            let stmt = ASetVar (p "x") (p "int") (AInteger (fitInteger 1))
+            checkStmt emptyEnv stmt `shouldSatisfy`
+                \case Right envLocal ->
+                        case Map.lookup (p "x") (envVars envLocal) of
+                            Just TyInt -> True
+                            _ -> False
+                      _ -> False
+    
+    describe "Last check" $ do
+        it "Fully evaluates undefined variable error message (concatenation)" $ do
+            checkExpr env (ASymbol (p "my_missing_var")) `shouldSatisfy` \case
+                Left msg -> "'my_missing_var'" `isInfixOfStr` msg
+                _ -> False
+
+        it "Uses env for AIf condition resolution" $ do
+            let expr = AIf (ASymbol (p "b")) (AInteger (fitInteger 1)) (AInteger (fitInteger 1))
+            checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
+
+        it "Fully evaluates AIf type mismatch error (closing parenthesis)" $ do
+            let expr = AIf (ABool True) (AInteger (fitInteger 1)) (ABool True)
+            checkExpr env expr `shouldSatisfy` \case
+                Left msg -> ")" `isInfixOfStr` msg && "vs" `isInfixOfStr` msg
+                _ -> False
+
+        it "Preserves environment in fallback statement" $ do
+            checkStmt env (AImport (p "ignored")) `shouldSatisfy` \case
+                Right resEnv -> case Map.lookup (p "i") (envVars resEnv) of
+                    Just TyInt -> True
+                    _ -> False
+                _ -> False
+        
+        it "Fully evaluates checkAst error propagation" $ do
+             let ast = [ ASetVar (p "x") (p "bool") (AInteger (fitInteger 1)) ]
+             checkAst ast `shouldSatisfy` \case
+                Left err -> "assigned int" `isInfixOfStr` err
+                _ -> False

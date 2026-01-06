@@ -30,6 +30,7 @@ library
       Z_old.Src.Parser.ParserISL
       AST.Ast
       AST.Semantics.Type
+      AST.Semantics.Check
       Common.Type.Integer
       Common.Utils.List
       Compiler.ASM.CompilerMonad
@@ -98,6 +99,7 @@ test-suite glados-unit
       Z_old.AstSpec
       AST.AstSpec
       AST.Semantics.TypeSpec
+      AST.Semantics.CheckSpec
       Parser.StatementSpec
       Parser.LexerSpec
       Parser.ExpressionSpec

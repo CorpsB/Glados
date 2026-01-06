@@ -1,11 +1,18 @@
-{- 
+{-
 -- EPITECH PROJECT, 2025
 -- Glados
 -- File description:
 -- Semantic Types definition
 -}
 
-module AST.Semantics.Type where
+module AST.Semantics.Type (
+    Type(..),
+    StructDef(..),
+    CheckEnv(..),
+    emptyEnv,
+    parseType,
+    typeToString,
+) where
 
 import qualified Data.Text as T
 import qualified Data.Map.Strict as Map
