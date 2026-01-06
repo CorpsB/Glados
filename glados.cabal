@@ -37,6 +37,7 @@ library
       Compiler.Bytecode.Encoder
       Compiler.CompilerState
       Compiler.Instruction
+      Compiler.Serializer
       Compiler.PsInstruction
       Parser.Lexer
       Parser.Expression
@@ -102,6 +103,7 @@ test-suite glados-unit
       Parser.ConditionsSpec
       Compiler.Bytecode.EncoderSpec
       Compiler.InstructionSpec
+      Compiler.SerializerSpec
       Compiler.PsInstructionSpec
       Compiler.CompilerStateSpec
       Compiler.ASM.CompilerMonadSpec

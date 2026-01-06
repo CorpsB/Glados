@@ -17,14 +17,10 @@ module Compiler.Instruction
     , immediateSize
     , getInstCode
     , instructionSize
-    , serializeInstruction
     ) where
 
 import Data.Word (Word8)
 import Common.Type.Integer (IntValue(..))
-import Data.Int (Int32)
-import qualified Data.ByteString.Builder as B
-import Compiler.Bytecode.Encoder (encodeInt32BE, encodeWord8, encodeBool)
 
 -- | Immediate values pushed by PUSH.
 --
@@ -228,51 +224,9 @@ instructionSize Dup                     = 1
 instructionSize Swap                    = 1
 instructionSize Add                     = 1
 instructionSize Sub                     = 1
-instructionSize (Jump off)              = 1 + 4
-instructionSize (JumpIfFalse off)       = 1 + 4
-instructionSize (Call off)              = 1 + 4
+instructionSize (Jump _)              = 1 + 4
+instructionSize (JumpIfFalse _)       = 1 + 4
+instructionSize (Call _)              = 1 + 4
 instructionSize Ret                     = 1
-instructionSize (MakeClosure addr n)    = 1 + 4 + 4
+instructionSize (MakeClosure _ _)    = 1 + 4 + 4
 instructionSize Halt                    = 1
-
--- | Serializes an 'Instruction' to a 'Builder' for binary encoding.
---
--- @args
---   - instr: the 'Instruction' to serialize
---
--- @details
---   Converts the instruction into its binary representation using the
---   appropriate opcode and payload encoding. Used for writing bytecode
---   to output files or buffers.
---
--- @return
---   The encoded instruction as a 'Builder'.
---
-serializeInstruction :: Instruction -> B.Builder
-serializeInstruction (Push (ImmInt (I32 n))) =
-    encodeWord8 0x01 <> encodeInt32BE n
-serializeInstruction (Push (ImmBool b)) =
-    encodeWord8 0x02 <> encodeBool b
-serializeInstruction Pop =
-    encodeWord8 0x03
-serializeInstruction Dup =
-    encodeWord8 0x04
-serializeInstruction Swap =
-    encodeWord8 0x05
-serializeInstruction Add =
-    encodeWord8 0x06
-serializeInstruction Sub =
-    encodeWord8 0x07
-serializeInstruction (Jump addr) =
-    encodeWord8 0x08 <> encodeInt32BE (fromIntegral addr)
-serializeInstruction (JumpIfFalse addr) =
-    encodeWord8 0x09 <> encodeInt32BE (fromIntegral addr)
-serializeInstruction (Call addr) =
-    encodeWord8 0x0A <> encodeInt32BE (fromIntegral addr)
-serializeInstruction Ret =
-    encodeWord8 0x0B
-serializeInstruction (MakeClosure addr n) =
-    encodeWord8 0x0C <> encodeInt32BE (fromIntegral addr)
-                     <> encodeInt32BE (fromIntegral n)
-serializeInstruction Halt =
-    encodeWord8 0xFF

@@ -5,6 +5,7 @@ import Test.Hspec
 import qualified Compiler.InstructionSpec
 import qualified Compiler.PsInstructionSpec
 import qualified Compiler.CompilerStateSpec
+import qualified Compiler.SerializerSpec
 import qualified Compiler.ASM.CompilerMonadSpec
 import qualified Compiler.ASM.AstToAsmSpec
 import qualified Compiler.ASM.CompilerSpec
