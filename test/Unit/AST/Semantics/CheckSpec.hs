@@ -152,7 +152,7 @@ spec = describe "Semantic Checker Coverage" $ do
         it "If branches type mismatch message" $ do
             let expr = AIf (ABool True) (AInteger (fitInteger 1)) (ABool False)
             checkExpr emptyEnv expr `shouldSatisfy`
-                \case Left msg -> "different types" `isInfixOfStr` msg && "int" `isInfixOfStr` msg && "bool" `isInfixOfStr` msg
+                \case Left msg -> "mismatch" `isInfixOfStr` msg && "int" `isInfixOfStr` msg && "bool" `isInfixOfStr` msg
                       _ -> False
 
         it "Variable assignment error message" $ do
@@ -179,7 +179,7 @@ spec = describe "Semantic Checker Coverage" $ do
                            (AInteger (fitInteger 1))
                            (ABool False)
             checkExpr emptyEnv expr `shouldSatisfy`
-                \case Left msg -> "different types" `isInfixOfStr` msg
+                \case Left msg -> "mismatch" `isInfixOfStr` msg
                       _        -> False
 
     describe "Extra checkStmt Scenarios" $ do
@@ -234,4 +234,186 @@ spec = describe "Semantic Checker Coverage" $ do
              let ast = [ ASetVar (p "x") (p "bool") (AInteger (fitInteger 1)) ]
              checkAst ast `shouldSatisfy` \case
                 Left err -> "assigned int" `isInfixOfStr` err
+                _ -> False
+    
+    describe "Structures Management" $ do
+        let pointFields = [(p "x", p "int"), (p "y", p "int")]
+        let definePoint = ADefineStruct (p "Point") pointFields
+        
+        let envWithPoint = case checkStmt emptyEnv definePoint of
+                Right e -> e
+                Left _ -> error "Setup failed: DefineStruct"
+
+        it "Defines a new struct successfully" $ do
+            checkStmt emptyEnv definePoint `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Fails to redefine existing struct" $ do
+            checkStmt envWithPoint definePoint `shouldSatisfy` \case 
+                Left msg -> "already defined" `isInfixOfStr` msg
+                _ -> False
+
+        it "Instantiates a valid struct" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case Right (TyStruct name) -> name == p "Point"; _ -> False
+
+        it "Fails instantiation: Undefined Struct" $ do
+            let inst = ASetStruct (p "Alien") []
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Undefined struct" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Unknown Field" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "z", AInteger (fitInteger 3))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Unknown field" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Missing Field" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Missing field" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Field Type Mismatch" $ do
+            let inst = ASetStruct (p "Point") [(p "x", ABool True), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "expected int" `isInfixOfStr` msg
+                _ -> False
+        
+        it "Instantiates using a variable (Forces env usage in validateField)" $ do
+            let envWithVar = case checkStmt envWithPoint (ASetVar (p "myVal") (p "int") (AInteger (fitInteger 10))) of
+                    Right e -> e
+                    Left _ -> error "Setup failed: Var"
+            
+            let inst = ASetStruct (p "Point") [(p "x", ASymbol (p "myVal")), (p "y", AInteger (fitInteger 2))]
+            
+            checkExpr envWithVar inst `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Fails instantiation: Undefined Struct" $ do
+            let inst = ASetStruct (p "Alien") []
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Undefined struct" `isInfixOfStr` msg && "Alien" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Unknown Field" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "z", AInteger (fitInteger 3))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Unknown field" `isInfixOfStr` msg && "'z'" `isInfixOfStr` msg && "Point" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Missing Field" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Missing field" `isInfixOfStr` msg && "'y'" `isInfixOfStr` msg && "Point" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Field Type Mismatch" $ do
+            let inst = ASetStruct (p "Point") [(p "x", ABool True), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "expected int" `isInfixOfStr` msg
+                _ -> False
+
+        it "Defines a new struct and stores its name correctly" $ do
+            checkStmt emptyEnv definePoint `shouldSatisfy` \case 
+                Right resEnv -> 
+                    case Map.lookup (p "Point") (envStructs resEnv) of
+                        Just def -> structName def == p "Point"
+                        Nothing -> False
+                _ -> False
+
+        it "Fails to redefine existing struct" $ do
+            checkStmt envWithPoint definePoint `shouldSatisfy` \case 
+                Left msg -> "already defined" `isInfixOfStr` msg && "Point" `isInfixOfStr` msg
+                _ -> False
+
+        it "Instantiates a valid struct (Success path)" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case Right (TyStruct name) -> name == p "Point"; _ -> False
+
+        it "Instantiates using a variable (Forces env usage in validateField)" $ do
+            let envWithVar = case checkStmt envWithPoint (ASetVar (p "myVal") (p "int") (AInteger (fitInteger 10))) of
+                    Right e -> e
+                    Left _ -> error "Setup failed: Var"
+            let inst = ASetStruct (p "Point") [(p "x", ASymbol (p "myVal")), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithVar inst `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Fails instantiation: Undefined Struct (Checks closing quote)" $ do
+            let inst = ASetStruct (p "Alien") []
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Undefined struct" `isInfixOfStr` msg && 
+                            "Alien'" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Unknown Field (Checks closing quote)" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "z", AInteger (fitInteger 3))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Unknown field" `isInfixOfStr` msg && 
+                            "'z'" `isInfixOfStr` msg && 
+                            "Point'" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Missing Field" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Missing field" `isInfixOfStr` msg && "'y'" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Field Type Mismatch" $ do
+            let inst = ASetStruct (p "Point") [(p "x", ABool True), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "expected int" `isInfixOfStr` msg
+                _ -> False
+        
+        it "Defines a new struct and stores its name correctly" $ do
+            checkStmt emptyEnv definePoint `shouldSatisfy` \case 
+                Right resEnv -> 
+                    case Map.lookup (p "Point") (envStructs resEnv) of
+                        Just def -> structName def == p "Point"
+                        Nothing -> False
+                _ -> False
+
+        it "Fails to redefine existing struct" $ do
+            checkStmt envWithPoint definePoint `shouldSatisfy` \case 
+                Left msg -> "already defined" `isInfixOfStr` msg && "Point" `isInfixOfStr` msg
+                _ -> False
+
+        it "Instantiates a valid struct (Success path covers Right ())" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case Right (TyStruct name) -> name == p "Point"; _ -> False
+
+        it "Instantiates using a variable (Forces env usage in validateField)" $ do
+            let envWithVar = case checkStmt envWithPoint (ASetVar (p "myVal") (p "int") (AInteger (fitInteger 10))) of
+                    Right e -> e
+                    Left _ -> error "Setup failed: Var"
+            let inst = ASetStruct (p "Point") [(p "x", ASymbol (p "myVal")), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithVar inst `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Fails instantiation: Undefined Struct (Checks closing quote)" $ do
+            let inst = ASetStruct (p "Alien") []
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Undefined struct" `isInfixOfStr` msg && 
+                            "Alien'" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Unknown Field (Checks closing quote)" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "z", AInteger (fitInteger 3))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Unknown field" `isInfixOfStr` msg && 
+                            "'z'" `isInfixOfStr` msg && 
+                            "Point'" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Missing Field (Checks closing quote)" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "Missing field" `isInfixOfStr` msg && 
+                            "'y'" `isInfixOfStr` msg && 
+                            "Point'" `isInfixOfStr` msg
+                _ -> False
+
+        it "Fails instantiation: Field Type Mismatch (Checks actual type string)" $ do
+            let inst = ASetStruct (p "Point") [(p "x", ABool True), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case 
+                Left msg -> "expected int" `isInfixOfStr` msg &&
+                            "but got bool" `isInfixOfStr` msg
                 _ -> False

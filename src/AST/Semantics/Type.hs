@@ -14,7 +14,7 @@ module AST.Semantics.Type (
     typeToString,
 ) where
 
-import qualified Data.Text as T
+import qualified Data.Text as DT
 import qualified Data.Map.Strict as Map
 
 -- | Enumeration of all possible types in the language.
@@ -24,20 +24,20 @@ data Type
     | TyVoid               -- Void type (void)
     | TyList Type          -- List type (e.g., [int], [[char]])
     | TyFunc [Type] Type   -- Function type (Args -> Return)
-    | TyStruct T.Text      -- Custom structure type identified by name
+    | TyStruct DT.Text      -- Custom structure type identified by name
     | TyAuto               -- Placeholder for type inference
     deriving (Show)
 
 -- | Definition of a structure (Name + Field Map).
 data StructDef = StructDef
-    { structName :: T.Text
-    , structFields :: Map.Map T.Text Type
+    { structName :: DT.Text
+    , structFields :: Map.Map DT.Text Type
     } deriving (Show)
 
 -- | Verification Environment.
 data CheckEnv = CheckEnv
-    { envVars :: Map.Map T.Text Type        -- Symbol table for variables
-    , envStructs :: Map.Map T.Text StructDef -- Symbol table for structs
+    { envVars :: Map.Map DT.Text Type        -- Symbol table for variables
+    , envStructs :: Map.Map DT.Text StructDef -- Symbol table for structs
     } deriving (Show)
 
 -- | Initial empty environment.
@@ -45,14 +45,14 @@ emptyEnv :: CheckEnv
 emptyEnv = CheckEnv Map.empty Map.empty
 
 -- | Parses a raw type string (from Parser) into a Semantic Type.
-parseType :: T.Text -> Type
+parseType :: DT.Text -> Type
 parseType t
-    | t == T.pack "int"  = TyInt
-    | t == T.pack "bool" = TyBool
-    | t == T.pack "void" = TyVoid
-    | t == T.pack "auto" = TyAuto
-    | T.isPrefixOf (T.pack "[") t && T.isSuffixOf (T.pack "]") t =
-        let inner = T.init (T.tail t)
+    | t == DT.pack "int"  = TyInt
+    | t == DT.pack "bool" = TyBool
+    | t == DT.pack "void" = TyVoid
+    | t == DT.pack "auto" = TyAuto
+    | DT.isPrefixOf (DT.pack "[") t && DT.isSuffixOf (DT.pack "]") t =
+        let inner = DT.init (DT.tail t)
         in TyList (parseType inner)
     | otherwise = TyStruct t
 
@@ -63,6 +63,6 @@ typeToString TyBool = "bool"
 typeToString TyVoid = "void"
 typeToString TyAuto = "auto"
 typeToString (TyList t) = "[" ++ typeToString t ++ "]"
-typeToString (TyStruct n) = T.unpack n
+typeToString (TyStruct n) = DT.unpack n
 typeToString (TyFunc args ret) = 
     "(" ++ unwords (map typeToString args) ++ " -> " ++ typeToString ret ++ ")"
