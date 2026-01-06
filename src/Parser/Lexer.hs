@@ -93,7 +93,7 @@ colon = symbol (DT.pack ":")
 -- These words cannot be used as variable or function identifiers.
 reservedWords :: [DT.Text]
 reservedWords = map DT.pack ["func", "ret", "if", "else", "int",
-        "bool", "void", "while"]
+        "bool", "void", "while", "lambda"]
 
 -- | Parse a specific keyword.
 --
