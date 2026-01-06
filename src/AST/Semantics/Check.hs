@@ -35,49 +35,63 @@ checkAst asts = case foldM checkStmt emptyEnv asts of
     Left err -> Left err
     Right _  -> Right ()
 
+-- | Helper to insert a variable into the environment
+insertVar :: CheckEnv -> T.Text -> Type -> Either String CheckEnv
+insertVar env name t =
+    let newVars = Map.insert name t (envVars env)
+    in Right $ env { envVars = newVars }
+
 -- | Check Expression: Verifies an expression and returns its Semantic Type.
 checkExpr :: CheckEnv -> Ast -> Either String Type
 checkExpr _ (AInteger _) = Right TyInt
 checkExpr _ (ABool _)    = Right TyBool
 checkExpr _ AVoid        = Right TyVoid
-
-checkExpr env (ASymbol name) = 
-    case Map.lookup name (envVars env) of
-        Just t  -> Right t
-        Nothing -> Left $ "Undefined variable '" ++ T.unpack name ++ "'"
-
-checkExpr env (AIf cond thenB elseB) = do
-    tCond <- checkExpr env cond
-    case tCond of
-        TyBool -> do
-            tThen <- checkExpr env thenB
-            tElse <- checkExpr env elseB
-            if areTypesCompatible tThen tElse
-                then Right tThen
-                else Left $ "Type mismatch in 'if' branches ("
-                            ++ typeToString tThen ++ " vs " ++ typeToString tElse ++ ")"
-        _ -> Left "Error: 'if' condition must be boolean"
+checkExpr env (ASymbol name) = checkSymbol env name
+checkExpr env (AIf c t e)    = checkIf env c t e
 checkExpr _ _ = Left "Error: Expression type not yet supported"
 
--- | Check Statement: Verifies a statement and returns the updated environment.checkStmt :: CheckEnv -> Ast -> Either String CheckEnv
+-- | Symbol lookup
+checkSymbol :: CheckEnv -> T.Text -> Either String Type
+checkSymbol env name = case Map.lookup name (envVars env) of
+    Just t  -> Right t
+    Nothing -> Left $ "Undefined variable '" ++ T.unpack name ++ "'"
+
+-- | IF logic
+checkIf :: CheckEnv -> Ast -> Ast -> Ast -> Either String Type
+checkIf env cond thenB elseB = do
+    tCond <- checkExpr env cond
+    case tCond of
+        TyBool -> checkBranches env thenB elseB
+        _ -> Left "Error: 'if' condition must be boolean"
+
+-- | Branches comparison
+checkBranches :: CheckEnv -> Ast -> Ast -> Either String Type
+checkBranches env thenB elseB = do
+    tThen <- checkExpr env thenB
+    tElse <- checkExpr env elseB
+    if areTypesCompatible tThen tElse
+        then Right tThen
+        else Left $ "Type mismatch in 'if' branches (" ++
+                    typeToString tThen ++ " vs " ++
+                    typeToString tElse ++ ")"
+
+-- | Check Statement: Verifies a statement and returns the updated environment.
 checkStmt :: CheckEnv -> Ast -> Either String CheckEnv
-checkStmt env (ASetVar name typeStr expr) = do
+checkStmt env (ASetVar name typeStr expr) = checkSetVar env name typeStr expr
+checkStmt env _ = Right env
+
+-- | Variable assignment
+checkSetVar :: CheckEnv -> T.Text -> T.Text -> Ast -> Either String CheckEnv
+checkSetVar env name typeStr expr = do
     let declaredType = parseType typeStr
     actualType <- checkExpr env expr
-    
-    -- Logic based purely on Pattern Matching
-    -- 1. If 'auto', accept everything.
-    -- 2. Otherwise, verify type compatibility.
-    case declaredType of
-        TyAuto -> do
-            let newVars = Map.insert name actualType (envVars env)
-            Right $ env { envVars = newVars }
-        _ -> if areTypesCompatible declaredType actualType
-             then do
-                let newVars = Map.insert name declaredType (envVars env)
-                Right $ env { envVars = newVars }
-             else Left $ "Variable '" ++ T.unpack name ++ 
-                         "' declared as " ++ typeToString declaredType ++ 
-                         " but assigned " ++ typeToString actualType
+    applyAssignment env name declaredType actualType
 
-checkStmt env _ = Right env
+-- | Applies the assignment logic based on types
+applyAssignment :: CheckEnv -> T.Text -> Type -> Type -> Either String CheckEnv
+applyAssignment env name TyAuto actual = insertVar env name actual
+applyAssignment env name declared actual
+    | areTypesCompatible declared actual = insertVar env name declared
+    | otherwise = Left $ "Variable '" ++ T.unpack name ++ 
+                         "' declared as " ++ typeToString declared ++ 
+                         " but assigned " ++ typeToString actual
