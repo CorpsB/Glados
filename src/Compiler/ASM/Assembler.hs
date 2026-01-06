@@ -23,6 +23,10 @@ import Compiler.Instruction (Instruction(..), Immediate(..), getInstCode, immedi
 import Compiler.Bytecode.Encoder (encodeInt32BE, encodeWord8, encodeBool)
 import Common.Type.Integer (IntValue(..))
 
+import qualified Data.Set as Set
+import Control.Monad (foldM, when)
+import Data.Foldable (traverse_)
+
 magicBytes :: B.Builder
 magicBytes = B.word8 0x47 <> B.word8 0x4C <> B.word8 0x41 <> B.word8 0x44
 
@@ -35,8 +39,47 @@ flagBytes = B.word8 0x00 <> B.word8 0x00
 type LabelMap = Map.Map Text Int
 
 assemble :: [PsInstruction] -> Either Text BS.ByteString
-assemble ps =
-    finalizeBytecode . peephole <$> resolveLabels (buildLabelMap ps) ps
+assemble ps = do
+    (lMap, size) <- foldM buildMap (Map.empty, 0) ps
+    insts <- resolveLabels lMap ps
+
+    let optimized = peephole insts
+
+    validateJumps optimized size
+    return $ finalizeBytecode optimized
+
+validateJumps :: [Instruction] -> Int -> Either Text ()
+validateJumps insts totalSize = 
+    let
+        offsets = scanl (\off i -> off + instructionSize i) 0 insts
+        validSet = Set.fromList offsets
+
+        check (off, inst) = case getJumpTarget off (instructionSize inst) inst of
+            Nothing  -> Right ()
+            Just tgt -> 
+                ensure (tgt >= 0 && tgt < totalSize) ("Jump out of bounds: " <> pack (show tgt)) *>
+                ensure (Set.member tgt validSet)     ("Jump target not aligned: " <> pack (show tgt))
+    in
+        traverse_ check (zip offsets insts)
+
+getJumpTarget :: Int -> Int -> Instruction -> Maybe Int
+getJumpTarget off sz (Jump rel)        = Just (off + sz + rel)
+getJumpTarget off sz (JumpIfFalse rel) = Just (off + sz + rel)
+getJumpTarget off sz (JumpIfTrue rel)  = Just (off + sz + rel)
+getJumpTarget off sz (Call rel)        = Just (off + sz + rel)
+getJumpTarget off sz (TailCall rel)    = Just (off + sz + rel)
+getJumpTarget off sz (MakeClosure rel _) = Just (off + sz + rel)
+getJumpTarget _   _  _                 = Nothing
+
+ensure :: Bool -> Text -> Either Text ()
+ensure True _ = Right ()
+ensure False msg = Left msg
+
+buildMap :: (LabelMap, Int) -> PsInstruction -> Either Text (LabelMap, Int)
+buildMap (acc, off) (LabelDef name)
+    | Map.member name acc = Left $ "Duplicate label: " <> name
+    | otherwise           = Right (Map.insert name off acc, off)
+buildMap (acc, off) inst  = Right (acc, off + pseudoSize inst)
 
 finalizeBytecode :: [Instruction] -> BS.ByteString
 finalizeBytecode insts =
@@ -80,12 +123,6 @@ payloadSize (GetFuncAddr _) = 4
 payloadSize (Cast _) = 1
 payloadSize (CheckStack _) = 4
 payloadSize _ = 0
-
-buildLabelMap :: [PsInstruction] -> LabelMap
-buildLabelMap insts = snd $ foldl accumulate (0, Map.empty) insts
-    where
-        accumulate (offset, accMap) (LabelDef name) = (offset, Map.insert name offset accMap)
-        accumulate (offset, accMap) inst = (offset + pseudoSize inst, accMap)
 
 peephole :: [Instruction] -> [Instruction]
 peephole = id
