@@ -24,6 +24,7 @@ import Data.Word (Word8)
 
 import VM.VMState (VMState(..), VirtualMachine)
 import VM.Bytecode.Reader (readByte)
+import VM.Instruction.Index
 import VM.Instruction.Stack
 import VM.Instruction.Arithmetic
 import VM.Instruction.Logic
@@ -56,6 +57,10 @@ executeInstruction 0x23 = instAnd
 executeInstruction 0x24 = instOr
 executeInstruction 0x25 = instLe
 
+executeInstruction 0x30 = instJump
+executeInstruction 0x31 = instJumpIfFalse
+executeInstruction 0x32 = instJumpIfTrue
+
 executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
 
@@ -77,9 +82,9 @@ executeInstruction op = error $ "VM Error: Unknown Opcode 0x" ++ show op
 runBytecode :: VirtualMachine ()
 runBytecode = do
     vm <- get
-    if not (isRunning vm)
-        then return ()
-        else do
+    case isRunning vm of
+        False -> return ()
+        True -> do
             opcode <- readByte
             executeInstruction opcode
             runBytecode
