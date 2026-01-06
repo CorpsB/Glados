@@ -5,28 +5,14 @@
 -- ResolveLabels
 -}
 
-module Compiler.ResolveLabels (resolveLabels, PseudoInst(..)) where
+module Compiler.ResolveLabels (resolveLabels, ) where
 
 import Compiler.Instruction (instructionSize, Instruction(..))
+import Compiler.PsInstruction (PsInstruction(..))
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import Control.Monad (foldM)
 import qualified Data.Text as T
-
--- | Pseudo-instructions for label resolution
--- Real: a real instruction
--- LabelDef: a label definition
--- JumpLabel, JumpIfFalseLabel, CallLabel, TailCallLabel: pseudo jumps/calls to labels
--- Extend as needed for your instruction set
-
-data PseudoInst
-    = Real Instruction
-    | LabelDef Text
-    | JumpLabel Text
-    | JumpIfFalseLabel Text
-    | CallLabel Text
-    | TailCallLabel Text
-    deriving (Show, Eq)
 
 sizeOfJumpInst :: Int
 sizeOfJumpInst = instructionSize (Jump 0)
@@ -37,14 +23,14 @@ sizeOfCallInst = instructionSize (Call 0)
 sizeOfTailCallInst :: Int
 sizeOfTailCallInst = instructionSize (Call 0)
 
-resolveLabels :: [PseudoInst] -> Either Text [Instruction]
+resolveLabels :: [PsInstruction] -> Either Text [Instruction]
 resolveLabels pseudos =
     -- Pass 1: build label map
     let (_, labelMap) = foldl' step1 (0, Map.empty) pseudos
     -- Pass 2: resolve pseudo instructions to real instructions
     in fmap fst $ foldM (step2 labelMap) ([], 0) pseudos
 
-step1 :: (Int, Map.Map Text Int) -> PseudoInst -> (Int, Map.Map Text Int)
+step1 :: (Int, Map.Map Text Int) -> PsInstruction -> (Int, Map.Map Text Int)
 step1 (idx, m) pseudo = case pseudo of
     LabelDef name -> (idx, Map.insert name idx m)
     Real instr    -> (idx + instructionSize instr, m)
@@ -53,7 +39,7 @@ step1 (idx, m) pseudo = case pseudo of
     CallLabel _   -> (idx + sizeOfCallInst, m)
     TailCallLabel _ -> (idx + sizeOfTailCallInst, m)
 
-step2 :: Map.Map Text Int -> ([Instruction], Int) -> PseudoInst -> Either Text ([Instruction], Int)
+step2 :: Map.Map Text Int -> ([Instruction], Int) -> PsInstruction -> Either Text ([Instruction], Int)
 step2 labelMap (out, idx) pseudo = case pseudo of
     Real instr -> step2Real out idx instr
     LabelDef _ -> step2LabelDef out idx
@@ -64,8 +50,7 @@ step2 labelMap (out, idx) pseudo = case pseudo of
 
 -- Helper functions for step2 cases
 step2Real :: [Instruction] -> Int -> Instruction -> Either Text ([Instruction], Int)
-step2Real out idx instr =
-    Right (out ++ [instr], idx + instructionSize instr)
+step2Real out idx instr = Right (out ++ [instr], idx + instructionSize instr)
 
 step2LabelDef :: [Instruction] -> Int -> Either Text ([Instruction], Int)
 step2LabelDef out idx = Right (out, idx)
@@ -77,7 +62,7 @@ step2JumpLabel labelMap out idx name =
         Just target ->
             let off = (target - (idx + sizeOfJumpInst))
             in Right (out ++ [Jump off],
-                     idx + sizeOfJumpInst)
+                    idx + sizeOfJumpInst)
 
 step2JumpIfFalseLabel :: Map.Map Text Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
 step2JumpIfFalseLabel labelMap out idx name =
@@ -86,7 +71,7 @@ step2JumpIfFalseLabel labelMap out idx name =
         Just target ->
             let off = (target - (idx + sizeOfJumpIfFalseInst))
             in Right (out ++ [JumpIfFalse off],
-                     idx + sizeOfJumpIfFalseInst)
+                    idx + sizeOfJumpIfFalseInst)
 
 step2CallLabel :: Map.Map Text Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
 step2CallLabel labelMap out idx name =
@@ -95,7 +80,7 @@ step2CallLabel labelMap out idx name =
         Just target ->
             let off = (target - (idx + sizeOfCallInst))
             in Right (out ++ [Call off],
-                     idx + sizeOfCallInst)
+                    idx + sizeOfCallInst)
 
 step2TailCallLabel :: Map.Map Text Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
 step2TailCallLabel labelMap out idx name =
@@ -104,4 +89,4 @@ step2TailCallLabel labelMap out idx name =
         Just target ->
             let off = (target - (idx + sizeOfTailCallInst))
             in Right (out ++ [TailCall off],
-                     idx + sizeOfTailCallInst)
+                    idx + sizeOfTailCallInst)
