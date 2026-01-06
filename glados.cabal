@@ -39,6 +39,7 @@ library
       Compiler.Instruction
       Compiler.Serializer
       Compiler.PsInstruction
+      Compiler.ResolveLabels
       Parser.Lexer
       Parser.Expression
       Parser.Statement
