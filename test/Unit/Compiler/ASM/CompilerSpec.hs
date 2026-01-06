@@ -20,29 +20,27 @@ import qualified Data.Set as Set
 import qualified Data.Text as T
 
 import AST.Ast (Ast(..))
-import qualified Z_old.Src.Type.Integer as Legacy
+import qualified Common.Type.Integer as Common
 
 import Compiler.ASM.Compiler
-  ( compileIf
+  ( compileAst
+  , compileIf
+  , compileFor
+  , compileWhile
   , compileSetVar
+  , compileSetStruct
+  , compileDefineStruct
   , compileDefineFun
   , compileDefineLambda
+  , compileTail
+  , compileLoop
   , getLambdaFreeVariables
-  )
-
-import Compiler.ASM.AstToAsm
-  ( astIntToAsm
-  , astBoolToAsm
-  , astSymbolToAsm
-  , astListToAsm
-  , astCallToAsm
   )
 
 import Compiler.ASM.CompilerMonad (CompilerMonad, emitInstruction)
 import Compiler.CompilerState (CompilerState(..), ScopeType(..), createCompilerState)
 import Compiler.Instruction (Instruction(..), Immediate(..))
 import Compiler.PsInstruction (PsInstruction(..))
-import qualified Common.Type.Integer as Common
 
 expectRight :: Either e a -> a
 expectRight (Right x) = x
@@ -55,31 +53,34 @@ expectLeft (Right _) = error "Expected Left, got Right"
 runCM :: CompilerMonad a -> CompilerState -> Either T.Text (a, CompilerState)
 runCM action st = runStateT action st
 
-legacyToInt :: Legacy.IntValue -> Int
-legacyToInt (Legacy.I8 n)    = fromIntegral n
-legacyToInt (Legacy.I16 n)   = fromIntegral n
-legacyToInt (Legacy.I32 n)   = fromIntegral n
-legacyToInt (Legacy.I64 n)   = fromIntegral n
-legacyToInt (Legacy.U8 n)    = fromIntegral n
-legacyToInt (Legacy.U16 n)   = fromIntegral n
-legacyToInt (Legacy.U32 n)   = fromIntegral n
-legacyToInt (Legacy.U64 n)   = fromIntegral n
-legacyToInt (Legacy.IChar c) = fromEnum c
-
-compileStub :: Ast -> CompilerMonad ()
-compileStub (AInteger n)         = astIntToAsm (legacyToInt n)
-compileStub (ABool b)            = astBoolToAsm b
-compileStub (ASymbol s)          = astSymbolToAsm s
-compileStub (AList xs)           = astListToAsm compileStub xs
-compileStub (ACall f args)       = astCallToAsm compileStub f args
-compileStub (AIf c t e)          = compileIf compileStub c t e
-compileStub (ADefineLambda p b)  = compileDefineLambda compileStub p b
-compileStub other                = lift (Left ("compileStub unsupported: " <> T.pack (show other)))
-
 spec :: Spec
 spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
-  describe "Helpers coverage" $ do
+  describe "derived instances (Show / Eq / Ord)" $ do
+    it "Instruction / Immediate: Show smoke" $ do
+      show (Push (ImmBool True)) `shouldContain` "Push"
+      show (ImmInt (Common.I32 1)) `shouldContain` "I32"
+
+    it "Instruction / Immediate: Eq smoke" $ do
+      (Push (ImmBool True) == Push (ImmBool True)) `shouldBe` True
+      (Push (ImmBool True) == Push (ImmBool False)) `shouldBe` False
+
+    it "Instruction / Immediate: Ord smoke" $ do
+      compare Add Sub `shouldBe` LT
+      compare (ImmInt (Common.I32 1)) (ImmInt (Common.I32 2)) `shouldBe` LT
+
+    it "PsInstruction: Show / Eq smoke (NO Ord instance)" $ do
+      show (LabelDef "x") `shouldContain` "LabelDef"
+      (LabelDef "a" == LabelDef "a") `shouldBe` True
+      (LabelDef "a" == LabelDef "b") `shouldBe` False
+      (Real Nop == Real Nop) `shouldBe` True
+
+    it "Ast: Show / Eq smoke" $ do
+      show (ABool True) `shouldContain` "ABool"
+      (AImport "Std" == AImport "Std") `shouldBe` True
+      (ABool True == ABool False) `shouldBe` False
+
+  describe "helpers" $ do
     it "expectRight throws on Left" $ do
       evaluate (expectRight (Left ("boom" :: T.Text) :: Either T.Text Int))
         `shouldThrow` (\(_ :: SomeException) -> True)
@@ -88,95 +89,11 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
       evaluate (expectLeft (Right (123 :: Int) :: Either T.Text Int))
         `shouldThrow` (\(_ :: SomeException) -> True)
 
-  describe "legacyToInt covers IntValue constructors" $ do
-    it "covers every constructor" $ do
-      legacyToInt (Legacy.I8 1) `shouldBe` 1
-      legacyToInt (Legacy.I16 1) `shouldBe` 1
-      legacyToInt (Legacy.I32 1) `shouldBe` 1
-      legacyToInt (Legacy.I64 1) `shouldBe` 1
-      legacyToInt (Legacy.U8 1) `shouldBe` 1
-      legacyToInt (Legacy.U16 1) `shouldBe` 1
-      legacyToInt (Legacy.U32 1) `shouldBe` 1
-      legacyToInt (Legacy.U64 1) `shouldBe` 1
-      legacyToInt (Legacy.IChar 'A') `shouldBe` 65
-
-  describe "compileStub (covers all its pattern branches)" $ do
-    it "AInteger delegates to astIntToAsm" $ do
-      let (_, st) = expectRight (runCM (compileStub (AInteger (Legacy.I32 7))) createCompilerState)
-      csCode st `shouldBe` Seq.singleton (Real (Push (ImmInt (Common.I64 7))))
-
-    it "ABool delegates to astBoolToAsm" $ do
-      let (_, st) = expectRight (runCM (compileStub (ABool True)) createCompilerState)
-      csCode st `shouldBe` Seq.singleton (Real (Push (ImmBool True)))
-
-    it "ASymbol delegates to astSymbolToAsm (global)" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 2) }
-      let (_, st) = expectRight (runCM (compileStub (ASymbol "x")) st0)
-      csCode st `shouldBe` Seq.singleton (Real (LoadGlobal 2))
-
-    it "AList delegates to astListToAsm" $ do
-      let (_, st) = expectRight (runCM (compileStub (AList [ABool True, ABool False])) createCompilerState)
-      csCode st `shouldBe`
-        Seq.fromList
-          [ Real (Push (ImmBool True))
-          , Real (Push (ImmBool False))
-          , CallLabel "list"
-          ]
-
-    it "ACall delegates to astCallToAsm (builtin)" $ do
-      let ast = ACall (ASymbol "+") [AInteger (Legacy.I32 1), AInteger (Legacy.I32 2)]
-      let (_, st) = expectRight (runCM (compileStub ast) createCompilerState)
-      csCode st `shouldBe`
-        Seq.fromList
-          [ Real (Push (ImmInt (Common.I64 1)))
-          , Real (Push (ImmInt (Common.I64 2)))
-          , Real Add
-          ]
-
-    it "ACall delegates to astCallToAsm (non-builtin -> CallLabel)" $ do
-      let ast = ACall (ASymbol "myFunc") [ABool True]
-      let (_, st) = expectRight (runCM (compileStub ast) createCompilerState)
-      csCode st `shouldBe`
-        Seq.fromList
-          [ Real (Push (ImmBool True))
-          , CallLabel "myFunc"
-          ]
-
-    it "AIf delegates to compileIf (via compileStub branch)" $ do
-      let ast = AIf (ABool True) (ABool False) (ABool True)
-      let (_, st) = expectRight (runCM (compileStub ast) createCompilerState)
-      csCode st `shouldBe`
-        Seq.fromList
-          [ Real (Push (ImmBool True))
-          , JumpIfFalseLabel "else_0"
-          , Real (Push (ImmBool False))
-          , JumpLabel "endif_1"
-          , LabelDef "else_0"
-          , Real (Push (ImmBool True))
-          , LabelDef "endif_1"
-          ]
-      csLabelCnt st `shouldBe` 2
-
-    it "ADefineLambda delegates to compileDefineLambda (via compileStub branch)" $ do
-      let ast = ADefineLambda ["x"] (ASymbol "x")
-      let (_, st) = expectRight (runCM (compileStub ast) createCompilerState)
-      csCode st `shouldBe` Seq.singleton (MakeClosureLabel "lambda_0" 0)
-      csFuncs st `shouldBe`
-        Seq.fromList
-          [ LabelDef "lambda_0"
-          , Real (LoadLocal 0)
-          , Real Ret
-          ]
-      csLabelCnt st `shouldBe` 1
-
-    it "unsupported branch returns Left" $ do
-      let err = expectLeft (runCM (compileStub AVoid) createCompilerState)
-      T.unpack err `shouldContain` "compileStub unsupported"
-
-  describe "getLambdaFreeVariables (all branches)" $ do
-    it "covers ASymbol/AInteger/ABool/ADefineLambda/ASetVar/ACall/AIf/AList/default" $ do
+  describe "getLambdaFreeVariables" $ do
+    it "covers major constructors and builtin exclusion" $ do
       getLambdaFreeVariables (ASymbol "x") `shouldBe` Set.fromList ["x"]
-      getLambdaFreeVariables (AInteger (Legacy.I32 132)) `shouldBe` Set.empty
+      getLambdaFreeVariables (ASymbol "+") `shouldBe` Set.empty
+      getLambdaFreeVariables (AInteger (Common.I32 132)) `shouldBe` Set.empty
       getLambdaFreeVariables (ABool True) `shouldBe` Set.empty
 
       let lam = ADefineLambda ["x"] (AList [ASymbol "x", ASymbol "y"])
@@ -185,7 +102,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
       let astVar = ASetVar "x" "Int" (AList [ASymbol "x", ASymbol "y"])
       getLambdaFreeVariables astVar `shouldBe` Set.fromList ["y"]
 
-      let callAst = ACall (ASymbol "+") [ASymbol "x", AInteger (Legacy.I32 2)]
+      let callAst = ACall (ASymbol "+") [ASymbol "x", AInteger (Common.I32 2)]
       getLambdaFreeVariables callAst `shouldBe` Set.fromList ["x"]
 
       let ifAst = AIf (ASymbol "c") (ASymbol "t") (AList [ASymbol "e"])
@@ -196,10 +113,58 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
       getLambdaFreeVariables (AImport "Std") `shouldBe` Set.empty
 
+  describe "compileLoop" $ do
+    it "emits condition, JumpIfFalseLabel to end, then body" $ do
+      let action = compileLoop compileAst (ABool True) (ABool False) "END"
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ Real (Push (ImmBool True))
+          , JumpIfFalseLabel "END"
+          , Real (Push (ImmBool False))
+          ]
+
+    it "propagates compileFn errors" $ do
+      let badCompile _ = lift (Left "boom")
+      let err = expectLeft (runCM (compileLoop badCompile (ABool True) (ABool True) "E") createCompilerState)
+      err `shouldBe` "boom"
+
+  describe "compileWhile" $ do
+    it "emits start label, loop body, jump back, end label" $ do
+      let action = compileWhile compileAst (ABool True) (ABool False)
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ LabelDef "while_start_0"
+          , Real (Push (ImmBool True))
+          , JumpIfFalseLabel "while_end_1"
+          , Real (Push (ImmBool False))
+          , JumpLabel "while_start_0"
+          , LabelDef "while_end_1"
+          ]
+      csLabelCnt st `shouldBe` 2
+
+  describe "compileFor" $ do
+    it "emits init, loop, update, jump back, end label" $ do
+      let action = compileFor compileAst (ABool True) (ABool False) (ABool True) (ABool False)
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ Real (Push (ImmBool True))
+          , LabelDef "for_start_0"
+          , Real (Push (ImmBool False))
+          , JumpIfFalseLabel "for_end_1"
+          , Real (Push (ImmBool True))
+          , Real (Push (ImmBool False))
+          , JumpLabel "for_start_0"
+          , LabelDef "for_end_1"
+          ]
+      csLabelCnt st `shouldBe` 2
+
   describe "compileIf" $ do
     it "emits expected control-flow sequence and labels" $ do
-      let ast = compileIf compileStub (ABool True) (ABool False) (ABool True)
-      let (_, st) = expectRight (runCM ast createCompilerState)
+      let action = compileIf compileAst (ABool True) (ABool False) (ABool True)
+      let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe`
         Seq.fromList
           [ Real (Push (ImmBool True))
@@ -219,30 +184,55 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
   describe "compileSetVar" $ do
     it "stores value and registers global symbol" $ do
-      let (_, st) = expectRight (runCM (compileSetVar compileStub "x" (AInteger (Legacy.I32 3))) createCompilerState)
+      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" (AInteger (Common.I32 3))) createCompilerState)
       Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0)
       csNextIndex st `shouldBe` 1
       csCode st `shouldBe`
         Seq.fromList
-          [ Real (Push (ImmInt (Common.I64 3)))
+          [ Real (Push (ImmInt (Common.I32 3)))
           , Real (StoreGlobal 0)
           ]
 
     it "fails on redefinition" $ do
       let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 7), csNextIndex = 8 }
-      let err = expectLeft (runCM (compileSetVar compileStub "x" (ABool True)) st0)
+      let err = expectLeft (runCM (compileSetVar compileAst "x" (ABool True)) st0)
       err `shouldBe` "Symbol already defined: x"
 
-    it "propagates compileFn error" $ do
-      let badCompile _ = lift (Left "Manual Error") :: CompilerMonad ()
-      let err = expectLeft (runCM (compileSetVar badCompile "x" (ABool True)) createCompilerState)
-      err `shouldBe` "Manual Error"
+  describe "compileDefineStruct / compileSetStruct" $ do
+    it "compileDefineStruct registers struct definition only" $ do
+      let action = compileDefineStruct "Point" [("x","Int"),("y","Int")]
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe` Seq.empty
+      Map.lookup "Point" (csStructs st) `shouldBe` Just ["x","y"]
+
+    it "compileSetStruct emits fields in struct order then BuildStruct" $ do
+      let st0 = createCompilerState { csStructs = Map.singleton "Point" ["x","y"] }
+      let action = compileSetStruct compileAst "Point"
+            [ ("y", AInteger (Common.I32 2))
+            , ("x", AInteger (Common.I32 1))
+            ]
+      let (_, st) = expectRight (runCM action st0)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ Real (Push (ImmInt (Common.I32 1)))
+          , Real (Push (ImmInt (Common.I32 2)))
+          , Real (BuildStruct 2)
+          ]
+
+    it "compileSetStruct fails when a required field is missing" $ do
+      let st0 = createCompilerState { csStructs = Map.singleton "Point" ["x","y"] }
+      let err = expectLeft (runCM (compileSetStruct compileAst "Point" [("x", ABool True)]) st0)
+      T.unpack err `shouldContain` "Missing field"
+
+    it "compileSetStruct fails when struct is undefined" $ do
+      let err = expectLeft (runCM (compileSetStruct compileAst "Nope" [("x", ABool True)]) createCompilerState)
+      T.unpack err `shouldContain` "Undefined struct"
 
   describe "compileDefineFun" $ do
     it "compiles isolated function; code goes to csFuncs, outer csCode preserved" $ do
       let action = do
             emitInstruction Nop
-            compileDefineFun compileStub "foo" ["x","y"] (ASymbol "x")
+            compileDefineFun compileAst "foo" ["x","y"] (ASymbol "x")
             emitInstruction Halt
       let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe` Seq.fromList [Real Nop, Real Halt]
@@ -254,26 +244,8 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           ]
       csLabelCnt st `shouldBe` 1
 
-    it "nested lambda inside function also ends up in csFuncs (merged)" $ do
-      let action = compileDefineFun compileStub "outer" ["x"] (ADefineLambda ["y"] (ASymbol "x"))
-      let (_, st) = expectRight (runCM action createCompilerState)
-
-      csCode st `shouldBe` Seq.empty
-
-      csLabelCnt st `shouldBe` 2
-
-      let fs = csFuncs st
-      Seq.length fs `shouldBe` 7
-      Seq.index fs 0 `shouldBe` LabelDef "fun_outer_0"
-      Seq.index fs 1 `shouldBe` Real (LoadLocal 0)
-      Seq.index fs 2 `shouldBe` MakeClosureLabel "lambda_1" 1
-      Seq.index fs 3 `shouldBe` Real Ret
-      Seq.index fs 4 `shouldBe` LabelDef "lambda_1"
-      Seq.index fs 5 `shouldBe` Real (LoadCapture 0)
-      Seq.index fs 6 `shouldBe` Real Ret
-
   describe "compileDefineLambda" $ do
-    it "multi-capture (global/global) + list body: loads captures, builds closure, lambda uses LoadCapture" $ do
+    it "multi-capture: loads captures, builds closure, lambda loads captures then Ret" $ do
       let st0 =
             createCompilerState
               { csSymbols =
@@ -283,36 +255,115 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
                     ]
               }
       let body = AList [ASymbol "a", ASymbol "b"]
-      let (_, st) = expectRight (runCM (compileDefineLambda compileStub ["x"] body) st0)
-
+      let (_, st) = expectRight (runCM (compileDefineLambda compileAst ["x"] body) st0)
       csCode st `shouldBe`
         Seq.fromList
           [ Real (LoadGlobal 2)
           , Real (LoadGlobal 7)
           , MakeClosureLabel "lambda_0" 2
           ]
-
       csFuncs st `shouldBe`
         Seq.fromList
           [ LabelDef "lambda_0"
           , Real (LoadCapture 0)
           , Real (LoadCapture 1)
-          , CallLabel "list"
           , Real Ret
           ]
-
       csLabelCnt st `shouldBe` 1
 
-    it "no captures: only MakeClosureLabel in outer, body uses LoadLocal in function" $ do
-      let (_, st) = expectRight (runCM (compileDefineLambda compileStub ["x"] (ASymbol "x")) createCompilerState)
-      csCode st `shouldBe` Seq.singleton (MakeClosureLabel "lambda_0" 0)
-      csFuncs st `shouldBe`
+    it "no-capture lambda: builds closure with 0 captures and uses LoadLocal for args" $ do
+      let (_, st) = expectRight (runCM (compileDefineLambda compileAst ["x"] (ASymbol "x")) createCompilerState)
+      csCode st `shouldBe` Seq.fromList [MakeClosureLabel "lambda_0" 0]
+      csFuncs st `shouldBe` Seq.fromList [LabelDef "lambda_0", Real (LoadLocal 0), Real Ret]
+      csLabelCnt st `shouldBe` 1
+
+    it "fails if a capture is undefined" $ do
+      let err = expectLeft (runCM (compileDefineLambda compileAst ["x"] (ASymbol "y")) createCompilerState)
+      T.unpack err `shouldContain` "Undefined symbol: y"
+
+  describe "compileTail" $ do
+    it "builtin call in tail position emits builtin instruction then Ret" $ do
+      let action = compileTail compileAst (ACall (ASymbol "+") [AInteger (Common.I32 1), AInteger (Common.I32 2)])
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe`
         Seq.fromList
-          [ LabelDef "lambda_0"
-          , Real (LoadLocal 0)
+          [ Real (Push (ImmInt (Common.I32 1)))
+          , Real (Push (ImmInt (Common.I32 2)))
+          , Real Add
           , Real Ret
           ]
 
-    it "fails if a capture is undefined" $ do
-      let err = expectLeft (runCM (compileDefineLambda compileStub ["x"] (ASymbol "y")) createCompilerState)
-      T.unpack err `shouldContain` "Undefined symbol: y"
+    it "non-builtin call in tail position emits TailCallLabel" $ do
+      let action = compileTail compileAst (ACall (ASymbol "foo") [ABool True])
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ Real (Push (ImmBool True))
+          , TailCallLabel "foo"
+          ]
+
+    it "indirect call in tail position emits CallIndirect then Ret" $ do
+      let action = compileTail compileAst (ACall (ABool True) [ABool False])
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ Real (Push (ImmBool True))
+          , Real (Push (ImmBool False))
+          , Real CallIndirect
+          , Real Ret
+          ]
+
+    it "tail If uses compileTail recursively on branches" $ do
+      let action = compileTail compileAst (AIf (ABool True) (ABool True) (ABool False))
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ Real (Push (ImmBool True))
+          , JumpIfFalseLabel "else_0"
+          , Real (Push (ImmBool True))
+          , Real Ret
+          , JumpLabel "endif_1"
+          , LabelDef "else_0"
+          , Real (Push (ImmBool False))
+          , Real Ret
+          , LabelDef "endif_1"
+          ]
+      csLabelCnt st `shouldBe` 2
+
+    it "tail List compiles init expressions then tail-compiles last" $ do
+      let action = compileTail compileAst (AList [ABool True, ABool False])
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ Real (Push (ImmBool True))
+          , Real (Push (ImmBool False))
+          , Real Ret
+          ]
+
+    it "tail empty List emits Ret" $ do
+      let action = compileTail compileAst (AList [])
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe` Seq.singleton (Real Ret)
+
+  describe "compileAst" $ do
+    it "AReturn compiles expr then Ret" $ do
+      let (_, st) = expectRight (runCM (compileAst (AReturn (ABool True))) createCompilerState)
+      csCode st `shouldBe` Seq.fromList [Real (Push (ImmBool True)), Real Ret]
+
+    it "AVoid produces no code" $ do
+      let (_, st) = expectRight (runCM (compileAst AVoid) createCompilerState)
+      csCode st `shouldBe` Seq.empty
+
+    it "AImport produces no code" $ do
+      let (_, st) = expectRight (runCM (compileAst (AImport "Std")) createCompilerState)
+      csCode st `shouldBe` Seq.empty
+
+    it "ACall delegates to astCallToAsm (hits compileAst branch)" $ do
+      let ast = ACall (ASymbol "+") [AInteger (Common.I32 1), AInteger (Common.I32 2)]
+      let (_, st) = expectRight (runCM (compileAst ast) createCompilerState)
+      csCode st `shouldBe`
+        Seq.fromList
+          [ Real (Push (ImmInt (Common.I32 1)))
+          , Real (Push (ImmInt (Common.I32 2)))
+          , Real Add
+          ]

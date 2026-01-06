@@ -27,6 +27,7 @@ import qualified Z_old.LispTest
 import qualified Z_old.AstSpec
 import qualified Z_old.Type.IntegerSpec
 import qualified Z_old.Utils.ListSpec
+import qualified Common.Type.IntegerSpec
 
 main :: IO ()
 main = hspec spec
@@ -56,3 +57,4 @@ spec = do
     Compiler.ASM.CompilerMonadSpec.spec
     Compiler.ASM.AstToAsmSpec.spec
     Compiler.ASM.CompilerSpec.spec
+    Common.Type.IntegerSpec.spec

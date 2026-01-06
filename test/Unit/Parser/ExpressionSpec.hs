@@ -14,16 +14,21 @@ import Test.Hspec
 import Text.Megaparsec (parse)
 import Parser.Expression (pExpr)
 import AST.Ast (Ast(..))
-import Z_old.Src.Type.Integer (IntValue(..))
+import Common.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 import Data.Void (Void)
 import Text.Megaparsec.Error (ParseErrorBundle)
+import Data.Int (Int8)
+import Data.Char (ord)
 
 parseExpr :: DT.Text -> Either (ParseErrorBundle DT.Text Void) Ast
 parseExpr input = parse pExpr "" input
 
 p :: String -> DT.Text
 p = DT.pack
+
+charToInt8 :: Char -> Int8
+charToInt8 c = fromIntegral (ord c)
 
 spec :: Spec
 spec = describe "Parser.Expression - Full Coverage" $ do
@@ -90,7 +95,7 @@ spec = describe "Parser.Expression - Full Coverage" $ do
 
         it "Parses Char" $ do
             parseExpr "'c'" `shouldSatisfy` \case
-                Right (AInteger (IChar 'c')) -> True
+                Right (AInteger (IChar v)) -> v == charToInt8 'c'
                 _ -> False
 
         it "Parses List Literal" $ do
