@@ -19,7 +19,8 @@ import Data.Word (Word8)
 import Control.Monad (foldM)
 
 import Compiler.PsInstruction (PsInstruction(..))
-import Compiler.Instruction (Instruction(..), Immediate(..), getInstCode, immediateToTypeID, immediateSize)
+import Compiler.Instruction (Instruction(..), Immediate(..),
+    getInstCode, immediateToTypeID, immediateSize)
 import Compiler.Bytecode.Encoder (encodeInt32BE, encodeWord8, encodeBool)
 import Common.Type.Integer (IntValue(..))
 
@@ -58,18 +59,18 @@ validateJumps insts totalSize =
             Nothing  -> Right ()
             Just tgt -> 
                 ensure (tgt >= 0 && tgt < totalSize) ("Jump out of bounds: " <> pack (show tgt)) *>
-                ensure (Set.member tgt validSet)     ("Jump target not aligned: " <> pack (show tgt))
+                ensure (Set.member tgt validSet) ("Jump target not aligned: " <> pack (show tgt))
     in
         traverse_ check (zip offsets insts)
 
 getJumpTarget :: Int -> Int -> Instruction -> Maybe Int
-getJumpTarget off sz (Jump rel)        = Just (off + sz + rel)
+getJumpTarget off sz (Jump rel) = Just (off + sz + rel)
 getJumpTarget off sz (JumpIfFalse rel) = Just (off + sz + rel)
-getJumpTarget off sz (JumpIfTrue rel)  = Just (off + sz + rel)
-getJumpTarget off sz (Call rel)        = Just (off + sz + rel)
-getJumpTarget off sz (TailCall rel)    = Just (off + sz + rel)
+getJumpTarget off sz (JumpIfTrue rel) = Just (off + sz + rel)
+getJumpTarget off sz (Call rel) = Just (off + sz + rel)
+getJumpTarget off sz (TailCall rel) = Just (off + sz + rel)
 getJumpTarget off sz (MakeClosure rel _) = Just (off + sz + rel)
-getJumpTarget _   _  _                 = Nothing
+getJumpTarget _ _ _ = Nothing
 
 ensure :: Bool -> Text -> Either Text ()
 ensure True _ = Right ()
@@ -78,12 +79,12 @@ ensure False msg = Left msg
 buildMap :: (LabelMap, Int) -> PsInstruction -> Either Text (LabelMap, Int)
 buildMap (acc, off) (LabelDef name)
     | Map.member name acc = Left $ "Duplicate label: " <> name
-    | otherwise           = Right (Map.insert name off acc, off)
+    | otherwise = Right (Map.insert name off acc, off)
 buildMap (acc, off) inst  = Right (acc, off + pseudoSize inst)
 
 finalizeBytecode :: [Instruction] -> BS.ByteString
 finalizeBytecode insts =
-    let body   = B.toLazyByteString $ foldMap serializeInstruction insts
+    let body = B.toLazyByteString $ foldMap serializeInstruction insts
         header = buildHeader (fromIntegral $ BL.length body)
     in BL.toStrict . B.toLazyByteString $ header <> body
 
@@ -93,7 +94,7 @@ buildHeader size =
 
 pseudoSize :: PsInstruction -> Int
 pseudoSize (LabelDef _) = 0
-pseudoSize (Real inst)  = instructionSize inst
+pseudoSize (Real inst) = instructionSize inst
 pseudoSize (JumpLabel _) = 5
 pseudoSize (JumpIfFalseLabel _) = 5
 pseudoSize (JumpIfTrueLabel _) = 5
