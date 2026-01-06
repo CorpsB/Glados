@@ -106,6 +106,7 @@ test-suite glados-unit
       Compiler.InstructionSpec
       Compiler.SerializerSpec
       Compiler.PsInstructionSpec
+      Compiler.ResolveLabelsSpec
       Compiler.CompilerStateSpec
       Compiler.ASM.CompilerMonadSpec
       Compiler.ASM.CompilerSpec

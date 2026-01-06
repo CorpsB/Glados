@@ -6,6 +6,7 @@ import qualified Compiler.InstructionSpec
 import qualified Compiler.PsInstructionSpec
 import qualified Compiler.CompilerStateSpec
 import qualified Compiler.SerializerSpec
+import qualified Compiler.ResolveLabelsSpec
 import qualified Compiler.ASM.CompilerMonadSpec
 import qualified Compiler.ASM.AstToAsmSpec
 import qualified Compiler.ASM.CompilerSpec
@@ -54,6 +55,8 @@ spec = do
     Compiler.InstructionSpec.spec
     Compiler.PsInstructionSpec.spec
     Compiler.CompilerStateSpec.spec
+    Compiler.SerializerSpec.spec
+    Compiler.ResolveLabelsSpec.spec
     Compiler.ASM.CompilerMonadSpec.spec
     Compiler.ASM.AstToAsmSpec.spec
     Compiler.ASM.CompilerSpec.spec
