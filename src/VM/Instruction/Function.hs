@@ -15,6 +15,7 @@ Ensures proper scope management and control flow between functions.
 -}
 module VM.Instruction.Function
     ( instCall
+    , instTailCall
     , instRet
     ) where
 
@@ -46,6 +47,26 @@ instCall = do
     put $ vm { snapshotStack = snap : snapshotStack vm,
         baseVStackIndex = V.length (vStack vm),
         bytecodeIndex = bytecodeIndex vm + offset }
+
+-- | Implements TAIL_CALL (Opcode 0x41).
+--
+-- @details
+--   Optimized function call for tail positions.
+--   1. Reads the relative jump offset.
+--   2. Updates 'baseVStackIndex' (FP) to the current Stack Pointer (SP) to setup
+--      the frame for the called function.
+--   3. Updates 'bytecodeIndex' (IP) to jump to the function code.
+--   
+--   CRITICAL: Unlike 'instCall', this does NOT push a 'CallSnapshot'.
+--   When the called function returns, it will pop the snapshot of the *current*
+--   caller, effectively skipping the current stack frame.
+--
+instTailCall :: VirtualMachine ()
+instTailCall = do
+    offset <- readInt32
+    vm <- get
+    put $ vm { baseVStackIndex = V.length (vStack vm),
+        bytecodeIndex = bytecodeIndex vm + offset}
 
 -- | Implements RET (Opcode 0x43).
 --

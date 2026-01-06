@@ -63,6 +63,7 @@ executeInstruction 0x31 = instJumpIfFalse
 executeInstruction 0x32 = instJumpIfTrue
 
 executeInstruction 0x40 = instCall
+executeInstruction 0x41 = instTailCall
 executeInstruction 0x43 = instRet
 
 executeInstruction 0x70 = instPrint
