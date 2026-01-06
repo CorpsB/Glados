@@ -28,6 +28,7 @@ import VM.Instruction.Index
 import VM.Instruction.Stack
 import VM.Instruction.Arithmetic
 import VM.Instruction.Logic
+import VM.Instruction.Function
 import VM.Instruction.System
 
 -- | Maps a raw opcode byte to its corresponding instruction function.
@@ -60,6 +61,9 @@ executeInstruction 0x25 = instLe
 executeInstruction 0x30 = instJump
 executeInstruction 0x31 = instJumpIfFalse
 executeInstruction 0x32 = instJumpIfTrue
+
+executeInstruction 0x40 = instCall
+executeInstruction 0x43 = instRet
 
 executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
