@@ -37,7 +37,7 @@ import VM.VMState (VMState(..), VirtualMachine)
 -- | Reads a single raw byte (8 bits) from the bytecode.
 --
 -- @details
---   Retrieves the byte at the current 'programIndex' and increments the index.
+--   Retrieves the byte at the current 'bytecodeIndex' and increments the index.
 --   Performs a bounds check to prevent reading past the end of the bytecode.
 --
 -- @throws
@@ -50,11 +50,11 @@ readByte :: VirtualMachine Word8
 readByte = do
     vm <- get
     let code = bytecode vm
-    let idx = programIndex vm
+    let idx = bytecodeIndex vm
     case idx >= BS.length code of
         True ->
             error "VM Error: Unexpected End of Bytecode (Segmentation Fault)"
-        False -> put (vm { programIndex = idx + 1 }) >>
+        False -> put (vm { bytecodeIndex = idx + 1 }) >>
             return (BS.index code idx)
 
 -- | Reads an unsigned 8-bit integer.

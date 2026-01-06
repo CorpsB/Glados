@@ -11,7 +11,7 @@ Description : Implementation of branching and jump operations.
 Stability   : stable
 
 Handles relative jumps and conditional branching instructions.
-These instructions modify the 'programIndex' (Instruction Pointer) of the VMState.
+These instructions modify the 'bytecodeIndex' (Instruction Pointer) of the VMState.
 -}
 module VM.Instruction.Index
     ( instJump
@@ -30,7 +30,7 @@ import VM.VMStack (stackPop)
 --
 -- @details
 --   1. Reads a signed 32-bit integer (offset) from the bytecode.
---   2. Adds this offset to the current 'programIndex'.
+--   2. Adds this offset to the current 'bytecodeIndex'.
 --
 --   Note: Since 'readInt32' advances the index by 4 bytes, the offset
 --   is effectively relative to the instruction immediately following the JUMP.
@@ -38,7 +38,7 @@ import VM.VMStack (stackPop)
 instJump :: VirtualMachine ()
 instJump = do
     offset <- readInt32
-    modify $ \s -> s { programIndex = programIndex s + offset }
+    modify $ \vm -> vm { bytecodeIndex = bytecodeIndex vm + offset }
 
 -- | Implements Jump If False (Opcode 0x31).
 --
@@ -58,7 +58,7 @@ instJumpIfFalse = do
     v <- stackPop
     case v of
         VBool False ->
-            modify $ \s -> s { programIndex = programIndex s + offset }
+            modify $ \vm -> vm { bytecodeIndex = bytecodeIndex vm + offset }
         VBool True  -> return ()
         _           -> error "VM Error: JUMP_IF_FALSE expects Boolean"
 
@@ -79,6 +79,6 @@ instJumpIfTrue = do
     v <- stackPop
     case v of
         VBool True ->
-            modify $ \s -> s { programIndex = programIndex s + offset }
+            modify $ \vm -> vm { bytecodeIndex = bytecodeIndex vm + offset }
         VBool False -> return ()
         _           -> error "VM Error: JUMP_IF_TRUE expects Boolean"

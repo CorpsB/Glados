@@ -40,4 +40,4 @@ instPrint = do
 --   on the next cycle.
 --
 instHalt :: VirtualMachine ()
-instHalt = modify $ \s -> s { isRunning = False }
+instHalt = modify $ \vm -> vm { isRunning = False }

@@ -35,17 +35,17 @@ import VM.VMStack (stackPop, stackPush)
 --   3. Pushes the snapshot to the 'snapshotStack'.
 --   4. Updates 'baseVStackIndex' (FP) to the current Stack Pointer (SP).
 --      This marks the start of the new stack frame.
---   5. Updates 'programIndex' (IP) to jump to the function code.
+--   5. Updates 'bytecodeIndex' (IP) to jump to the function code.
 --
 instCall :: VirtualMachine ()
 instCall = do
     offset <- readInt32
-    s <- get
-    let snap = CallSnapshot { callbackIndex = programIndex s,
-        vStackIndex = baseVStackIndex s, vEnv = V.empty }
-    put $ s { snapshotStack = snap : snapshotStack s,
-        baseVStackIndex = V.length (vStack s),
-        programIndex = programIndex s + offset }
+    vm <- get
+    let snap = CallSnapshot { callbackIndex = bytecodeIndex vm,
+        vStackIndex = baseVStackIndex vm, vEnv = V.empty }
+    put $ vm { snapshotStack = snap : snapshotStack vm,
+        baseVStackIndex = V.length (vStack vm),
+        bytecodeIndex = bytecodeIndex vm + offset }
 
 -- | Implements RET (Opcode 0x43).
 --
@@ -63,9 +63,10 @@ instCall = do
 instRet :: VirtualMachine ()
 instRet = do
     retV <- stackPop
-    s <- get
-    case snapshotStack s of
+    vm <- get
+    case snapshotStack vm of
         [] -> error "VM Error: Return called with empty call stack"
-        (snap:rest) -> put (s { programIndex = callbackIndex snap,
+        (snap:rest) -> put (vm { bytecodeIndex = callbackIndex snap,
             baseVStackIndex = vStackIndex snap, snapshotStack = rest,
-            vStack = V.take (baseVStackIndex s) (vStack s) }) >> stackPush retV
+            vStack = V.take (baseVStackIndex vm) (vStack vm) }) >>
+            stackPush retV
