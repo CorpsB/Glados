@@ -65,10 +65,10 @@ valueToString (VInt i) = show (intValueToInt i)
 valueToString (VBool True) = "#t"
 valueToString (VBool False) = "#f"
 valueToString (VList v) = "'(" ++ unwords (
-  	map valueToString (V.toList v)) ++ ")"
+    map valueToString (V.toList v)) ++ ")"
 valueToString (VStruct v) = "{struct:" ++ unwords (
-  	map valueToString (V.toList v)) ++ "}"
-valueToString (VClosure addr caps) = 
+    map valueToString (V.toList v)) ++ "}"
+valueToString (VClosure addr caps) =
     "#<procedure @" ++ show addr ++ " captures:" ++ show (V.length caps) ++ ">"
 valueToString (VFuncPtr addr) = "#<function @" ++ show addr ++ ">"
 valueToString VVoid = "void"
