@@ -12,11 +12,14 @@ module AST.AstSpec (spec) where
 import Test.Hspec
 import Data.List (isInfixOf)
 
-import Z_old.Src.Type.Integer (IntValue(..))
-import AST.Ast (Ast(..), Env)
+import Common.Type.Integer (IntValue(..))
+import AST.Ast (Ast(..), showAst, printAst)
+import Data.Text (Text)
+
+type Env = [(Text, Ast)]
 
 spec :: Spec
-spec = describe "AST.Ast (structure only)" $ do
+spec = describe "AST.Ast" $ do
   it "constructs and matches every Ast constructor" $ do
     let intAst = AInteger (I32 42)
     intAst `shouldBe` AInteger (I32 42)
@@ -71,9 +74,39 @@ spec = describe "AST.Ast (structure only)" $ do
         env = [("k", ASymbol "v")]
     env `shouldBe` [("k", ASymbol "v")]
 
-  it "Show derivation prints constructor names" $ do
-    show (AInteger (I32 1)) `shouldSatisfy` ("AInteger" `isInfixOf`)
-    show (ABool True) `shouldSatisfy` ("ABool" `isInfixOf`)
-    show (ASymbol "x") `shouldSatisfy` ("ASymbol" `isInfixOf`)
-    show (AList []) `shouldSatisfy` ("AList" `isInfixOf`)
-    show (AReturn AVoid) `shouldSatisfy` ("AReturn" `isInfixOf`)
+  describe "showAst" $ do
+    it "covers all showAst branches" $ do
+      showAst (AInteger (I32 42)) `shouldBe` "42"
+      showAst (ABool True) `shouldBe` "#t"
+      showAst (ABool False) `shouldBe` "#f"
+      showAst (ASymbol "x") `shouldBe` "x"
+      showAst (AList [ABool True, AInteger (I32 1)]) `shouldBe` "(#t 1)"
+      showAst (ADefineLambda ["x"] (ASymbol "x")) `shouldBe` "#<lambda>"
+      showAst (AIf (ABool True) AVoid (ABool False)) `shouldSatisfy` ("AIf" `isInfixOf`)
+
+  describe "Derived Eq instance (coverage for generated code)" $ do
+    it "Eq is used (same constructor)" $ do
+      (AInteger (I32 1) == AInteger (I32 1)) `shouldBe` True
+      (AInteger (I32 1) == AInteger (I32 2)) `shouldBe` False
+
+    it "Eq is used (different constructors)" $ do
+      (AInteger (I32 1) == ABool True) `shouldBe` False
+      (ASymbol "x" == AVoid) `shouldBe` False
+
+    it "Eq recurses (lists)" $ do
+      (AList [ABool True, AInteger (I32 1)] == AList [ABool True, AInteger (I32 1)]) `shouldBe` True
+      (AList [ABool True] == AList [ABool False]) `shouldBe` False
+
+  describe "Derived Show instance (coverage for generated code)" $ do
+    it "Show prints constructor names" $ do
+      show (AInteger (I32 1)) `shouldSatisfy` ("AInteger" `isInfixOf`)
+      show (ABool True) `shouldSatisfy` ("ABool" `isInfixOf`)
+      show (ASymbol "x") `shouldSatisfy` ("ASymbol" `isInfixOf`)
+      show (AList []) `shouldSatisfy` ("AList" `isInfixOf`)
+      show (AReturn AVoid) `shouldSatisfy` ("AReturn" `isInfixOf`)
+      show (ADefineFunc "f" [] "Int" AVoid) `shouldSatisfy` ("ADefineFunc" `isInfixOf`)
+
+  describe "printAst" $ do
+    it "printAst returns () (smoke)" $ do
+      printAst (AInteger (I32 1)) `shouldReturn` ()
+      printAst (AIf (ABool True) AVoid (ABool False)) `shouldReturn` ()
