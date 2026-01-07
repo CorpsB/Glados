@@ -22,7 +22,7 @@ module VM.Instruction.Function
 import Control.Monad.State.Strict (get, put)
 import qualified Data.Vector as V
 
-import VM.VMState (VirtualMachine, VMState(..))
+import VM.VMState (VirtualMachine, VMState(..), doSnapshot)
 import VM.VMValue (VMValue)
 import VM.CallSnapshot (CallSnapshot(..))
 import VM.Bytecode.Reader (readInt32)
@@ -31,42 +31,100 @@ import VM.VMStack (stackPop, stackPush)
 -- | Implements CALL (Opcode 0x40).
 --
 -- @details
---   1. Reads the relative jump offset.
---   2. Creates a 'CallSnapshot' to save the current context (Return Address, Old FP).
---   3. Pushes the snapshot to the 'snapshotStack'.
---   4. Updates 'baseVStackIndex' (FP) to the current Stack Pointer (SP).
---      This marks the start of the new stack frame.
---   5. Updates 'bytecodeIndex' (IP) to jump to the function code.
+--   Static call. Reads relative offset, calculates target, and delegates frame setup.
 --
 instCall :: VirtualMachine ()
 instCall = do
     offset <- readInt32
     vm <- get
-    let snap = CallSnapshot { callbackIndex = bytecodeIndex vm,
-        vStackIndex = baseVStackIndex vm, vEnv = V.empty }
-    put $ vm { snapshotStack = snap : snapshotStack vm,
-        baseVStackIndex = V.length (vStack vm),
-        bytecodeIndex = bytecodeIndex vm + offset }
+    doSnapshot (bytecodeIndex vm + offset) V.empty
 
 -- | Implements TAIL_CALL (Opcode 0x41).
 --
 -- @details
---   Optimized function call for tail positions.
---   1. Reads the relative jump offset.
---   2. Updates 'baseVStackIndex' (FP) to the current Stack Pointer (SP) to setup
---      the frame for the called function.
---   3. Updates 'bytecodeIndex' (IP) to jump to the function code.
---   
---   CRITICAL: Unlike 'instCall', this does NOT push a 'CallSnapshot'.
---   When the called function returns, it will pop the snapshot of the *current*
---   caller, effectively skipping the current stack frame.
+--   Optimized call. Replaces current frame (no snapshot pushed).
 --
 instTailCall :: VirtualMachine ()
 instTailCall = do
     offset <- readInt32
     vm <- get
     put $ vm { baseVStackIndex = V.length (vStack vm),
-        bytecodeIndex = bytecodeIndex vm + offset}
+        bytecodeIndex = bytecodeIndex vm + offset, env = V.empty }
+
+-- | Helper to dispatch CALL_INDIRECT based on the callable type.
+--
+-- @args
+--   - callee: The value popped from stack (must be VClosure or VFuncPtr).
+--
+-- @details
+--   Extracts the address and environment from the callable and calls 'doSnapshot'.
+--
+-- @throws
+--   Error if 'callee' is not a callable type.
+--
+dispatchIndirectCall :: VMValue -> VirtualMachine ()
+dispatchIndirectCall (VClosure addr caps) = doSnapshot addr caps
+dispatchIndirectCall (VFuncPtr addr) = doSnapshot addr V.empty
+dispatchIndirectCall x = error $ "VM Error: Not callable: " ++ show x
+
+-- | Implements CALL_INDIRECT (Opcode 0x42).
+--
+-- @details
+--   Pops the top value and delegates to 'dispatchIndirectCall'.
+--
+instCallIndirect :: VirtualMachine ()
+instCallIndirect = do
+    callee <- stackPop
+    dispatchIndirectCall callee
+
+-- | Helper to finalize the creation of a closure.
+--
+-- @args
+--   - vm: The current VM state.
+--   - addr: The function address.
+--   - count: The number of variables to capture.
+--
+-- @details
+--   Extracts the last 'count' elements from the stack, truncates the stack,
+--   and pushes the new VClosure.
+--
+pushClosure :: VMState -> Int -> Int -> VirtualMachine ()
+pushClosure vm addr count =
+    put $ vm { vStack = V.take start (vStack vm) } >>
+    stackPush (VClosure addr (V.slice start count (vStack vm)))
+    where start = (V.length (vStack vm)) - count
+
+-- | Implements MAKE_CLOSURE (Opcode 0x60).
+--
+-- @details
+--   Reads arguments then checks if the stack has enough elements.
+--   If yes, calls 'pushClosure'.
+--
+instMakeClosure :: VirtualMachine ()
+instMakeClosure = do
+    addr <- readInt32
+    count <- readInt32
+    vm <- get
+    case V.length (vStack vm) >= count of
+        False -> error "VM Error: MAKE_CLOSURE Stack Underflow"
+        True -> pushClosure vm addr count
+
+-- | Helper to perform the state restoration for RET.
+--
+-- @args
+--   - vm: Current state.
+--   - snap: The snapshot to restore.
+--   - rest: The remaining snapshot stack.
+--   - v: The return value to push.
+--
+-- @details
+--   Restores IP, FP, Env, and cleans the stack before pushing the return value.
+--
+execReturn :: VMState -> CallSnapshot -> [CallSnapshot] -> VMValue ->
+    VirtualMachine ()
+execReturn vm snap rest v = put (vm { bytecodeIndex = callbackIndex snap,
+    baseVStackIndex = vStackIndex snap, env = vEnv snap, snapshotStack = rest,
+    vStack = V.take (baseVStackIndex vm) (vStack vm) }) >> stackPush v
 
 -- | Implements RET (Opcode 0x43).
 --
@@ -83,11 +141,8 @@ instTailCall = do
 --
 instRet :: VirtualMachine ()
 instRet = do
-    retV <- stackPop
+    retVal <- stackPop
     vm <- get
     case snapshotStack vm of
         [] -> error "VM Error: Return called with empty call stack"
-        (snap:rest) -> put (vm { bytecodeIndex = callbackIndex snap,
-            baseVStackIndex = vStackIndex snap, snapshotStack = rest,
-            vStack = V.take (baseVStackIndex vm) (vStack vm) }) >>
-            stackPush retV
+        (snap:rest) -> execReturn vm snap rest retVal

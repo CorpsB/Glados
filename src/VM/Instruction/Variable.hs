@@ -18,6 +18,8 @@ local variables (positive offsets) regardless of the absolute stack depth.
 module VM.Instruction.Variable
     ( instLoadLocal
     , instStoreLocal
+    , instLoadCapture
+    , instStoreCapture
     ) where
 
 import Control.Monad.State.Strict (get, put)
@@ -76,3 +78,39 @@ instStoreLocal = do
         False -> error $ "VM Error: STORE_LOCAL out of bounds (Index: " ++
             show baseIdx ++ ", Size: " ++ show (V.length stack) ++ ")"
         True -> put $ vm { vStack = stack V.// [(baseIdx, v)] }
+
+-- | Implements LOAD_CAPTURE (Opcode 0x54).
+--
+-- @details
+--   Accesses a variable in the current function's captured environment.
+--   1. Reads the capture index (Int32).
+--   2. Pushes the value at 'env[index]' onto the stack.
+--
+instLoadCapture :: VirtualMachine ()
+instLoadCapture = do
+    idx <- readInt32
+    vm <- get
+    let currEnv = env vm
+    case idx >= 0 && idx < V.length currEnv of
+        False -> error $ "VM Error: LOAD_CAPTURE out of bounds (" ++
+            show idx ++ ")"
+        True -> stackPush (currEnv V.! idx)
+
+-- | Implements STORE_CAPTURE (Opcode 0x55).
+--
+-- @details
+--   Updates a variable in the current function's captured environment.
+--   1. Reads the capture index.
+--   2. Pops the new value.
+--   3. Writes to 'env[index]'.
+--
+instStoreCapture :: VirtualMachine ()
+instStoreCapture = do
+    idx <- readInt32
+    val <- stackPop
+    vm <- get
+    let currEnv = env vm
+    case idx >= 0 && idx < V.length currEnv of
+        False -> error $ "VM Error: STORE_CAPTURE out of bounds (" ++
+            show idx ++ ")"
+        True -> put $ vm { env = currEnv V.// [(idx, val)] }

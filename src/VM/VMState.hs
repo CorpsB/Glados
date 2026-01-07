@@ -9,6 +9,8 @@ module VM.VMState
     ( VMState(..)
     , VirtualMachine
     , createVMState
+    , createSnapshot
+    , doSnapshot
     ) where
 
 import qualified Data.ByteString as BS
@@ -47,6 +49,11 @@ data VMState = VMState
       -- ^ The stack of saved contexts (formerly callStack).
       --   Used to restore the state upon returning from a function.
 
+    , env :: V.Vector VMValue
+      -- ^ The Current Environment (Closures).
+      --   Contains variables captured by the currently executing function.
+      --   If the current function is not a closure, this is typically empty.
+
     , globalEnv :: V.Vector VMValue
       -- ^ The persistent global environment.
       --   Stores global variables accessible throughout the program life.
@@ -77,6 +84,48 @@ createVMState code = VMState
     , vStack          = V.empty
     , baseVStackIndex = 0
     , snapshotStack   = []
+    , env             = V.empty
     , globalEnv       = V.replicate 1024 (undefined)
     , isRunning       = True
     }
+
+-- | Creates a snapshot of the current VM context (IP, FP, Env).
+--
+-- @args
+--   - vm: The current VM state.
+--
+-- @details
+--   Captures the current Instruction Pointer, Frame Pointer, and Closure Environment.
+--   Used by CALL instructions to save the state before jumping.
+--
+-- @return
+--   A 'CallSnapshot' containing the saved context.
+--
+createSnapshot :: VMState -> CallSnapshot
+createSnapshot vm = CallSnapshot
+    { callbackIndex = bytecodeIndex vm
+    , vStackIndex   = baseVStackIndex vm
+    , vEnv          = env vm
+    }
+
+-- | Sets up a new stack frame for a function call (Shared Logic).
+--
+-- @args
+--   - idx: The absolute address (index) to jump to.
+--   - newEnv: The closure environment to load (empty for static calls).
+--
+-- @details
+--   1. Creates and pushes a snapshot of the current state.
+--   2. Updates FP (baseVStackIndex) and IP (bytecodeIndex).
+--   3. Sets the new environment.
+--
+-- @return
+--   Unit. State is modified.
+--
+doSnapshot :: Int -> V.Vector VMValue -> VirtualMachine ()
+doSnapshot idx nEnv = do
+    vm <- get
+    put $ vm { snapshotStack = createSnapshot vm : snapshotStack vm
+             , baseVStackIndex = V.length (vStack vm)
+             , bytecodeIndex = idx
+             , env = nEnv }

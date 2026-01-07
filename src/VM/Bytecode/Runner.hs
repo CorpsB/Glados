@@ -64,7 +64,15 @@ executeInstruction 0x32 = instJumpIfTrue
 
 executeInstruction 0x40 = instCall
 executeInstruction 0x41 = instTailCall
+executeInstruction 0x42 = instCallIndirect
 executeInstruction 0x43 = instRet
+
+executeInstruction 0x50 = instLoadLocal
+executeInstruction 0x51 = instStoreLocal
+executeInstruction 0x54 = instLoadCapture
+executeInstruction 0x55 = instStoreCapture
+
+executeInstruction 0x60 = instMakeClosure
 
 executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
