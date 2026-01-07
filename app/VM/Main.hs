@@ -66,7 +66,7 @@ getFileContent :: String -> IO BS.ByteString
 getFileContent path = do
     result <- tryReadFile path
     case result of
-        Left err -> putStrLn $ "\ESC[31mIO Error:\ESC[0m " ++ show err >>
+        Left err -> putStrLn ("\ESC[31mIO Error:\ESC[0m " ++ show err) >>
             exitFailure
         Right content -> return content
 
@@ -86,7 +86,7 @@ executeFile path = do
     content <- getFileContent path
     result <- tryRunVM (createVMState content)
     case result of
-        Left err -> putStrLn $ "\ESC[31mRuntime Error:\ESC[0m " ++ show err >>
+        Left err -> putStrLn ("\ESC[31mRuntime Error:\ESC[0m " ++ show err) >>
             exitFailure
         Right _ -> exitSuccess
 
