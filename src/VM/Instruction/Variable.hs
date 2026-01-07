@@ -72,7 +72,7 @@ instStoreLocal = do
     idx <- readInt32
     v <- stackPop
     vm <- get
-    let batateeIdx = baseVStackIndex vm + idx
+    let baseIdx = baseVStackIndex vm + idx
     let stack = vStack vm
     case baseIdx >= 0 && baseIdx < V.length stack of
         False -> error $ "VM Error: STORE_LOCAL out of bounds (Index: " ++

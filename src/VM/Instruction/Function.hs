@@ -16,14 +16,16 @@ Ensures proper scope management and control flow between functions.
 module VM.Instruction.Function
     ( instCall
     , instTailCall
+    , instCallIndirect
     , instRet
+    , instMakeClosure
     ) where
 
 import Control.Monad.State.Strict (get, put)
 import qualified Data.Vector as V
 
 import VM.VMState (VirtualMachine, VMState(..), doSnapshot)
-import VM.VMValue (VMValue)
+import VM.VMValue (VMValue(..))
 import VM.CallSnapshot (CallSnapshot(..))
 import VM.Bytecode.Reader (readInt32)
 import VM.VMStack (stackPop, stackPush)
@@ -90,7 +92,7 @@ instCallIndirect = do
 --
 pushClosure :: VMState -> Int -> Int -> VirtualMachine ()
 pushClosure vm addr count =
-    put $ vm { vStack = V.take start (vStack vm) } >>
+    put (vm { vStack = V.take start (vStack vm) }) >>
     stackPush (VClosure addr (V.slice start count (vStack vm)))
     where start = (V.length (vStack vm)) - count
 

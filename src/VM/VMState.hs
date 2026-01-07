@@ -15,10 +15,10 @@ module VM.VMState
 
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
-import Control.Monad.State.Strict (StateT)
+import Control.Monad.State.Strict (StateT, get, put)
 
 import VM.VMValue (VMValue)
-import VM.CallSnapshot (CallSnapshot)
+import VM.CallSnapshot (CallSnapshot(..))
 
 -- | The core state of the Virtual Machine.
 --

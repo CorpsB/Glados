@@ -6,7 +6,7 @@
 -}
 
 module VM.VMValue
-    ( Value(..)
+    ( VMValue(..)
     , valueToString
     ) where
 

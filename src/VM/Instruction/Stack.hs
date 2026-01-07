@@ -67,7 +67,7 @@ import VM.VMStack
 --   Error "VM Error: Unsupported PUSH TypeID" if the provided TypeID is unknown.
 --
 stackPushValue :: Word8 -> VirtualMachine ()
-stackPushValue 0x00 = do v <- readByte; stackPush (VBool (val /= 0))
+stackPushValue 0x00 = do v <- readByte; stackPush (VBool (v /= 0))
 stackPushValue 0x01 = do v <- readInt8; stackPush (VInt (I8 v))
 stackPushValue 0x02 = do v <- readWord8; stackPush (VInt (UI8 v))
 stackPushValue 0x03 = do v <- readInt16; stackPush (VInt (I16 v))

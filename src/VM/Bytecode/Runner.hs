@@ -29,6 +29,7 @@ import VM.Instruction.Stack
 import VM.Instruction.Arithmetic
 import VM.Instruction.Logic
 import VM.Instruction.Function
+import VM.Instruction.Variable
 import VM.Instruction.System
 
 -- | Maps a raw opcode byte to its corresponding instruction function.
