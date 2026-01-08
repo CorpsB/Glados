@@ -5,7 +5,7 @@
 -- ResolveLabelsSpec
 -}
 
-module Compiler.ResolveLabelsSpec (spec) where
+module Compiler.ResolveLabels.ResolveLabelsSpec (spec) where
 
 import Test.Hspec
 import qualified Data.Map.Strict as Map

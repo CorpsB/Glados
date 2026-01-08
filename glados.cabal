@@ -39,7 +39,17 @@ library
       Compiler.Instruction
       Compiler.Serializer
       Compiler.PsInstruction
-      Compiler.ResolveLabels
+      Compiler.ResolveLabels.ResolveLabels
+      Compiler.ResolveLabels.ResolveLabelsHelpers
+      Compiler.ResolveLabels.Step2CallLabel
+      Compiler.ResolveLabels.Step2GetFuncAddrLabel
+      Compiler.ResolveLabels.Step2JumpIfFalseLabel
+      Compiler.ResolveLabels.Step2JumpIfTrueLabel
+      Compiler.ResolveLabels.Step2JumpLabel
+      Compiler.ResolveLabels.Step2LabelDef
+      Compiler.ResolveLabels.Step2MakeClosureLabel
+      Compiler.ResolveLabels.Step2Real
+      Compiler.ResolveLabels.Step2TailCallLabel
       Parser.Lexer
       Parser.Expression
       Parser.Statement
