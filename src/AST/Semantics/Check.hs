@@ -14,21 +14,7 @@ import Data.List (isPrefixOf)
 
 import AST.Ast (Ast(..))
 import AST.Semantics.Type
-
--- | Checks if two types are semantically compatible.
--- Replaces the usage of (==) with explicit domain logic.
-areTypesCompatible :: Type -> Type -> Bool
-areTypesCompatible TyInt TyInt   = True
-areTypesCompatible TyBool TyBool = True
-areTypesCompatible TyVoid TyVoid = True
-areTypesCompatible TyAuto TyAuto = True
-areTypesCompatible (TyList a) (TyList b) = areTypesCompatible a b
-areTypesCompatible (TyStruct a) (TyStruct b) = a == b
-areTypesCompatible (TyFunc args1 ret1) (TyFunc args2 ret2) = 
-    length args1 == length args2 &&
-    and (zipWith areTypesCompatible args1 args2) &&
-    areTypesCompatible ret1 ret2
-areTypesCompatible _ _ = False
+import AST.Semantics.CheckCall (checkCall)
 
 -- | Main entry point: validates a list of AST nodes.
 checkAst :: [Ast] -> Either String ()
@@ -51,7 +37,8 @@ checkExpr env (ASymbol name) = checkSymbol env name
 checkExpr env (AIf c t e)    = checkIf env c t e
 checkExpr env (ASetStruct name fields) =
     checkStructInstantiation env name fields
-checkExpr env (APos line _ ast) = 
+checkExpr env (ACall func args) = checkCall checkExpr env func args
+checkExpr env (APos line _ ast) =
     case checkExpr env ast of
         Left err -> 
             if "Error line" `isPrefixOf` err 
@@ -75,6 +62,28 @@ checkIf env cond thenB elseB = do
         TyInt  -> checkBranches env thenB elseB
         _ -> Left "Error: 'if' condition must be boolean"
 
+-- | Loop logic (While)
+checkLoop :: CheckEnv -> Ast -> Ast -> Either String CheckEnv
+checkLoop env cond body = do
+    tCond <- checkExpr env cond
+    case tCond of
+        TyBool -> checkStmt env body
+        TyInt  -> checkStmt env body
+        _ -> Left "Error: Loop condition must be boolean or integer"
+
+-- | Loop logic (For)
+checkFor :: CheckEnv -> Ast -> Ast -> Ast -> Ast -> Either String CheckEnv
+checkFor env initStmt cond updateStmt body = do
+    envAfterInit <- checkStmt env initStmt
+    tCond <- checkExpr envAfterInit cond
+    case tCond of
+        TyBool -> Right ()
+        TyInt  -> Right ()
+        _ -> Left "Error: 'for' condition must be boolean or integer"
+    _ <- checkStmt envAfterInit updateStmt
+    _ <- checkStmt envAfterInit body
+    Right env
+
 -- | Branches comparison
 checkBranches :: CheckEnv -> Ast -> Ast -> Either String Type
 checkBranches env thenB elseB = do
@@ -90,6 +99,10 @@ checkBranches env thenB elseB = do
 checkStmt :: CheckEnv -> Ast -> Either String CheckEnv
 checkStmt env (ADefineStruct name fields) = defineStruct env name fields
 checkStmt env (ASetVar name typeStr expr) = checkSetVar env name typeStr expr
+checkStmt env (ADefineFunc name args ret body) =
+    defineFunc env name args ret body
+checkStmt env (AWhile cond body) = checkLoop env cond body
+checkStmt env (AFor i c u b) = checkFor env i c u b
 checkStmt env (APos line _ ast) = 
     case checkStmt env ast of
         Left err -> 
@@ -118,6 +131,25 @@ checkSetVar env name typeStr expr = do
     let declaredType = parseType typeStr
     actualType <- checkExpr env expr
     applyAssignment env name declaredType actualType
+
+-- | Define a new function in the environment.
+--
+-- Parses argument types and return type.
+-- Adds the function to the environment (enabling recursion).
+-- Creates a new scope with arguments bound.
+-- Validates the function body within this new scope.
+defineFunc :: CheckEnv -> DT.Text -> [(DT.Text, DT.Text)]
+           -> DT.Text -> Ast -> Either String CheckEnv
+defineFunc env name args retType body = do
+    let argTypes = map (parseType . snd) args
+    let retTy = parseType retType
+    let funcType = TyFunc argTypes retTy
+    
+    envWithFunc <- insertVar env name funcType
+    envForBody <- foldM (\e (n, t) -> insertVar e n (parseType t))
+                        envWithFunc args
+    _ <- checkStmt envForBody body
+    Right envWithFunc
 
 -- | Applies the assignment logic based on types compatibility
 applyAssignment :: CheckEnv -> DT.Text -> Type -> Type -> Either String CheckEnv

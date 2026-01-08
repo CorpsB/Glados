@@ -31,6 +31,7 @@ library
       AST.Ast
       AST.Semantics.Type
       AST.Semantics.Check
+      AST.Semantics.CheckCall
       Common.Type.Integer
       Common.Utils.List
       Compiler.ASM.CompilerMonad

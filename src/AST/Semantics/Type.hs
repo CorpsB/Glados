@@ -12,6 +12,7 @@ module AST.Semantics.Type (
     emptyEnv,
     parseType,
     typeToString,
+    areTypesCompatible,
 ) where
 
 import qualified Data.Text as DT
@@ -66,3 +67,18 @@ typeToString (TyList t) = "[" ++ typeToString t ++ "]"
 typeToString (TyStruct n) = DT.unpack n
 typeToString (TyFunc args ret) = 
     "(" ++ unwords (map typeToString args) ++ " -> " ++ typeToString ret ++ ")"
+
+-- | Checks if two types are semantically compatible.
+-- Replaces usage of (==) with explicit pattern matching.
+areTypesCompatible :: Type -> Type -> Bool
+areTypesCompatible TyInt TyInt   = True
+areTypesCompatible TyBool TyBool = True
+areTypesCompatible TyVoid TyVoid = True
+areTypesCompatible TyAuto TyAuto = True
+areTypesCompatible (TyList a) (TyList b) = areTypesCompatible a b
+areTypesCompatible (TyStruct a) (TyStruct b) = a == b
+areTypesCompatible (TyFunc args1 ret1) (TyFunc args2 ret2) = 
+    length args1 == length args2 &&
+    and (zipWith areTypesCompatible args1 args2) &&
+    areTypesCompatible ret1 ret2
+areTypesCompatible _ _ = False
