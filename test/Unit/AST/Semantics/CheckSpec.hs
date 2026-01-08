@@ -167,7 +167,7 @@ spec = describe "Semantic Checker Coverage" $ do
             checkExpr envLocal (ASymbol (p "x")) `shouldSatisfy` \case Right TyInt -> True; _ -> False
 
         it "If condition not boolean" $ do
-            let expr = AIf (AInteger (fitInteger 1))
+            let expr = AIf AVoid
                            (AInteger (fitInteger 2))
                            (AInteger (fitInteger 3))
             checkExpr emptyEnv expr `shouldSatisfy`
@@ -417,3 +417,15 @@ spec = describe "Semantic Checker Coverage" $ do
                 Left msg -> "expected int" `isInfixOfStr` msg &&
                             "but got bool" `isInfixOfStr` msg
                 _ -> False
+
+        it "Defines a new struct and stores its name correctly" $ do
+            checkStmt emptyEnv definePoint `shouldSatisfy` \case 
+                Right resEnv -> 
+                    case Map.lookup (p "Point") (envStructs resEnv) of
+                        Just def -> structName def == p "Point"
+                        Nothing -> False
+                _ -> False
+
+        it "Instantiates a valid struct (Success path covers Right ())" $ do
+            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "y", AInteger (fitInteger 2))]
+            checkExpr envWithPoint inst `shouldSatisfy` \case Right (TyStruct name) -> name == p "Point"; _ -> False

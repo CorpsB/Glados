@@ -10,6 +10,7 @@ module AST.Semantics.Check (checkAst, checkExpr, checkStmt) where
 import Control.Monad (foldM, unless, forM_)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as DT
+import Data.List (isPrefixOf)
 
 import AST.Ast (Ast(..))
 import AST.Semantics.Type
@@ -50,6 +51,13 @@ checkExpr env (ASymbol name) = checkSymbol env name
 checkExpr env (AIf c t e)    = checkIf env c t e
 checkExpr env (ASetStruct name fields) =
     checkStructInstantiation env name fields
+checkExpr env (APos line _ ast) = 
+    case checkExpr env ast of
+        Left err -> 
+            if "Error line" `isPrefixOf` err 
+                then Left err
+                else Left $ "Error line " ++ show line ++ ": " ++ err
+        Right t  -> Right t
 checkExpr _ _ = Left "Error: Expression type not supported"
 
 -- | Symbol lookup
@@ -64,6 +72,7 @@ checkIf env cond thenB elseB = do
     tCond <- checkExpr env cond
     case tCond of
         TyBool -> checkBranches env thenB elseB
+        TyInt  -> checkBranches env thenB elseB
         _ -> Left "Error: 'if' condition must be boolean"
 
 -- | Branches comparison
@@ -81,6 +90,13 @@ checkBranches env thenB elseB = do
 checkStmt :: CheckEnv -> Ast -> Either String CheckEnv
 checkStmt env (ADefineStruct name fields) = defineStruct env name fields
 checkStmt env (ASetVar name typeStr expr) = checkSetVar env name typeStr expr
+checkStmt env (APos line _ ast) = 
+    case checkStmt env ast of
+        Left err -> 
+            if "Error line" `isPrefixOf` err
+                then Left err
+                else Left $ "Error line " ++ show line ++ ": " ++ err
+        Right newEnv -> Right newEnv
 checkStmt env _ = Right env
 
 -- | Define a new structure in the environment.
@@ -134,16 +150,17 @@ getStructDef env name = case Map.lookup name (envStructs env) of
 
 -- | Checks for unknown fields provided in instantiation
 checkExtraFields :: DT.Text -> [DT.Text] -> [DT.Text] -> Either String ()
-checkExtraFields name expected provided = do
+checkExtraFields name expected provided =
     let unknown = filter (`notElem` expected) provided
-    forM_ (take 1 unknown) $ \u ->
+    in forM_ (take 1 unknown) $ \u ->
         Left $ "Error: Unknown field '" ++ DT.unpack u ++ 
                   "' in struct '" ++ DT.unpack name ++ "'"
+
 -- | Checks for missing mandatory fields
 checkMissingFields :: DT.Text -> [DT.Text] -> [DT.Text] -> Either String ()
-checkMissingFields name expected provided = do
+checkMissingFields name expected provided =
     let missing = filter (`notElem` provided) expected
-    forM_ (take 1 missing) $ \m ->
+    in forM_ (take 1 missing) $ \m ->
         Left $ "Error: Missing field '" ++ DT.unpack m ++ 
                   "' in construction of '" ++ DT.unpack name ++ "'"
 

@@ -13,14 +13,14 @@ module Parser.ExpressionSpec (spec) where
 import Test.Hspec
 import Text.Megaparsec (parse)
 import Parser.Expression (pExpr)
-import AST.Ast (Ast(..))
+import AST.Ast (Ast(..), cleanAst)
 import Z_old.Src.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 import Data.Void (Void)
 import Text.Megaparsec.Error (ParseErrorBundle)
 
 parseExpr :: DT.Text -> Either (ParseErrorBundle DT.Text Void) Ast
-parseExpr input = parse pExpr "" input
+parseExpr input = fmap cleanAst (parse pExpr "" input)
 
 p :: String -> DT.Text
 p = DT.pack

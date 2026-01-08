@@ -5,10 +5,10 @@
 -- Ast
 -}
 
-module AST.Ast (Ast(..), Env, showAst, printAst) where
+module AST.Ast (Ast(..), Env, showAst, printAst, cleanAst) where
 
 import Z_old.Src.Type.Integer (IntValue(..), intValueToInt)
-import Data.Text as DT
+import qualified Data.Text as DT
 
 type Env = [(DT.Text, Ast)]
 
@@ -107,6 +107,14 @@ data Ast
       -- ^ Represents an explicit return statement.
       --   @param Ast The expression to return.
 
+    | APos Int Int Ast
+      -- ^ Represents a source code position wrapper.
+      --   Used for precise error reporting (line, column).
+      --   This node wraps another AST node without changing its semantics.
+      --   @param Int The line number.
+      --   @param Int The column number.
+      --   @param Ast The wrapped AST node.
+
     deriving (Show, Eq)
 
 showAst :: Ast -> String
@@ -117,9 +125,36 @@ showAst (ASymbol s) = DT.unpack s
 showAst (AList xs) = "(" ++ Prelude.unwords (Prelude.map showAst xs) ++ ")"
 showAst (ASetClosure _ _ _) = "#\\<procedure\\>"
 showAst (ADefineLambda _ _) = "#<lambda>"
+showAst (APos _ _ ast) = showAst ast
 showAst other = Prelude.show other
 -- TO DO: add new AST lines
 
 printAst :: Ast -> IO ()
 printAst ast = putStrLn (Prelude.show ast)
 -- TO DO: replace function by an AST tree view
+
+-- | Recursively removes all position wrappers (APos) from the AST.
+--
+-- This is useful for:
+-- Pretty printing (to avoid cluttering the output with position data).
+-- Testing (to compare AST structure without worrying about line numbers).
+--
+-- @param Ast The AST potentially containing APos nodes.
+-- @return Ast The cleaned AST with purely structural nodes.
+cleanAst :: Ast -> Ast
+cleanAst (APos _ _ ast) = cleanAst ast
+cleanAst (AList xs) = AList (map cleanAst xs)
+cleanAst (ADefineFunc n a r b) = ADefineFunc n a r (cleanAst b)
+cleanAst (ADefineLambda args body) = ADefineLambda args (cleanAst body)
+cleanAst (ASetVar n t expr) = ASetVar n t (cleanAst expr)
+cleanAst (ASetStruct n fields) =
+    ASetStruct n (map (\(f, a) -> (f, cleanAst a)) fields)
+cleanAst (ASetClosure p b env) =
+    ASetClosure p (cleanAst b) (map (\(n, a) -> (n, cleanAst a)) env)
+cleanAst (ACall func args) = ACall (cleanAst func) (map cleanAst args)
+cleanAst (AIf c t e) = AIf (cleanAst c) (cleanAst t) (cleanAst e)
+cleanAst (AWhile c b) = AWhile (cleanAst c) (cleanAst b)
+cleanAst (AFor i c u b) =
+    AFor (cleanAst i) (cleanAst c) (cleanAst u) (cleanAst b)
+cleanAst (AReturn e) = AReturn (cleanAst e)
+cleanAst other = other

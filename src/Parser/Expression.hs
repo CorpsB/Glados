@@ -162,7 +162,7 @@ pLambda = do
 -- A term is the basic unit of an expression, such as literals,
 -- variables, function calls, or parenthesized sub-expressions.
 pTermBase :: Parser Ast
-pTermBase = choice
+pTermBase = withPos $ choice
     [ try pNew, try pLambda
     , parens pExpr
     , pInteger
@@ -243,6 +243,7 @@ incrementOps :: Ast -> Ast
 incrementOps (ASymbol name) = 
     ASetVar name (DT.pack "auto") (ACall (ASymbol (DT.pack "+"))
         [ASymbol name, AInteger (fitInteger 1)])
+incrementOps (APos l c ast) = APos l c (incrementOps ast)
 incrementOps other = ACall (ASymbol (DT.pack "++")) [other]
 
 -- | Handle the decrement operator (--).
@@ -254,6 +255,7 @@ decrementOps :: Ast -> Ast
 decrementOps (ASymbol name) = 
     ASetVar name (DT.pack "auto") (ACall (ASymbol (DT.pack "-"))
         [ASymbol name, AInteger (fitInteger 1)])
+decrementOps (APos l c ast) = APos l c (decrementOps ast)
 decrementOps other = ACall (ASymbol (DT.pack "--")) [other]
 
 -- | Combined operator table for expression parsing.
