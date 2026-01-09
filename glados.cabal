@@ -50,6 +50,7 @@ library
       Compiler.ResolveLabels.Step2MakeClosureLabel
       Compiler.ResolveLabels.Step2Real
       Compiler.ResolveLabels.Step2TailCallLabel
+      Compiler.Bytecode.DisasmFinal
       Parser.Lexer
       Parser.Expression
       Parser.Statement
@@ -62,6 +63,7 @@ library
     , text
     , containers
     , mtl
+    , binary
   default-language:    Haskell2010
   ghc-options:
     -Wall
