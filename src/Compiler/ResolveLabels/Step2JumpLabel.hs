@@ -7,10 +7,9 @@
 
 module Compiler.ResolveLabels.Step2JumpLabel (step2JumpLabel) where
 
-import Compiler.Instruction (instructionSize, Instruction(..))
+import Compiler.Instruction (Instruction(..))
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
-import Data.Int (Int32, Int64)
 import qualified Data.Text as T
 import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfJumpInst)
 
