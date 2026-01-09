@@ -9,15 +9,19 @@ module Compiler.ResolveLabels.Step2JumpIfTrueLabel (step2JumpIfTrueLabel, ) wher
 
 import Data.Text (Text)
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import Compiler.Instruction (Instruction(..), instructionSize)
 import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfJumpIfTrueInst)
 
-step2JumpIfTrueLabel :: Map.Map Text Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
-step2JumpIfTrueLabel labelMap out idx name =
+step2JumpIfTrueLabel :: Map.Map Text Int -> Set.Set Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
+step2JumpIfTrueLabel labelMap starts out idx name =
     case Map.lookup name labelMap of
         Nothing -> Left (T.pack "Unknown label: " <> name)
-        Just target -> jumpIfTrueResult target out idx name
+        Just target -> if Set.member target starts
+                       then jumpIfTrueResult target out idx name
+                       else Left (T.pack
+                        "JumpIfTrue target not at instruction boundary")
 
 jumpIfTrueResult :: Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
 jumpIfTrueResult target out idx name =

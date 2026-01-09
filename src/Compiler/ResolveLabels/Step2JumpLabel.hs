@@ -9,15 +9,19 @@ module Compiler.ResolveLabels.Step2JumpLabel (step2JumpLabel) where
 
 import Compiler.Instruction (Instruction(..))
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
 import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfJumpInst)
 
-step2JumpLabel :: Map.Map Text Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
-step2JumpLabel labelMap out idx name =
+step2JumpLabel :: Map.Map Text Int -> Set.Set Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
+step2JumpLabel labelMap startsSet out idx name =
     case Map.lookup name labelMap of
         Nothing -> Left (T.pack "Unknown label: " <> name)
-        Just target -> jumpLabelResult target out idx name
+        Just target ->
+            if Set.member target startsSet
+                then jumpLabelResult target out idx name
+                else Left (T.pack "Jump target not at instruction boundary")
 
 jumpLabelResult :: Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
 jumpLabelResult target out idx name =
@@ -25,4 +29,5 @@ jumpLabelResult target out idx name =
     in case checkInt32Range off64 of
         Left err -> Left (T.pack "Jump offset for label '" <> name
             <> T.pack "' " <> err)
-        Right off -> Right (out ++ [Jump (fromIntegral off)], idx + sizeOfJumpInst)
+        Right off ->
+            Right (out ++ [Jump (fromIntegral off)], idx + sizeOfJumpInst)
