@@ -55,8 +55,8 @@ detectDuplicateLabels idx name m =
         else Right (idx, Map.insert name idx m)
 
 step2 :: Map.Map Text Int -> Set.Set Int -> ([Instruction], Int) -> PsInstruction -> Either Text ([Instruction], Int)
-step2 lm ss (out, idx) (Real instr) = step2Real out idx instr
-step2 lm ss (out, idx) (LabelDef _) = step2LabelDef out idx
+step2 _ _ (out, idx) (Real instr) = step2Real out idx instr
+step2 _ _ (out, idx) (LabelDef _) = step2LabelDef out idx
 step2 lm ss (out, idx) pseudo = step2Pseudo lm ss out idx pseudo
 
 step2Pseudo :: Map.Map Text Int -> Set.Set Int -> [Instruction] -> Int -> PsInstruction -> Either Text ([Instruction], Int)

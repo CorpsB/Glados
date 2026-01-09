@@ -8,7 +8,7 @@
 module Compiler.ResolveLabels.Step2TailCallLabel (step2TailCallLabel, ) where
 
 import Data.Text (Text)
-import Compiler.Instruction (Instruction(..), instructionSize)
+import Compiler.Instruction (Instruction(..))
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T

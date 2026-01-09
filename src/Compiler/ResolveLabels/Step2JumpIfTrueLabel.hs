@@ -11,7 +11,7 @@ import Data.Text (Text)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import Compiler.Instruction (Instruction(..), instructionSize)
+import Compiler.Instruction (Instruction(..))
 import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfJumpIfTrueInst)
 
 step2JumpIfTrueLabel :: Map.Map Text Int -> Set.Set Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
