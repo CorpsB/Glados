@@ -217,16 +217,52 @@ getInstCode Nop                  = 0xFF
 --   The instruction size in bytes as 'Int'.
 --
 instructionSize :: Instruction -> Int
-instructionSize (Push (ImmInt (I32 _))) = 1 + 4
-instructionSize (Push (ImmBool _))      = 1 + 1
+instructionSize (Push imm)              = 1 + 1 + immediateSize imm
 instructionSize Pop                     = 1
 instructionSize Dup                     = 1
 instructionSize Swap                    = 1
+
+-- Arithmetic
 instructionSize Add                     = 1
 instructionSize Sub                     = 1
-instructionSize (Jump _)              = 1 + 4
-instructionSize (JumpIfFalse _)       = 1 + 4
-instructionSize (Call _)              = 1 + 4
+instructionSize Mul                     = 1
+instructionSize Div                     = 1
+instructionSize Mod                     = 1
+
+-- Logic & Comparison
+instructionSize Eq                      = 1
+instructionSize Lt                      = 1
+instructionSize Le                      = 1
+instructionSize Not                     = 1
+instructionSize And                     = 1
+instructionSize Or                      = 1
+
+-- Flow Control
+instructionSize (Jump _)                = 1 + 4
+instructionSize (JumpIfFalse _)         = 1 + 4
+instructionSize (JumpIfTrue _)          = 1 + 4
+
+-- Functions & Calls
+instructionSize (Call _)                = 1 + 4
+instructionSize (TailCall _)            = 1 + 4
+instructionSize CallIndirect            = 1
 instructionSize Ret                     = 1
-instructionSize (MakeClosure _ _)    = 1 + 4 + 4
+
+-- Memory (Variables)
+instructionSize (LoadLocal _)           = 1 + 4
+instructionSize (StoreLocal _)          = 1 + 4
+instructionSize (LoadGlobal _)          = 1 + 4
+instructionSize (StoreGlobal _)         = 1 + 4
+instructionSize (LoadCapture _)         = 1 + 4
+instructionSize (StoreCapture _)        = 1 + 4
+
+-- Closures & Types
+instructionSize (MakeClosure _ _)       = 1 + 4 + 4
+instructionSize (GetFuncAddr _)         = 1 + 4
+instructionSize (Cast _)                = 1 + 1
+
+-- System / Debug
+instructionSize Print                   = 1
 instructionSize Halt                    = 1
+instructionSize (CheckStack _)          = 1 + 4
+instructionSize Nop                     = 1
