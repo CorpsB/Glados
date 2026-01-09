@@ -22,25 +22,30 @@ import Compiler.PsInstruction (PsInstruction(..))
 import qualified Data.Map.Strict as Map
 import Data.Text (Text)
 import Control.Monad (foldM)
+import qualified Data.Text as T
 
 resolveLabels :: [PsInstruction] -> Either Text [Instruction]
 resolveLabels pseudos =
-    -- Pass 1: build label map
-    let (_, labelMap) = foldl' step1 (0, Map.empty) pseudos
-    -- Pass 2: resolve pseudo instructions to real instructions
-    in fmap fst $ foldM (step2 labelMap) ([], 0) pseudos
+    foldM step1 (0, Map.empty) pseudos >>= \(_, labelMap) ->
+    fmap fst $ foldM (step2 labelMap) ([], 0) pseudos
 
-step1 :: (Int, Map.Map Text Int) -> PsInstruction -> (Int, Map.Map Text Int)
+step1 :: (Int, Map.Map Text Int) -> PsInstruction -> Either Text (Int, Map.Map Text Int)
 step1 (idx, m) pseudo = case pseudo of
-    LabelDef name -> (idx, Map.insert name idx m)
-    Real instr    -> (idx + instructionSize instr, m)
-    JumpLabel _   -> (idx + sizeOfJumpInst, m)
-    JumpIfFalseLabel _ -> (idx + sizeOfJumpIfFalseInst, m)
-    JumpIfTrueLabel _  -> (idx + sizeOfJumpIfFalseInst, m)
-    CallLabel _   -> (idx + sizeOfCallInst, m)
-    TailCallLabel _ -> (idx + sizeOfTailCallInst, m)
-    MakeClosureLabel _ _ -> (idx + instructionSize (MakeClosure 0 0), m)
-    GetFuncAddrLabel _ -> (idx + instructionSize (GetFuncAddr 0), m)
+    LabelDef name -> detectDuplicateLabels idx name m
+    Real instr    -> Right (idx + instructionSize instr, m)
+    JumpLabel _   -> Right (idx + sizeOfJumpInst, m)
+    JumpIfFalseLabel _ -> Right (idx + sizeOfJumpIfFalseInst, m)
+    JumpIfTrueLabel _  -> Right (idx + sizeOfJumpIfFalseInst, m)
+    CallLabel _   -> Right (idx + sizeOfCallInst, m)
+    TailCallLabel _ -> Right (idx + sizeOfTailCallInst, m)
+    MakeClosureLabel _ _ -> Right (idx + instructionSize (MakeClosure 0 0), m)
+    GetFuncAddrLabel _ -> Right (idx + instructionSize (GetFuncAddr 0), m)
+
+detectDuplicateLabels :: Int -> Text -> Map.Map Text Int -> Either Text (Int, Map.Map Text Int)
+detectDuplicateLabels idx name m =
+    if Map.member name m
+        then Left (T.pack $ "Duplicate label: " ++ T.unpack name)
+        else Right (idx, Map.insert name idx m)
 
 step2 :: Map.Map Text Int -> ([Instruction], Int) -> PsInstruction -> Either Text ([Instruction], Int)
 step2 labelMap (out, idx) pseudo = case pseudo of
