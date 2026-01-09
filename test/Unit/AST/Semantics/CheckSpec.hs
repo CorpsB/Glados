@@ -429,3 +429,234 @@ spec = describe "Semantic Checker Coverage" $ do
         it "Instantiates a valid struct (Success path covers Right ())" $ do
             let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "y", AInteger (fitInteger 2))]
             checkExpr envWithPoint inst `shouldSatisfy` \case Right (TyStruct name) -> name == p "Point"; _ -> False
+
+    describe "Function Calls & Operators Delegation" $ do
+
+        it "Delegates ACall to checkCall (Binary Operator)" $ do
+            let call = ACall (ASymbol (p "+")) [AInteger (fitInteger 1), AInteger (fitInteger 2)]
+            checkExpr env call `shouldSatisfy` \case Right TyInt -> True; _ -> False
+
+    describe "APos Error Handling (Line Numbers)" $ do
+        it "Wraps error with line number when APos is encountered" $ do
+            let expr = APos 10 5 (ASymbol (p "unknown_var"))
+            checkExpr env expr `shouldSatisfy` \case
+                Left err -> "Error line 10:" `isInfixOfStr` err && "unknown_var" `isInfixOfStr` err
+                _ -> False
+
+        it "Does not double-wrap error messages (Nested APos)" $ do
+            let expr = APos 10 1 (APos 20 1 (ASymbol (p "unknown_var")))
+            checkExpr env expr `shouldSatisfy` \case
+                Left err -> "Error line 20:" `isInfixOfStr` err && not ("Error line 10:" `isInfixOfStr` err)
+                _ -> False
+        
+        it "Propagates success correctly through APos" $ do
+            let expr = APos 10 5 (AInteger (fitInteger 42))
+            checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
+
+    describe "Loop Logic (checkFor via checkStmt)" $ do
+        it "Validates For loop with Bool condition" $ do
+            let stmt = AFor (ASetVar (p "x") (p "int") (AInteger (fitInteger 0))) 
+                            (ABool True) 
+                            AVoid 
+                            AVoid 
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Validates For loop with Int condition (C-Style Support)" $ do
+            let stmt = AFor AVoid 
+                            (AInteger (fitInteger 1)) 
+                            AVoid 
+                            AVoid
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Rejects For loop with Invalid condition type" $ do
+            let stmt = AFor AVoid 
+                            AVoid 
+                            AVoid 
+                            AVoid
+            checkStmt env stmt `shouldSatisfy` \case
+                Left err -> "must be boolean or integer" `isInfixOfStr` err
+                _ -> False
+
+        it "Validates For loop initialization scope" $ do
+            let stmt = AFor (ASetVar (p "loopVar") (p "int") (AInteger (fitInteger 0)))
+                            (ASymbol (p "loopVar")) 
+                            AVoid
+                            AVoid
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+    describe "If Condition C-Style" $ do
+        it "Accepts TyInt as condition and checks branches" $ do
+            let expr = AIf (AInteger (fitInteger 1)) (AInteger (fitInteger 1)) (AInteger (fitInteger 1))
+            checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
+
+    describe "Coverage: Loop Logic" $ do
+        it "Validates While with TyBool" $ do
+            let stmt = AWhile (ABool True) AVoid
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Validates While with TyInt" $ do
+            let stmt = AWhile (AInteger (fitInteger 1)) AVoid
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Rejects While with TyVoid" $ do
+            let stmt = AWhile AVoid AVoid
+            checkStmt env stmt `shouldSatisfy` \case 
+                Left err -> "Loop condition must be boolean or integer" `isInfixOfStr` err
+                _ -> False
+
+        it "Checks Body in While loop" $ do
+            let stmt = AWhile (ABool True) (ASetVar (p "i") (p "bool") (AInteger (fitInteger 1)))
+            checkStmt env stmt `shouldSatisfy` \case 
+                Left err -> "but assigned" `isInfixOfStr` err
+                _ -> False
+
+    describe "Coverage: For Loop Logic" $ do
+        it "Validates For condition TyBool" $ do
+            let stmt = AFor AVoid (ABool True) AVoid AVoid
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Validates For condition TyInt" $ do
+            let stmt = AFor AVoid (AInteger (fitInteger 1)) AVoid AVoid
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Rejects For condition TyVoid" $ do
+            let stmt = AFor AVoid AVoid AVoid AVoid
+            checkStmt env stmt `shouldSatisfy` \case 
+                Left err -> "'for' condition must be boolean or integer" `isInfixOfStr` err
+                _ -> False
+
+        it "Checks Update statement" $ do
+            let stmt = AFor AVoid (ABool True) (ASetVar (p "i") (p "bool") (AInteger (fitInteger 1))) AVoid
+            checkStmt env stmt `shouldSatisfy` \case 
+                Left err -> "but assigned" `isInfixOfStr` err
+                _ -> False
+
+        it "Checks Body statement" $ do
+            let stmt = AFor AVoid (ABool True) AVoid (ASetVar (p "i") (p "bool") (AInteger (fitInteger 1)))
+            checkStmt env stmt `shouldSatisfy` \case 
+                Left err -> "but assigned" `isInfixOfStr` err
+                _ -> False
+
+    describe "Coverage: Environment Propagation" $ do
+        it "Propagates env to branches when condition is Int" $ do
+            let expr = AIf (AInteger (fitInteger 1)) (ASymbol (p "i")) (ASymbol (p "i"))
+            checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
+
+        it "Propagates env to checkCall" $ do
+            let call = ACall (ASymbol (p "f1")) [AInteger (fitInteger 1)]
+            checkExpr env call `shouldSatisfy` \case Right TyVoid -> True; _ -> False
+    
+    describe "Function Definition" $ do
+        it "Defines a function and adds it to environment" $ do
+            let func = ADefineFunc (p "myFunc") [(p "x", p "int")] (p "int") (AReturn (ASymbol (p "x")))
+            checkStmt env func `shouldSatisfy` \case
+                Right newEnv -> 
+                    case Map.lookup (p "myFunc") (envVars newEnv) of
+                        Just (TyFunc [TyInt] TyInt) -> True
+                        _ -> False
+                _ -> False
+
+        it "Validates function body using argument scope" $ do
+            let body = ASetVar (p "a") (p "auto") (AInteger (fitInteger 10))
+            let func = ADefineFunc (p "test") [(p "a", p "int")] (p "void") body
+            checkStmt env func `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Fails if function body contains semantic error" $ do
+            let body = ASetVar (p "local") (p "int") (ABool True)
+            let func = ADefineFunc (p "fail") [] (p "void") body
+            checkStmt env func `shouldSatisfy` \case
+                Left err -> "assigned bool" `isInfixOfStr` err
+                _ -> False
+
+        it "Allows recursion (Function visible inside its own body)" $ do
+            let callRec = ACall (ASymbol (p "rec")) []
+            let func = ADefineFunc (p "rec") [] (p "void") callRec
+            checkStmt env func `shouldSatisfy` \case Right _ -> True; _ -> False
+
+    describe "Statement Position Error Handling" $ do
+        it "Wraps statement error with line number" $ do
+            let stmt = APos 42 1 (ASetVar (p "x") (p "int") (ABool True))
+            checkStmt emptyEnv stmt `shouldSatisfy` \case
+                Left err -> "Error" `isInfixOfStr` err && "assigned bool" `isInfixOfStr` err
+                _ -> False
+
+        it "Does not double-wrap statement errors" $ do
+            let stmt = APos 10 1 (APos 20 1 (ASetVar (p "x") (p "int") (ABool True)))
+            checkStmt emptyEnv stmt `shouldSatisfy` \case
+                Left err -> "Error" `isInfixOfStr` err && not ("Error :" `isInfixOfStr` err)
+                _ -> False
+        
+        it "Propagates success correctly through APos Statement" $ do
+            let stmt = APos 10 5 (ASetVar (p "x") (p "int") (AInteger (fitInteger 42)))
+            checkStmt emptyEnv stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+    describe "checkLoop Environment Propagation" $ do
+        it "Returns modified environment when condition is TyBool" $ do
+            let body = ASetVar (p "x_bool") (p "int") (AInteger (fitInteger 10))
+            let stmt = AWhile (ABool True) body
+            checkStmt env stmt `shouldSatisfy` \case
+                Right resEnv -> case Map.lookup (p "x_bool") (envVars resEnv) of
+                    Just TyInt -> True
+                    _ -> False
+                _ -> False
+
+        it "Returns modified environment when condition is TyInt" $ do
+            let body = ASetVar (p "y_int") (p "int") (AInteger (fitInteger 20))
+            let stmt = AWhile (AInteger (fitInteger 1)) body
+            checkStmt env stmt `shouldSatisfy` \case
+                Right resEnv -> case Map.lookup (p "y_int") (envVars resEnv) of
+                    Just TyInt -> True
+                    _ -> False
+                _ -> False
+
+        it "Returns Left Error when condition is invalid" $ do
+            let stmt = AWhile AVoid AVoid
+            checkStmt env stmt `shouldSatisfy` \case
+                Left err -> "Loop condition must be boolean or integer" `isInfixOfStr` err
+                _ -> False
+    
+    describe "Loop Condition Check" $ do
+        it "Propagates error" $ do
+            let stmt = AWhile (ASymbol (p "unknown_var")) AVoid
+            checkStmt env stmt `shouldSatisfy` \case 
+                Left err -> "Undefined variable" `isInfixOfStr` err
+                _ -> False
+    
+    describe "For Loop Scoping & Internals" $ do
+        
+        it "Verifies updateStmt sees variables from initStmt" $ do
+            let initS = ASetVar (p "i_scope") (p "int") (AInteger (fitInteger 0))
+            let condS = ACall (ASymbol (p "<")) [ASymbol (p "i_scope"), AInteger (fitInteger 10)]
+            let updateS = ASetVar (p "i_scope") (p "auto") (AInteger (fitInteger 1))
+            let bodyS = AVoid
+            
+            let stmt = AFor initS condS updateS bodyS
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Verifies body sees variables from initStmt" $ do
+            let initS = ASetVar (p "j_scope") (p "int") (AInteger (fitInteger 0))
+            let condS = ABool True
+            let updateS = AVoid
+            let bodyS = ASetVar (p "j_scope") (p "auto") (AInteger (fitInteger 1))
+            let stmt = AFor initS condS updateS bodyS
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Verifies loop variables do NOT leak into outer scope" $ do
+
+            let initS = ASetVar (p "leak_check") (p "int") (AInteger (fitInteger 0))
+            let stmt = AFor initS (ABool True) AVoid AVoid
+            
+            checkStmt env stmt `shouldSatisfy` \case 
+                Right resEnv -> 
+                    case Map.lookup (p "leak_check") (envVars resEnv) of
+                        Nothing -> True
+                        Just _ -> False
+                _ -> False
+
+        it "Passes TyBool condition (Right ())" $ do
+            let stmt = AFor AVoid (ABool True) AVoid AVoid
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+        it "Passes TyInt condition (Right ())" $ do
+            let stmt = AFor AVoid (AInteger (fitInteger 1)) AVoid AVoid
+            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
