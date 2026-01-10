@@ -138,6 +138,19 @@ test-suite glados-unit
       Compiler.ASM.CompilerSpec
       Compiler.ASM.AstToAsmSpec
       Common.Type.IntegerSpec
+      VM.Bytecode.ReaderSpec
+      VM.Bytecode.RunnerSpec
+      VM.Instruction.ArithmeticSpec
+      VM.Instruction.FunctionSpec
+      VM.Instruction.IndexSpec
+      VM.Instruction.LogicSpec
+      VM.Instruction.StackSpec
+      VM.Instruction.SystemSpec
+      VM.Instruction.VariableSpec
+      VM.CallSnapshotSpec
+      VM.VMStateSpec
+      VM.VMStackSpec
+      VM.VMValueSpec
   build-depends:
       base >= 4.7 && < 5
     , glados
@@ -150,6 +163,7 @@ test-suite glados-unit
     , containers
     , transformers
     , mtl
+    , vector
   ghc-options:
     -Wall
     -Wcompat
