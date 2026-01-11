@@ -10,6 +10,9 @@ import qualified Compiler.ASM.AstToAsmSpec
 import qualified Compiler.ASM.CompilerSpec
 
 import qualified AST.AstSpec
+import qualified AST.Semantics.TypeSpec
+import qualified AST.Semantics.CheckSpec
+import qualified AST.Semantics.CheckCallSpec
 import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
 import qualified Parser.ExpressionSpec
@@ -45,6 +48,9 @@ spec = do
     Z_old.LispTest.spec
     Z_old.AstSpec.spec
     AST.AstSpec.spec
+    AST.Semantics.TypeSpec.spec
+    AST.Semantics.CheckSpec.spec
+    AST.Semantics.CheckCallSpec.spec
     Parser.StatementSpec.spec
     Parser.LexerSpec.spec
     Parser.ExpressionSpec.spec

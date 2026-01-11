@@ -27,7 +27,8 @@ module Parser.Lexer (
     braces,
     semicolon,
     comma,
-    colon
+    colon,
+    withPos
 ) where
 
 import Text.Megaparsec
@@ -35,6 +36,7 @@ import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
 import Data.Void
 import qualified Data.Text as DT
+import AST.Ast (Ast(..))
 
 -- | The standard Parser type for this project.
 --
@@ -87,6 +89,20 @@ comma = symbol (DT.pack ",")
 -- | Parse a colon : symbol.
 colon :: Parser DT.Text
 colon = symbol (DT.pack ":")
+
+-- | Wraps a parser with position information.
+--
+-- Captures the current source position (line, column) before running the parser 'p',
+-- and wraps the resulting AST node in an 'APos' constructor.
+-- This allows error reporting to pinpoint the exact location of semantic errors later.
+--
+-- @param Parser Ast The parser to wrap.
+-- @return Parser Ast A parser that returns an APos node containing the original result.
+withPos :: Parser Ast -> Parser Ast
+withPos p = do
+    pos <- getSourcePos
+    node <- p
+    return (APos (unPos (sourceLine pos)) (unPos (sourceColumn pos)) node)
 
 -- | List of reserved keywords in the language.
 --

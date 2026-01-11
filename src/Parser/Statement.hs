@@ -242,7 +242,7 @@ pBasic =
 -- Aggregates all statement types (control flow, declarations, basic instructions)
 -- into a single choice. This is the top-level parser for a line of code.
 pStatement :: Parser Ast
-pStatement = choice (pControlFlow ++ pDeclarations ++ pBasic)
+pStatement = withPos $ choice (pControlFlow ++ pDeclarations ++ pBasic)
 
 -- | Main entry point for the parser.
 --

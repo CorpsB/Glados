@@ -157,14 +157,26 @@ pLambda = do
     body <- pExpr
     return (ADefineLambda args body)
 
+-- | Parse an IF expression (e.g., x = if (c) { 1 } else { 0 }).
+-- Returns an AIf node. Note that 'else' is mandatory or defaults to Void.
+pIfExpr :: Parser Ast
+pIfExpr = do
+    _ <- pKeyword (DT.pack "if")
+    cond <- parens pExpr
+    thenExpr <- braces pExpr
+    elseExpr <- option AVoid $ do
+        _ <- pKeyword (DT.pack "else")
+        braces pExpr
+    return (AIf cond thenExpr elseExpr)
+
 -- | Parse a term in an expression.
 --
 -- A term is the basic unit of an expression, such as literals,
 -- variables, function calls, or parenthesized sub-expressions.
 pTermBase :: Parser Ast
-pTermBase = choice
+pTermBase = withPos $ choice
     [ try pNew, try pLambda
-    , parens pExpr
+    , parens pExpr , try pIfExpr
     , pInteger
     , pBool
     , pChar
@@ -197,6 +209,8 @@ sugarSyntOps =
     [ Prefix (prefix (DT.pack "!") <$ symbol (DT.pack "!"))
     , Prefix (incrementOps <$ symbol (DT.pack "++"))
     , Prefix (decrementOps <$ symbol (DT.pack "--"))
+    , Postfix (incrementOps <$ symbol (DT.pack "++"))
+    , Postfix (decrementOps <$ symbol (DT.pack "--"))
     ]
 
 -- | Table of multiplicative operators (*, /, %).
@@ -214,10 +228,13 @@ additiveOps =
     , InfixL (binary (DT.pack "-") <$ symbol (DT.pack "-"))
     ]
 
--- | Table of comparison operators (==, <, >).
+-- | Table of comparison operators (==, <, >, etc).
 comparisonOps :: [Operator Parser Ast]
 comparisonOps =
     [ InfixL (binary (DT.pack "eq?") <$ symbol (DT.pack "=="))
+    , InfixL (binary (DT.pack "neq?") <$ symbol (DT.pack "!="))
+    , InfixL (binary (DT.pack "<=")  <$ try (symbol (DT.pack "<=")))
+    , InfixL (binary (DT.pack ">=")  <$ try (symbol (DT.pack ">=")))
     , InfixL (binary (DT.pack "<")   <$ symbol (DT.pack "<"))
     , InfixL (binary (DT.pack ">")   <$ symbol (DT.pack ">"))
     ]
@@ -243,6 +260,7 @@ incrementOps :: Ast -> Ast
 incrementOps (ASymbol name) = 
     ASetVar name (DT.pack "auto") (ACall (ASymbol (DT.pack "+"))
         [ASymbol name, AInteger (fitInteger 1)])
+incrementOps (APos l c ast) = APos l c (incrementOps ast)
 incrementOps other = ACall (ASymbol (DT.pack "++")) [other]
 
 -- | Handle the decrement operator (--).
@@ -254,6 +272,7 @@ decrementOps :: Ast -> Ast
 decrementOps (ASymbol name) = 
     ASetVar name (DT.pack "auto") (ACall (ASymbol (DT.pack "-"))
         [ASymbol name, AInteger (fitInteger 1)])
+decrementOps (APos l c ast) = APos l c (decrementOps ast)
 decrementOps other = ACall (ASymbol (DT.pack "--")) [other]
 
 -- | Combined operator table for expression parsing.
