@@ -35,7 +35,7 @@ runCM = runStateT
 
 spec :: Spec
 spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
-  describe "Helpers coverage" $ do
+  describe "helpers" $ do
     it "expectRight / expectLeft cover both branches + throw branches" $ do
       expectRight (Right (1 :: Int) :: Either T.Text Int) `shouldBe` 1
       expectLeft (Left ("e" :: T.Text) :: Either T.Text Int) `shouldBe` "e"
@@ -99,7 +99,7 @@ spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
       let err = expectLeft (runStateT action createCompilerState)
       err `shouldBe` "Symbol already defined: conflict"
 
-  describe "registerSymbol (all branches)" $ do
+  describe "registerSymbol" $ do
     it "ScopeLocal adjusts csNextIndex to max(old, idx+1)" $ do
       let action = do
             registerSymbol "x" ScopeLocal 0
@@ -121,6 +121,30 @@ spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
       let (_, st) = expectRight (runCM (registerSymbol "c" ScopeCapture 2) st0)
       csNextIndex st `shouldBe` 7
       Map.lookup "c" (csSymbols st) `shouldBe` Just (ScopeCapture, 2)
+
+  describe "defineStruct / getStructDefinition" $ do
+    it "defineStruct stores field order" $ do
+      let action = defineStruct "Point" ["x","y","z"]
+      let (_, st) = expectRight (runCM action createCompilerState)
+      Map.lookup "Point" (csStructs st) `shouldBe` Just ["x","y","z"]
+
+    it "defineStruct overwrites existing definition" $ do
+      let action = do
+            defineStruct "S" ["a"]
+            defineStruct "S" ["b","c"]
+      let (_, st) = expectRight (runCM action createCompilerState)
+      Map.lookup "S" (csStructs st) `shouldBe` Just ["b","c"]
+
+    it "getStructDefinition returns stored definition" $ do
+      let action = do
+            defineStruct "S" ["a","b"]
+            getStructDefinition "S"
+      let (fields, _) = expectRight (runCM action createCompilerState)
+      fields `shouldBe` ["a","b"]
+
+    it "getStructDefinition fails for unknown struct" $ do
+      let err = expectLeft (runCM (getStructDefinition "Unknown") createCompilerState)
+      T.unpack err `shouldContain` "Undefined struct"
 
   describe "compileInIsolatedFunctionScope" $ do
     it "moves isolated csCode into outer csFuncs, restores outer csCode, and merges nested csFuncs too" $ do

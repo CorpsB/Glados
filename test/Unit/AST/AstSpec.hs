@@ -12,14 +12,11 @@ module AST.AstSpec (spec) where
 
 import Test.Hspec
 import Data.List (isInfixOf)
-
-import Z_old.Src.Type.Integer (IntValue(..))
-import AST.Ast (Ast(..), Env, showAst, printAst, cleanAst)
-
+import Common.Type.Integer (IntValue(..))
+import AST.Ast (Ast(..), showAst, printAst, cleanAst)
 
 spec :: Spec
 spec = describe "AST Core Coverage" $ do
-
     describe "Constructor & Structure Checks (No Eq)" $ do
         
         it "Constructs AInteger" $ do
@@ -72,13 +69,6 @@ spec = describe "AST Core Coverage" $ do
                 ASetStruct "Point" [("x", AInteger (I8 2))] -> True
                 _ -> False
 
-        it "Constructs ASetClosure" $ do
-            let envVal = [("a", AInteger (I32 0))]
-            let ast = ASetClosure ["x"] (ASymbol "x") envVal
-            ast `shouldSatisfy` \case 
-                ASetClosure ["x"] (ASymbol "x") [("a", AInteger (I32 0))] -> True
-                _ -> False
-
         it "Constructs ACall" $ do
             let ast = ACall (ASymbol "f") [AInteger (I32 1)]
             ast `shouldSatisfy` \case 
@@ -109,11 +99,6 @@ spec = describe "AST Core Coverage" $ do
             let ast = AReturn (ASymbol "x")
             ast `shouldSatisfy` \case AReturn (ASymbol "x") -> True; _ -> False
 
-        it "Matches Env type structure" $ do
-            let env :: Env
-                env = [("k", ASymbol "v")]
-            env `shouldSatisfy` \case [("k", ASymbol "v")] -> True; _ -> False
-
     describe "showAst (S-Expression Formatting)" $ do
         
         it "Formats Integers" $ do
@@ -129,10 +114,6 @@ spec = describe "AST Core Coverage" $ do
         it "Formats Lists" $ do
             let list = AList [ASymbol "+", AInteger (I8 1), AInteger (I8 2)]
             showAst list `shouldSatisfy` (== "(+ 1 2)")
-
-        it "Formats Closure" $ do
-            let closure = ASetClosure ["x"] AVoid []
-            showAst closure `shouldSatisfy` (== "#\\<procedure\\>")
 
         it "Formats Lambda" $ do
             let lambda = ADefineLambda ["x"] AVoid
@@ -153,14 +134,6 @@ spec = describe "AST Core Coverage" $ do
             let lambda = ADefineLambda ["x"] dirtyBody
             cleanAst lambda `shouldSatisfy` \case 
                 ADefineLambda ["x"] (AInteger (I8 42)) -> True
-                _ -> False
-
-        it "Cleans ASetClosure body and environment" $ do
-            let dirtyBody = APos 1 1 AVoid
-            let dirtyEnv = [("var", APos 2 2 (AInteger (I8 10)))]
-            let closure = ASetClosure ["args"] dirtyBody dirtyEnv
-            cleanAst closure `shouldSatisfy` \case 
-                ASetClosure ["args"] AVoid [("var", AInteger (I8 10))] -> True
                 _ -> False
 
         it "Cleans AList recursively" $ do

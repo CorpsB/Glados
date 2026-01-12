@@ -5,12 +5,10 @@
 -- Ast
 -}
 
-module AST.Ast (Ast(..), Env, showAst, printAst, cleanAst) where
+module AST.Ast (Ast(..), showAst, printAst, cleanAst) where
 
-import Z_old.Src.Type.Integer (IntValue(..), intValueToInt)
+import Common.Type.Integer (IntValue(..), intValueToInt)
 import qualified Data.Text as DT
-
-type Env = [(DT.Text, Ast)]
 
 -- | Abstract Syntax Tree (AST) definition for the GLADOS language.
 --
@@ -69,13 +67,6 @@ data Ast
       -- ^ Represents a structure definition statement wrapper.
       --   @param ADefineStruct The structure definition node.
 
-    | ASetClosure [DT.Text] Ast Env
-      -- ^ Represents a Closure (function with captured environment).
-      --   Usually generated during evaluation or static analysis phases.
-      --   @param [Text] The parameters.
-      --   @param Ast The body.
-      --   @param Env The captured environment/context.
-
     | ACall Ast [Ast]
       -- ^ Represents a function call (Application).
       --   @param Ast The callee (function expression or symbol).
@@ -123,7 +114,6 @@ showAst (ABool True) = "#t"
 showAst (ABool False) = "#f"
 showAst (ASymbol s) = DT.unpack s
 showAst (AList xs) = "(" ++ Prelude.unwords (Prelude.map showAst xs) ++ ")"
-showAst (ASetClosure _ _ _) = "#\\<procedure\\>"
 showAst (ADefineLambda _ _) = "#<lambda>"
 showAst (APos _ _ ast) = showAst ast
 showAst other = Prelude.show other
@@ -149,8 +139,6 @@ cleanAst (ADefineLambda args body) = ADefineLambda args (cleanAst body)
 cleanAst (ASetVar n t expr) = ASetVar n t (cleanAst expr)
 cleanAst (ASetStruct n fields) =
     ASetStruct n (map (\(f, a) -> (f, cleanAst a)) fields)
-cleanAst (ASetClosure p b env) =
-    ASetClosure p (cleanAst b) (map (\(n, a) -> (n, cleanAst a)) env)
 cleanAst (ACall func args) = ACall (cleanAst func) (map cleanAst args)
 cleanAst (AIf c t e) = AIf (cleanAst c) (cleanAst t) (cleanAst e)
 cleanAst (AWhile c b) = AWhile (cleanAst c) (cleanAst b)

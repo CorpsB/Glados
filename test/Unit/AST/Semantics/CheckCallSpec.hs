@@ -13,7 +13,7 @@ import Test.Hspec
 import AST.Semantics.CheckCall
 import AST.Semantics.Type
 import AST.Ast (Ast(..))
-import Z_old.Src.Type.Integer (fitInteger)
+import Common.Type.Integer (fitInteger)
 import qualified Data.Text as DT
 import qualified Data.Map.Strict as Map
 import Data.List (isInfixOf)

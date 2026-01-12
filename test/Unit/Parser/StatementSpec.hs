@@ -12,14 +12,19 @@ module Parser.StatementSpec (spec) where
 
 import Test.Hspec
 import Parser.Statement (parseALL)
+
 import AST.Ast (Ast(..), cleanAst)
-import Z_old.Src.Type.Integer (IntValue(..))
+import Common.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
+import Data.Int (Int8)
+import Data.Char (ord)
 import Data.Void (Void)
 import Text.Megaparsec.Error (ParseErrorBundle)
 
 p :: String -> DT.Text
 p = DT.pack
+c8 :: Char -> Int8
+c8 = fromIntegral . ord
 
 parseClean :: DT.Text -> Either (ParseErrorBundle DT.Text Void) [Ast]
 parseClean input = fmap (map cleanAst) (parseALL input)
@@ -44,13 +49,13 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses characters ('c')" $ do
             let code = "'c';"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AInteger (IChar 'c')] -> True
+                Right [AInteger (IChar v)] -> v == c8 'c'
                 _ -> False
 
         it "Parses strings as list of chars" $ do
             let code = "\"Hi\";"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AList [AInteger (IChar 'H'), AInteger (IChar 'i')]] -> True
+                Right [AList [AInteger (IChar h), AInteger (IChar i)]] -> h == c8 'H' && i == c8 'i'
                 _ -> False
 
         it "Parses list literals" $ do
@@ -282,7 +287,7 @@ spec = describe "Parser - Statement & Expression" $ do
                 Right [ASetVar _ _ (ACall nthOuter [innerCall, idxY])] -> 
                     (case nthOuter of ASymbol s -> s == p "nth"; _ -> False) &&
                     (case idxY of ASymbol s -> s == p "y"; _ -> False) &&
-                    (case innerCall of 
+                    (case innerCall of
                         ACall nthInner [matrixArg, idxX] ->
                             (case nthInner of ASymbol s -> s == p "nth"; _ -> False) &&
                             (case matrixArg of ASymbol s -> s == p "matrix"; _ -> False) &&
@@ -317,7 +322,7 @@ spec = describe "Parser - Statement & Expression" $ do
                     (case outerUpdate of ASymbol s -> s == p "update"; _ -> False) &&
                     (case matArg of ASymbol s -> s == p "mat"; _ -> False) &&
                     (case idx1 of AInteger (I8 1) -> True; _ -> False) &&
-                    (case innerUpdate of 
+                    (case innerUpdate of
                         ACall innerOp [nthCall, idx2, valArg] ->
                             (case innerOp of ASymbol s -> s == p "update"; _ -> False) &&
                             (case nthCall of ACall (ASymbol nth) _ -> nth == p "nth"; _ -> False) &&
@@ -354,19 +359,21 @@ spec = describe "Parser - Statement & Expression" $ do
                 Right [ASetVar _ _ (ACall getField [objArg, fieldArg])] -> 
                     (case getField of ASymbol s -> s == p "get_field"; _ -> False) &&
                     (case objArg of ASymbol s -> s == p "p"; _ -> False) &&
-                    (case fieldArg of AList [AInteger (IChar 'x')] -> True; _ -> False)
+                    (case fieldArg of AList [AInteger (IChar v)] -> v == c8 'x'; _ -> False)
                 _ -> False
+
         it "Parses nested access: user.profile.id" $ do
             let code = "id = user.profile.id;"
             parseClean (p code) `shouldSatisfy` \case
                 Right [ASetVar _ _ (ACall outerGet [innerCall, _])] -> 
                     (case outerGet of ASymbol s -> s == p "get_field"; _ -> False) &&
-                    (case innerCall of 
+                    (case innerCall of
                         ACall innerGet [userArg, _] ->
                             (case innerGet of ASymbol s -> s == p "get_field"; _ -> False) &&
                             (case userArg of ASymbol s -> s == p "user"; _ -> False)
                         _ -> False)
                 _ -> False
+
         it "Parses mixed array and member access: users[0].name" $ do
             let code = "name = users[0].name;"
             parseClean (p code) `shouldSatisfy` \case

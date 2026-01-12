@@ -30,6 +30,20 @@ import qualified Z_old.LispTest
 import qualified Z_old.AstSpec
 import qualified Z_old.Type.IntegerSpec
 import qualified Z_old.Utils.ListSpec
+import qualified Common.Type.IntegerSpec
+import qualified VM.Bytecode.ReaderSpec
+import qualified VM.Bytecode.RunnerSpec
+import qualified VM.Instruction.ArithmeticSpec
+import qualified VM.Instruction.FunctionSpec
+import qualified VM.Instruction.IndexSpec
+import qualified VM.Instruction.LogicSpec
+import qualified VM.Instruction.StackSpec
+import qualified VM.Instruction.SystemSpec
+import qualified VM.Instruction.VariableSpec
+import qualified VM.CallSnapshotSpec
+import qualified VM.VMStateSpec
+import qualified VM.VMStackSpec
+import qualified VM.VMValueSpec
 
 main :: IO ()
 main = hspec spec
@@ -62,3 +76,17 @@ spec = do
     Compiler.ASM.CompilerMonadSpec.spec
     Compiler.ASM.AstToAsmSpec.spec
     Compiler.ASM.CompilerSpec.spec
+    Common.Type.IntegerSpec.spec
+    VM.Bytecode.ReaderSpec.spec
+    VM.Bytecode.RunnerSpec.spec
+    VM.Instruction.ArithmeticSpec.spec
+    VM.Instruction.FunctionSpec.spec
+    VM.Instruction.IndexSpec.spec
+    VM.Instruction.LogicSpec.spec
+    VM.Instruction.StackSpec.spec
+    VM.Instruction.SystemSpec.spec
+    VM.Instruction.VariableSpec.spec
+    VM.CallSnapshotSpec.spec
+    VM.VMStateSpec.spec
+    VM.VMStackSpec.spec
+    VM.VMValueSpec.spec

@@ -13,7 +13,7 @@ module Parser.ConditionsSpec (spec) where
 import Test.Hspec
 import Parser.Statement (parseALL)
 import AST.Ast (Ast(..), cleanAst)
-import Z_old.Src.Type.Integer (IntValue(..))
+import Common.Type.Integer (IntValue(..))
 import qualified Data.Text as DT
 import Data.Void (Void)
 import Text.Megaparsec.Error (ParseErrorBundle)
