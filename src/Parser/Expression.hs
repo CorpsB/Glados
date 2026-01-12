@@ -22,8 +22,10 @@ import Text.Megaparsec
 import Text.Megaparsec.Char (char, string)
 import Control.Monad.Combinators.Expr
 import qualified Data.Text as DT
+import Data.Char (ord)
+
 import AST.Ast (Ast(..))
-import Z_old.Src.Type.Integer (fitInteger, IntValue(..))
+import Common.Type.Integer (fitInteger, IntValue(..))
 import qualified Text.Megaparsec.Char.Lexer as L
 import Parser.Lexer
 
@@ -42,7 +44,8 @@ pMemberSuffix :: Parser (Ast -> Ast)
 pMemberSuffix = do
     _ <- symbol (DT.pack ".")
     fieldName <- pIdentifier
-    let fieldNameAst = AList (map (AInteger . IChar) (DT.unpack fieldName))
+    let fieldNameAst = AList (map (AInteger . IChar . fromIntegral . ord)
+                       (DT.unpack fieldName))
     return (\obj -> ACall (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
 
 -- | Parse a decimal integer.
@@ -65,6 +68,15 @@ pIndexSuffix = do
     _ <- symbol (DT.pack "]")
     return (\arr -> ACall (ASymbol (DT.pack "nth")) [arr, indexExpr])
 
+-- | Parse a function call suffix.
+--
+-- Example: (arg1, arg2)
+-- Returns a function that wraps the preceding expression in a 'ACall' node.
+pCallSuffix :: Parser (Ast -> Ast)
+pCallSuffix = do
+    args <- parens (pExpr `sepBy` comma)
+    return (\func -> ACall func args)
+
 -- | Parse a boolean literal (True or False).
 pBool :: Parser Ast
 pBool = lexeme (choice
@@ -79,7 +91,8 @@ pString :: Parser Ast
 pString = (lexeme $ do
     _ <- char '"'
     content <- manyTill L.charLiteral (char '"')
-    return $ AList (map (AInteger . IChar) content)) <?> "string"
+    return $ AList (map (AInteger . IChar . fromIntegral . ord)
+        content)) <?> "string"
 
 -- | Parse a character literal enclosed in single quotes.
 --
@@ -89,7 +102,7 @@ pChar = (lexeme $ do
     _ <- char '\''
     c <- L.charLiteral
     _ <- char '\''
-    return (AInteger (IChar c))) <?> "character"
+    return (AInteger (IChar (fromIntegral (ord c))))) <?> "character"
 
 -- | Parse a list literal enclosed in brackets.
 --
@@ -137,14 +150,37 @@ pNew = do
     fields <- braces (pFieldInit `sepBy` comma)
     return (ASetStruct className fields)
 
+-- | Parse lambda
+--
+-- Syntax: lambda (arg1, arg2)
+pLambda :: Parser Ast
+pLambda = do
+    _ <- pKeyword (DT.pack "lambda")
+    args <- parens (pIdentifier `sepBy` comma)
+    _ <- optional (symbol (DT.pack "->")) 
+    body <- pExpr
+    return (ADefineLambda args body)
+
+-- | Parse an IF expression (e.g., x = if (c) { 1 } else { 0 }).
+-- Returns an AIf node. Note that 'else' is mandatory or defaults to Void.
+pIfExpr :: Parser Ast
+pIfExpr = do
+    _ <- pKeyword (DT.pack "if")
+    cond <- parens pExpr
+    thenExpr <- braces pExpr
+    elseExpr <- option AVoid $ do
+        _ <- pKeyword (DT.pack "else")
+        braces pExpr
+    return (AIf cond thenExpr elseExpr)
+
 -- | Parse a term in an expression.
 --
 -- A term is the basic unit of an expression, such as literals,
 -- variables, function calls, or parenthesized sub-expressions.
 pTermBase :: Parser Ast
-pTermBase = choice
-    [ try pNew
-    , parens pExpr
+pTermBase = withPos $ choice
+    [ try pNew, try pLambda
+    , parens pExpr , try pIfExpr
     , pInteger
     , pBool
     , pChar
@@ -160,7 +196,7 @@ pTermBase = choice
 pTerm :: Parser Ast
 pTerm = do
     base <- pTermBase
-    suffixes <- many (choice [pIndexSuffix, pMemberSuffix])
+    suffixes <- many (choice [try pCallSuffix, pIndexSuffix, pMemberSuffix])
     return (foldl (\acc f -> f acc) base suffixes)
 
 -- | Helper to create a binary operator AST node.
@@ -177,6 +213,8 @@ sugarSyntOps =
     [ Prefix (prefix (DT.pack "!") <$ symbol (DT.pack "!"))
     , Prefix (incrementOps <$ symbol (DT.pack "++"))
     , Prefix (decrementOps <$ symbol (DT.pack "--"))
+    , Postfix (incrementOps <$ symbol (DT.pack "++"))
+    , Postfix (decrementOps <$ symbol (DT.pack "--"))
     ]
 
 -- | Table of multiplicative operators (*, /, %).
@@ -194,10 +232,13 @@ additiveOps =
     , InfixL (binary (DT.pack "-") <$ symbol (DT.pack "-"))
     ]
 
--- | Table of comparison operators (==, <, >).
+-- | Table of comparison operators (==, <, >, etc).
 comparisonOps :: [Operator Parser Ast]
 comparisonOps =
     [ InfixL (binary (DT.pack "eq?") <$ symbol (DT.pack "=="))
+    , InfixL (binary (DT.pack "neq?") <$ symbol (DT.pack "!="))
+    , InfixL (binary (DT.pack "<=")  <$ try (symbol (DT.pack "<=")))
+    , InfixL (binary (DT.pack ">=")  <$ try (symbol (DT.pack ">=")))
     , InfixL (binary (DT.pack "<")   <$ symbol (DT.pack "<"))
     , InfixL (binary (DT.pack ">")   <$ symbol (DT.pack ">"))
     ]
@@ -223,6 +264,7 @@ incrementOps :: Ast -> Ast
 incrementOps (ASymbol name) = 
     ASetVar name (DT.pack "auto") (ACall (ASymbol (DT.pack "+"))
         [ASymbol name, AInteger (fitInteger 1)])
+incrementOps (APos l c ast) = APos l c (incrementOps ast)
 incrementOps other = ACall (ASymbol (DT.pack "++")) [other]
 
 -- | Handle the decrement operator (--).
@@ -234,6 +276,7 @@ decrementOps :: Ast -> Ast
 decrementOps (ASymbol name) = 
     ASetVar name (DT.pack "auto") (ACall (ASymbol (DT.pack "-"))
         [ASymbol name, AInteger (fitInteger 1)])
+decrementOps (APos l c ast) = APos l c (decrementOps ast)
 decrementOps other = ACall (ASymbol (DT.pack "--")) [other]
 
 -- | Combined operator table for expression parsing.

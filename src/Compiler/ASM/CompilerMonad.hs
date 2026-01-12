@@ -21,6 +21,8 @@ module Compiler.ASM.CompilerMonad
     , generateUniqueLabel
     , defineSymbol
     , registerSymbol
+    , defineStruct
+    , getStructDefinition
     , compileInIsolatedFunctionScope
     , appendPseudoInstruction
     ) where
@@ -227,6 +229,43 @@ registerSymbol name scopeType idx = do
             csSymbols = newSymbols, 
             csNextIndex = max (csNextIndex s) (idx + 1) 
         }
+
+-- | Registers a new structure definition in the compiler state.
+--
+-- @args
+--   - name: The name of the structure.
+--   - fields: The list of field names.
+--
+-- @details
+--   Updates the 'csStructs' map. If the structure is already defined, it is overwritten
+--   (or you could raise an error depending on desired behavior).
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+defineStruct :: Text -> [Text] -> CompilerMonad ()
+defineStruct name fields = do
+    s <- get
+    put $ s { csStructs = Map.insert name fields (csStructs s) }
+
+-- | Retrieves the field names for a given structure.
+--
+-- @args
+--   - name: The name of the structure to look up.
+--
+-- @details
+--   Looks up the structure in the 'csStructs' map. Returns the list of fields
+--   if found, otherwise lifts a Left error.
+--
+-- @return
+--   The list of field names wrapped in 'CompilerMonad', or an error.
+--
+getStructDefinition :: Text -> CompilerMonad [Text]
+getStructDefinition name = do
+    s <- get
+    case Map.lookup name (csStructs s) of
+        Just fields -> return fields
+        Nothing -> lift $ Left (pack $ "Undefined struct: " ++ show name)
 
 -- | Compiles an action within an isolated function scope.
 --

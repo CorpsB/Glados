@@ -61,6 +61,7 @@ data CompilerState = CompilerState
     { csCode      :: (Seq PsInstruction) -- ^ Generated code (in natural order)
     , csFuncs     :: Seq PsInstruction   -- ^ Compiled functions' buffer
     , csSymbols   :: SymTable            -- ^ Local variable mapping
+    , csStructs   :: Map Text [Text]     -- ^ Struct definitions (Name -> Field Names in order)
     , csNextIndex :: Int                 -- ^ Next available local index
     , csLabelCnt  :: Int                 -- ^ Counter for unique label generation
     } deriving (Show, Eq)
@@ -79,6 +80,7 @@ createCompilerState = CompilerState
     { csCode = Seq.empty
     , csFuncs = Seq.empty
     , csSymbols = Map.empty
+    , csStructs = Map.empty
     , csNextIndex = 0
     , csLabelCnt = 0
     }

@@ -6,79 +6,190 @@
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 module AST.AstSpec (spec) where
 
 import Test.Hspec
 import Data.List (isInfixOf)
-
-import Z_old.Src.Type.Integer (IntValue(..))
-import AST.Ast (Ast(..), Env)
+import Common.Type.Integer (IntValue(..))
+import AST.Ast (Ast(..), showAst, printAst, cleanAst)
 
 spec :: Spec
-spec = describe "AST.Ast (structure only)" $ do
-  it "constructs and matches every Ast constructor" $ do
-    let intAst = AInteger (I32 42)
-    intAst `shouldBe` AInteger (I32 42)
+spec = describe "AST Core Coverage" $ do
+    describe "Constructor & Structure Checks (No Eq)" $ do
+        
+        it "Constructs AInteger" $ do
+            let ast = AInteger (I32 42)
+            ast `shouldSatisfy` \case AInteger (I32 42) -> True; _ -> False
 
-    let boolAst = ABool True
-    boolAst `shouldBe` ABool True
+        it "Constructs ABool" $ do
+            let ast = ABool True
+            ast `shouldSatisfy` \case ABool True -> True; _ -> False
 
-    let symAst = ASymbol "x"
-    symAst `shouldBe` ASymbol "x"
+        it "Constructs ASymbol" $ do
+            let ast = ASymbol "x"
+            ast `shouldSatisfy` \case ASymbol "x" -> True; _ -> False
 
-    let voidAst = AVoid
-    voidAst `shouldBe` AVoid
+        it "Constructs AVoid" $ do
+            let ast = AVoid
+            ast `shouldSatisfy` \case AVoid -> True; _ -> False
 
-    let listAst = AList [voidAst, symAst]
-    listAst `shouldBe` AList [AVoid, ASymbol "x"]
+        it "Constructs AList" $ do
+            let ast = AList [AVoid, ASymbol "x"]
+            ast `shouldSatisfy` \case AList [AVoid, ASymbol "x"] -> True; _ -> False
 
-    let defineFuncAst = ADefineFunc "f" [("x","Int"), ("y","Int")] "Int" (ASymbol "x")
-    defineFuncAst `shouldBe` ADefineFunc "f" [("x","Int"), ("y","Int")] "Int" (ASymbol "x")
+        it "Constructs ADefineFunc" $ do
+            let ast = ADefineFunc "f" [("x","Int"), ("y","Int")] "Int" (ASymbol "x")
+            ast `shouldSatisfy` \case 
+                ADefineFunc "f" [("x","Int"), ("y","Int")] "Int" (ASymbol "x") -> True
+                _ -> False
 
-    let lambdaAst = ADefineLambda ["x","y"] (AList [ASymbol "x", ASymbol "y"])
-    lambdaAst `shouldBe` ADefineLambda ["x","y"] (AList [ASymbol "x", ASymbol "y"])
+        it "Constructs ADefineLambda" $ do
+            let ast = ADefineLambda ["x","y"] (AList [ASymbol "x", ASymbol "y"])
+            ast `shouldSatisfy` \case 
+                ADefineLambda ["x","y"] (AList [ASymbol "x", ASymbol "y"]) -> True
+                _ -> False
 
-    let defineStructAst = ADefineStruct "Point" [("x","Int"), ("y","Int")]
-    defineStructAst `shouldBe` ADefineStruct "Point" [("x","Int"), ("y","Int")]
+        it "Constructs ADefineStruct" $ do
+            let ast = ADefineStruct "Point" [("x","Int"), ("y","Int")]
+            ast `shouldSatisfy` \case 
+                ADefineStruct "Point" [("x","Int"), ("y","Int")] -> True
+                _ -> False
 
-    let setVarAst = ASetVar "x" "Int" (AInteger (I8 1))
-    setVarAst `shouldBe` ASetVar "x" "Int" (AInteger (I8 1))
+        it "Constructs ASetVar" $ do
+            let ast = ASetVar "x" "Int" (AInteger (I8 1))
+            ast `shouldSatisfy` \case 
+                ASetVar "x" "Int" (AInteger (I8 1)) -> True
+                _ -> False
 
-    let setStructAst = ASetStruct "Point" [("x", AInteger (I8 2))]
-    setStructAst `shouldBe` ASetStruct "Point" [("x", AInteger (I8 2))]
+        it "Constructs ASetStruct" $ do
+            let ast = ASetStruct "Point" [("x", AInteger (I8 2))]
+            ast `shouldSatisfy` \case 
+                ASetStruct "Point" [("x", AInteger (I8 2))] -> True
+                _ -> False
 
-    let env :: Env
-        env = [("a", AInteger (I32 0))]
-    let setClosureAst = ASetClosure ["x"] (ASymbol "x") env
-    setClosureAst `shouldBe` ASetClosure ["x"] (ASymbol "x") [("a", AInteger (I32 0))]
+        it "Constructs ACall" $ do
+            let ast = ACall (ASymbol "f") [AInteger (I32 1)]
+            ast `shouldSatisfy` \case 
+                ACall (ASymbol "f") [AInteger (I32 1)] -> True
+                _ -> False
 
-    let callAst = ACall (ASymbol "f") [AInteger (I32 1)]
-    callAst `shouldBe` ACall (ASymbol "f") [AInteger (I32 1)]
+        it "Constructs AImport" $ do
+            let ast = AImport "Std"
+            ast `shouldSatisfy` \case AImport "Std" -> True; _ -> False
 
-    let importAst = AImport "Std"
-    importAst `shouldBe` AImport "Std"
+        it "Constructs AIf" $ do
+            let ast = AIf (ABool True) AVoid (ABool False)
+            ast `shouldSatisfy` \case 
+                AIf (ABool True) AVoid (ABool False) -> True
+                _ -> False
 
-    let ifAst = AIf (ABool True) AVoid (ABool False)
-    ifAst `shouldBe` AIf (ABool True) AVoid (ABool False)
+        it "Constructs AWhile" $ do
+            let ast = AWhile (ABool True) AVoid
+            ast `shouldSatisfy` \case AWhile (ABool True) AVoid -> True; _ -> False
 
-    let whileAst = AWhile (ABool True) AVoid
-    whileAst `shouldBe` AWhile (ABool True) AVoid
+        it "Constructs AFor" $ do
+            let ast = AFor AVoid (ABool True) AVoid AVoid
+            ast `shouldSatisfy` \case 
+                AFor AVoid (ABool True) AVoid AVoid -> True
+                _ -> False
 
-    let forAst = AFor AVoid (ABool True) AVoid AVoid
-    forAst `shouldBe` AFor AVoid (ABool True) AVoid AVoid
+        it "Constructs AReturn" $ do
+            let ast = AReturn (ASymbol "x")
+            ast `shouldSatisfy` \case AReturn (ASymbol "x") -> True; _ -> False
 
-    let returnAst = AReturn (ASymbol "x")
-    returnAst `shouldBe` AReturn (ASymbol "x")
+    describe "showAst (S-Expression Formatting)" $ do
+        
+        it "Formats Integers" $ do
+            showAst (AInteger (I8 42)) `shouldSatisfy` (== "42")
 
-  it "Env type alias works ([(Text, Ast)])" $ do
-    let env :: Env
-        env = [("k", ASymbol "v")]
-    env `shouldBe` [("k", ASymbol "v")]
+        it "Formats Booleans" $ do
+            showAst (ABool True) `shouldSatisfy` (== "#t")
+            showAst (ABool False) `shouldSatisfy` (== "#f")
 
-  it "Show derivation prints constructor names" $ do
-    show (AInteger (I32 1)) `shouldSatisfy` ("AInteger" `isInfixOf`)
-    show (ABool True) `shouldSatisfy` ("ABool" `isInfixOf`)
-    show (ASymbol "x") `shouldSatisfy` ("ASymbol" `isInfixOf`)
-    show (AList []) `shouldSatisfy` ("AList" `isInfixOf`)
-    show (AReturn AVoid) `shouldSatisfy` ("AReturn" `isInfixOf`)
+        it "Formats Symbols" $ do
+            showAst (ASymbol "myVar") `shouldSatisfy` (== "myVar")
+
+        it "Formats Lists" $ do
+            let list = AList [ASymbol "+", AInteger (I8 1), AInteger (I8 2)]
+            showAst list `shouldSatisfy` (== "(+ 1 2)")
+
+        it "Formats Lambda" $ do
+            let lambda = ADefineLambda ["x"] AVoid
+            showAst lambda `shouldSatisfy` (== "#<lambda>")
+
+        it "Formats APos (Transparency)" $ do
+            let node = APos 10 5 (ASymbol "x")
+            showAst node `shouldSatisfy` (== "x")
+
+        it "Formats 'other' nodes (Deriving Show Check)" $ do
+            showAst AVoid `shouldSatisfy` ("AVoid" `isInfixOf`)
+            showAst (AImport "lib") `shouldSatisfy` ("AImport" `isInfixOf`)
+
+    describe "cleanAst (Recursion & Wrappers)" $ do
+        
+        it "Cleans ADefineLambda body" $ do
+            let dirtyBody = APos 1 1 (AInteger (I8 42))
+            let lambda = ADefineLambda ["x"] dirtyBody
+            cleanAst lambda `shouldSatisfy` \case 
+                ADefineLambda ["x"] (AInteger (I8 42)) -> True
+                _ -> False
+
+        it "Cleans AList recursively" $ do
+            let list = AList [APos 1 1 (AInteger (I8 1)), APos 2 2 (ASymbol "x")]
+            cleanAst list `shouldSatisfy` \case 
+                AList [AInteger (I8 1), ASymbol "x"] -> True
+                _ -> False
+            
+        it "Cleans ASetVar recursively" $ do
+            let dirtyVar = ASetVar "x" "int" (APos 5 5 (AInteger (I8 10)))
+            cleanAst dirtyVar `shouldSatisfy` \case 
+                ASetVar "x" "int" (AInteger (I8 10)) -> True
+                _ -> False
+
+        it "Cleans ACall recursively" $ do
+            let dirtyCall = ACall (APos 1 1 (ASymbol "f")) [APos 2 2 (AInteger (I8 1))]
+            cleanAst dirtyCall `shouldSatisfy` \case
+                ACall (ASymbol "f") [AInteger (I8 1)] -> True
+                _ -> False
+
+        it "Cleans AIf recursively" $ do
+            let dirtyIf = AIf (APos 1 1 (ABool True)) (APos 2 2 AVoid) (APos 3 3 AVoid)
+            cleanAst dirtyIf `shouldSatisfy` \case
+                AIf (ABool True) AVoid AVoid -> True
+                _ -> False
+                
+        it "Cleans AWhile recursively" $ do
+            let dirtyWhile = AWhile (APos 1 1 (ABool True)) (APos 2 2 AVoid)
+            cleanAst dirtyWhile `shouldSatisfy` \case
+                AWhile (ABool True) AVoid -> True
+                _ -> False
+
+        it "Cleans AFor recursively" $ do
+            let dirtyFor = AFor (APos 1 1 AVoid) (APos 2 2 (ABool True)) (APos 3 3 AVoid) (APos 4 4 AVoid)
+            cleanAst dirtyFor `shouldSatisfy` \case
+                AFor AVoid (ABool True) AVoid AVoid -> True
+                _ -> False
+        
+        it "Cleans AReturn recursively" $ do
+            let dirtyRet = AReturn (APos 1 1 AVoid)
+            cleanAst dirtyRet `shouldSatisfy` \case
+                AReturn AVoid -> True
+                _ -> False
+        
+        it "Cleans ASetStruct recursively" $ do
+            let dirtyStruct = ASetStruct "S" [("f", APos 1 1 AVoid)]
+            cleanAst dirtyStruct `shouldSatisfy` \case
+                ASetStruct "S" [("f", AVoid)] -> True
+                _ -> False
+                
+        it "Cleans ADefineFunc recursively" $ do
+            let dirtyFunc = ADefineFunc "f" [] "void" (APos 1 1 AVoid)
+            cleanAst dirtyFunc `shouldSatisfy` \case
+                ADefineFunc "f" [] "void" AVoid -> True
+                _ -> False
+
+    describe "printAst (IO Side Effects)" $ do
+        it "Executes without crashing" $ do
+            printAst (AInteger (I8 10)) `shouldReturn` ()

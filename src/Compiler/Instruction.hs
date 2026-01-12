@@ -49,15 +49,17 @@ data Immediate
 --   The TypeID as a 'Word8'.
 --
 immediateToTypeID :: Immediate -> Word8
-immediateToTypeID (ImmBool _)       = 0x00
-immediateToTypeID (ImmInt (I8 _))   = 0x01
-immediateToTypeID (ImmInt (UI8 _))  = 0x02
-immediateToTypeID (ImmInt (I16 _))  = 0x03
-immediateToTypeID (ImmInt (UI16 _)) = 0x04
-immediateToTypeID (ImmInt (I32 _))  = 0x05
-immediateToTypeID (ImmInt (UI32 _)) = 0x06
-immediateToTypeID (ImmInt (I64 _))  = 0x07
-immediateToTypeID (ImmInt (UI64 _)) = 0x08
+immediateToTypeID (ImmBool _)         = 0x00
+immediateToTypeID (ImmInt (I8 _))     = 0x01
+immediateToTypeID (ImmInt (UI8 _))    = 0x02
+immediateToTypeID (ImmInt (IChar _))  = 0x09
+immediateToTypeID (ImmInt (UIChar _)) = 0x10
+immediateToTypeID (ImmInt (I16 _))    = 0x03
+immediateToTypeID (ImmInt (UI16 _))   = 0x04
+immediateToTypeID (ImmInt (I32 _))    = 0x05
+immediateToTypeID (ImmInt (UI32 _))   = 0x06
+immediateToTypeID (ImmInt (I64 _))    = 0x07
+immediateToTypeID (ImmInt (UI64 _))   = 0x08
 
 -- | Size in bytes of the immediate payload (not counting the TypeID byte).
 --
@@ -73,15 +75,17 @@ immediateToTypeID (ImmInt (UI64 _)) = 0x08
 --   The payload size in bytes as 'Int'.
 --
 immediateSize :: Immediate -> Int
-immediateSize (ImmBool _)       = 1
-immediateSize (ImmInt (I8 _))   = 1
-immediateSize (ImmInt (UI8 _))  = 1
-immediateSize (ImmInt (I16 _))  = 2
-immediateSize (ImmInt (UI16 _)) = 2
-immediateSize (ImmInt (I32 _))  = 4
-immediateSize (ImmInt (UI32 _)) = 4
-immediateSize (ImmInt (I64 _))  = 8
-immediateSize (ImmInt (UI64 _)) = 8
+immediateSize (ImmBool _)         = 1
+immediateSize (ImmInt (I8 _))     = 1
+immediateSize (ImmInt (UI8 _))    = 1
+immediateSize (ImmInt (IChar _))  = 1
+immediateSize (ImmInt (UIChar _)) = 1
+immediateSize (ImmInt (I16 _))    = 2
+immediateSize (ImmInt (UI16 _))   = 2
+immediateSize (ImmInt (I32 _))    = 4
+immediateSize (ImmInt (UI32 _))   = 4
+immediateSize (ImmInt (I64 _))    = 8
+immediateSize (ImmInt (UI64 _))   = 8
 
 -- | The Instruction set used by compiler/VM
 --
@@ -136,6 +140,7 @@ data Instruction
     -- 7. Closures & Types
     | MakeClosure Int Int     -- ^ 0x60 MAKE_CLOSURE [addr] [n_captures]
     | GetFuncAddr Int         -- ^ 0x61 GET_FUNC_ADDR [id]
+    | BuildStruct Int         -- ^ 0x62 BUILD_STRUCT [n_fields]
     | Cast Word8              -- ^ 0x80 CAST [TypeID]
 
     -- 8. System / Debug
@@ -195,6 +200,7 @@ getInstCode (StoreCapture _)     = 0x55
 
 getInstCode (MakeClosure _ _)    = 0x60
 getInstCode (GetFuncAddr _)      = 0x61
+getInstCode (BuildStruct _)      = 0x62
 getInstCode (Cast _)             = 0x80
 
 getInstCode Print                = 0x70

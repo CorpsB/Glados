@@ -11,10 +11,17 @@ Description : High-level code generation (Flow control, Definitions, Calls).
 Stability : experimental
 -}
 module Compiler.ASM.Compiler 
-    ( compileIf
+    ( compileAst
+    , compileIf
+    , compileFor
+    , compileWhile
     , compileSetVar
+    , compileSetStruct
     , compileDefineFun
     , compileDefineLambda
+    , compileDefineStruct
+    , compileTail
+    , compileLoop
     , getLambdaFreeVariables
     ) where
 
@@ -22,10 +29,18 @@ import Data.Text (Text, pack)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
-import Control.Monad (zipWithM_)
+import Control.Monad (zipWithM_, forM_)
+import Control.Monad.State (lift)
 
 import Compiler.ASM.CompilerMonad
-import Compiler.ASM.AstToAsm (astSymbolToAsm, builtinMap)
+import Compiler.ASM.AstToAsm
+    ( builtinMap
+    , astSymbolToAsm
+    , astIntToAsm
+    , astBoolToAsm
+    , astListToAsm
+    , astCallToAsm
+    )
 import Compiler.Instruction (Instruction(..))
 import Compiler.PsInstruction (PsInstruction(..))
 import Compiler.CompilerState (ScopeType(..))
@@ -65,6 +80,42 @@ getLambdaFreeVariables (AIf cond t e) =
 getLambdaFreeVariables (AList e) = Set.unions (map getLambdaFreeVariables e)
 getLambdaFreeVariables _ = Set.empty
 
+-- | Helper function for Tail Call Optimization
+--
+-- @args
+--   - compileFn: The standard compilation function for non-tail expressions.
+--   - ast: The AST node to compile in tail position.
+--
+-- @details
+--   Detects if the expression is a function call. If so, emits 'TailCallLabel'
+--   (TCO). If it is a control structure (If, List), it propagates the tail
+--   context recursively. Otherwise, compiles normally and emits 'Ret'.
+--
+compileTail :: (Ast -> CompilerMonad ()) -> Ast -> CompilerMonad ()
+compileTail compileFn (ACall func args) = case func of
+    ASymbol name -> case Map.lookup name builtinMap of
+        Just instr -> mapM_ compileFn args >>
+            emitInstruction instr >> emitInstruction Ret
+        Nothing -> mapM_ compileFn args >>
+            appendPseudoInstruction (TailCallLabel name)
+    _ -> compileFn func >> mapM_ compileFn args >>
+        emitInstruction CallIndirect >> emitInstruction Ret
+compileTail compileFn (AIf cond t e) = do
+    lElse <- generateUniqueLabel (pack "else")
+    lEnd  <- generateUniqueLabel (pack "endif")
+    compileFn cond
+    emitJumpIfFalseToLabel lElse
+    compileTail compileFn t
+    emitJumpToLabel lEnd
+    emitLabelDefinition lElse
+    compileTail compileFn e
+    emitLabelDefinition lEnd
+compileTail compileFn (AList exprs)
+    | null exprs = emitInstruction Ret
+    | otherwise = mapM_ compileFn (init exprs) >>
+        compileTail compileFn (last exprs)
+compileTail compileFn other = compileFn other >> emitInstruction Ret
+
 -- | Compiles a conditional expression (If-Then-Else).
 --
 -- @args
@@ -93,6 +144,75 @@ compileIf compileFn cond thenBranch elseBranch = do
     compileFn elseBranch
     emitLabelDefinition lEnd
 
+-- | Helper function to compile the common logic of loops.
+--
+-- @args
+--   - compileFn: The recursive compilation function.
+--   - cond: The condition AST.
+--   - body: The body AST.
+--   - lEnd: The label to jump to if the condition is false.
+--
+-- @details
+--   Compiles the condition, emits the jump-if-false check, and compiles the body.
+--   This sequence is shared between While and For loops.
+--
+compileLoop :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Text -> CompilerMonad ()
+compileLoop compileFn cond body lEnd =
+    compileFn cond >>
+    emitJumpIfFalseToLabel lEnd >>
+    compileFn body
+
+-- | Compiles a While loop.
+--
+-- @args
+--   - compileFn: The recursive compilation function.
+--   - cond: The loop condition AST.
+--   - body: The loop body AST.
+--
+-- @details
+--   Generates start and end labels. Uses 'compileLoop' for the core logic
+--   and handles the looping jump back to start.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileWhile :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> CompilerMonad ()
+compileWhile compileFn cond body = do
+    lStart <- generateUniqueLabel (pack "while_start")
+    lEnd   <- generateUniqueLabel (pack "while_end")
+    emitLabelDefinition lStart
+    compileLoop compileFn cond body lEnd
+    emitJumpToLabel lStart
+    emitLabelDefinition lEnd
+
+-- | Compiles a For loop.
+--
+-- @args
+--   - compileFn: The recursive compilation function.
+--   - initAst: The initialization AST (executed once).
+--   - cond: The loop condition AST.
+--   - body: The loop body AST.
+--   - updateAst: The update/increment AST (executed after each iteration).
+--
+-- @details
+--   Compiles the initialization step first. Then uses 'compileLoop' for the
+--   condition and body. Finally, compiles the update step before jumping back.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileFor :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Ast -> Ast ->
+    CompilerMonad ()
+compileFor compileFn initAst cond body updateAst = do
+    lStart <- generateUniqueLabel (pack "for_start")
+    lEnd   <- generateUniqueLabel (pack "for_end")
+    compileFn initAst
+    emitLabelDefinition lStart
+    compileLoop compileFn cond body lEnd
+    compileFn updateAst
+    emitJumpToLabel lStart
+    emitLabelDefinition lEnd
+
 -- | Compiles a variable definition.
 --
 -- @args
@@ -112,6 +232,33 @@ compileSetVar compileFn name body = do
     compileFn body
     idx <- defineSymbol name
     emitInstruction (StoreGlobal idx)
+
+-- | Compiles a structure instantiation.
+--
+-- @args
+--   - compileFn: The recursive compilation function.
+--   - name: The name of the structure to instantiate.
+--   - assignedFields: The list of (Field Name, Value AST) pairs.
+--
+-- @details
+--   Retrieves the structure definition from 'CompilerState' using 'getStructDefinition'.
+--   Reorders the provided values to match the definition order, compiles them
+--   (pushing to stack), and emits a 'BuildStruct' instruction.
+--   Returns an error if the struct is undefined or fields mismatch.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileSetStruct :: (Ast -> CompilerMonad ()) -> Text -> [(Text, Ast)] ->
+    CompilerMonad ()
+compileSetStruct compileFn name assignedFields = do
+    defFields <- getStructDefinition name
+    forM_ defFields $ \fName ->
+        case Map.lookup fName (Map.fromList assignedFields) of
+            Just valAst -> compileFn valAst
+            Nothing -> lift $ Left (pack (
+                "Missing field in struct instantiation: " ++ show fName))
+    emitInstruction (BuildStruct (length defFields))
 
 -- | Compiles a named function definition.
 --
@@ -159,11 +306,62 @@ compileDefineLambda :: (Ast -> CompilerMonad ()) -> [Text] -> Ast ->
     CompilerMonad ()
 compileDefineLambda compileFn params body = do
     let fvars = Set.toList (getLambdaFreeVariables (ADefineLambda params body))
+    let ncaptures = length fvars
     mapM_ astSymbolToAsm fvars
     ulabel <- generateUniqueLabel (pack "lambda")
-    compileInIsolatedFunctionScope $
-        emitLabelDefinition ulabel >>
-        zipWithM_ (\p i -> registerSymbol p ScopeLocal i) params [0..] >>
+    compileInIsolatedFunctionScope $ emitLabelDefinition ulabel >>
         zipWithM_ (\c i -> registerSymbol c ScopeCapture i) fvars [0..] >>
-        compileFn body >> emitInstruction Ret
-    appendPseudoInstruction (MakeClosureLabel ulabel (length fvars))
+        zipWithM_ (\p i -> registerSymbol p ScopeLocal (
+            ncaptures + i)) params [0..] >> compileTail compileFn body
+    appendPseudoInstruction (MakeClosureLabel ulabel ncaptures)
+
+-- | Registers a structure definition.
+--
+-- @args
+--   - name: The name of the structure.
+--   - fields: The list of (Field Name, Field Type) pairs.
+--
+-- @details
+--   Updates the 'CompilerState' to store the list of field names in order.
+--   No bytecode is emitted for a structure definition (it is a compile-time
+--   metadata operation).
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileDefineStruct :: Text -> [(Text, Text)] -> CompilerMonad ()
+compileDefineStruct name fields = defineStruct name (map fst fields)
+
+-- | Main Dispatcher Function: Compiles any AST node.
+--
+-- @args
+--   - ast: The AST node to compile.
+--
+-- @details
+--   This is the central router of the compiler. It pattern-matches on the AST
+--   constructors and delegates to the appropriate specific compilation function.
+--   It passes itself ('compileAst') recursively to handle nested expressions.
+--
+-- @return
+--   Unit value wrapped in 'CompilerMonad'.
+--
+compileAst :: Ast -> CompilerMonad ()
+compileAst (AInteger i) = astIntToAsm i
+compileAst (ABool b) = astBoolToAsm b
+compileAst (ASymbol s) = astSymbolToAsm s
+compileAst AVoid = return ()
+compileAst (AList xs) = astListToAsm compileAst xs
+compileAst (ADefineFunc name args _ body) =
+    compileDefineFun compileAst name (map fst args) body
+compileAst (ADefineLambda params body) =
+    compileDefineLambda compileAst params body
+compileAst (ADefineStruct name fields) = compileDefineStruct name fields
+compileAst (ASetVar name _ body) = compileSetVar compileAst name body
+compileAst (ASetStruct name fields) = compileSetStruct compileAst name fields
+compileAst (AIf cond t f) = compileIf compileAst cond t f
+compileAst (AWhile cond body) = compileWhile compileAst cond body
+compileAst (AFor i cond body u) = compileFor compileAst i cond body u
+compileAst (ACall func args) = astCallToAsm compileAst func args
+compileAst (AReturn expr) = compileAst expr >> emitInstruction Ret
+compileAst (AImport _) = return ()
+compileAst _ = return ()

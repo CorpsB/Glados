@@ -17,6 +17,7 @@
 all:
 	stack build
 	cp "$$(stack path --local-install-root)/bin/glados" .
+	cp "$$(stack path --local-install-root)/bin/glados-vm" .
 
 test:
 	stack test
@@ -28,6 +29,7 @@ clean:
 fclean:
 	$(MAKE) clean
 	rm -f glados
+	rm -f glados-vm
 
 re:
 	$(MAKE) fclean

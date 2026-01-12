@@ -29,8 +29,13 @@ library
       Z_old.Src.Utils.List
       Z_old.Src.Parser.ParserISL
       AST.Ast
+      AST.Semantics.Type
+      AST.Semantics.Check
+      AST.Semantics.CheckCall
       Common.Type.Integer
       Common.Utils.List
+      Common.Utils.Bytecode.Header
+      Common.Utils.Bytecode.File
       Compiler.ASM.CompilerMonad
       Compiler.ASM.Compiler
       Compiler.ASM.AstToAsm
@@ -55,6 +60,21 @@ library
       Parser.Expression
       Parser.Statement
       Parser.Conditions
+      VM.VMState
+      VM.VMValue
+      VM.VMStack
+      VM.CallSnapshot
+      VM.Bytecode.Reader
+      VM.Bytecode.Runner
+      VM.Instruction.Stack
+      VM.Instruction.Arithmetic
+      VM.Instruction.Logic
+      VM.Instruction.System
+      VM.Instruction.Index
+      VM.Instruction.Struct
+      VM.Instruction.List
+      VM.Instruction.Function
+      VM.Instruction.Variable
   build-depends:
       base >= 4.7 && < 5
     , megaparsec
@@ -64,6 +84,7 @@ library
     , containers
     , mtl
     , binary
+    , vector
   default-language:    Haskell2010
   ghc-options:
     -Wall
@@ -91,6 +112,22 @@ executable glados
     -rtsopts
     -with-rtsopts=-N
 
+executable glados-vm
+  hs-source-dirs:      app/VM
+  main-is:             Main.hs
+  build-depends:
+      base >= 4.7 && < 5
+    , glados
+    , bytestring
+    , mtl
+    , vector
+  default-language:    Haskell2010
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+    -Wall
+
 test-suite glados-unit
   type:                exitcode-stdio-1.0
   hs-source-dirs:
@@ -110,6 +147,9 @@ test-suite glados-unit
       Z_old.LispTest
       Z_old.AstSpec
       AST.AstSpec
+      AST.Semantics.TypeSpec
+      AST.Semantics.CheckSpec
+      AST.Semantics.CheckCallSpec
       Parser.StatementSpec
       Parser.LexerSpec
       Parser.ExpressionSpec
@@ -123,6 +163,20 @@ test-suite glados-unit
       Compiler.ASM.CompilerMonadSpec
       Compiler.ASM.CompilerSpec
       Compiler.ASM.AstToAsmSpec
+      Common.Type.IntegerSpec
+      VM.Bytecode.ReaderSpec
+      VM.Bytecode.RunnerSpec
+      VM.Instruction.ArithmeticSpec
+      VM.Instruction.FunctionSpec
+      VM.Instruction.IndexSpec
+      VM.Instruction.LogicSpec
+      VM.Instruction.StackSpec
+      VM.Instruction.SystemSpec
+      VM.Instruction.VariableSpec
+      VM.CallSnapshotSpec
+      VM.VMStateSpec
+      VM.VMStackSpec
+      VM.VMValueSpec
   build-depends:
       base >= 4.7 && < 5
     , glados
@@ -135,6 +189,7 @@ test-suite glados-unit
     , containers
     , transformers
     , mtl
+    , vector
   ghc-options:
     -Wall
     -Wcompat
