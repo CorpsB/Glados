@@ -23,9 +23,6 @@ import Common.Type.Integer (IntValue(..))
 runVM :: VirtualMachine a -> VMState -> IO (a, VMState)
 runVM = runStateT
 
-evalVM :: VirtualMachine a -> VMState -> IO a
-evalVM = evalStateT
-
 spec :: Spec
 spec = describe "VM.VMState" $ do
 

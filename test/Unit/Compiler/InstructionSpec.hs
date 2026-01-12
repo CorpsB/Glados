@@ -15,7 +15,7 @@ import Data.Word (Word8)
 
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LBS
-import Compiler.Serializer (serializeInstruction)
+import Compiler.Bytecode.Serializer (serializeInstruction)
 import Compiler.Instruction
 import Common.Type.Integer (IntValue(..))
 
