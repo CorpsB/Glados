@@ -5,8 +5,7 @@
 -- step2MakeClosureLabel
 -}
 
-module Compiler.ResolveLabels.Step2MakeClosureLabel (step2MakeClosureLabel, ) where
-
+module Compiler.ResolveLabels.Step2MakeClosureLabel (step2MakeClosureLabel) where
 
 import Compiler.Instruction (Instruction(..), instructionSize)
 import Data.Text (Text)
@@ -30,8 +29,8 @@ makeClosureResult :: Int -> [Instruction] -> Int ->
     Text -> Int -> Either Text ([Instruction], Int)
 makeClosureResult target out idx name n =
     let mcSize = instructionSize (MakeClosure 0 0)
-        off64 = computeOffset target (idx + mcSize)
-    in case checkInt32Range off64 of
+        off64 = computeOffset target (idx + mcSize) in
+    case checkInt32Range off64 of
         Left err -> Left (T.pack "MakeClosure offset for label '"
             <> name <> T.pack "' " <> err)
         Right off ->

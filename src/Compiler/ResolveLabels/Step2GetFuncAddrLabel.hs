@@ -5,7 +5,7 @@
 -- Step2GetFuncAddrLabel
 -}
 
-module Compiler.ResolveLabels.Step2GetFuncAddrLabel (step2GetFuncAddrLabel, ) where
+module Compiler.ResolveLabels.Step2GetFuncAddrLabel (step2GetFuncAddrLabel) where
 
 import Data.Text (Text)
 import Compiler.Instruction (Instruction(..), instructionSize)

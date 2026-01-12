@@ -12,7 +12,11 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import Compiler.Instruction (Instruction(..))
-import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfCallInst)
+import Compiler.ResolveLabels.ResolveLabelsHelpers
+    ( computeOffset
+    , checkInt32Range
+    , sizeOfCallInst
+    )
 
 step2CallLabel :: Map.Map Text Int -> Set.Set Int ->
     [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)

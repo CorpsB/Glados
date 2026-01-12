@@ -5,14 +5,17 @@
 -- Step2JumpIfTrueLabel
 -}
 
-module Compiler.ResolveLabels.Step2JumpIfTrueLabel (step2JumpIfTrueLabel, ) where
+module Compiler.ResolveLabels.Step2JumpIfTrueLabel (step2JumpIfTrueLabel) where
 
 import Data.Text (Text)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
 import Compiler.Instruction (Instruction(..))
-import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfJumpIfTrueInst)
+import Compiler.ResolveLabels.ResolveLabelsHelpers
+    ( computeOffset
+    , checkInt32Range
+    , sizeOfJumpIfTrueInst)
 
 step2JumpIfTrueLabel :: Map.Map Text Int -> Set.Set Int ->
     [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)

@@ -5,7 +5,7 @@
 -- Step2LabelDef
 -}
 
-module Compiler.ResolveLabels.Step2LabelDef (step2LabelDef, ) where
+module Compiler.ResolveLabels.Step2LabelDef (step2LabelDef) where
 
 import Data.Text (Text)
 import Compiler.Instruction (Instruction)

@@ -5,7 +5,7 @@
 -- Step2Real
 -}
 
-module Compiler.ResolveLabels.Step2Real (step2Real, ) where
+module Compiler.ResolveLabels.Step2Real (step2Real) where
 
 import Data.Text (Text)
 import Compiler.Instruction (Instruction, instructionSize)

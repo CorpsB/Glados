@@ -21,8 +21,6 @@ import Data.Int (Int64, Int32)
 
 import Compiler.Instruction (Instruction(..), instructionSize)
 
-
-
 sizeOfJumpInst :: Int
 sizeOfJumpInst = instructionSize (Jump 0)
 sizeOfJumpIfFalseInst :: Int

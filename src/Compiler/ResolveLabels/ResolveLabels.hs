@@ -17,7 +17,8 @@ import Compiler.ResolveLabels.Step2MakeClosureLabel (step2MakeClosureLabel)
 import Compiler.ResolveLabels.Step2Real (step2Real)
 import Compiler.ResolveLabels.Step2TailCallLabel (step2TailCallLabel)
 import Compiler.Instruction (instructionSize, Instruction(..))
-import Compiler.ResolveLabels.ResolveLabelsHelpers (sizeOfJumpInst, sizeOfJumpIfFalseInst, sizeOfJumpIfTrueInst, sizeOfCallInst, sizeOfTailCallInst)
+import Compiler.ResolveLabels.ResolveLabelsHelpers (sizeOfJumpInst,
+    sizeOfJumpIfFalseInst, sizeOfJumpIfTrueInst, sizeOfCallInst, sizeOfTailCallInst)
 import Compiler.PsInstruction (PsInstruction(..))
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set

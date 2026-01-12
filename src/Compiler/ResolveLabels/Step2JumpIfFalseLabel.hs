@@ -12,7 +12,11 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
-import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfJumpIfFalseInst)
+import Compiler.ResolveLabels.ResolveLabelsHelpers
+    ( computeOffset
+    , checkInt32Range
+    , sizeOfJumpIfFalseInst
+    )
 
 step2JumpIfFalseLabel :: Map.Map Text Int -> Set.Set Int
     -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)

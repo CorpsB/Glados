@@ -5,14 +5,18 @@
 -- step2TailCallLabel
 -}
 
-module Compiler.ResolveLabels.Step2TailCallLabel (step2TailCallLabel, ) where
+module Compiler.ResolveLabels.Step2TailCallLabel (step2TailCallLabel) where
 
 import Data.Text (Text)
 import Compiler.Instruction (Instruction(..))
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfTailCallInst)
+import Compiler.ResolveLabels.ResolveLabelsHelpers
+    ( computeOffset
+    , checkInt32Range
+    , sizeOfTailCallInst
+    )
 
 step2TailCallLabel :: Map.Map Text Int -> Set.Set Int ->
     [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
