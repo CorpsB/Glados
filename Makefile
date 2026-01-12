@@ -30,4 +30,4 @@ test:
 	stack test --coverage
 
 doc:
-	cabal haddock --haddock-all
+	stack haddock --no-haddock-deps
