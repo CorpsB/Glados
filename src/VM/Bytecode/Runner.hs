@@ -29,6 +29,7 @@ import VM.Instruction.Stack
 import VM.Instruction.Arithmetic
 import VM.Instruction.Logic
 import VM.Instruction.Struct
+import VM.Instruction.List
 import VM.Instruction.Function
 import VM.Instruction.Variable
 import VM.Instruction.System
@@ -80,10 +81,15 @@ executeInstruction 0x55 = instStoreCapture
 executeInstruction 0x60 = instMakeClosure
 executeInstruction 0x61 = instGetFuncAddr
 executeInstruction 0x62 = instBuildStruct
+executeInstruction 0x63 = instGetStructField
 
 executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
 executeInstruction 0x80 = instCast
+
+executeInstruction 0x90 = instCons
+executeInstruction 0x91 = instHead
+executeInstruction 0x92 = instTail
 
 executeInstruction 0xFE = instCheckStack
 executeInstruction 0xFF = return () -- NOP

@@ -56,6 +56,7 @@ library
       VM.Instruction.System
       VM.Instruction.Index
       VM.Instruction.Struct
+      VM.Instruction.List
       VM.Instruction.Function
       VM.Instruction.Variable
   build-depends:

@@ -14,6 +14,7 @@ Handles the creation of structures.
 -}
 module VM.Instruction.Struct
     ( instBuildStruct
+    , instGetStructField
     , pushStruct
     ) where
 
@@ -22,7 +23,7 @@ import Control.Monad.State.Strict (get, put)
 
 import VM.VMState (VMState(..), VirtualMachine)
 import VM.VMValue (VMValue(..))
-import VM.VMStack (stackPush)
+import VM.VMStack (stackPush, stackPop)
 import VM.Bytecode.Reader (readInt32)
 
 -- | Helper for instBuildStruct to manipulate the stack.
@@ -53,3 +54,25 @@ instBuildStruct = do
     case V.length (vStack vm) >= count of
         False -> error "VM Error: BUILD_STRUCT Stack Underflow"
         True -> pushStruct vm count
+
+-- | Implements GET_STRUCT_FIELD (Opcode 0x63).
+--
+-- @details
+--   Reads a field index and retrieves the value from a Struct on the stack.
+--   1. Reads 'index' (Int32).
+--   2. Pops 'struct' (VStruct).
+--   3. Pushes 'struct[index]'.
+--
+-- @throws
+--   Error if the popped value is not a VStruct or if index is out of bounds.
+--
+instGetStructField :: VirtualMachine ()
+instGetStructField = do
+    idx <- readInt32
+    v <- stackPop
+    case v of
+        VStruct fields -> case idx >= 0 && idx < V.length fields of
+            True  -> stackPush (fields V.! idx)
+            False -> error $ "VM Error: Struct Field Access Out of Bounds " ++
+                "(" ++ show idx ++ ")"
+        _ -> error "VM Error: GET_STRUCT_FIELD expects a Struct"
