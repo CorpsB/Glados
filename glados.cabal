@@ -35,9 +35,9 @@ library
       Compiler.ASM.Compiler
       Compiler.ASM.AstToAsm
       Compiler.Bytecode.Encoder
+      Compiler.Bytecode.Serializer
       Compiler.CompilerState
       Compiler.Instruction
-      Compiler.Serializer
       Compiler.PsInstruction
       Compiler.ResolveLabels.ResolveLabels
       Compiler.ResolveLabels.ResolveLabelsHelpers
