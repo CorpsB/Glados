@@ -14,16 +14,19 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfJumpIfFalseInst)
 
-step2JumpIfFalseLabel :: Map.Map Text Int -> Set.Set Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
+step2JumpIfFalseLabel :: Map.Map Text Int -> Set.Set Int
+    -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
 step2JumpIfFalseLabel labelMap starts out idx name =
     case Map.lookup name labelMap of
         Nothing -> Left (T.pack "Unknown label: " <> name)
-        Just target -> if Set.member target starts
-                       then jumpIfFalseResult target out idx name
-                       else Left (T.pack
-                        "JumpIfFalse target not at instruction boundary")
+        Just target -> 
+            case Set.member target starts of
+                True  -> jumpIfFalseResult target out idx name
+                False -> Left (T.pack
+                    "JumpIfFalse target not at instruction boundary")
 
-jumpIfFalseResult :: Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
+jumpIfFalseResult :: Int -> [Instruction] -> Int ->
+    Text -> Either Text ([Instruction], Int)
 jumpIfFalseResult target out idx name =
     let off64 = computeOffset target (idx + sizeOfJumpIfFalseInst)
     in case checkInt32Range off64 of

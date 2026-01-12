@@ -39,7 +39,7 @@ computeOffset target idx = fromIntegral target - fromIntegral idx
 
 checkInt32Range :: Int64 -> Either Text Int32
 checkInt32Range off =
-    if off < fromIntegral (minBound :: Int32) || off > fromIntegral
-        (maxBound :: Int32)
-        then Left (T.pack "Offset out of range")
-        else Right (fromIntegral off)
+    case off < fromIntegral (minBound :: Int32)
+        || off > fromIntegral (maxBound :: Int32) of
+        True  -> Left (T.pack "Offset out of range")
+        False -> Right (fromIntegral off)

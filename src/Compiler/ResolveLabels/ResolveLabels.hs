@@ -31,7 +31,8 @@ resolveLabels pseudos =
         \(_, labelMap, startsSet) ->
         fmap fst $ foldM (step2 labelMap startsSet) ([], 0) pseudos
 
-step1 :: (Int, Map.Map Text Int, Set.Set Int) -> PsInstruction -> Either Text (Int, Map.Map Text Int, Set.Set Int)
+step1 :: (Int, Map.Map Text Int, Set.Set Int) -> PsInstruction
+    -> Either Text (Int, Map.Map Text Int, Set.Set Int)
 step1 (idx, m, s) (LabelDef name) = case detectDuplicateLabels idx name m of
     Left err -> Left err
     Right (_, newM) -> Right (idx, newM, s)
@@ -48,18 +49,21 @@ pseudoSize (MakeClosureLabel _ _) = instructionSize (MakeClosure 0 0)
 pseudoSize (GetFuncAddrLabel _) = instructionSize (GetFuncAddr 0)
 pseudoSize (LabelDef _) = 0
 
-detectDuplicateLabels :: Int -> Text -> Map.Map Text Int -> Either Text (Int, Map.Map Text Int)
+detectDuplicateLabels :: Int -> Text -> Map.Map Text Int
+    -> Either Text (Int, Map.Map Text Int)
 detectDuplicateLabels idx name m =
-    if Map.member name m
-        then Left (T.pack $ "Duplicate label: " ++ T.unpack name)
-        else Right (idx, Map.insert name idx m)
+    case Map.member name m of
+        True  -> Left (T.pack $ "Duplicate label: " ++ T.unpack name)
+        False -> Right (idx, Map.insert name idx m)
 
-step2 :: Map.Map Text Int -> Set.Set Int -> ([Instruction], Int) -> PsInstruction -> Either Text ([Instruction], Int)
+step2 :: Map.Map Text Int -> Set.Set Int -> ([Instruction], Int)
+    -> PsInstruction -> Either Text ([Instruction], Int)
 step2 _ _ (out, idx) (Real instr) = step2Real out idx instr
 step2 _ _ (out, idx) (LabelDef _) = step2LabelDef out idx
 step2 lm ss (out, idx) pseudo = step2Pseudo lm ss out idx pseudo
 
-step2Pseudo :: Map.Map Text Int -> Set.Set Int -> [Instruction] -> Int -> PsInstruction -> Either Text ([Instruction], Int)
+step2Pseudo :: Map.Map Text Int -> Set.Set Int -> [Instruction]
+    -> Int -> PsInstruction -> Either Text ([Instruction], Int)
 step2Pseudo lm ss out idx (JumpLabel name) = step2JumpLabel lm ss out idx name
 step2Pseudo lm ss out idx (JumpIfFalseLabel name) =
     step2JumpIfFalseLabel lm ss out idx name
@@ -67,7 +71,8 @@ step2Pseudo lm ss out idx (JumpIfTrueLabel name) =
     step2JumpIfTrueLabel lm ss out idx name
 step2Pseudo lm ss out idx other = step2PseudoRest lm ss out idx other
 
-step2PseudoRest :: Map.Map Text Int -> Set.Set Int -> [Instruction] -> Int -> PsInstruction -> Either Text ([Instruction], Int)
+step2PseudoRest :: Map.Map Text Int -> Set.Set Int -> [Instruction]
+    -> Int -> PsInstruction -> Either Text ([Instruction], Int)
 step2PseudoRest lm ss out idx (CallLabel name) =
     step2CallLabel lm ss out idx name
 step2PseudoRest lm ss out idx (TailCallLabel name) =

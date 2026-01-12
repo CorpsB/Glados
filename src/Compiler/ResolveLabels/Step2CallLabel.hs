@@ -14,16 +14,19 @@ import qualified Data.Text as T
 import Compiler.Instruction (Instruction(..))
 import Compiler.ResolveLabels.ResolveLabelsHelpers (computeOffset, checkInt32Range, sizeOfCallInst)
 
-step2CallLabel :: Map.Map Text Int -> Set.Set Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
+step2CallLabel :: Map.Map Text Int -> Set.Set Int ->
+    [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
 step2CallLabel labelMap starts out idx name =
     case Map.lookup name labelMap of
         Nothing -> Left (T.pack "Unknown label: " <> name)
-        Just target -> if Set.member target starts
-                       then callLabelResult target out idx name
-                       else Left (T.pack
-                        "Call target not at instruction boundary")
+        Just target -> 
+            case Set.member target starts of
+                True  -> callLabelResult target out idx name
+                False -> Left (T.pack
+                    "Call target not at instruction boundary")
 
-callLabelResult :: Int -> [Instruction] -> Int -> Text -> Either Text ([Instruction], Int)
+callLabelResult :: Int -> [Instruction] -> Int
+    -> Text -> Either Text ([Instruction], Int)
 callLabelResult target out idx name =
     let off64 = computeOffset target (idx + sizeOfCallInst)
     in case checkInt32Range off64 of
