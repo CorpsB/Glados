@@ -49,13 +49,13 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses characters ('c')" $ do
             let code = "'c';"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AInteger (IChar 'c')] -> True
+                Right [AInteger (IChar v)] -> v == c8 'c'
                 _ -> False
 
         it "Parses strings as list of chars" $ do
             let code = "\"Hi\";"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AList [AInteger (IChar 'H'), AInteger (IChar 'i')]] -> True
+                Right [AList [AInteger (IChar h), AInteger (IChar i)]] -> h == c8 'H' && i == c8 'i'
                 _ -> False
 
         it "Parses list literals" $ do

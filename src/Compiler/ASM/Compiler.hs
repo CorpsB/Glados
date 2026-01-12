@@ -364,3 +364,4 @@ compileAst (AFor i cond body u) = compileFor compileAst i cond body u
 compileAst (ACall func args) = astCallToAsm compileAst func args
 compileAst (AReturn expr) = compileAst expr >> emitInstruction Ret
 compileAst (AImport _) = return ()
+compileAst _ = return ()

@@ -139,8 +139,6 @@ cleanAst (ADefineLambda args body) = ADefineLambda args (cleanAst body)
 cleanAst (ASetVar n t expr) = ASetVar n t (cleanAst expr)
 cleanAst (ASetStruct n fields) =
     ASetStruct n (map (\(f, a) -> (f, cleanAst a)) fields)
-cleanAst (ASetClosure p b env) =
-    ASetClosure p (cleanAst b) (map (\(n, a) -> (n, cleanAst a)) env)
 cleanAst (ACall func args) = ACall (cleanAst func) (map cleanAst args)
 cleanAst (AIf c t e) = AIf (cleanAst c) (cleanAst t) (cleanAst e)
 cleanAst (AWhile c b) = AWhile (cleanAst c) (cleanAst b)
