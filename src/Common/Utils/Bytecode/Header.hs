@@ -52,6 +52,5 @@ extractContentIfValidHeader :: BS.ByteString -> IO BS.ByteString
 extractContentIfValidHeader content =
     case evaluateHeader content of
         True  -> return (BS.drop 10 content)
-        False -> do
-            putStrLn "\ESC[31mInvalid File: Bad Header.\ESC[0m"
+        False -> putStrLn "\ESC[31mInvalid File: Bad Header.\ESC[0m" >>
             exitFailure
