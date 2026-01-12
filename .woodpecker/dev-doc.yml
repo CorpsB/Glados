@@ -13,7 +13,7 @@ steps:
 
       - rm -rf public
       - mkdir -p public
-      - DOC_DIR="$(dirname "$(find dist-newstyle -path '*/doc/html/*/index.html' | head -n 1)")"
+      - DOC_DIR="$(find .stack-work -type f -path '*/doc/html/glados/index.html' -print -quit | xargs -r dirname)"
       - test -n "$DOC_DIR"
       - cp -a "$DOC_DIR"/. public/
       - test -f public/index.html
