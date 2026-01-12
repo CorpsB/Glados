@@ -20,6 +20,8 @@ module VM.Instruction.Variable
     , instStoreLocal
     , instLoadCapture
     , instStoreCapture
+    , instLoadGlobal
+    , instStoreGlobal
     ) where
 
 import Control.Monad.State.Strict (get, put)
@@ -114,3 +116,34 @@ instStoreCapture = do
         False -> error $ "VM Error: STORE_CAPTURE out of bounds (" ++
             show idx ++ ")"
         True -> put $ vm { env = currEnv V.// [(idx, val)] }
+
+-- | Implements LOAD_GLOBAL (Opcode 0x52).
+--
+-- @details
+--   Accesses the Global Environment (Heap) at the given index.
+--
+instLoadGlobal :: VirtualMachine ()
+instLoadGlobal = do
+    idx <- readInt32
+    vm <- get
+    let gEnv = globalEnv vm
+    case idx >= 0 && idx < V.length gEnv of
+        False -> error $ "VM Error: LOAD_GLOBAL out of bounds (" ++
+            show idx ++ ")"
+        True -> stackPush (gEnv V.! idx)
+
+-- | Implements STORE_GLOBAL (Opcode 0x53).
+--
+-- @details
+--   Stores the top of the stack into the Global Environment at 'idx'.
+--
+instStoreGlobal :: VirtualMachine ()
+instStoreGlobal = do
+    idx <- readInt32
+    v <- stackPop
+    vm <- get
+    let gEnv = globalEnv vm
+    case idx >= 0 && idx < V.length gEnv of
+        False -> error $ "VM Error: STORE_GLOBAL out of bounds (" ++
+            show idx ++ ")"
+        True -> put $ vm { globalEnv = gEnv V.// [(idx, v)] }

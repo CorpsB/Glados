@@ -7,9 +7,12 @@
 
 module VM.VMValue
     ( VMValue(..)
+    , castValue
     , valueToString
+    , valueToInt
     ) where
 
+import Data.Word (Word8)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
 import Common.Type.Integer (IntValue(..), intValueToInt)
@@ -72,3 +75,41 @@ valueToString (VClosure addr caps) =
     "#<procedure @" ++ show addr ++ " captures:" ++ show (V.length caps) ++ ">"
 valueToString (VFuncPtr addr) = "#<function @" ++ show addr ++ ">"
 valueToString VVoid = "void"
+
+-- | Helper to extract a raw integer value for casting purposes.
+--
+-- @details
+--   - Integers: returns the raw value.
+--   - Booleans: True -> 1, False -> 0.
+--   - Pointers: returns the address.
+--   - Others: returns 0 (safe default).
+valueToInt :: VMValue -> Int
+valueToInt (VInt i) = intValueToInt i
+valueToInt (VBool True) = 1
+valueToInt (VBool False) = 0
+valueToInt (VFuncPtr addr) = addr
+valueToInt _ = 0
+
+-- | Converts a VMValue to a specific target TypeID.
+--
+-- @args
+--   - typeId: The target type identifier (see ASM_SPEC).
+--   - val: The value to convert.
+--
+-- @details
+--   Performs a native conversion (truncation or extension) via 'fromIntegral'.
+--   Supports converting between Booleans, Integers (signed/unsigned) and Chars.
+--
+castValue :: Word8 -> VMValue -> VMValue
+castValue 0x00 v = VBool (valueToInt v /= 0)
+castValue 0x01 v = VInt (I8 (fromIntegral (valueToInt v)))
+castValue 0x02 v = VInt (UI8 (fromIntegral (valueToInt v)))
+castValue 0x03 v = VInt (I16 (fromIntegral (valueToInt v)))
+castValue 0x04 v = VInt (UI16 (fromIntegral (valueToInt v)))
+castValue 0x05 v = VInt (I32 (fromIntegral (valueToInt v)))
+castValue 0x06 v = VInt (UI32 (fromIntegral (valueToInt v)))
+castValue 0x07 v = VInt (I64 (fromIntegral (valueToInt v)))
+castValue 0x08 v = VInt (UI64 (fromIntegral (valueToInt v)))
+castValue 0x09 v = VInt (IChar (fromIntegral (valueToInt v)))
+castValue 0x10 v = VInt (UIChar (fromIntegral (valueToInt v)))
+castValue _ v = v

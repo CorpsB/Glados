@@ -28,6 +28,7 @@ import VM.Instruction.Index
 import VM.Instruction.Stack
 import VM.Instruction.Arithmetic
 import VM.Instruction.Logic
+import VM.Instruction.Struct
 import VM.Instruction.Function
 import VM.Instruction.Variable
 import VM.Instruction.System
@@ -45,6 +46,7 @@ executeInstruction :: Word8 -> VirtualMachine ()
 executeInstruction 0x01 = instPush
 executeInstruction 0x02 = instPop
 executeInstruction 0x03 = instDup
+executeInstruction 0x04 = instSwap
 
 executeInstruction 0x10 = instAdd
 executeInstruction 0x11 = instSub
@@ -70,14 +72,20 @@ executeInstruction 0x43 = instRet
 
 executeInstruction 0x50 = instLoadLocal
 executeInstruction 0x51 = instStoreLocal
+executeInstruction 0x52 = instLoadGlobal
+executeInstruction 0x53 = instStoreGlobal
 executeInstruction 0x54 = instLoadCapture
 executeInstruction 0x55 = instStoreCapture
 
 executeInstruction 0x60 = instMakeClosure
+executeInstruction 0x61 = instGetFuncAddr
+executeInstruction 0x62 = instBuildStruct
 
 executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
+executeInstruction 0x80 = instCast
 
+executeInstruction 0xFE = instCheckStack
 executeInstruction 0xFF = return () -- NOP
 executeInstruction op = error $ "VM Error: Unknown Opcode 0x" ++ show op
 

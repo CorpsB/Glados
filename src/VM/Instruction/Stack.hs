@@ -17,12 +17,14 @@ module VM.Instruction.Stack
     ( instPush
     , instPop
     , instDup
+    , instSwap
+    , instCast
     ) where
 
 import Data.Word (Word8)
 import Common.Type.Integer (IntValue(..))
 import VM.VMState (VirtualMachine)
-import VM.VMValue (VMValue(..))
+import VM.VMValue (VMValue(..), castValue)
 import VM.Bytecode.Reader
     ( readByte
     , readInt8
@@ -127,3 +129,27 @@ instDup :: VirtualMachine ()
 instDup = do
     val <- stackTop
     stackPush val
+
+-- | Implements the SWAP instruction (Opcode 0x04).
+--
+-- @details
+--   Swaps the top two elements of the stack.
+--   Stack: [..., A, B] -> [..., B, A]
+--
+instSwap :: VirtualMachine ()
+instSwap = do
+    b <- stackPop
+    a <- stackPop
+    stackPush b
+    stackPush a
+
+-- | Implements CAST (Opcode 0x80).
+--
+-- @details
+--   Reads a TypeID and tries to convert the top of stack to that type.
+--
+instCast :: VirtualMachine ()
+instCast = do
+    typeId <- readByte
+    val <- stackPop
+    stackPush (castValue typeId val)

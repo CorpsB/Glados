@@ -19,6 +19,7 @@ module VM.Instruction.Function
     , instCallIndirect
     , instRet
     , instMakeClosure
+    , instGetFuncAddr
     ) where
 
 import Control.Monad.State.Strict (get, put)
@@ -148,3 +149,14 @@ instRet = do
     case snapshotStack vm of
         [] -> error "VM Error: Return called with empty call stack"
         (snap:rest) -> execReturn vm snap rest retVal
+
+-- | Implements GET_FUNC_ADDR (Opcode 0x61).
+--
+-- @details
+--   Reads an absolute address (Int) and pushes it as a VFuncPtr.
+--   Used to pass functions as values before potentially wrapping them in closures.
+--
+instGetFuncAddr :: VirtualMachine ()
+instGetFuncAddr = do
+    addr <- readInt32
+    stackPush (VFuncPtr addr)

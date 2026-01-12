@@ -13,12 +13,15 @@ Stability   : stable
 module VM.Instruction.System
     ( instPrint
     , instHalt
+    , instCheckStack
     ) where
 
-import Control.Monad.State.Strict (liftIO, modify)
+import Control.Monad.State.Strict (liftIO, modify, get)
+import qualified Data.Vector as V
 import VM.VMState (VirtualMachine, VMState(..))
 import VM.VMValue (valueToString)
 import VM.VMStack (stackPop)
+import VM.Bytecode.Reader (readInt32)
 
 -- | Implements PRINT (Opcode 0x70).
 --
@@ -41,3 +44,18 @@ instPrint = do
 --
 instHalt :: VirtualMachine ()
 instHalt = modify $ \vm -> vm { isRunning = False }
+
+-- | Implements CHECK_STACK (Opcode 0xFE).
+--
+-- @details
+--   Ensures the stack has at least 'N' elements.
+--   Reads 'N' as an Int32. Throws error if stack is too small.
+--
+instCheckStack :: VirtualMachine ()
+instCheckStack = do
+    required <- readInt32
+    vm <- get
+    case V.length (vStack vm) >= required of
+        False -> error $ "VM Error: Stack Check Failed (Required: " ++
+            show required ++ ", Actual: " ++ show (V.length (vStack vm)) ++ ")"
+        True -> return ()
