@@ -1,3 +1,7 @@
+when:
+  - event: push
+    branch: main
+
 steps:
   - name: publish_docs
     image: haskell:9.10.3
