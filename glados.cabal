@@ -31,6 +31,8 @@ library
       AST.Ast
       Common.Type.Integer
       Common.Utils.List
+      Common.Utils.Bytecode.Header
+      Common.Utils.Bytecode.File
       Compiler.ASM.CompilerMonad
       Compiler.ASM.Compiler
       Compiler.ASM.AstToAsm

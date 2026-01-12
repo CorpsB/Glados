@@ -22,10 +22,11 @@ import System.Environment (getArgs)
 import System.Exit (exitFailure, exitSuccess)
 import Control.Exception (try, SomeException)
 import Control.Monad.State.Strict (runStateT)
-import qualified Data.ByteString as BS
 
 import VM.VMState (VMState, createVMState)
 import VM.Bytecode.Runner (runBytecode)
+import Common.Utils.Bytecode.Header
+import Common.Utils.Bytecode.File
 
 -- | Helper function to execute the VM loop safely.
 --
@@ -42,34 +43,6 @@ import VM.Bytecode.Runner (runBytecode)
 tryRunVM :: VMState -> IO (Either SomeException ((), VMState))
 tryRunVM state = try (runStateT runBytecode state)
 
--- | Helper to attempt reading a file with explicit typing.
---
--- @details
---   Moves the type casting out of the main logic.
---
-tryReadFile :: String -> IO (Either SomeException BS.ByteString)
-tryReadFile path = try (BS.readFile path)
-
--- | Retrieves the file content or exits the program on error.
---
--- @args
---   - path: Path to the file.
---
--- @details
---   Handles the IO exception immediately: prints the error and calls exitFailure.
---   This prevents 'executeFile' from handling nested cases.
---
--- @return
---   The file content as ByteString.
---
-getFileContent :: String -> IO BS.ByteString
-getFileContent path = do
-    result <- tryReadFile path
-    case result of
-        Left err -> putStrLn ("\ESC[31mIO Error:\ESC[0m " ++ show err) >>
-            exitFailure
-        Right content -> return content
-
 -- | Loads and executes the specified bytecode file.
 --
 -- @args
@@ -83,7 +56,8 @@ getFileContent path = do
 --
 executeFile :: String -> IO ()
 executeFile path = do
-    content <- getFileContent path
+    rawContent <- getFileContent path
+    content <- extractContentIfValidHeader rawContent
     result <- tryRunVM (createVMState content)
     case result of
         Left err -> putStrLn ("\ESC[31mRuntime Error:\ESC[0m " ++ show err) >>
