@@ -11,7 +11,7 @@ import Compiler.Instruction
 import qualified Data.ByteString.Builder as B
 import Compiler.Bytecode.Encoder (encodeInt32BE, encodeWord8, encodeBool)
 import Common.Type.Integer (IntValue(..))
-import Data.Word (Word8)
+import Data.Word ()
 
 -- | Serializes an 'Instruction' to a 'Builder' for binary encoding.
 --
@@ -37,7 +37,7 @@ serializeInstruction (Push (ImmInt (I8 n))) =
 serializeInstruction (Push (ImmInt (UI8 n))) =
     encodeWord8 0x01 <>
     encodeWord8 0x02 <>
-    encodeWord8 (fromIntegral n)
+    encodeWord8 n
 serializeInstruction (Push (ImmInt (I16 n))) =
     encodeWord8 0x01 <>
     encodeWord8 0x03 <>
@@ -49,7 +49,7 @@ serializeInstruction (Push (ImmInt (UI16 n))) =
 serializeInstruction (Push (ImmInt (I32 n))) =
     encodeWord8 0x01 <>
     encodeWord8 0x05 <>
-    B.int32BE (fromIntegral n)
+    B.int32BE n
 serializeInstruction (Push (ImmInt (UI32 n))) =
     encodeWord8 0x01 <>
     encodeWord8 0x06 <>
@@ -69,7 +69,7 @@ serializeInstruction (Push (ImmInt (IChar n))) =
 serializeInstruction (Push (ImmInt (UIChar n))) =
     encodeWord8 0x01 <>
     encodeWord8 0x10 <>
-    encodeWord8 (fromIntegral n)
+    encodeWord8 n
 
 serializeInstruction Pop = encodeWord8 0x02
 serializeInstruction Dup = encodeWord8 0x03
@@ -136,9 +136,16 @@ serializeInstruction (GetFuncAddr idx) =
 serializeInstruction (BuildStruct n) =
     encodeWord8 0x62 <>
     encodeInt32BE (fromIntegral n)
+serializeInstruction (GetStructField idx) =
+    encodeWord8 0x63 <>
+    encodeInt32BE (fromIntegral idx)
 serializeInstruction (Cast typeId) =
     encodeWord8 0x80 <>
     encodeWord8 typeId
+
+serializeInstruction Cons = encodeWord8 0x90
+serializeInstruction Head = encodeWord8 0x91
+serializeInstruction Tail = encodeWord8 0x92
 
 serializeInstruction Print = encodeWord8 0x70
 serializeInstruction Halt = encodeWord8 0x71
