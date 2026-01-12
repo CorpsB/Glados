@@ -10,10 +10,93 @@
 module Compiler.InstructionSpec (spec) where
 
 import Test.Hspec
-import Data.List (sort, isInfixOf)
+import Data.List (sort, isInfixOf, isPrefixOf)
+import Data.Word (Word8)
 
+import qualified Data.ByteString.Builder as B
+import qualified Data.ByteString.Lazy as LBS
+import Compiler.Bytecode.Serializer (serializeInstruction)
 import Compiler.Instruction
 import Common.Type.Integer (IntValue(..))
+
+shouldOpcode :: Instruction -> Word8 -> Expectation
+shouldOpcode inst expected = getInstCode inst `shouldBe` expected
+
+allImmediates :: [Immediate]
+allImmediates =
+    [ ImmBool True
+    , ImmBool False
+    , ImmInt (I8 0)
+    , ImmInt (UI8 0)
+    , ImmInt (I16 0)
+    , ImmInt (UI16 0)
+    , ImmInt (I32 0)
+    , ImmInt (UI32 0)
+    , ImmInt (I64 0)
+    , ImmInt (UI64 0)
+    ]
+
+allInstructions :: [Instruction]
+allInstructions =
+    [ Push (ImmBool True)
+    , Push (ImmInt (I8 42))
+    , Pop, Dup, Swap
+    , Add, Sub, Mul, Div, Mod
+    , Eq, Lt, Le, Not, And, Or
+    , Jump 0, JumpIfFalse 0, JumpIfTrue 0
+    , Call 0, TailCall 0, CallIndirect, Ret
+    , LoadLocal 0, StoreLocal 0
+    , LoadGlobal 0, StoreGlobal 0
+    , LoadCapture 0, StoreCapture 0
+    , MakeClosure 0 0, GetFuncAddr 0
+    , Cast 0x00
+    , Print, Halt
+    , CheckStack 0
+    , Nop
+    ]
+
+instrCtorName :: Instruction -> String
+instrCtorName inst = case inst of
+    Push _        -> "Push"
+    Pop           -> "Pop"
+    Dup           -> "Dup"
+    Swap          -> "Swap"
+    Add           -> "Add"
+    Sub           -> "Sub"
+    Mul           -> "Mul"
+    Div           -> "Div"
+    Mod           -> "Mod"
+    Eq            -> "Eq"
+    Lt            -> "Lt"
+    Le            -> "Le"
+    Not           -> "Not"
+    And           -> "And"
+    Or            -> "Or"
+    Jump _        -> "Jump"
+    JumpIfFalse _ -> "JumpIfFalse"
+    JumpIfTrue _  -> "JumpIfTrue"
+    Call _        -> "Call"
+    TailCall _    -> "TailCall"
+    CallIndirect  -> "CallIndirect"
+    Ret           -> "Ret"
+    LoadLocal _   -> "LoadLocal"
+    StoreLocal _  -> "StoreLocal"
+    LoadGlobal _  -> "LoadGlobal"
+    StoreGlobal _ -> "StoreGlobal"
+    LoadCapture _ -> "LoadCapture"
+    StoreCapture _-> "StoreCapture"
+    MakeClosure _ _ -> "MakeClosure"
+    GetFuncAddr _ -> "GetFuncAddr"
+    Cast _        -> "Cast"
+    Print         -> "Print"
+    Halt          -> "Halt"
+    CheckStack _  -> "CheckStack"
+    Nop           -> "Nop"
+
+immCtorName :: Immediate -> String
+immCtorName im = case im of
+    ImmBool _ -> "ImmBool"
+    ImmInt _  -> "ImmInt"
 
 spec :: Spec
 spec = describe "Compiler.Instruction" $ do
@@ -120,3 +203,55 @@ spec = describe "Compiler.Instruction" $ do
       (Le < Or) `shouldBe` True
 
       sort [Nop, Add, Pop] `shouldBe` [Pop, Add, Nop]
+
+    describe "Derived instances (Eq / Ord / Show) - cover ALL ctors" $ do
+        it "Eq: every constructor equals itself (and Immediate too) and distinct ctors compare /=" $ do
+            mapM_ (\x -> x `shouldBe` x) allInstructions
+            mapM_ (\i -> i `shouldBe` i) allImmediates
+            and (zipWith (/=) allInstructions (drop 1 allInstructions)) `shouldBe` True
+            and (zipWith (/=) allImmediates (drop 1 allImmediates)) `shouldBe` True
+        it "Ord: compare x x = EQ for all constructors + sort produces non-decreasing order" $ do
+            mapM_ (\x -> compare x x `shouldBe` EQ) allInstructions
+            mapM_ (\i -> compare i i `shouldBe` EQ) allImmediates
+            let xs = sort allInstructions
+            and (zipWith (<=) xs (drop 1 xs)) `shouldBe` True
+            let ys = sort allImmediates
+            and (zipWith (<=) ys (drop 1 ys)) `shouldBe` True
+        it "Show: non-empty and starts with the constructor name for every instruction and immediate" $ do
+            mapM_ (\x -> show x `shouldSatisfy` (not . null)) allInstructions
+            mapM_ (\x -> (instrCtorName x `isPrefixOf` show x) `shouldBe` True) allInstructions
+            mapM_ (\i -> show i `shouldSatisfy` (not . null)) allImmediates
+            mapM_ (\i -> (immCtorName i `isPrefixOf` show i) `shouldBe` True) allImmediates
+
+    describe "instructionSize (Instruction)" $ do
+        it "Push (ImmInt (I32 5)): correct size" $ do
+            length (runBuilder (serializeInstruction (Push (ImmInt (I32 5))))) `shouldBe` instructionSize (Push (ImmInt (I32 5)))
+        it "Push (ImmBool True): correct size" $ do
+            length (runBuilder (serializeInstruction (Push (ImmBool True)))) `shouldBe` instructionSize (Push (ImmBool True))
+        it "Push (ImmBool False): correct size" $ do
+            length (runBuilder (serializeInstruction (Push (ImmBool False)))) `shouldBe` instructionSize (Push (ImmBool False))
+        it "Pop: correct size" $ do
+            length (runBuilder (serializeInstruction Pop)) `shouldBe` instructionSize Pop
+        it "Dup: correct size" $ do
+            length (runBuilder (serializeInstruction Dup)) `shouldBe` instructionSize Dup
+        it "Swap: correct size" $ do
+            length (runBuilder (serializeInstruction Swap)) `shouldBe` instructionSize Swap
+        it "Add: correct size" $ do
+            length (runBuilder (serializeInstruction Add)) `shouldBe` instructionSize Add
+        it "Sub: correct size" $ do
+            length (runBuilder (serializeInstruction Sub)) `shouldBe` instructionSize Sub
+        it "Jump 42: correct size" $ do
+            length (runBuilder (serializeInstruction (Jump 42))) `shouldBe` instructionSize (Jump 42)
+        it "JumpIfFalse 99: correct size" $ do
+            length (runBuilder (serializeInstruction (JumpIfFalse 99))) `shouldBe` instructionSize (JumpIfFalse 99)
+        it "Call 55: correct size" $ do
+            length (runBuilder (serializeInstruction (Call 55))) `shouldBe` instructionSize (Call 55)
+        it "Ret: correct size" $ do
+            length (runBuilder (serializeInstruction Ret)) `shouldBe` instructionSize Ret
+        it "MakeClosure 7 2: correct size" $ do
+            length (runBuilder (serializeInstruction (MakeClosure 7 2))) `shouldBe` instructionSize (MakeClosure 7 2)
+        it "Halt: correct size" $ do
+            length (runBuilder (serializeInstruction Halt)) `shouldBe` instructionSize Halt
+
+runBuilder :: B.Builder -> [Int]
+runBuilder b = map fromEnum $ LBS.unpack (B.toLazyByteString b)

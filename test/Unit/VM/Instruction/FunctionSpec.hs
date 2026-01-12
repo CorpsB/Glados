@@ -54,9 +54,6 @@ expectTopSnap vm k =
     (s:_) -> k s
     []    -> expectationFailure "Expected snapshotStack to contain at least one CallSnapshot"
 
-expectErrorMsg :: String -> ErrorCall -> Bool
-expectErrorMsg needle (ErrorCall msg) = needle `isInfixOf` msg
-
 -- Spec ------------------------------------------------------------------------
 
 spec :: Spec

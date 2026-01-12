@@ -16,13 +16,14 @@ module Compiler.Instruction
     , immediateToTypeID
     , immediateSize
     , getInstCode
+    , instructionSize
     ) where
 
 import Data.Word (Word8)
 import Common.Type.Integer (IntValue(..))
 
 -- | Immediate values pushed by PUSH.
--- 
+--
 -- @details
 --   Immediate represents the different immediate payloads that can be encoded
 --   after a PUSH opcode. The TypeID encoding follows ASM_SPEC.md (version 0x02).
@@ -140,7 +141,13 @@ data Instruction
     | MakeClosure Int Int     -- ^ 0x60 MAKE_CLOSURE [addr] [n_captures]
     | GetFuncAddr Int         -- ^ 0x61 GET_FUNC_ADDR [id]
     | BuildStruct Int         -- ^ 0x62 BUILD_STRUCT [n_fields]
+    | GetStructField Int      -- ^ 0x63 GET_STRUCT_FIELD [idx]
     | Cast Word8              -- ^ 0x80 CAST [TypeID]
+
+    -- 9. List Operations
+    | Cons                    -- ^ 0x90 CONS
+    | Head                    -- ^ 0x91 HEAD
+    | Tail                    -- ^ 0x92 TAIL
 
     -- 8. System / Debug
     | Print                   -- ^ 0x70 PRINT
@@ -200,9 +207,85 @@ getInstCode (StoreCapture _)     = 0x55
 getInstCode (MakeClosure _ _)    = 0x60
 getInstCode (GetFuncAddr _)      = 0x61
 getInstCode (BuildStruct _)      = 0x62
+getInstCode (GetStructField _)   = 0x63
 getInstCode (Cast _)             = 0x80
+
+getInstCode Cons                 = 0x90
+getInstCode Head                 = 0x91
+getInstCode Tail                 = 0x92
 
 getInstCode Print                = 0x70
 getInstCode Halt                 = 0x71
 getInstCode (CheckStack _)       = 0xFE
 getInstCode Nop                  = 0xFF
+
+-- | Computes the size in bytes of a given instruction, including its payload.
+--
+-- @args
+--   - instr: the 'Instruction' whose size is to be computed
+--
+-- @details
+--   Returns the total number of bytes required to encode the instruction,
+--   including opcode and any immediate or address payloads. Used for offset
+--   calculations and binary serialization.
+--
+-- @return
+--   The instruction size in bytes as 'Int'.
+--
+instructionSize :: Instruction -> Int
+instructionSize (Push imm)          = 1 + 1 + immediateSize imm
+instructionSize Pop                 = 1
+instructionSize Dup                 = 1
+instructionSize Swap                = 1
+
+-- Arithmetic
+instructionSize Add                 = 1
+instructionSize Sub                 = 1
+instructionSize Mul                 = 1
+instructionSize Div                 = 1
+instructionSize Mod                 = 1
+
+-- Logic & Comparison
+instructionSize Eq                  = 1
+instructionSize Lt                  = 1
+instructionSize Le                  = 1
+instructionSize Not                 = 1
+instructionSize And                 = 1
+instructionSize Or                  = 1
+
+-- Flow Control
+instructionSize (Jump _)            = 1 + 4
+instructionSize (JumpIfFalse _)     = 1 + 4
+instructionSize (JumpIfTrue _)      = 1 + 4
+
+-- Functions & Calls
+instructionSize (Call _)            = 1 + 4
+instructionSize (TailCall _)        = 1 + 4
+instructionSize CallIndirect        = 1
+instructionSize Ret                 = 1
+
+-- Memory (Variables)
+instructionSize (LoadLocal _)       = 1 + 4
+instructionSize (StoreLocal _)      = 1 + 4
+instructionSize (LoadGlobal _)      = 1 + 4
+instructionSize (StoreGlobal _)     = 1 + 4
+instructionSize (LoadCapture _)     = 1 + 4
+instructionSize (StoreCapture _)    = 1 + 4
+
+-- Closures & Types
+instructionSize (MakeClosure _ _)   = 1 + 4 + 4
+instructionSize (GetFuncAddr _)     = 1 + 4
+instructionSize (BuildStruct _)     = 1 + 4
+instructionSize (GetStructField _)  = 1 + 4
+instructionSize (Cast _)            = 1 + 1
+
+-- List Operations
+instructionSize Cons                = 1
+instructionSize Head                = 1
+instructionSize Tail                = 1
+
+-- System / Debug
+instructionSize Print               = 1
+instructionSize Halt                = 1
+instructionSize (CheckStack _)      = 1 + 4
+instructionSize Nop                 = 1
