@@ -53,3 +53,4 @@ serializeInstruction (MakeClosure addr n) =
                      <> encodeInt32BE (fromIntegral n)
 serializeInstruction Halt =
     encodeWord8 0xFF
+serializeInstruction _ = encodeWord8 0xFF -- JASCO GAMING DOIT FIX CA

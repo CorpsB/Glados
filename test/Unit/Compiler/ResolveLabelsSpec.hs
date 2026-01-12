@@ -5,14 +5,13 @@
 -- ResolveLabelsSpec
 -}
 
-module Compiler.ResolveLabels.ResolveLabelsSpec (spec) where
+module Compiler.ResolveLabelsSpec (spec) where
 
 import Test.Hspec
-import qualified Data.Map.Strict as Map
+import qualified Data.Map.Strict()
 import qualified Data.Text as T
-import Compiler.Instruction (Instruction(..))
 import Compiler.PsInstruction (PsInstruction(..))
-import Compiler.ResolveLabels (resolveLabels)
+import Compiler.ResolveLabels.ResolveLabels (resolveLabels)
 
 spec :: Spec
 spec = do
@@ -57,8 +56,6 @@ spec = do
       res `shouldSatisfy` (\x -> case x of Right _ -> True; _ -> False)
 
     it "returns error for offset out of range (JumpLabel)" $ do
-      let big = maxBound :: Int
-      let pseudos = [LabelDef (T.pack "L"), JumpLabel (T.pack "L")]
       -- Patch the label map to simulate a huge offset
       let res = resolveLabels [LabelDef (T.pack "L"), JumpLabel (T.pack "L")]
       -- We can't directly trigger the offset error without changing the code,

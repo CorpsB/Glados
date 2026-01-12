@@ -11,7 +11,6 @@ import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Bits
-import Data.Int (Int32)
 import Data.Word (Word8)
 import Data.Binary.Get
 import Data.ByteString (ByteString)

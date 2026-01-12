@@ -8,7 +8,7 @@
 module Compiler.SerializerSpec (spec) where
 
 import Test.Hspec
-import Data.Word (Word8)
+import Data.Word()
 import qualified Data.ByteString.Builder as B
 import qualified Data.ByteString.Lazy as LBS
 
