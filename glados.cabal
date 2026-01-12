@@ -29,6 +29,9 @@ library
       Z_old.Src.Utils.List
       Z_old.Src.Parser.ParserISL
       AST.Ast
+      AST.Semantics.Type
+      AST.Semantics.Check
+      AST.Semantics.CheckCall
       Common.Type.Integer
       Common.Utils.List
       Common.Utils.Bytecode.Header
@@ -130,6 +133,9 @@ test-suite glados-unit
       Z_old.LispTest
       Z_old.AstSpec
       AST.AstSpec
+      AST.Semantics.TypeSpec
+      AST.Semantics.CheckSpec
+      AST.Semantics.CheckCallSpec
       Parser.StatementSpec
       Parser.LexerSpec
       Parser.ExpressionSpec
