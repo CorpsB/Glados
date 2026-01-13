@@ -1,2 +1,0 @@
-inc = lambda(a) -> a + 1;
-print(inc(inc(43)));

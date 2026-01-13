@@ -1,3 +1,0 @@
-b: bool = True;
-b = 1;
-print(b);

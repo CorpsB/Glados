@@ -1,2 +1,0 @@
-matrix: [[int]] = [[1, 0], [True, 1]];
-print(matrix[0][0]);

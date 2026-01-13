@@ -1,8 +1,0 @@
-struct Triple {
-    a: int;
-    b: int;
-    c: int;
-}
-
-t: Triple = new Triple { a: 1, b: 1, c: 1 };
-print(t.a + t.b + t.c);

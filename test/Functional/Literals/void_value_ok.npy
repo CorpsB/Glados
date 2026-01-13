@@ -1,2 +1,0 @@
-x: void = void;
-print(42);

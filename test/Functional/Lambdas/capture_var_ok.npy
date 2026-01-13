@@ -1,3 +1,0 @@
-x = 40;
-addx = lambda(a) -> a + x;
-print(addx(2));

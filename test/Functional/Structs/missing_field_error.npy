@@ -1,7 +1,0 @@
-struct Vector2 {
-    x: int;
-    y: int;
-}
-
-v: Vector2 = new Vector2 { x: 1 };
-print(v.x);

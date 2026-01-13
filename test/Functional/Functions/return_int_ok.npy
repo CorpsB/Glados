@@ -1,5 +1,0 @@
-func add(a: int, b: int) -> int {
-    ret a + b;
-}
-
-print(add(40, 2));

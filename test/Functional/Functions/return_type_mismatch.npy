@@ -1,5 +1,0 @@
-func bad() -> int {
-    ret True;
-}
-
-print(bad());

@@ -1,3 +1,0 @@
-mul = lambda(a, b) -> a * b;
-square = lambda(x) -> mul(x, x);
-print(square(4));

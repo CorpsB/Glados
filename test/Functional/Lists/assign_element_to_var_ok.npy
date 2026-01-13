@@ -1,3 +1,0 @@
-numbers: [int] = [1, 2, 3];
-first = numbers[2];
-print(first);

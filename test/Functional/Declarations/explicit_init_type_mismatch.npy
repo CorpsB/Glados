@@ -1,2 +1,0 @@
-x: int = True;
-print(x);

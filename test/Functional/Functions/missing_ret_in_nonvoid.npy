@@ -1,4 +1,0 @@
-func bad() -> int {
-    x = 1;
-}
-print(bad());

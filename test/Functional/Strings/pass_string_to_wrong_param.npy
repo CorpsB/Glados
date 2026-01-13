@@ -1,5 +1,0 @@
-func f(x: int) {
-    print(x);
-}
-
-f("test");

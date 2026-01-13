@@ -1,5 +1,0 @@
-func inc(x: int) -> int {
-    ret x + 1;
-}
-
-print(inc(inc(43)));

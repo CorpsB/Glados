@@ -1,3 +1,0 @@
-import "math.npy";
-
-print(add(40, 2));
