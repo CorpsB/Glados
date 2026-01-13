@@ -55,13 +55,13 @@ checkSymbol env name = case Map.lookup name (envVars env) of
     Nothing -> Left $ "Undefined variable '" ++ DT.unpack name ++ "'"
 
 validateStructField :: CheckEnv -> DT.Text -> DT.Text -> Either String Type
-validateStructField env structName field = do
-    def <- getStructDef env structName
+validateStructField env sName field = do
+    def <- getStructDef env sName
     case Map.lookup field (structFields def) of
         Just t -> Right t
         Nothing -> Left $ "Field '" ++ DT.unpack field ++ 
                           "' not found in struct '" ++ 
-                          DT.unpack structName ++ "'"
+                          DT.unpack sName ++ "'"
 
 checkStructAccess :: CheckEnv -> Ast -> DT.Text -> Either String Type
 checkStructAccess env obj field = do
