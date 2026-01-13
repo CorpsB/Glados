@@ -49,6 +49,7 @@ library
       Parser.Expression
       Parser.Statement
       Parser.Conditions
+      Parser.ImportSystem
       VM.VMState
       VM.VMValue
       VM.VMStack
@@ -135,6 +136,7 @@ test-suite glados-unit
       Parser.LexerSpec
       Parser.ExpressionSpec
       Parser.ConditionsSpec
+      Parser.ImportSystemSpec
       Compiler.Bytecode.EncoderSpec
       Compiler.InstructionSpec
       Compiler.SerializerSpec
@@ -171,6 +173,7 @@ test-suite glados-unit
     , transformers
     , mtl
     , vector
+    , directory
   ghc-options:
     -Wall
     -Wcompat

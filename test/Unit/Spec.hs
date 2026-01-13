@@ -19,6 +19,7 @@ import qualified Parser.StatementSpec
 import qualified Parser.LexerSpec
 import qualified Parser.ExpressionSpec
 import qualified Parser.ConditionsSpec
+import qualified Parser.ImportSystemSpec
 import qualified Compiler.Bytecode.EncoderSpec
 
 import qualified Common.Type.IntegerSpec
@@ -49,6 +50,7 @@ spec = do
     Parser.LexerSpec.spec
     Parser.ExpressionSpec.spec
     Parser.ConditionsSpec.spec
+    Parser.ImportSystemSpec.spec
     Compiler.Bytecode.EncoderSpec.spec
     Compiler.InstructionSpec.spec
     Compiler.PsInstructionSpec.spec
