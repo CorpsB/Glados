@@ -216,5 +216,5 @@ Standard operators and functions available globally.
 | `<`, `>`, `<=`, `>=` | Comparison |
 | `&&`, `!`, `\|\|` | Logical operators |
 | `print(val)` | Prints a value to stdout |
-|`int8(INTEGER)`, `uint8(INTEGER)`, `int16(INTEGER)`, `uint16(INTEGER)`, `int32(INTEGER)`, `uint32(INTEGER)`, `int64(INTEGER)`, `uint64(INTEGER)`, `char(INTEGER)`, `uchar(INTEGER)` | All Integer|
-|`exit(CODE)`, `head(LIST)`, `cons(LIST)`, `tail(LIST)` |
+|`int8(integer)`, `uint8(integer)`, `int16(integer)`, `uint16(integer)`, `int32(integer)`, `uint32(integer)`, `int64(integer)`, `uint64(integer)`, `char(integer)`, `uchar(integer)` | Casts value to specific Integer type|
+|`exit(code)`, `head(list)`, `cons(list)`, `tail(lsit)`, nth(list, index)| Standard list manipulation functions|
