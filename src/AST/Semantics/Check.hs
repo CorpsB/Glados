@@ -38,6 +38,7 @@ checkExpr env (AIf c t e)    = checkIf env c t e
 checkExpr env (ASetStruct name fields) =
     checkStructInstantiation env name fields
 checkExpr env (ACall func args) = checkCall checkExpr env func args
+checkExpr env (AAccessStruct obj field) = checkStructAccess env obj field
 checkExpr env (APos line _ ast) =
     case checkExpr env ast of
         Left err -> 
@@ -52,6 +53,23 @@ checkSymbol :: CheckEnv -> DT.Text -> Either String Type
 checkSymbol env name = case Map.lookup name (envVars env) of
     Just t  -> Right t
     Nothing -> Left $ "Undefined variable '" ++ DT.unpack name ++ "'"
+
+validateStructField :: CheckEnv -> DT.Text -> DT.Text -> Either String Type
+validateStructField env structName field = do
+    def <- getStructDef env structName
+    case Map.lookup field (structFields def) of
+        Just t -> Right t
+        Nothing -> Left $ "Field '" ++ DT.unpack field ++ 
+                          "' not found in struct '" ++ 
+                          DT.unpack structName ++ "'"
+
+checkStructAccess :: CheckEnv -> Ast -> DT.Text -> Either String Type
+checkStructAccess env obj field = do
+    typeObj <- checkExpr env obj
+    case typeObj of
+        TyStruct name -> validateStructField env name field
+        _ -> Left $ "Cannot access field '" ++ DT.unpack field ++ 
+                    "' on non-struct type " ++ typeToString typeObj
 
 -- | IF logic
 checkIf :: CheckEnv -> Ast -> Ast -> Ast -> Either String Type
