@@ -1,0 +1,5 @@
+func show(s: [char]) {
+    print(s);
+}
+
+show("Noopy");
