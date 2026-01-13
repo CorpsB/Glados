@@ -13,7 +13,7 @@ import Test.Hspec
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Text as T
-import Data.Int (Int32)
+import Data.Int()
 import Compiler.Instruction (Instruction(..))
 import Compiler.ResolveLabels.Step2CallLabel (step2CallLabel)
 

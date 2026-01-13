@@ -77,3 +77,46 @@ spec = describe "Semantic Type System" $ do
             typeToString (TyStruct (p "S")) `shouldSatisfy` (== "S")
             typeToString (TyFunc [TyInt, TyBool] TyVoid) `shouldSatisfy` (== "(int bool -> void)")
             typeToString (TyFunc [] TyVoid) `shouldSatisfy` (== "( -> void)")
+    
+    describe "Derived Show Instances (Debug Output)" $ do
+        
+        describe "Type Show Instance" $ do
+            it "shows atomic types" $ do
+                show TyInt  `shouldBe` "TyInt"
+                show TyBool `shouldBe` "TyBool"
+                show TyVoid `shouldBe` "TyVoid"
+                show TyAuto `shouldBe` "TyAuto"
+
+            it "shows wrapped types (Text is quoted)" $ do
+                show (TyStruct (p "Point")) `shouldBe` "TyStruct \"Point\""
+
+            it "shows recursive types (List)" $ do
+                show (TyList TyInt) `shouldBe` "TyList TyInt"
+                show (TyList (TyList TyBool)) `shouldBe` "TyList (TyList TyBool)"
+
+            it "shows function types" $ do
+                show (TyFunc [TyInt, TyBool] TyVoid) 
+                    `shouldBe` "TyFunc [TyInt,TyBool] TyVoid"
+    
+    describe "Derived Show Instances (Deep Coverage)" $ do
+        
+        it "Forces showsPrec evaluation (StructDef inside Just)" $ do
+            let sDef = StructDef (p "Test") Map.empty
+            show (Just sDef) `shouldSatisfy` ("Just (StructDef" `isInfixOf`)
+
+        it "Forces showsPrec evaluation with Data (StructDef inside Just)" $ do
+            let sDef = StructDef (p "Full") (Map.singleton (p "val") TyInt)
+            let res = show (Just sDef)
+            res `shouldSatisfy` ("Just (StructDef" `isInfixOf`)
+            res `shouldSatisfy` ("(\"val\",TyInt)" `isInfixOf`)
+
+        it "Forces showsPrec evaluation (CheckEnv inside List)" $ do
+            let env = emptyEnv
+            show [env] `shouldSatisfy` ("CheckEnv" `isInfixOf`)
+            
+        it "Verifies exact output for StructDef" $ do
+             let sDef = StructDef (p "S") Map.empty
+             show sDef `shouldBe` "StructDef {structName = \"S\", structFields = fromList []}"
+
+        it "Verifies exact output for CheckEnv" $ do
+             show emptyEnv `shouldBe` "CheckEnv {envVars = fromList [], envStructs = fromList []}"
