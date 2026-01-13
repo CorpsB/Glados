@@ -193,3 +193,55 @@ spec = describe "AST Core Coverage" $ do
     describe "printAst (IO Side Effects)" $ do
         it "Executes without crashing" $ do
             printAst (AInteger (I8 10)) `shouldReturn` ()
+    describe "Derived Instances (Eq & Show)" $ do
+        
+        describe "Eq Instance (Structural Equality)" $ do
+            it "Check Equality: AInteger" $ do
+                AInteger (I32 42) `shouldBe` AInteger (I32 42)
+                AInteger (I32 42) `shouldNotBe` AInteger (I32 0)
+                AInteger (I32 42) `shouldNotBe` AInteger (I16 42)
+
+            it "Check Equality: ASymbol" $ do
+                ASymbol "foo" `shouldBe` ASymbol "foo"
+                ASymbol "foo" `shouldNotBe` ASymbol "bar"
+
+            it "Check Equality: AList (Recursive)" $ do
+                let l1 = AList [ASymbol "a", AInteger (I8 1)]
+                let l2 = AList [ASymbol "a", AInteger (I8 1)]
+                let l3 = AList [ASymbol "a", AInteger (I8 2)]
+                l1 `shouldBe` l2
+                l1 `shouldNotBe` l3
+
+            it "Check Equality: APos (Position matters)" $ do
+                APos 10 5 AVoid `shouldBe` APos 10 5 AVoid
+                APos 10 5 AVoid `shouldNotBe` APos 11 5 AVoid
+                APos 10 5 AVoid `shouldNotBe` APos 10 6 AVoid
+                APos 10 5 (ASymbol "x") `shouldNotBe` APos 10 5 (ASymbol "y")
+
+            it "Check Equality: Different Constructors" $ do
+                AVoid `shouldNotBe` AList []
+                ABool True `shouldNotBe` ASymbol "True"
+
+        describe "Show Instance (Haskell Representation)" $ do
+            
+            it "Show: AInteger" $ do
+                show (AInteger (I8 42)) `shouldBe` "AInteger (I8 42)"
+
+            it "Show: ABool" $ do
+                show (ABool True) `shouldBe` "ABool True"
+
+            it "Show: ASymbol" $ do
+                show (ASymbol "x") `shouldBe` "ASymbol \"x\""
+
+            it "Show: AVoid" $ do
+                show AVoid `shouldBe` "AVoid"
+
+            it "Show: APos" $ do
+                show (APos 1 1 AVoid) `shouldBe` "APos 1 1 AVoid"
+
+            it "Show: AList" $ do
+                show (AList [AVoid]) `shouldBe` "AList [AVoid]"
+            
+            it "Show: ACall (Complex Structure)" $ do
+                let ast = ACall (ASymbol "f") [AInteger (I8 1)]
+                show ast `shouldBe` "ACall (ASymbol \"f\") [AInteger (I8 1)]"
