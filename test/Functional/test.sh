@@ -1,331 +1,386 @@
-# #!/usr/bin/env bash
+#!/usr/bin/env bash
 
-echo "Aucun test pour le moment. Pipeline réussie."
-exit 0
+# declare -A test1=( [titre]="Basic : " [fichier]=".scm" [exitcode]="0" [output]="")
 
-# # declare -A test1=( [titre]="Basic : " [fichier]=".scm" [exitcode]="0" [output]="")
+# Basic
+declare -A test_basics_import_simple=([titre]="Basics : import simple" [fichier]="test/Functional/Basics/import_simple.npy" [exitcode]="0" [output]="42")
+declare -A test_basics_import_function=([titre]="Basics : import function" [fichier]="test/Functional/Basics/import_function.npy" [exitcode]="0" [output]="42")
+declare -A test_basics_import_multiple=([titre]="Basics : import multiple" [fichier]="test/Functional/Basics/import_multiple.npy" [exitcode]="0" [output]="42")
+declare -A test_basics_import_missing_file=([titre]="Basics : import missing file" [fichier]="test/Functional/Basics/import_missing_file.npy" [exitcode]="84" [output]="")
+declare -A test_basics_import_symbol_visibility=([titre]="Basics : symbol visibility (no import)" [fichier]="test/Functional/Basics/import_symbol_visibility.npy" [exitcode]="84" [output]="")
+declare -A test_basics_import_unused=([titre]="Basics : import unused" [fichier]="test/Functional/Basics/import_unused.npy" [exitcode]="0" [output]="42")
 
-# # Basic
-# declare -A test1=( [titre]="Basic : foo" [fichier]="test/Functional/Basic/foo.scm" [exitcode]="0" [output]="42")
-# declare -A test2=( [titre]="Basic : error" [fichier]="test/Functional/Basic/error.scm" [exitcode]="84" [output]="")
-# declare -A test3=( [titre]="Basic : call" [fichier]="test/Functional/Basic/call.scm" [exitcode]="0" [output]="5")
-# declare -A test4=( [titre]="Basic : lambda1" [fichier]="test/Functional/Basic/lambda1.scm" [exitcode]="0" [output]="#\<procedure\>")
-# declare -A test5=( [titre]="Basic : lambda2" [fichier]="test/Functional/Basic/lambda2.scm" [exitcode]="0" [output]="3")
-# declare -A test6=( [titre]="Basic : lambda3" [fichier]="test/Functional/Basic/lambda3.scm" [exitcode]="0" [output]="7")
-# declare -A test7=( [titre]="Basic : function" [fichier]="test/Functional/Basic/function1.scm" [exitcode]="0" [output]="7")
-# declare -A test8=( [titre]="Basic : if1" [fichier]="test/Functional/Basic/if1.scm" [exitcode]="0" [output]="1")
-# declare -A test9=( [titre]="Basic : if2" [fichier]="test/Functional/Basic/if2.scm" [exitcode]="0" [output]="2")
-# declare -A test10=( [titre]="Basic : if3" [fichier]="test/Functional/Basic/if3.scm" [exitcode]="0" [output]="21")
-# declare -A test11=( [titre]="Basic : builtins1" [fichier]="test/Functional/Basic/builtins1.scm" [exitcode]="0" [output]="11")
-# declare -A test12=( [titre]="Basic : builtins2" [fichier]="test/Functional/Basic/builtins2.scm" [exitcode]="0" [output]="#t")
-# declare -A test13=( [titre]="Basic : builtins3" [fichier]="test/Functional/Basic/builtins3.scm" [exitcode]="0" [output]="#f")
-# declare -A test14=( [titre]="Basic : superior" [fichier]="test/Functional/Basic/superior.scm" [exitcode]="0" [output]="#t")
-# declare -A test15=( [titre]="Basic : factorial" [fichier]="test/Functional/Basic/factorial.scm" [exitcode]="0" [output]="3628800")
+#Syntax
+declare -A test_syntax_semicolon_ok=([titre]="Syntax : semicolon ok" [fichier]="test/Functional/Syntax/semicolon_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_syntax_semicolon_missing=([titre]="Syntax : missing semicolon" [fichier]="test/Functional/Syntax/semicolon_missing.npy" [exitcode]="84" [output]="")
+declare -A test_syntax_block_ok=([titre]="Syntax : block braces ok" [fichier]="test/Functional/Syntax/block_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_syntax_block_missing=([titre]="Syntax : missing braces" [fichier]="test/Functional/Syntax/block_missing.npy" [exitcode]="84" [output]="")
+declare -A test_syntax_if_parentheses_missing=([titre]="Syntax : if missing parentheses" [fichier]="test/Functional/Syntax/if_parentheses_missing.npy" [exitcode]="84" [output]="")
+declare -A test_syntax_while_parentheses_missing=([titre]="Syntax : while missing parentheses" [fichier]="test/Functional/Syntax/while_parentheses_missing.npy" [exitcode]="84" [output]="")
 
-# # Simple : Parsing
-# declare -A test16=( [titre]="Simple : Bad file extension" [fichier]="test/Functional/Simple/bad_extension.txt" [exitcode]="0" [output]="")
-# declare -A test17=( [titre]="Simple : Empty file" [fichier]="test/Functional/Simple/empty_file.scm" [exitcode]="0" [output]="")
-# declare -A test18=( [titre]="Simple : No extension file" [fichier]="test/Functional/Simple/no_extention" [exitcode]="0" [output]="")
-# declare -A test19=( [titre]="Simple : Not enough parentheses" [fichier]="test/Functional/Simple/error1.scm" [exitcode]="84" [output]="")
-# declare -A test20=( [titre]="Simple : Too many parentheses" [fichier]="test/Functional/Simple/error2.scm" [exitcode]="84" [output]="")
-# declare -A test21=( [titre]="Simple : Bad file" [fichier]="test/Functional/Simple/error3.scm" [exitcode]="84" [output]="")
-# declare -A test22=( [titre]="Simple : Just space" [fichier]="test/Functional/Simple/error4.scm" [exitcode]="0" [output]="")
-# declare -A test23=( [titre]="Simple : Just multi-space" [fichier]="test/Functional/Simple/error5.scm" [exitcode]="0" [output]="")
-# declare -A test24=( [titre]="Simple : Just newline" [fichier]="test/Functional/Simple/error6.scm" [exitcode]="0" [output]="")
-# declare -A test27=( [titre]="Simple : Only closing parenthesis" [fichier]="test/Functional/Simple/only_closing_paren.scm" [exitcode]="84" [output]="")
-# declare -A test28=( [titre]="Simple : Truncated expression" [fichier]="test/Functional/Simple/truncated_expr.scm" [exitcode]="84" [output]="")
+#Declaration
+declare -A test_declarations_infer_int_ok=([titre]="Declarations : infer int ok" [fichier]="test/Functional/Declarations/infer_int_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_declarations_explicit_int_ok=([titre]="Declarations : explicit int ok" [fichier]="test/Functional/Declarations/explicit_int_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_declarations_infer_bool_ok=([titre]="Declarations : infer bool ok" [fichier]="test/Functional/Declarations/infer_bool_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_declarations_explicit_bool_ok=([titre]="Declarations : explicit bool ok" [fichier]="test/Functional/Declarations/explicit_bool_ok.npy" [exitcode]="0" [output]="False")
+declare -A test_declarations_void_declaration_ok=([titre]="Declarations : void declaration ok" [fichier]="test/Functional/Declarations/void_declaration_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_declarations_explicit_init_type_mismatch=([titre]="Declarations : explicit init type mismatch" [fichier]="test/Functional/Declarations/explicit_init_type_mismatch.npy" [exitcode]="84" [output]="")
+declare -A test_declarations_infer_then_assign_wrong_type=([titre]="Declarations : infer then assign wrong type" [fichier]="test/Functional/Declarations/infer_then_assign_wrong_type.npy" [exitcode]="84" [output]="")
+declare -A test_declarations_explicit_then_assign_wrong_type=([titre]="Declarations : explicit then assign wrong type" [fichier]="test/Functional/Declarations/explicit_then_assign_wrong_type.npy" [exitcode]="84" [output]="")
+declare -A test_declarations_bool_then_assign_int=([titre]="Declarations : bool then assign int" [fichier]="test/Functional/Declarations/bool_then_assign_int.npy" [exitcode]="84" [output]="")
 
-# # Simple : Builtin eq?
-# declare -A test29=( [titre]="Simple : Simple true" [fichier]="test/Functional/Simple/bu_eq1.scm" [exitcode]="0" [output]="#t")
-# declare -A test30=( [titre]="Simple : Simple negative true" [fichier]="test/Functional/Simple/bu_eq2.scm" [exitcode]="0" [output]="#t")
-# declare -A test31=( [titre]="Simple : Simple false" [fichier]="test/Functional/Simple/bu_eq3.scm" [exitcode]="0" [output]="#f")
-# declare -A test32=( [titre]="Simple : Compare positive and negative integers" [fichier]="test/Functional/Simple/bu_eq4.scm" [exitcode]="0" [output]="#f")
-# declare -A test33=( [titre]="Simple : Compare two negative zero numbers" [fichier]="test/Functional/Simple/bu_eq5.scm" [exitcode]="0" [output]="#t")
-# declare -A test34=( [titre]="Simple : Compare zero and negative zero" [fichier]="test/Functional/Simple/bu_eq6.scm" [exitcode]="0" [output]="#t")
-# declare -A test35=( [titre]="Simple : eq? #t #t" [fichier]="test/Functional/Simple/bu_eq_bool1.scm" [exitcode]="0" [output]="#t")
-# declare -A test36=( [titre]="Simple : eq? #t #f" [fichier]="test/Functional/Simple/bu_eq_bool2.scm" [exitcode]="0" [output]="#f")
-# declare -A test37=( [titre]="Simple : eq? bool expr" [fichier]="test/Functional/Simple/bu_eq_bool3.scm" [exitcode]="0" [output]="#t")
-# declare -A test38=( [titre]="Simple : eq? deux expressions arithmétiques" [fichier]="test/Functional/Simple/bu_eq_expr1.scm" [exitcode]="0" [output]="#t")
-# declare -A test39=( [titre]="Simple : eq? sans arguments" [fichier]="test/Functional/Simple/bu_eq_arity0.scm" [exitcode]="84" [output]="")
-# declare -A test40=( [titre]="Simple : eq? un seul argument" [fichier]="test/Functional/Simple/bu_eq_arity1.scm" [exitcode]="84" [output]="")
-# declare -A test41=( [titre]="Simple : eq? trop d'arguments" [fichier]="test/Functional/Simple/bu_eq_arity3.scm" [exitcode]="84" [output]="")
+#Asign
+declare -A test_assign_reassign_int_ok=([titre]="Assign : reassign int ok" [fichier]="test/Functional/Assign/reassign_int_ok.npy" [exitcode]="0" [output]="2")
+declare -A test_assign_reassign_chain_ok=([titre]="Assign : reassign chain ok" [fichier]="test/Functional/Assign/reassign_chain_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_assign_for_header_init_update_ok=([titre]="Assign : for header init/update ok" [fichier]="test/Functional/Assign/for_header_init_update_ok.npy" [exitcode]="0" [output]="6")
+declare -A test_assign_use_undeclared_var=([titre]="Assign : use undeclared var" [fichier]="test/Functional/Assign/use_undeclared_var.npy" [exitcode]="84" [output]="")
+declare -A test_assign_reassign_type_mismatch=([titre]="Assign : reassign type mismatch" [fichier]="test/Functional/Assign/reassign_type_mismatch.npy" [exitcode]="84" [output]="")
+declare -A test_assign_for_header_type_mismatch=([titre]="Assign : for header type mismatch" [fichier]="test/Functional/Assign/for_header_type_mismatch.npy" [exitcode]="84" [output]="")
 
-# # Simple : Builtin <
-# declare -A test42=( [titre]="Simple : Simple true case" [fichier]="test/Functional/Simple/bu_<1.scm" [exitcode]="0" [output]="#t")
-# declare -A test43=( [titre]="Simple : Simple false case" [fichier]="test/Functional/Simple/bu_<2.scm" [exitcode]="0" [output]="#f")
-# declare -A test44=( [titre]="Simple : Negative integer" [fichier]="test/Functional/Simple/bu_<3.scm" [exitcode]="0" [output]="#t")
-# declare -A test45=( [titre]="Simple : String and int" [fichier]="test/Functional/Simple/bu_<4.scm" [exitcode]="84" [output]="")
-# declare -A test46=( [titre]="Simple : Same numbers" [fichier]="test/Functional/Simple/bu_<5.scm" [exitcode]="0" [output]="#f")
-# declare -A test47=( [titre]="Simple : Bool and int" [fichier]="test/Functional/Simple/bu_<6.scm" [exitcode]="84" [output]="")
-# declare -A test48=( [titre]="Simple : < arity 0" [fichier]="test/Functional/Simple/bu_<arity0.scm" [exitcode]="84" [output]="")
-# declare -A test49=( [titre]="Simple : < arity 1" [fichier]="test/Functional/Simple/bu_<arity1.scm" [exitcode]="84" [output]="")
-# declare -A test50=( [titre]="Simple : < arity 3" [fichier]="test/Functional/Simple/bu_<arity3.scm" [exitcode]="84" [output]="")
-# declare -A test51=( [titre]="Simple : < with arithmetic expressions" [fichier]="test/Functional/Simple/bu_<expr1.scm" [exitcode]="0" [output]="#f")
-# declare -A test52=( [titre]="Simple : < expr false" [fichier]="test/Functional/Simple/bu_<expr2.scm" [exitcode]="0" [output]="#f")
-# declare -A test53=( [titre]="Simple : Bool and bool in <" [fichier]="test/Functional/Simple/bu_<boolbool.scm" [exitcode]="84" [output]="")
+#Literals
+declare -A test_literals_int_positive_ok=([titre]="Literals : int positive" [fichier]="test/Functional/Literals/int_positive_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_literals_int_negative_ok=([titre]="Literals : int negative" [fichier]="test/Functional/Literals/int_negative_ok.npy" [exitcode]="0" [output]="-42")
+declare -A test_literals_bool_true_ok=([titre]="Literals : bool True" [fichier]="test/Functional/Literals/bool_true_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_literals_bool_false_ok=([titre]="Literals : bool False" [fichier]="test/Functional/Literals/bool_false_ok.npy" [exitcode]="0" [output]="False")
+declare -A test_literals_void_value_ok=([titre]="Literals : void literal value" [fichier]="test/Functional/Literals/void_value_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_literals_list_int_ok=([titre]="Literals : list of int" [fichier]="test/Functional/Literals/list_int_ok.npy" [exitcode]="0" [output]="2")
+declare -A test_literals_list_nested_ok=([titre]="Literals : nested list" [fichier]="test/Functional/Literals/list_nested_ok.npy" [exitcode]="0" [output]="1")
+declare -A test_literals_string_sugar_ok=([titre]="Literals : string sugar" [fichier]="test/Functional/Literals/string_sugar_ok.npy" [exitcode]="0" [output]="Noopy")
 
+#Strings
+declare -A test_strings_print_literal_ok=([titre]="Strings : print literal" [fichier]="test/Functional/Strings/print_literal_ok.npy" [exitcode]="0" [output]="Hello"])
+declare -A test_strings_assign_to_char_list_ok=([titre]="Strings : assign to [char]" [fichier]="test/Functional/Strings/assign_to_char_list_ok.npy" [exitcode]="0" [output]="World"])
+declare -A test_strings_pass_to_function_ok=([titre]="Strings : pass to function [char]" [fichier]="test/Functional/Strings/pass_to_function_ok.npy" [exitcode]="0" [output]="Noopy"])
+declare -A test_strings_assign_string_to_int_list=([titre]="Strings : string to [int] error" [fichier]="test/Functional/Strings/assign_string_to_int_list.npy" [exitcode]="84" [output]=""])
+declare -A test_strings_pass_string_to_wrong_param=([titre]="Strings : pass string to wrong param" [fichier]="test/Functional/Strings/pass_string_to_wrong_param.npy" [exitcode]="84" [output]=""])
 
-# # Simple : Builtin +
-# declare -A test54=( [titre]="Simple : Simple addition" [fichier]="test/Functional/Simple/bu_+1.scm" [exitcode]="0" [output]="2")
-# declare -A test55=( [titre]="Simple : Addition with negative integer" [fichier]="test/Functional/Simple/bu_+2.scm" [exitcode]="0" [output]="1")
-# declare -A test56=( [titre]="Simple : Addition of two negative numbers" [fichier]="test/Functional/Simple/bu_+3.scm" [exitcode]="0" [output]="-4")
-# declare -A test57=( [titre]="Simple : Add boolean with integer" [fichier]="test/Functional/Simple/bu_+4.scm" [exitcode]="84" [output]="")
-# declare -A test58=( [titre]="Simple : Add string with integer" [fichier]="test/Functional/Simple/bu_+5.scm" [exitcode]="84" [output]="")
-# declare -A test59=( [titre]="Simple : Add string with string" [fichier]="test/Functional/Simple/bu_+6.scm" [exitcode]="84" [output]="")
-# declare -A test60=( [titre]="Simple : Addition with 0 arguments" [fichier]="test/Functional/Simple/bu_+arity0.scm" [exitcode]="84" [output]="")
-# declare -A test61=( [titre]="Simple : Addition with 1 argument" [fichier]="test/Functional/Simple/bu_+arity1.scm" [exitcode]="84" [output]="")
-# declare -A test62=( [titre]="Simple : Addition with 3 arguments" [fichier]="test/Functional/Simple/bu_+arity3.scm" [exitcode]="84" [output]="")
-# declare -A test63=( [titre]="Simple : Addition with arithmetic expressions" [fichier]="test/Functional/Simple/bu_+expr1.scm" [exitcode]="0" [output]="9")
-# declare -A test64=( [titre]="Simple : Add boolean with boolean" [fichier]="test/Functional/Simple/bu_+boolbool.scm" [exitcode]="84" [output]="")
+#Lists
+declare -A test_lists_literal_and_index_ok=([titre]="Lists : literal + index" [fichier]="test/Functional/Lists/literal_and_index_ok.npy" [exitcode]="0" [output]="10"])
+declare -A test_lists_index_zero_based_ok=([titre]="Lists : index 0-based" [fichier]="test/Functional/Lists/index_zero_based_ok.npy" [exitcode]="0" [output]="1"])
+declare -A test_lists_assign_element_to_var_ok=([titre]="Lists : element to var" [fichier]="test/Functional/Lists/assign_element_to_var_ok.npy" [exitcode]="0" [output]="3"])
+declare -A test_lists_nested_index_ok=([titre]="Lists : nested index" [fichier]="test/Functional/Lists/nested_index_ok.npy" [exitcode]="0" [output]="1"])
+declare -A test_lists_inconsistent_literal_type=([titre]="Lists : inconsistent literal type" [fichier]="test/Functional/Lists/inconsistent_literal_type.npy" [exitcode]="84" [output]=""])
+declare -A test_lists_nested_inconsistent_type=([titre]="Lists : nested inconsistent type" [fichier]="test/Functional/Lists/nested_inconsistent_type.npy" [exitcode]="84" [output]=""])
+declare -A test_lists_index_out_of_bounds=([titre]="Lists : index out of bounds" [fichier]="test/Functional/Lists/index_out_of_bounds.npy" [exitcode]="84" [output]=""])
 
-# # Simple : Builtin -
-# declare -A test65=( [titre]="Simple : Simple subtract" [fichier]="test/Functional/Simple/bu_-1.scm" [exitcode]="0" [output]="0")
-# declare -A test66=( [titre]="Simple : Subtract with negative integer" [fichier]="test/Functional/Simple/bu_-2.scm" [exitcode]="0" [output]="-3")
-# declare -A test67=( [titre]="Simple : Subtract two negative numbers" [fichier]="test/Functional/Simple/bu_-3.scm" [exitcode]="0" [output]="0")
-# declare -A test68=( [titre]="Simple : Subtract boolean with integer" [fichier]="test/Functional/Simple/bu_-4.scm" [exitcode]="84" [output]="")
-# declare -A test69=( [titre]="Simple : Subtract string with integer" [fichier]="test/Functional/Simple/bu_-5.scm" [exitcode]="84" [output]="")
-# declare -A test70=( [titre]="Simple : Subtract string with string" [fichier]="test/Functional/Simple/bu_-6.scm" [exitcode]="84" [output]="")
-# declare -A test71=( [titre]="Simple : Subtract with 0 arguments" [fichier]="test/Functional/Simple/bu_-arity0.scm" [exitcode]="84" [output]="")
-# declare -A test72=( [titre]="Simple : Subtract with 1 argument" [fichier]="test/Functional/Simple/bu_-arity1.scm" [exitcode]="84" [output]="")
-# declare -A test73=( [titre]="Simple : Subtract with 3 arguments" [fichier]="test/Functional/Simple/bu_-arity3.scm" [exitcode]="84" [output]="")
-# declare -A test74=( [titre]="Simple : Subtract with arithmetic expressions" [fichier]="test/Functional/Simple/bu_-expr1.scm" [exitcode]="0" [output]="0")
-# declare -A test75=( [titre]="Simple : Subtract boolean with boolean" [fichier]="test/Functional/Simple/bu_-boolbool.scm" [exitcode]="84" [output]="")
+#Expression
+declare -A test_expr_add_sub_mul_ok=([titre]="Expressions : add sub mul" [fichier]="test/Functional/Expressions/add_sub_mul_ok.npy" [exitcode]="0" [output]="14"])
+declare -A test_expr_div_operator_ok=([titre]="Expressions : div operator" [fichier]="test/Functional/Expressions/div_operator_ok.npy" [exitcode]="0" [output]="3"])
+declare -A test_expr_div_keyword_ok=([titre]="Expressions : div keyword" [fichier]="test/Functional/Expressions/div_keyword_ok.npy" [exitcode]="0" [output]="3"])
+declare -A test_expr_mod_operator_ok=([titre]="Expressions : mod operator" [fichier]="test/Functional/Expressions/mod_operator_ok.npy" [exitcode]="0" [output]="1"])
+declare -A test_expr_mod_keyword_ok=([titre]="Expressions : mod keyword" [fichier]="test/Functional/Expressions/mod_keyword_ok.npy" [exitcode]="0" [output]="1"])
+declare -A test_expr_operator_precedence_ok=([titre]="Expressions : operator precedence" [fichier]="test/Functional/Expressions/operator_precedence_ok.npy" [exitcode]="0" [output]="14"])
+declare -A test_expr_division_by_zero=([titre]="Expressions : division by zero" [fichier]="test/Functional/Expressions/division_by_zero.npy" [exitcode]="84" [output]=""])
+declare -A test_expr_modulo_by_zero=([titre]="Expressions : modulo by zero" [fichier]="test/Functional/Expressions/modulo_by_zero.npy" [exitcode]="84" [output]=""])
 
-# # Simple : Builtin *
-# declare -A test76=( [titre]="Simple : Simple multiplication" [fichier]="test/Functional/Simple/bu_x1.scm" [exitcode]="0" [output]="1")
-# declare -A test77=( [titre]="Simple : Multiply with negative integer" [fichier]="test/Functional/Simple/bu_x2.scm" [exitcode]="0" [output]="-2")
-# declare -A test78=( [titre]="Simple : Multiply two negative numbers" [fichier]="test/Functional/Simple/bu_x3.scm" [exitcode]="0" [output]="4")
-# declare -A test79=( [titre]="Simple : Multiply boolean with integer" [fichier]="test/Functional/Simple/bu_x4.scm" [exitcode]="84" [output]="")
-# declare -A test80=( [titre]="Simple : Multiply string with integer" [fichier]="test/Functional/Simple/bu_x5.scm" [exitcode]="84" [output]="")
-# declare -A test81=( [titre]="Simple : Multiply string with string" [fichier]="test/Functional/Simple/bu_x6.scm" [exitcode]="84" [output]="")
-# declare -A test82=( [titre]="Simple : Multiply with 0 arguments" [fichier]="test/Functional/Simple/bu_xarity0.scm" [exitcode]="84" [output]="")
-# declare -A test83=( [titre]="Simple : Multiply with 1 argument" [fichier]="test/Functional/Simple/bu_xarity1.scm" [exitcode]="84" [output]="")
-# declare -A test84=( [titre]="Simple : Multiply with 3 arguments" [fichier]="test/Functional/Simple/bu_xarity3.scm" [exitcode]="84" [output]="")
-# declare -A test85=( [titre]="Simple : Multiply with arithmetic expressions" [fichier]="test/Functional/Simple/bu_xexpr1.scm" [exitcode]="0" [output]="9")
-# declare -A test86=( [titre]="Simple : Multiply boolean with boolean" [fichier]="test/Functional/Simple/bu_xboolbool.scm" [exitcode]="84" [output]="")
+#Comparaison
+declare -A test_cmp_eq_true_ok=([titre]="Comparisons : == true" [fichier]="test/Functional/Comparisons/eq_true_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_eq_false_ok=([titre]="Comparisons : == false" [fichier]="test/Functional/Comparisons/eq_false_ok.npy" [exitcode]="0" [output]="False")
+declare -A test_cmp_neq_true_ok=([titre]="Comparisons : != true" [fichier]="test/Functional/Comparisons/neq_true_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_lt_ok=([titre]="Comparisons : <" [fichier]="test/Functional/Comparisons/lt_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_gt_ok=([titre]="Comparisons : >" [fichier]="test/Functional/Comparisons/gt_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_lte_ok=([titre]="Comparisons : <=" [fichier]="test/Functional/Comparisons/lte_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_gte_ok=([titre]="Comparisons : >=" [fichier]="test/Functional/Comparisons/gte_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_bool_eq_ok=([titre]="Comparisons : bool ==" [fichier]="test/Functional/Comparisons/bool_eq_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_mismatched_types_eq=([titre]="Comparisons : type mismatch ==" [fichier]="test/Functional/Comparisons/mismatched_types_eq.npy" [exitcode]="84" [output]="")
+declare -A test_cmp_list_eq_disallowed=([titre]="Comparisons : list == disallowed" [fichier]="test/Functional/Comparisons/list_eq_disallowed.npy" [exitcode]="84" [output]="")
 
-# # Simple : Builtin /
-# declare -A test87=( [titre]="Simple : Simple division" [fichier]="test/Functional/Simple/bu_:1.scm" [exitcode]="0" [output]="1")
-# declare -A test88=( [titre]="Simple : Division with negative integer" [fichier]="test/Functional/Simple/bu_:2.scm" [exitcode]="0" [output]="-1")
-# declare -A test89=( [titre]="Simple : Division of two negative numbers" [fichier]="test/Functional/Simple/bu_:3.scm" [exitcode]="0" [output]="1")
-# declare -A test90=( [titre]="Simple : Division of boolean with integer" [fichier]="test/Functional/Simple/bu_:4.scm" [exitcode]="84" [output]="")
-# declare -A test91=( [titre]="Simple : Division of string with integer" [fichier]="test/Functional/Simple/bu_:5.scm" [exitcode]="84" [output]="")
-# declare -A test92=( [titre]="Simple : Division of string with string" [fichier]="test/Functional/Simple/bu_:6.scm" [exitcode]="84" [output]="")
-# declare -A test93=( [titre]="Simple : Division by zero" [fichier]="test/Functional/Simple/bu_:7.scm" [exitcode]="84" [output]="")
-# declare -A test94=( [titre]="Simple : Division with 0 arguments" [fichier]="test/Functional/Simple/bu_:arity0.scm" [exitcode]="84" [output]="")
-# declare -A test95=( [titre]="Simple : Division with 1 argument" [fichier]="test/Functional/Simple/bu_:arity1.scm" [exitcode]="84" [output]="")
-# declare -A test96=( [titre]="Simple : Division with 3 arguments" [fichier]="test/Functional/Simple/bu_:arity3.scm" [exitcode]="84" [output]="")
-# declare -A test97=( [titre]="Simple : Division with arithmetic expressions" [fichier]="test/Functional/Simple/bu_:expr1.scm" [exitcode]="0" [output]="2")
-# declare -A test98=( [titre]="Simple : Division of boolean with boolean" [fichier]="test/Functional/Simple/bu_:boolbool.scm" [exitcode]="84" [output]="")
+#Logical
+declare -A test_logical_and_true_ok=([titre]="Logical : && true" [fichier]="test/Functional/Logical/and_true_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_logical_and_false_ok=([titre]="Logical : && false" [fichier]="test/Functional/Logical/and_false_ok.npy" [exitcode]="0" [output]="False")
+declare -A test_logical_or_true_ok=([titre]="Logical : || true" [fichier]="test/Functional/Logical/or_true_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_logical_or_false_ok=([titre]="Logical : || false" [fichier]="test/Functional/Logical/or_false_ok.npy" [exitcode]="0" [output]="False")
+declare -A test_logical_not_ok=([titre]="Logical : !" [fichier]="test/Functional/Logical/not_ok.npy" [exitcode]="0" [output]="False")
+declare -A test_logical_compose_with_comparisons_ok=([titre]="Logical : compose with comparisons" [fichier]="test/Functional/Logical/compose_with_comparisons_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_logical_short_circuit_and_ok=([titre]="Logical : short-circuit &&" [fichier]="test/Functional/Logical/short_circuit_and_ok.npy" [exitcode]="0" [output]="False")
+declare -A test_logical_short_circuit_or_ok=([titre]="Logical : short-circuit ||" [fichier]="test/Functional/Logical/short_circuit_or_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_logical_not_type_error=([titre]="Logical : ! type error" [fichier]="test/Functional/Logical/not_type_error.npy" [exitcode]="84" [output]="")
+declare -A test_logical_and_type_error=([titre]="Logical : && type error" [fichier]="test/Functional/Logical/and_type_error.npy" [exitcode]="84" [output]="")
 
-# # Simple : Builtin mod
-# declare -A test99=( [titre]="Simple : Simple mod" [fichier]="test/Functional/Simple/bu_mod1.scm" [exitcode]="0" [output]="1")
-# declare -A test100=( [titre]="Simple : mod with negative dividend" [fichier]="test/Functional/Simple/bu_mod2.scm" [exitcode]="0" [output]="1")
-# declare -A test101=( [titre]="Simple : mod with negative divisor" [fichier]="test/Functional/Simple/bu_mod3.scm" [exitcode]="0" [output]="-1")
-# declare -A test102=( [titre]="Simple : mod with two negative numbers" [fichier]="test/Functional/Simple/bu_mod4.scm" [exitcode]="0" [output]="-1")
-# declare -A test103=( [titre]="Simple : mod with zero dividend" [fichier]="test/Functional/Simple/bu_mod5.scm" [exitcode]="0" [output]="0")
-# declare -A test104=( [titre]="Simple : mod by zero" [fichier]="test/Functional/Simple/bu_mod6.scm" [exitcode]="84" [output]="")
-# declare -A test105=( [titre]="Simple : mod boolean with integer" [fichier]="test/Functional/Simple/bu_mod7.scm" [exitcode]="84" [output]="")
-# declare -A test106=( [titre]="Simple : mod integer with boolean" [fichier]="test/Functional/Simple/bu_mod8.scm" [exitcode]="84" [output]="")
-# declare -A test107=( [titre]="Simple : mod string with integer" [fichier]="test/Functional/Simple/bu_mod9.scm" [exitcode]="84" [output]="")
-# declare -A test108=( [titre]="Simple : mod integer with string" [fichier]="test/Functional/Simple/bu_mod10.scm" [exitcode]="84" [output]="")
-# declare -A test109=( [titre]="Simple : mod with 0 arguments" [fichier]="test/Functional/Simple/bu_mod11.scm" [exitcode]="84" [output]="")
-# declare -A test110=( [titre]="Simple : mod with 1 argument" [fichier]="test/Functional/Simple/bu_mod12.scm" [exitcode]="84" [output]="")
-# declare -A test111=( [titre]="Simple : mod with 3 arguments" [fichier]="test/Functional/Simple/bu_mod13.scm" [exitcode]="84" [output]="")
-# declare -A test112=( [titre]="Simple : mod with arithmetic expressions" [fichier]="test/Functional/Simple/bu_mod14.scm" [exitcode]="0" [output]="1")
-# declare -A test113=( [titre]="Simple : mod boolean with boolean" [fichier]="test/Functional/Simple/bu_mod15.scm" [exitcode]="84" [output]="")
+#Conditions
+declare -A test_conditions_if_true_ok=([titre]="Conditions : if true" [fichier]="test/Functional/Conditions/if_true_ok.npy" [exitcode]="0" [output]="1")
+declare -A test_conditions_if_false_ok=([titre]="Conditions : if false" [fichier]="test/Functional/Conditions/if_false_ok.npy" [exitcode]="0" [output]="2")
+declare -A test_conditions_if_else_ok=([titre]="Conditions : if else" [fichier]="test/Functional/Conditions/if_else_ok.npy" [exitcode]="0" [output]="2")
+declare -A test_conditions_else_if_chain_ok=([titre]="Conditions : else if chain" [fichier]="test/Functional/Conditions/else_if_chain_ok.npy" [exitcode]="0" [output]="B")
+declare -A test_conditions_nested_if_ok=([titre]="Conditions : nested if" [fichier]="test/Functional/Conditions/nested_if_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_conditions_block_scope_ok=([titre]="Conditions : block scope" [fichier]="test/Functional/Conditions/block_scope_ok.npy" [exitcode]="0" [output]="1")
+declare -A test_conditions_if_condition_type_error=([titre]="Conditions : if condition type error" [fichier]="test/Functional/Conditions/if_condition_type_error.npy" [exitcode]="84" [output]="")
+declare -A test_conditions_scope_outside_block_error=([titre]="Conditions : scope outside block error" [fichier]="test/Functional/Conditions/scope_outside_block_error.npy" [exitcode]="84" [output]="")
 
-# # Simple : Conditional expressions
-# declare -A test114=( [titre]="Simple : if true" [fichier]="test/Functional/Simple/if_simple_true.scm" [exitcode]="0" [output]="1")
-# declare -A test115=( [titre]="Simple : if false" [fichier]="test/Functional/Simple/if_simple_false.scm" [exitcode]="0" [output]="2")
-# declare -A test116=( [titre]="Simple : if with eq? true" [fichier]="test/Functional/Simple/if_eq_true.scm" [exitcode]="0" [output]="10")
-# declare -A test117=( [titre]="Simple : if with eq? false" [fichier]="test/Functional/Simple/if_eq_false.scm" [exitcode]="0" [output]="20")
-# declare -A test118=( [titre]="Simple : nested if in then branch" [fichier]="test/Functional/Simple/if_nested_then.scm" [exitcode]="0" [output]="2")
-# declare -A test119=( [titre]="Simple : nested if in else branch" [fichier]="test/Functional/Simple/if_nested_else.scm" [exitcode]="0" [output]="2")
-# declare -A test120=( [titre]="Simple : if true does not evaluate else" [fichier]="test/Functional/Simple/if_short_circuit_else.scm" [exitcode]="0" [output]="1")
-# declare -A test121=( [titre]="Simple : if false does not evaluate then" [fichier]="test/Functional/Simple/if_short_circuit_then.scm" [exitcode]="0" [output]="1")
-# declare -A test122=( [titre]="Simple : if with 2 arguments" [fichier]="test/Functional/Simple/if_arity2.scm" [exitcode]="84" [output]="")
-# declare -A test123=( [titre]="Simple : if with 1 argument" [fichier]="test/Functional/Simple/if_arity1.scm" [exitcode]="84" [output]="")
-# declare -A test124=( [titre]="Simple : if with 4 arguments" [fichier]="test/Functional/Simple/if_arity4.scm" [exitcode]="84" [output]="")
-# declare -A test125=( [titre]="Simple : if with non boolean condition" [fichier]="test/Functional/Simple/if_non_boolean_condition.scm" [exitcode]="0" [output]="2")
-# declare -A test126=( [titre]="Simple : if with non boolean condition (neg)" [fichier]="test/Functional/Simple/if_non_boolean_condition_neg.scm" [exitcode]="0" [output]="2")
+#Loops
+declare -A test_loops_while_basic_ok=([titre]="Loops : while basic" [fichier]="test/Functional/Loops/while_basic_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_loops_while_zero_iter_ok=([titre]="Loops : while zero iter" [fichier]="test/Functional/Loops/while_zero_iter_ok.npy" [exitcode]="0" [output]="0")
+declare -A test_loops_for_basic_ok=([titre]="Loops : for basic sum" [fichier]="test/Functional/Loops/for_basic_sum_ok.npy" [exitcode]="0" [output]="6")
+declare -A test_loops_for_side_effect_update_ok=([titre]="Loops : for side effect update" [fichier]="test/Functional/Loops/for_side_effect_update_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_loops_nested_loops_ok=([titre]="Loops : nested loops" [fichier]="test/Functional/Loops/nested_loops_ok.npy" [exitcode]="0" [output]="4")
+declare -A test_loops_while_condition_type_error=([titre]="Loops : while condition type error" [fichier]="test/Functional/Loops/while_condition_type_error.npy" [exitcode]="84" [output]="")
+declare -A test_loops_for_condition_type_error=([titre]="Loops : for condition type error" [fichier]="test/Functional/Loops/for_condition_type_error.npy" [exitcode]="84" [output]="")
+declare -A test_loops_for_update_type_error=([titre]="Loops : for update type error" [fichier]="test/Functional/Loops/for_update_type_error.npy" [exitcode]="84" [output]="")
 
-# # Simple : define
-# declare -A test127=( [titre]="Simple : define variable" [fichier]="test/Functional/Simple/define1.scm" [exitcode]="0" [output]="42")
-# declare -A test128=( [titre]="Simple : redefine variable" [fichier]="test/Functional/Simple/define2.scm" [exitcode]="0" [output]="2")
-# declare -A test129=( [titre]="Simple : define with expression" [fichier]="test/Functional/Simple/define3.scm" [exitcode]="0" [output]="3")
-# declare -A test130=( [titre]="Simple : define lambda and call" [fichier]="test/Functional/Simple/define4.scm" [exitcode]="0" [output]="5")
-# declare -A test131=( [titre]="Simple : define function and call" [fichier]="test/Functional/Simple/define5.scm" [exitcode]="0" [output]="5")
-# declare -A test132=( [titre]="Simple : use variable before define" [fichier]="test/Functional/Simple/define6.scm" [exitcode]="84" [output]="")
-# declare -A test133=( [titre]="Simple : define with no value" [fichier]="test/Functional/Simple/define7.scm" [exitcode]="84" [output]="")
-# declare -A test134=( [titre]="Simple : define with too many arguments" [fichier]="test/Functional/Simple/define8.scm" [exitcode]="84" [output]="")
-# declare -A test135=( [titre]="Simple : define with non symbol name" [fichier]="test/Functional/Simple/define9.scm" [exitcode]="84" [output]="")
-# declare -A test136=( [titre]="Simple : multiple defines used in expression" [fichier]="test/Functional/Simple/define10.scm" [exitcode]="0" [output]="3")
+#Functions
+declare -A test_functions_return_int_ok=([titre]="Functions : return int" [fichier]="test/Functional/Functions/return_int_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_functions_void_implicit_ok=([titre]="Functions : void implicit" [fichier]="test/Functional/Functions/void_implicit_ok.npy" [exitcode]="0" [output]="Hi")
+declare -A test_functions_multiple_args_ok=([titre]="Functions : multiple args" [fichier]="test/Functional/Functions/multiple_args_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_functions_call_in_expression_ok=([titre]="Functions : call in expression" [fichier]="test/Functional/Functions/call_in_expression_ok.npy" [exitcode]="0" [output]="45")
+declare -A test_functions_wrong_arity=([titre]="Functions : wrong arity" [fichier]="test/Functional/Functions/wrong_arity.npy" [exitcode]="84" [output]="")
+declare -A test_functions_wrong_arg_type=([titre]="Functions : wrong arg type" [fichier]="test/Functional/Functions/wrong_arg_type.npy" [exitcode]="84" [output]="")
+declare -A test_functions_return_type_mismatch=([titre]="Functions : return type mismatch" [fichier]="test/Functional/Functions/return_type_mismatch.npy" [exitcode]="84" [output]="")
+declare -A test_functions_missing_ret_in_nonvoid=([titre]="Functions : missing ret in nonvoid" [fichier]="test/Functional/Functions/missing_ret_in_nonvoid.npy" [exitcode]="84" [output]="")
 
-# # Simple : Named functions
-# declare -A test137=( [titre]="Simple : Named function simple add" [fichier]="test/Functional/Simple/named_fun1.scm" [exitcode]="0" [output]="3")
-# declare -A test138=( [titre]="Simple : Named function zero arguments" [fichier]="test/Functional/Simple/named_fun2.scm" [exitcode]="0" [output]="42")
-# declare -A test139=( [titre]="Simple : Named function one argument" [fichier]="test/Functional/Simple/named_fun3.scm" [exitcode]="0" [output]="5")
-# declare -A test140=( [titre]="Simple : Named function recursion" [fichier]="test/Functional/Simple/named_fun4.scm" [exitcode]="0" [output]="120")
-# declare -A test141=( [titre]="Simple : Named function called with too few arguments" [fichier]="test/Functional/Simple/named_fun5.scm" [exitcode]="84" [output]="")
-# declare -A test142=( [titre]="Simple : Named function called with too many arguments" [fichier]="test/Functional/Simple/named_fun6.scm" [exitcode]="84" [output]="")
-# declare -A test143=( [titre]="Simple : Named functions calling each other" [fichier]="test/Functional/Simple/named_fun7.scm" [exitcode]="0" [output]="9")
-# declare -A test144=( [titre]="Simple : Named function with non symbol name" [fichier]="test/Functional/Simple/named_fun8.scm" [exitcode]="84" [output]="")
+#Lambda
+declare -A test_lambdas_basic_multiply_ok=([titre]="Lambdas : basic multiply" [fichier]="test/Functional/Lambdas/basic_multiply_ok.npy" [exitcode]="0" [output]="12")
+declare -A test_lambdas_capture_var_ok=([titre]="Lambdas : capture var" [fichier]="test/Functional/Lambdas/capture_var_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_lambdas_return_used_in_expr_ok=([titre]="Lambdas : used in expression" [fichier]="test/Functional/Lambdas/used_in_expression_ok.npy" [exitcode]="0" [output]="45")
+declare -A test_lambdas_nested_call_ok=([titre]="Lambdas : nested call" [fichier]="test/Functional/Lambdas/nested_call_ok.npy" [exitcode]="0" [output]="16")
+declare -A test_lambdas_wrong_arity=([titre]="Lambdas : wrong arity" [fichier]="test/Functional/Lambdas/wrong_arity.npy" [exitcode]="84" [output]="")
+declare -A test_lambdas_wrong_arg_type=([titre]="Lambdas : wrong arg type" [fichier]="test/Functional/Lambdas/wrong_arg_type.npy" [exitcode]="84" [output]="")
+declare -A test_lambdas_non_callable_used_as_func=([titre]="Lambdas : non callable used as func" [fichier]="test/Functional/Lambdas/non_callable_used_as_func.npy" [exitcode]="84" [output]="")
 
-# # Simple : Lambdas
-# declare -A test145=( [titre]="Simple : lambda value" [fichier]="test/Functional/Simple/lambda1.scm" [exitcode]="0" [output]="#\<procedure\>") 
-# declare -A test146=( [titre]="Simple : lambda call with 2 arguments" [fichier]="test/Functional/Simple/lambda2.scm" [exitcode]="0" [output]="5")
-# declare -A test147=( [titre]="Simple : lambda with no arguments" [fichier]="test/Functional/Simple/lambda3.scm" [exitcode]="0" [output]="42")
-# declare -A test148=( [titre]="Simple : lambda defined then called" [fichier]="test/Functional/Simple/lambda4.scm" [exitcode]="0" [output]="5")
-# declare -A test149=( [titre]="Simple : lambda called with too few arguments" [fichier]="test/Functional/Simple/lambda5.scm" [exitcode]="84" [output]="")
-# declare -A test150=( [titre]="Simple : lambda called with too many arguments" [fichier]="test/Functional/Simple/lambda6.scm" [exitcode]="84" [output]="")
-# declare -A test151=( [titre]="Simple : lambda with invalid parameter list" [fichier]="test/Functional/Simple/lambda7.scm" [exitcode]="84" [output]="")
+#Struct
+declare -A test_structs_basic_new_access_ok=([titre]="Structs : basic new + access" [fichier]="test/Functional/Structs/basic_new_access_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_structs_assign_struct_to_var_ok=([titre]="Structs : assign struct to var" [fichier]="test/Functional/Structs/assign_struct_to_var_ok.npy" [exitcode]="0" [output]="7")
+declare -A test_structs_nested_struct_ok=([titre]="Structs : nested struct" [fichier]="test/Functional/Structs/nested_struct_ok.npy" [exitcode]="0" [output]="9")
+declare -A test_structs_multiple_fields_ok=([titre]="Structs : multiple fields" [fichier]="test/Functional/Structs/multiple_fields_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_structs_missing_field_error=([titre]="Structs : missing field" [fichier]="test/Functional/Structs/missing_field_error.npy" [exitcode]="84" [output]="")
+declare -A test_structs_extra_field_error=([titre]="Structs : extra field" [fichier]="test/Functional/Structs/extra_field_error.npy" [exitcode]="84" [output]="")
+declare -A test_structs_wrong_field_type_error=([titre]="Structs : wrong field type" [fichier]="test/Functional/Structs/wrong_field_type_error.npy" [exitcode]="84" [output]="")
+declare -A test_structs_unknown_field_access_error=([titre]="Structs : unknown field access" [fichier]="test/Functional/Structs/unknown_field_access_error.npy" [exitcode]="84" [output]="")
 
-# # Simple : 64-bit integers
-# declare -A test152=( [titre]="Simple : max 64-bit integer literal" [fichier]="test/Functional/Simple/int64_max.scm" [exitcode]="0" [output]="9223372036854775807")
-# declare -A test153=( [titre]="Simple : min 64-bit integer literal" [fichier]="test/Functional/Simple/int64_min.scm" [exitcode]="0" [output]="-9223372036854775808")
-# declare -A test154=( [titre]="Simple : addition with large positive integers" [fichier]="test/Functional/Simple/int64_add_pos.scm" [exitcode]="0" [output]="9223372036854775807")
-# declare -A test155=( [titre]="Simple : addition with large negative integers" [fichier]="test/Functional/Simple/int64_add_neg.scm" [exitcode]="0" [output]="-9223372036854775808")
-# declare -A test156=( [titre]="Simple : multiplication with large integers" [fichier]="test/Functional/Simple/int64_mul.scm" [exitcode]="0" [output]="9223372030926249001")
-# declare -A test157=( [titre]="Simple : div with large integers" [fichier]="test/Functional/Simple/int64_div.scm" [exitcode]="0" [output]="4611686018427387903")
-# declare -A test158=( [titre]="Simple : mod with large integers" [fichier]="test/Functional/Simple/int64_mod.scm" [exitcode]="0" [output]="6")
-# declare -A test159=( [titre]="Simple : list builtin" [fichier]="test/Functional/Simple/bu_list1.scm" [exitcode]="0" [output]="(1 2 3)")
-# declare -A test160=( [titre]="Simple : car builtin" [fichier]="test/Functional/Simple/bu_list2.scm" [exitcode]="0" [output]="1")
-# declare -A test161=( [titre]="Simple : cdr builtin" [fichier]="test/Functional/Simple/bu_list3.scm" [exitcode]="0" [output]="(2 3)")
-
-# # Advanced :
-# declare -A test200=( [titre]="Advanced : gcd + fact + lambda" [fichier]="test/Functional/Advanced/advanced1.scm" [exitcode]="0" [output]="18")
-# declare -A test201=( [titre]="Advanced : sign, clamp, poly" [fichier]="test/Functional/Advanced/advanced2.scm" [exitcode]="0" [output]="37")
-# declare -A test202=( [titre]="Advanced : sum of primes with named functions" [fichier]="test/Functional/Advanced/advanced_named1.scm" [exitcode]="0" [output]="77")
-# declare -A test203=( [titre]="Advanced : mixed named functions and lambda" [fichier]="test/Functional/Advanced/advanced_named2.scm" [exitcode]="0" [output]="-5")
+#Builtins
+declare -A test_builtins_print_int_ok=([titre]="Builtins : print int" [fichier]="test/Functional/Builtins/print_int_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_builtins_print_bool_ok=([titre]="Builtins : print bool" [fichier]="test/Functional/Builtins/print_bool_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_builtins_print_string_ok=([titre]="Builtins : print string" [fichier]="test/Functional/Builtins/print_string_ok.npy" [exitcode]="0" [output]="Noopy")
+declare -A test_builtins_print_list_int_ok=([titre]="Builtins : print [int] (observe)" [fichier]="test/Functional/Builtins/print_list_int_ok.npy" [exitcode]="0" [output]="")
+declare -A test_builtins_print_nested_list_ok=([titre]="Builtins : print [[int]] (observe)" [fichier]="test/Functional/Builtins/print_nested_list_ok.npy" [exitcode]="0" [output]="")
+declare -A test_builtins_print_struct_ok=([titre]="Builtins : print struct (observe)" [fichier]="test/Functional/Builtins/print_struct_ok.npy" [exitcode]="0" [output]="")
+declare -A test_builtins_print_void_ok=([titre]="Builtins : print void (observe)" [fichier]="test/Functional/Builtins/print_void_ok.npy" [exitcode]="0" [output]="")
 
 
-# # Test func
-# RED="\e[31m"
-# GREEN="\e[32m"
-# YELLOW="\e[33m"
-# BLUE="\e[34m"
-# BOLD="\e[1m"
-# RESET="\e[0m"
+# Test func
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+BLUE="\e[34m"
+BOLD="\e[1m"
+RESET="\e[0m"
 
-# run_test() {
-#     local test_name="$1"
-#     declare -n test="$test_name"
+run_test() {
+    local test_name="$1"
+    declare -n test="$test_name"
 
-#     local titre="${test[titre]}"
-#     local fichier="${test[fichier]}"
-#     local expected_code="${test[exitcode]}"
-#     local expected_output="${test[output]}"
+    local titre="${test[titre]}"
+    local fichier="${test[fichier]}"
+    local expected_code="${test[exitcode]}"
+    local expected_output="${test[output]}"
 
-#     output=$(./glados < "$fichier" 2>/dev/null)
-#     ret=$?
-#     output=${output%$'\n'}
+    output=$(./glados < "$fichier" 2>/dev/null)
+    ret=$?
+    output=${output%$'\n'}
 
-#     local has_error=0
-#     local err_msg=""
+    local has_error=0
+    local err_msg=""
 
-#     if [[ "$ret" -ne "$expected_code" ]]; then
-#         has_error=1
-#         err_msg+="Exit code attendu : $expected_code\n"
-#         err_msg+="Exit code obtenu : $ret\n"
-#     fi
+    if [[ "$ret" -ne "$expected_code" ]]; then
+        has_error=1
+        err_msg+="Exit code attendu : $expected_code\n"
+        err_msg+="Exit code obtenu : $ret\n"
+    fi
 
-#     if [[ -n "$expected_output" ]]; then
-#         if [[ "$output" != "$expected_output" ]]; then
-#             has_error=1
-#             err_msg+="Output attendu : '$expected_output'\n"
-#             err_msg+="Output obtenu  : '$output'\n"
-#         fi
-#     fi
+    if [[ -n "$expected_output" ]]; then
+        if [[ "$output" != "$expected_output" ]]; then
+            has_error=1
+            err_msg+="Output attendu : '$expected_output'\n"
+            err_msg+="Output obtenu  : '$output'\n"
+        fi
+    fi
 
-#     if [[ $has_error -eq 0 ]]; then
-#         echo -e "[${GREEN}OK${RESET}] ${titre}"
-#         return 0 
-#     else
-#         echo -e "[${RED}KO${RESET}] ${titre}"
-#         echo -e "${YELLOW}----------------------------------------${RESET}"
-#         echo -e "$err_msg" | sed 's/^/    /'
-#         echo -e "${YELLOW}----------------------------------------${RESET}"
-#         return 1
-#     fi
-# }
+    if [[ $has_error -eq 0 ]]; then
+        echo -e "[${GREEN}OK${RESET}] ${titre}"
+        return 0 
+    else
+        echo -e "[${RED}KO${RESET}] ${titre}"
+        echo -e "${YELLOW}----------------------------------------${RESET}"
+        echo -e "$err_msg" | sed 's/^/    /'
+        echo -e "${YELLOW}----------------------------------------${RESET}"
+        return 1
+    fi
+}
 
-# run_all_tests() {
-# local tests=(
-#     test1 test2 test3 test4 test5
-#     test6 test7 test8 test9 test10
-#     test11 test12 test13 test14 test15
+run_all_tests() {
+local tests=(
+  # Basics
+  test_basics_import_simple
+  test_basics_import_function
+  test_basics_import_multiple
+  test_basics_import_missing_file
+  test_basics_import_symbol_visibility
+  test_basics_import_unused
 
-#     test16 test17 test18 test19 test20
-#     test21 test22 test23 test24
-#     test27 test28
+  # Syntax
+  test_syntax_semicolon_ok
+  test_syntax_semicolon_missing
+  test_syntax_block_ok
+  test_syntax_block_missing
+  test_syntax_if_parentheses_missing
+  test_syntax_while_parentheses_missing
 
-#     test29 test30 test31 test32 test33
-#     test34 test35 test36 test37 test38
-#     test39 test40 test41
+  # Declarations
+  test_declarations_infer_int_ok
+  test_declarations_explicit_int_ok
+  test_declarations_infer_bool_ok
+  test_declarations_explicit_bool_ok
+  test_declarations_void_declaration_ok
+  test_declarations_explicit_init_type_mismatch
+  test_declarations_infer_then_assign_wrong_type
+  test_declarations_explicit_then_assign_wrong_type
+  test_declarations_bool_then_assign_int
 
-#     test42 test43 test44 test45 test46
-#     test47 test48 test49 test50 test51
-#     test52 test53
+  # Assign
+  test_assign_reassign_int_ok
+  test_assign_reassign_chain_ok
+  test_assign_for_header_init_update_ok
+  test_assign_use_undeclared_var
+  test_assign_reassign_type_mismatch
+  test_assign_for_header_type_mismatch
 
-#     test54 test55 test56 test57 test58
-#     test59 test60 test61 test62 test63
-#     test64
+  # Literals
+  test_literals_int_positive_ok
+  test_literals_int_negative_ok
+  test_literals_bool_true_ok
+  test_literals_bool_false_ok
+  test_literals_void_value_ok
+  test_literals_list_int_ok
+  test_literals_list_nested_ok
+  test_literals_string_sugar_ok
 
-#     test65 test66 test67 test68 test69
-#     test70 test71 test72 test73 test74
-#     test75
+  # Strings
+  test_strings_print_literal_ok
+  test_strings_assign_to_char_list_ok
+  test_strings_pass_to_function_ok
+  test_strings_assign_string_to_int_list
+  test_strings_pass_string_to_wrong_param
 
-#     test76 test77 test78 test79 test80
-#     test81 test82 test83 test84 test85
-#     test86
+  # Lists
+  test_lists_literal_and_index_ok
+  test_lists_index_zero_based_ok
+  test_lists_assign_element_to_var_ok
+  test_lists_nested_index_ok
+  test_lists_inconsistent_literal_type
+  test_lists_nested_inconsistent_type
+  test_lists_index_out_of_bounds
 
-#     test87 test88 test89 test90 test91
-#     test92 test93 test94 test95 test96
-#     test97 test98
+  # Expressions
+  test_expr_add_sub_mul_ok
+  test_expr_div_operator_ok
+  test_expr_div_keyword_ok
+  test_expr_mod_operator_ok
+  test_expr_mod_keyword_ok
+  test_expr_operator_precedence_ok
+  test_expr_division_by_zero
+  test_expr_modulo_by_zero
 
-#     test99 test100 test101 test102 test103
-#     test104 test105 test106 test107 test108
-#     test109 test110 test111 test112 test113
+  # Comparisons
+  test_cmp_eq_true_ok
+  test_cmp_eq_false_ok
+  test_cmp_neq_true_ok
+  test_cmp_lt_ok
+  test_cmp_gt_ok
+  test_cmp_lte_ok
+  test_cmp_gte_ok
+  test_cmp_bool_eq_ok
+  test_cmp_mismatched_types_eq
+  test_cmp_list_eq_disallowed
 
-#     test114 test115 test116 test117 test118
-#     test119 test120 test121 test122 test123
-#     test124 test125 test126
+  # Logical
+  test_logical_and_true_ok
+  test_logical_and_false_ok
+  test_logical_or_true_ok
+  test_logical_or_false_ok
+  test_logical_not_ok
+  test_logical_compose_with_comparisons_ok
+  test_logical_short_circuit_and_ok
+  test_logical_short_circuit_or_ok
+  test_logical_not_type_error
+  test_logical_and_type_error
 
-#     test127 test128 test129 test130 test131
-#     test132 test133 test134 test135 test136
+  # Conditions
+  test_conditions_if_true_ok
+  test_conditions_if_false_ok
+  test_conditions_if_else_ok
+  test_conditions_else_if_chain_ok
+  test_conditions_nested_if_ok
+  test_conditions_block_scope_ok
+  test_conditions_if_condition_type_error
+  test_conditions_scope_outside_block_error
 
-#     test137 test138 test139 test140 test141
-#     test142 test143 test144
+  # Loops
+  test_loops_while_basic_ok
+  test_loops_while_zero_iter_ok
+  test_loops_for_basic_ok
+  test_loops_for_side_effect_update_ok
+  test_loops_nested_loops_ok
+  test_loops_while_condition_type_error
+  test_loops_for_condition_type_error
+  test_loops_for_update_type_error
 
-#     test145 test146 test147 test148 test149 
-#     test150 test151
+  # Functions
+  test_functions_return_int_ok
+  test_functions_void_implicit_ok
+  test_functions_multiple_args_ok
+  test_functions_call_in_expression_ok
+  test_functions_wrong_arity
+  test_functions_wrong_arg_type
+  test_functions_return_type_mismatch
+  test_functions_missing_ret_in_nonvoid
 
-#     test152 test153 test154 test155 test156
-#     test157 test158 test159 test160 test161
+  # Lambdas
+  test_lambdas_basic_multiply_ok
+  test_lambdas_capture_var_ok
+  test_lambdas_return_used_in_expr_ok
+  test_lambdas_nested_call_ok
+  test_lambdas_wrong_arity
+  test_lambdas_wrong_arg_type
+  test_lambdas_non_callable_used_as_func
 
-#     test200 test201 test202 test203
-# )
+  # Structs
+  test_structs_basic_new_access_ok
+  test_structs_assign_struct_to_var_ok
+  test_structs_nested_struct_ok
+  test_structs_multiple_fields_ok
+  test_structs_missing_field_error
+  test_structs_extra_field_error
+  test_structs_wrong_field_type_error
+  test_structs_unknown_field_access_error
+
+  # Builtins
+  test_builtins_print_int_ok
+  test_builtins_print_bool_ok
+  test_builtins_print_string_ok
+  test_builtins_print_list_int_ok
+  test_builtins_print_nested_list_ok
+  test_builtins_print_struct_ok
+  test_builtins_print_void_ok
+)
 
 
 
-#     local total=${#tests[@]}
-#     local passed=0
-#     local failed=0
+    local total=${#tests[@]}
+    local passed=0
+    local failed=0
 
-#     for t in "${tests[@]}"; do
-#         if run_test "$t"; then
-#             ((passed++))
-#         else
-#             failed=1
-#         fi
-#     done
+    for t in "${tests[@]}"; do
+        if run_test "$t"; then
+            ((passed++))
+        else
+            failed=1
+        fi
+    done
 
-#     echo
-#     echo "Résultat : $passed / $total tests OK"
+    echo
+    echo "Résultat : $passed / $total tests OK"
 
-#     return $failed
-# }
+    return $failed
+}
 
-# run_all_tests
-# exit $?
+run_all_tests
+exit $?

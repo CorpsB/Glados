@@ -1,0 +1,12 @@
+struct Vector2 {
+    x: int;
+    y: int;
+}
+
+struct Player {
+    pos: Vector2;
+    hp: int;
+}
+
+pl: Player = new Player { pos: new Vector2 { x: 4, y: 5 }, hp: 10 };
+print(pl.pos.x + pl.pos.y);

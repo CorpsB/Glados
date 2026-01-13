@@ -1,0 +1,5 @@
+func mix(a: int, b: int, c: int) -> int {
+    ret a + b + c;
+}
+
+print(mix(20, 20, 2));
