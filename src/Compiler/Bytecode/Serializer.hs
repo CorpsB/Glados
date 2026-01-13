@@ -149,6 +149,7 @@ serializeInstruction Tail = encodeWord8 0x92
 
 serializeInstruction Print = encodeWord8 0x70
 serializeInstruction Halt = encodeWord8 0x71
+serializeInstruction Exit = encodeWord8 0x72
 serializeInstruction (CheckStack n) =
     encodeWord8 0xFE <>
     encodeInt32BE (fromIntegral n)

@@ -13,13 +13,16 @@ Stability   : stable
 module VM.Instruction.System
     ( instPrint
     , instHalt
+    , instExit
     , instCheckStack
     ) where
 
+import System.Exit (exitWith, ExitCode(..))
 import Control.Monad.State.Strict (liftIO, modify, get)
 import qualified Data.Vector as V
+
 import VM.VMState (VirtualMachine, VMState(..))
-import VM.VMValue (valueToString)
+import VM.VMValue (valueToString, valueToInt)
 import VM.VMStack (stackPop)
 import VM.Bytecode.Reader (readInt32)
 
@@ -59,3 +62,17 @@ instCheckStack = do
         False -> error $ "VM Error: Stack Check Failed (Required: " ++
             show required ++ ", Actual: " ++ show (V.length (vStack vm)) ++ ")"
         True -> return ()
+
+-- | Implements EXIT (Opcode 0x72).
+--
+-- @details
+--   Pops an integer status code from the stack and terminates the process.
+--   Useful for unit testing (exit 84 on failure).
+--
+instExit :: VirtualMachine ()
+instExit = do
+    v <- stackPop
+    let code = valueToInt v
+    case code of
+        0 -> liftIO $ exitWith ExitSuccess
+        _ -> liftIO $ exitWith (ExitFailure code)

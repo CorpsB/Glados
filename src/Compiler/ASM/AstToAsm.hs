@@ -44,6 +44,11 @@ builtinMap = Map.fromList
     , (pack "==", Eq)
     , (pack "<", Lt)
     , (pack "<=", Le)
+    , (pack "print", Print)
+    , (pack "exit", Exit)
+    , (pack "cons", Cons)
+    , (pack "head", Head)
+    , (pack "tail", Tail)
     ]
 
 -- | Pushes an Integer AST value directly to the stack.
