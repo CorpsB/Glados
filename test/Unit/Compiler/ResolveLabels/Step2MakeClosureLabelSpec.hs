@@ -19,7 +19,6 @@ import Compiler.ResolveLabels.Step2MakeClosureLabel (step2MakeClosureLabel)
 spec :: Spec
 spec = describe "Step2MakeClosureLabel" $ do
 
-    -- On récupère la taille réelle pour les calculs de test
     let mcSize = instructionSize (MakeClosure 0 0)
 
     it "resolves a valid forward MakeClosure label" $ do
@@ -31,8 +30,7 @@ spec = describe "Step2MakeClosureLabel" $ do
         let labelMap = Map.fromList [(labelName, targetAddr)]
         let validStarts = Set.fromList [0, 50, 100]
         let currentOut = []
-        
-        -- Offset = Target - (Current + SizeOfMakeClosure)
+
         let expectedOffset = 100 - (50 + mcSize)
         let expectedInstr = MakeClosure expectedOffset captureCount
         let expectedIdx = 50 + mcSize
