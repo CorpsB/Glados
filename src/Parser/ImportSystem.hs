@@ -11,6 +11,7 @@ import Control.Exception (try, IOException)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Text.Megaparsec.Error (errorBundlePretty)
+import Data.List (isSuffixOf)
 import AST.Ast (Ast(..))
 import Parser.Statement (parseALL)
 
@@ -21,31 +22,36 @@ import Parser.Statement (parseALL)
 -- Otherwise, it descends into child nodes (If, While, Func...) to check
 -- for nested imports.
 resolveImports :: [Ast] -> IO (Either String [Ast])
-resolveImports [] = return (Right [])
-resolveImports (node:xs) = do
-    processedHead <- processNode node
+resolveImports asts = resolveImportsRec [] asts
+
+-- | Recursive worker that carries the list of visited files to prevent cycles.
+resolveImportsRec :: [String] -> [Ast] -> IO (Either String [Ast])
+resolveImportsRec _ [] = return (Right [])
+resolveImportsRec visited (node:xs) = do
+    processedHead <- processNode visited node
     case processedHead of
         Left err -> return (Left err)
         Right nodes -> do
-            processedTail <- resolveImports xs
+            processedTail <- resolveImportsRec visited xs
             case processedTail of
                 Left err -> return (Left err)
                 Right tailNodes -> return (Right (nodes ++ tailNodes))
 
--- | Processes an individual node.
+-- | Processes an individual node with cycle detection context.
 -- Returns a list of ASTs (since a single Import can expand into multiple instructions).
-processNode :: Ast -> IO (Either String [Ast])
-processNode (AImport path) = processImport path
-processNode (AList subStmts) = processAList subStmts
-processNode (ADefineFunc name args ret body) = processFunc name args ret body
-processNode (ADefineLambda args body) = processLambda args body
-processNode (AWhile cond body) = processWhile cond body
-processNode (AFor i c u b) = processFor i c u b
-processNode (AIf c t e) = processIf c t e
-processNode (APos l c ast) = processAPos l c ast
-processNode other = return (Right [other])
+processNode :: [String] -> Ast -> IO (Either String [Ast])
+processNode visited (AImport path) = processImport visited path
+processNode visited (AList subStmts) = processAList visited subStmts
+processNode visited (ADefineFunc name args ret body) =
+    processFunc visited name args ret body
+processNode visited (ADefineLambda args body) = processLambda visited args body
+processNode visited (AWhile cond body) = processWhile visited cond body
+processNode visited (AFor i c u b) = processFor visited i c u b
+processNode visited (AIf c t e) = processIf visited c t e
+processNode visited (APos l c ast) = processAPos visited l c ast
+processNode _ other = return (Right [other])
 
--- | Safely reads the content of an import file.
+-- | Reads the content of an import file.
 -- Returns an Either type to handle IO exceptions gracefully.
 readImportFile :: String -> IO (Either String T.Text)
 readImportFile path = do
@@ -56,52 +62,65 @@ readImportFile path = do
         Right txt -> Right txt
 
 -- | Parses the content of an imported file and recursively resolves its imports.
-parseImportContent :: String -> T.Text -> IO (Either String [Ast])
-parseImportContent path content = case parseALL content of
+parseImportContent :: [String] -> String -> T.Text -> IO (Either String [Ast])
+parseImportContent visited path content = case parseALL content of
     Left err -> return (Left ("Parse error in '" ++ path ++ "':\n" ++
         errorBundlePretty err))
-    Right asts -> resolveImports asts
+    Right asts -> resolveImportsRec (path : visited) asts
 
 -- | Process Import Statements.
--- Handles the file reading and parsing logic via helper functions.
-processImport :: T.Text -> IO (Either String [Ast])
-processImport path = do
+-- Checks for:
+-- 1. .npy extension
+-- 2. Circular dependency
+processImport :: [String] -> T.Text -> IO (Either String [Ast])
+processImport visited path =
     let pathStr = T.unpack path
-    content <- readImportFile pathStr
-    case content of
-        Left err -> return (Left err)
-        Right txt -> parseImportContent pathStr txt
+    in if not (".npy" `isSuffixOf` pathStr)
+        then return (Left $ "Import Error: File '" ++ pathStr ++
+            "' must have .npy extension")
+        else processImportLogic visited pathStr
+
+-- | Logic for imports to avoid nested ifs and long functions.
+processImportLogic :: [String] -> String -> IO (Either String [Ast])
+processImportLogic visited pathStr
+    | pathStr `elem` visited = return (Left $ "Circular import detected: " ++
+        pathStr ++ " is already in the import stack " ++ show visited)
+    | otherwise = do
+        content <- readImportFile pathStr
+        case content of
+            Left err -> return (Left err)
+            Right txt -> parseImportContent visited pathStr txt
 
 -- | Process Block Statements.
-processAList :: [Ast] -> IO (Either String [Ast])
-processAList subStmts = do
-    res <- resolveImports subStmts
+processAList :: [String] -> [Ast] -> IO (Either String [Ast])
+processAList visited subStmts = do
+    res <- resolveImportsRec visited subStmts
     case res of
         Left err -> return (Left err)
         Right newStmts -> return (Right [AList newStmts])
 
 -- | Process Function Definitions.
-processFunc :: T.Text -> [(T.Text, T.Text)] -> T.Text -> Ast ->
+processFunc :: [String] -> T.Text -> [(T.Text, T.Text)] -> T.Text -> Ast ->
     IO (Either String [Ast])
-processFunc name args ret body = do
-    res <- processSingleNode body
+processFunc visited name args ret body = do
+    res <- processSingleNode visited body
     case res of
         Left err -> return (Left err)
         Right newBody -> return (Right [ADefineFunc name args ret newBody])
 
 -- | Process Lambda Definitions.
-processLambda :: [T.Text] -> Ast -> IO (Either String [Ast])
-processLambda args body = do
-    res <- processSingleNode body
+processLambda :: [String] -> [T.Text] -> Ast -> IO (Either String [Ast])
+processLambda visited args body = do
+    res <- processSingleNode visited body
     case res of
         Left err -> return (Left err)
         Right newBody -> return (Right [ADefineLambda args newBody])
 
 -- | Process While Loops.
-processWhile :: Ast -> Ast -> IO (Either String [Ast])
-processWhile cond body = do
-    resCond <- processSingleNode cond
-    resBody <- processSingleNode body
+processWhile :: [String] -> Ast -> Ast -> IO (Either String [Ast])
+processWhile visited cond body = do
+    resCond <- processSingleNode visited cond
+    resBody <- processSingleNode visited body
     case (resCond, resBody) of
         (Right newCond, Right newBody) ->
             return (Right [AWhile newCond newBody])
@@ -122,19 +141,19 @@ constructForAst _ = Left
 -- nc: New Condition
 -- nu: New Update
 -- nb: New Body
-processFor :: Ast -> Ast -> Ast -> Ast -> IO (Either String [Ast])
-processFor i c u b = do
-    results <- mapM processSingleNode [i, c, u, b]
+processFor :: [String] -> Ast -> Ast -> Ast -> Ast -> IO (Either String [Ast])
+processFor visited i c u b = do
+    results <- mapM (processSingleNode visited) [i, c, u, b]
     return $ case sequence results of
         Left err -> Left err
         Right list -> constructForAst list
 
 -- | Process If Conditions.
-processIf :: Ast -> Ast -> Ast -> IO (Either String [Ast])
-processIf c t e = do
-    resC <- processSingleNode c
-    resT <- processSingleNode t
-    resE <- processSingleNode e
+processIf :: [String] -> Ast -> Ast -> Ast -> IO (Either String [Ast])
+processIf visited c t e = do
+    resC <- processSingleNode visited c
+    resT <- processSingleNode visited t
+    resE <- processSingleNode visited e
     case (resC, resT, resE) of
         (Right nc, Right nt, Right ne) -> return (Right [AIf nc nt ne])
         (Left err, _, _) -> return (Left err)
@@ -142,9 +161,9 @@ processIf c t e = do
         (_, _, Left err) -> return (Left err)
 
 -- | Process Position Wrappers.
-processAPos :: Int -> Int -> Ast -> IO (Either String [Ast])
-processAPos l c ast = do
-    res <- processNode ast
+processAPos :: [String] -> Int -> Int -> Ast -> IO (Either String [Ast])
+processAPos visited l c ast = do
+    res <- processNode visited ast
     case res of
         Left err -> return (Left err)
         Right [single] -> return (Right [APos l c single])
@@ -155,9 +174,9 @@ processAPos l c ast = do
 -- If an import is placed where a single expression is expected, it is contextual,
 -- but here we assume an import returns nothing (or a list).
 -- To simplify, we take the first element or wrap it.
-processSingleNode :: Ast -> IO (Either String Ast)
-processSingleNode node = do
-    res <- processNode node
+processSingleNode :: [String] -> Ast -> IO (Either String Ast)
+processSingleNode visited node = do
+    res <- processNode visited node
     case res of
         Left err -> return (Left err)
         Right [] -> return (Right AVoid)

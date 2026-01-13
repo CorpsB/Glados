@@ -370,3 +370,56 @@ spec = describe "Import System Resolution" $ do
                         [AIf (ASetVar "first" "auto" (AInteger (I8 1))) AVoid AVoid] -> True
                         _ -> False
                     _ -> False
+    
+    describe "Security & File Extension Checks" $ do
+
+        it "Rejects imports without .npy extension" $ do
+            let input = [AImport (p "script.txt")]
+            result <- resolveImports input
+            
+            result `shouldSatisfy` \case
+                Left err -> "must have .npy extension" `isInfixOf` err
+                _ -> False
+
+        it "Detects circular imports (A -> A)" $ do
+            let fileA = "self_loop.npy"
+            let contentA = "import \"self_loop.npy\";"
+            
+            withTempFile fileA contentA $ do
+                let input = [AImport (p fileA)]
+                result <- resolveImports input
+                
+                result `shouldSatisfy` \case
+                    Left err -> "Circular import detected" `isInfixOf` err 
+                                && "self_loop.npy" `isInfixOf` err
+                    _ -> False
+
+        it "Detects indirect circular imports (A -> B -> A)" $ do
+            let fileA = "cycle_A.npy"
+            let fileB = "cycle_B.npy"
+            
+            let contentA = "import \"cycle_B.npy\";"
+            let contentB = "import \"cycle_A.npy\";"
+            
+            withTempFile fileB contentB $ do
+                withTempFile fileA contentA $ do
+                    let input = [AImport (p fileA)]
+                    result <- resolveImports input
+                    
+                    result `shouldSatisfy` \case
+                        Left err -> "Circular import detected" `isInfixOf` err
+                        _ -> False
+    
+    it "Includes visited stack in circular import error message" $ do
+            let fileName = "stack_trace_check.npy"
+            let content = "import \"stack_trace_check.npy\";"
+            
+            withTempFile fileName content $ do
+                let input = [AImport (p fileName)]
+                result <- resolveImports input
+                
+                result `shouldSatisfy` \case
+                    Left err -> 
+                        " is already in the import stack " `isInfixOf` err
+                        && show [fileName] `isInfixOf` err 
+                    _ -> False
