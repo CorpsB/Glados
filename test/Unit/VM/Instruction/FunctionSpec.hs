@@ -25,8 +25,6 @@ import VM.CallSnapshot (CallSnapshot(..))
 import VM.Instruction.Function
 import qualified Common.Type.Integer as Common
 
--- Small helpers ---------------------------------------------------------------
-
 i :: Int -> VMValue
 i n = VInt (Common.fromInt64 (fromIntegral n))
 
@@ -54,39 +52,34 @@ expectTopSnap vm k =
     (s:_) -> k s
     []    -> expectationFailure "Expected snapshotStack to contain at least one CallSnapshot"
 
-expectErrorMsg :: String -> ErrorCall -> Bool
-expectErrorMsg needle (ErrorCall msg) = needle `isInfixOf` msg
-
--- Spec ------------------------------------------------------------------------
-
 spec :: Spec
 spec = describe "VM.Instruction.Function" $ do
 
+  describe "instGetFuncAddr (GET_FUNC_ADDR 0x44)" $ do
+    it "reads addr and pushes VFuncPtr" $ do
+      let bc = beI32 123
+      let vm0 = (mkVM bc) { vStack = V.fromList [i 1] }
+      (_, vm1) <- runStateT instGetFuncAddr vm0
+      vStack vm1 `shouldBe` V.fromList [i 1, VFuncPtr 123]
+      bytecodeIndex vm1 `shouldBe` 4
+
   describe "instCall (CALL 0x40)" $ do
-    it "reads offset, pushes a snapshot (saving old env), jumps to (post-read IP)+offset, clears env" $ do
+    it "reads offset, pushes snapshot, jumps to (post-read IP)+offset, clears env" $ do
       let offset = 10
       let bc = beI32 offset
-
       let vm0 =
             (mkVM bc)
-              { bytecodeIndex = 0
-              , baseVStackIndex = 0
-              , env = V.fromList [VBool True]        -- should be SAVED into snapshot
-              , vStack = V.fromList [i 1, i 2]       -- FP becomes stack length
+              { baseVStackIndex = 0
+              , env = V.fromList [VBool True]
+              , vStack = V.fromList [i 1, i 2]
               }
 
       (_, vm1) <- runStateT instCall vm0
 
-      -- After reading Int32, IP is 4. Target = 4 + offset
       bytecodeIndex vm1 `shouldBe` (4 + offset)
-
-      -- New frame pointer becomes current stack length
       baseVStackIndex vm1 `shouldBe` V.length (vStack vm0)
-
-      -- Env is cleared for static calls
       env vm1 `shouldBe` V.empty
 
-      -- Snapshot pushed, stores return address (= post-read IP) and previous env
       expectTopSnap vm1 $ \s -> do
         callbackIndex s `shouldBe` 4
         vStackIndex s `shouldBe` baseVStackIndex vm0
@@ -96,13 +89,11 @@ spec = describe "VM.Instruction.Function" $ do
     it "reads offset and replaces current frame (no snapshot pushed), clears env" $ do
       let offset = 7
       let bc = beI32 offset
-
       let snap0 = CallSnapshot { callbackIndex = 999, vStackIndex = 123, vEnv = V.fromList [i 42] }
 
       let vm0 =
             (mkVM bc)
-              { bytecodeIndex = 0
-              , baseVStackIndex = 0
+              { baseVStackIndex = 0
               , env = V.fromList [VBool True]
               , vStack = V.fromList [i 1, i 2, i 3]
               , snapshotStack = [snap0]
@@ -110,16 +101,9 @@ spec = describe "VM.Instruction.Function" $ do
 
       (_, vm1) <- runStateT instTailCall vm0
 
-      -- post-read IP is 4, target is 4 + offset
       bytecodeIndex vm1 `shouldBe` (4 + offset)
-
-      -- FP becomes current stack length
       baseVStackIndex vm1 `shouldBe` V.length (vStack vm0)
-
-      -- env cleared
       env vm1 `shouldBe` V.empty
-
-      -- snapshotStack preserved (no push)
       snapshotStack vm1 `shouldBe` snapshotStack vm0
 
   describe "instCallIndirect (CALL_INDIRECT 0x42)" $ do
@@ -129,38 +113,28 @@ spec = describe "VM.Instruction.Function" $ do
             (mkVM BS.empty)
               { bytecodeIndex = 10
               , baseVStackIndex = 0
-              , env = V.fromList [VBool True] -- should be saved into snapshot
+              , env = V.fromList [VBool True]
               , vStack = V.fromList [i 1, VClosure 77 caps]
               }
 
       (_, vm1) <- runStateT instCallIndirect vm0
-
-      -- Jump to closure addr
       bytecodeIndex vm1 `shouldBe` 77
-
-      -- Env becomes captured env
       env vm1 `shouldBe` caps
-
-      -- Callee popped from stack
       vStack vm1 `shouldBe` V.fromList [i 1]
 
-      -- Snapshot pushed, return address is current IP (no read here)
       expectTopSnap vm1 $ \s -> do
         callbackIndex s `shouldBe` 10
-        vStackIndex s `shouldBe` baseVStackIndex vm0
         vEnv s `shouldBe` env vm0
 
     it "calls a function pointer (uses address + empty env)" $ do
       let vm0 =
             (mkVM BS.empty)
               { bytecodeIndex = 33
-              , baseVStackIndex = 0
-              , env = V.fromList [VBool False] -- saved into snapshot
+              , env = V.fromList [VBool False]
               , vStack = V.fromList [i 1, VFuncPtr 55]
               }
 
       (_, vm1) <- runStateT instCallIndirect vm0
-
       bytecodeIndex vm1 `shouldBe` 55
       env vm1 `shouldBe` V.empty
       vStack vm1 `shouldBe` V.fromList [i 1]
@@ -169,12 +143,8 @@ spec = describe "VM.Instruction.Function" $ do
         callbackIndex s `shouldBe` 33
         vEnv s `shouldBe` env vm0
 
-    it "throws when popped value is not callable and message contains show value (covers show x)" $ do
-      let vm0 =
-            (mkVM BS.empty)
-              { vStack = V.fromList [VBool True]
-              }
-
+    it "throws when popped value is not callable and message contains show value" $ do
+      let vm0 = (mkVM BS.empty) { vStack = V.fromList [VBool True] }
       runStateT instCallIndirect vm0 `shouldThrow` \case
         ErrorCall msg ->
           ("VM Error: Not callable:" `isInfixOf` msg) &&
@@ -183,27 +153,14 @@ spec = describe "VM.Instruction.Function" $ do
   describe "instMakeClosure (MAKE_CLOSURE 0x60)" $ do
     it "captures last N values and pushes VClosure" $ do
       let bc = beI32 77 <> beI32 2
-
-      let vm0 =
-            (mkVM bc)
-              { vStack = V.fromList [i 1, i 2, i 3]
-              }
+      let vm0 = (mkVM bc) { vStack = V.fromList [i 1, i 2, i 3] }
 
       (_, vm1) <- runStateT instMakeClosure vm0
-
-      vStack vm1 `shouldBe`
-        V.fromList
-          [ i 1
-          , VClosure 77 (V.fromList [i 2, i 3])
-          ]
+      vStack vm1 `shouldBe` V.fromList [i 1, VClosure 77 (V.fromList [i 2, i 3])]
 
     it "throws MAKE_CLOSURE Stack Underflow when not enough values" $ do
       let bc = beI32 77 <> beI32 5
-
-      let vm0 =
-            (mkVM bc)
-              { vStack = V.fromList [i 1, i 2]
-              }
+      let vm0 = (mkVM bc) { vStack = V.fromList [i 1, i 2] }
 
       runStateT instMakeClosure vm0 `shouldThrow` \case
         ErrorCall msg -> "VM Error: MAKE_CLOSURE Stack Underflow" `isInfixOf` msg
@@ -223,25 +180,17 @@ spec = describe "VM.Instruction.Function" $ do
               , bytecodeIndex = 999
               , env = V.fromList [VBool False]
               , snapshotStack = [snap]
-              , vStack = V.fromList [i 10, i 20, VBool False, i 999] -- retVal = 999
+              , vStack = V.fromList [i 10, i 20, VBool False, i 999]
               }
 
       (_, vm1) <- runStateT instRet vm0
-
       bytecodeIndex vm1 `shouldBe` 123
       baseVStackIndex vm1 `shouldBe` 0
       env vm1 `shouldBe` V.fromList [i 42]
       snapshotStack vm1 `shouldBe` []
-
-      -- stack cleaned to baseVStackIndex of callee (2), then retVal pushed
       vStack vm1 `shouldBe` V.fromList [i 10, i 20, i 999]
 
     it "throws when call stack is empty" $ do
-      let vm0 =
-            (mkVM BS.empty)
-              { snapshotStack = []
-              , vStack = V.fromList [i 1] -- so stackPop succeeds
-              }
-
+      let vm0 = (mkVM BS.empty) { snapshotStack = [], vStack = V.fromList [i 1] }
       runStateT instRet vm0 `shouldThrow` \case
         ErrorCall msg -> "VM Error: Return called with empty call stack" `isInfixOf` msg

@@ -157,6 +157,8 @@ test-suite glados-unit
       VM.Instruction.StackSpec
       VM.Instruction.SystemSpec
       VM.Instruction.VariableSpec
+      VM.Instruction.ListSpec
+      VM.Instruction.StructSpec
       VM.CallSnapshotSpec
       VM.VMStateSpec
       VM.VMStackSpec

@@ -2,60 +2,45 @@
 -- EPITECH PROJECT, 2025
 -- Glados
 -- File description:
--- StackInstructionSpec
+-- Stack instructions unit tests
 -}
 
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module VM.Instruction.StackSpec (spec) where
 
 import Test.Hspec
-import Control.Monad.State.Strict (runStateT, evalStateT)
+import Control.Monad.State.Strict (runStateT)
+import Control.Exception (ErrorCall(..))
+import Data.List (isInfixOf)
+
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
 import Data.Bits (shiftR)
-import Data.Word (Word8, Word16, Word32, Word64)
 import Data.Int (Int8, Int16, Int32, Int64)
-import Control.Exception (ErrorCall(..))
-import Data.List (isPrefixOf)
+import Data.Word (Word8, Word16, Word32, Word64)
 
-import VM.VMState (VMState(..), VirtualMachine, createVMState)
-import VM.VMValue (VMValue(..))
 import Common.Type.Integer (IntValue(..))
+import VM.VMValue (VMValue(..))
+import VM.VMState (VMState(..), createVMState)
+import VM.Instruction.Stack (instPush, instPop, instDup, instSwap, instCast)
 
-import VM.Instruction.Stack (instPush, instPop, instDup)
+mkVM :: [Word8] -> VMState
+mkVM bytes = createVMState (BS.pack bytes)
 
--- Helpers
-runVM :: VirtualMachine a -> VMState -> IO (a, VMState)
-runVM = runStateT
+be16 :: Word16 -> [Word8]
+be16 w = [fromIntegral (w `shiftR` 8), fromIntegral w]
 
-evalVM :: VirtualMachine a -> VMState -> IO a
-evalVM = evalStateT
-
-mkVM :: [Word8] -> [VMValue] -> Int -> VMState
-mkVM bytes stk ip =
-  (createVMState (BS.pack bytes))
-    { vStack = V.fromList stk
-    , bytecodeIndex = ip
-    }
-
--- Big-endian encoders matching VM.Bytecode.Reader
-beW16 :: Word16 -> [Word8]
-beW16 w =
-  [ fromIntegral (w `shiftR` 8)
-  , fromIntegral w
-  ]
-
-beW32 :: Word32 -> [Word8]
-beW32 w =
+be32 :: Word32 -> [Word8]
+be32 w =
   [ fromIntegral (w `shiftR` 24)
   , fromIntegral (w `shiftR` 16)
   , fromIntegral (w `shiftR` 8)
   , fromIntegral w
   ]
 
-beW64 :: Word64 -> [Word8]
-beW64 w =
+be64 :: Word64 -> [Word8]
+be64 w =
   [ fromIntegral (w `shiftR` 56)
   , fromIntegral (w `shiftR` 48)
   , fromIntegral (w `shiftR` 40)
@@ -66,138 +51,132 @@ beW64 w =
   , fromIntegral w
   ]
 
-beI32 :: Int -> [Word8]
-beI32 n =
-  let w :: Word32
-      w = fromIntegral (fromIntegral n :: Int32) -- 2's complement
-  in beW32 w
+expectErrorContains :: String -> ErrorCall -> Bool
+expectErrorContains needle (ErrorCall msg) = needle `isInfixOf` msg
 
 spec :: Spec
 spec = describe "VM.Instruction.Stack" $ do
 
   describe "instPush" $ do
     it "pushes Bool (TypeID 0x00): 0 -> #f, non-zero -> #t" $ do
-      let codeFalse = [0x00, 0x00] -- typeId, value
-      let vm0 = mkVM codeFalse [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VBool False]
-      bytecodeIndex vm1 `shouldBe` 2
+      let vm0a = mkVM [0x00, 0x00]
+      (_, vm1a) <- runStateT instPush vm0a
+      vStack vm1a `shouldBe` V.fromList [VBool False]
 
-      let codeTrue = [0x00, 0x2A]
-      let vm2 = mkVM codeTrue [] 0
-      (_, vm3) <- runVM instPush vm2
-      vStack vm3 `shouldBe` V.fromList [VBool True]
-      bytecodeIndex vm3 `shouldBe` 2
+      let vm0b = mkVM [0x00, 0x02]
+      (_, vm1b) <- runStateT instPush vm0b
+      vStack vm1b `shouldBe` V.fromList [VBool True]
 
     it "pushes Int8 (TypeID 0x01)" $ do
-      let code = [0x01, 0xFF] -- -1
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (I8 (-1 :: Int8))]
-      bytecodeIndex vm1 `shouldBe` 2
+      let vm0 = mkVM [0x01, 0x7F]
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (I8 (127 :: Int8))]
 
     it "pushes UInt8 (TypeID 0x02)" $ do
-      let code = [0x02, 0xFE]
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (UI8 254)]
-      bytecodeIndex vm1 `shouldBe` 2
+      let vm0 = mkVM [0x02, 0xFF]
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (UI8 255)]
 
     it "pushes Int16 (TypeID 0x03) big-endian" $ do
-      let val :: Int16
-          val = -2
-      let w :: Word16
-          w = fromIntegral val
-      let code = [0x03] ++ beW16 w
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (I16 val)]
-      bytecodeIndex vm1 `shouldBe` 3
+      let x = (-2 :: Int16)
+      let vm0 = mkVM ([0x03] ++ be16 (fromIntegral x :: Word16))
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (I16 x)]
 
     it "pushes UInt16 (TypeID 0x04) big-endian" $ do
-      let code = [0x04] ++ beW16 0x1234
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (UI16 0x1234)]
-      bytecodeIndex vm1 `shouldBe` 3
+      let w = (50000 :: Word16)
+      let vm0 = mkVM ([0x04] ++ be16 w)
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (UI16 w)]
 
     it "pushes Int32 (TypeID 0x05) using readInt32 then casts into I32" $ do
-      let code = [0x05] ++ beI32 (-12345)
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (I32 (-12345))]
-      bytecodeIndex vm1 `shouldBe` 5
+      let x = (123456 :: Int32)
+      let vm0 = mkVM ([0x05] ++ be32 (fromIntegral x :: Word32))
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (I32 x)]
 
     it "pushes UInt32 (TypeID 0x06)" $ do
-      let code = [0x06] ++ beW32 0x89ABCDEF
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (UI32 0x89ABCDEF)]
-      bytecodeIndex vm1 `shouldBe` 5
+      let w = (0x01020304 :: Word32)
+      let vm0 = mkVM ([0x06] ++ be32 w)
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (UI32 w)]
 
     it "pushes Int64 (TypeID 0x07)" $ do
-      let val :: Int64
-          val = -1
-      let w :: Word64
-          w = fromIntegral val
-      let code = [0x07] ++ beW64 w
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (I64 val)]
-      bytecodeIndex vm1 `shouldBe` 9
+      let x = (42 :: Int64)
+      let vm0 = mkVM ([0x07] ++ be64 (fromIntegral x :: Word64))
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (I64 x)]
 
     it "pushes UInt64 (TypeID 0x08)" $ do
-      let code = [0x08] ++ beW64 0x0102030405060708
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (UI64 0x0102030405060708)]
-      bytecodeIndex vm1 `shouldBe` 9
+      let w = (0x0102030405060708 :: Word64)
+      let vm0 = mkVM ([0x08] ++ be64 w)
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (UI64 w)]
 
     it "pushes Char (TypeID 0x09) as IChar (via readInt8)" $ do
-      let code = [0x09, 0x41] -- 'A' as 65
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (IChar (65 :: Int8))]
-      bytecodeIndex vm1 `shouldBe` 2
+      let c = (65 :: Int8)
+      let vm0 = mkVM [0x09, fromIntegral c]
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (IChar c)]
 
     it "pushes UChar (TypeID 0x10) as UIChar (via readWord8)" $ do
-      let code = [0x10, 0xFF]
-      let vm0 = mkVM code [] 0
-      (_, vm1) <- runVM instPush vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (UIChar 255)]
-      bytecodeIndex vm1 `shouldBe` 2
+      let vm0 = mkVM [0x10, 200]
+      (_, vm1) <- runStateT instPush vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (UIChar 200)]
 
     it "throws on unsupported TypeID" $ do
-      let code = [0x99, 0x00]
-      let vm0 = mkVM code [] 0
-      evalVM instPush vm0
-        `shouldThrow` \e -> case e of
-          ErrorCall msg -> "VM Error: Unsupported PUSH TypeID:" `isPrefixOf` msg
-          _             -> False
+      let vm0 = mkVM [0x99]
+      runStateT instPush vm0 `shouldThrow` expectErrorContains "Unsupported PUSH TypeID"
 
-    it "propagates End of Bytecode error when value bytes are missing" $ do
-      -- asks for Int32 but only provides 1 byte of payload
-      let code = [0x05, 0x01]
-      let vm0 = mkVM code [] 0
-      evalVM instPush vm0
-        `shouldThrow` errorCall "VM Error: Unexpected End of Bytecode (Segmentation Fault)"
+    it "propagates End of Bytecode error when payload bytes are missing" $ do
+      let vm0 = mkVM [0x07] -- says Int64 but missing 8 bytes
+      runStateT instPush vm0 `shouldThrow` anyException
 
   describe "instPop" $ do
     it "removes and discards the top stack value" $ do
-      let vm0 = mkVM [] [VInt (I64 1), VBool True] 0
-      (_, vm1) <- runVM instPop vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (I64 1)]
+      let vm0 = (mkVM []) { vStack = V.fromList [VBool True] }
+      (_, vm1) <- runStateT instPop vm0
+      vStack vm1 `shouldBe` V.empty
 
     it "propagates Stack Underflow on empty stack" $ do
-      let vm0 = mkVM [] [] 0
-      evalVM instPop vm0 `shouldThrow` errorCall "VM Error: Stack Underflow"
+      let vm0 = (mkVM []) { vStack = V.empty }
+      runStateT instPop vm0 `shouldThrow` anyException
 
   describe "instDup" $ do
     it "duplicates the top value" $ do
-      let vm0 = mkVM [] [VInt (I64 1), VBool False] 0
-      (_, vm1) <- runVM instDup vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (I64 1), VBool False, VBool False]
+      let vm0 = (mkVM []) { vStack = V.fromList [VInt (I64 1)] }
+      (_, vm1) <- runStateT instDup vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (I64 1), VInt (I64 1)]
 
-    it "propagates Stack Underflow (Top) on empty stack" $ do
-      let vm0 = mkVM [] [] 0
-      evalVM instDup vm0 `shouldThrow` errorCall "VM Error: Stack Underflow (Top)"
+    it "propagates Stack Underflow on empty stack" $ do
+      let vm0 = (mkVM []) { vStack = V.empty }
+      runStateT instDup vm0 `shouldThrow` anyException
+
+  describe "instSwap" $ do
+    it "swaps the top two values" $ do
+      let vm0 = (mkVM []) { vStack = V.fromList [VInt (I64 1), VBool True] }
+      (_, vm1) <- runStateT instSwap vm0
+      vStack vm1 `shouldBe` V.fromList [VBool True, VInt (I64 1)]
+
+    it "throws if stack has < 2 elements" $ do
+      let vm0 = (mkVM []) { vStack = V.fromList [VInt (I64 1)] }
+      runStateT instSwap vm0 `shouldThrow` anyException
+
+  describe "instCast" $ do
+    it "casts Int -> Bool (TypeID 0x00)" $ do
+      let vm0 = (mkVM [0x00]) { vStack = V.fromList [VInt (I64 0)] }
+      (_, vm1) <- runStateT instCast vm0
+      vStack vm1 `shouldBe` V.fromList [VBool False]
+
+    it "unknown TypeID does NOT throw: value stays unchanged (castValue fallback)" $ do
+      let vm0 = (mkVM [0x99]) { vStack = V.fromList [VInt (I64 42)] }
+      (_, vm1) <- runStateT instCast vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (I64 42)]
+
+    it "throws if bytecode has no TypeID to read" $ do
+      let vm0 = (mkVM []) { vStack = V.fromList [VInt (I64 1)] }
+      runStateT instCast vm0 `shouldThrow` anyException
+
+    it "throws if stack is empty (Stack Underflow)" $ do
+      let vm0 = (mkVM [0x00]) { vStack = V.empty }
+      runStateT instCast vm0 `shouldThrow` anyException

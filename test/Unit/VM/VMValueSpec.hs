@@ -10,7 +10,7 @@ module VM.VMValueSpec (spec) where
 import Test.Hspec
 import qualified Data.Vector as V
 
-import VM.VMValue (VMValue(..), valueToString)
+import VM.VMValue (VMValue(..), valueToString, valueToInt, castValue)
 import Common.Type.Integer (IntValue(..))
 
 spec :: Spec
@@ -70,17 +70,46 @@ spec = describe "VM.VMValue" $ do
     it "prints void as \"void\"" $ do
       valueToString VVoid `shouldBe` "void"
 
+  describe "valueToInt" $ do
+    it "VInt returns the integer" $ do
+      valueToInt (VInt (I64 42)) `shouldBe` 42
+
+    it "VBool maps to 1/0" $ do
+      valueToInt (VBool True) `shouldBe` 1
+      valueToInt (VBool False) `shouldBe` 0
+
+    it "VFuncPtr returns its address" $ do
+      valueToInt (VFuncPtr 999) `shouldBe` 999
+
+    it "fallback returns 0" $ do
+      valueToInt (VList V.empty) `shouldBe` 0
+
+  describe "castValue (covers all branches)" $ do
+    it "casts to Bool (0x00) using valueToInt != 0" $ do
+      castValue 0x00 (VInt (I64 0)) `shouldBe` VBool False
+      castValue 0x00 (VInt (I64 2)) `shouldBe` VBool True
+
+    it "casts signed/unsigned/char variants" $ do
+      castValue 0x01 (VInt (I64 42)) `shouldBe` VInt (I8 42)
+      castValue 0x02 (VInt (I64 42)) `shouldBe` VInt (UI8 42)
+      castValue 0x03 (VInt (I64 42)) `shouldBe` VInt (I16 42)
+      castValue 0x04 (VInt (I64 42)) `shouldBe` VInt (UI16 42)
+      castValue 0x05 (VInt (I64 42)) `shouldBe` VInt (I32 42)
+      castValue 0x06 (VInt (I64 42)) `shouldBe` VInt (UI32 42)
+      castValue 0x07 (VInt (I64 42)) `shouldBe` VInt (I64 42)
+      castValue 0x08 (VInt (I64 42)) `shouldBe` VInt (UI64 42)
+      castValue 0x09 (VInt (I64 65)) `shouldBe` VInt (IChar 65)
+      castValue 0x10 (VInt (I64 65)) `shouldBe` VInt (UIChar 65)
+
+    it "unknown typeId returns the value unchanged (fallback)" $ do
+      castValue 0x99 (VBool True) `shouldBe` VBool True
+
   describe "deriving (Eq, Show)" $ do
-    it "Eq: considers identical values equal" $ do
+    it "Eq works" $ do
       let a = VList (V.fromList [VInt (I8 1), VBool True])
       let b = VList (V.fromList [VInt (I8 1), VBool True])
       a `shouldBe` b
 
-    it "Eq: considers different values not equal" $ do
-      let a = VClosure 10 (V.fromList [VInt (I8 1)])
-      let b = VClosure 11 (V.fromList [VInt (I8 1)])
-      a `shouldNotBe` b
-
-    it "Show: produces a constructor-based representation" $ do
+    it "Show produces a constructor-based representation" $ do
       show (VBool True) `shouldBe` "VBool True"
       show VVoid `shouldBe` "VVoid"

@@ -19,13 +19,15 @@ import qualified Data.Vector as V
 
 import VM.VMState (VMState(..), createVMState)
 import VM.VMValue (VMValue(..))
-import Common.Type.Integer (IntValue(..)) -- ✅ FIX I64
+import Common.Type.Integer (IntValue(..))
 
 import VM.Instruction.Variable
   ( instLoadLocal
   , instStoreLocal
   , instLoadCapture
   , instStoreCapture
+  , instLoadGlobal
+  , instStoreGlobal
   )
 
 beI32 :: Int -> [Word8]
@@ -51,6 +53,42 @@ expectVMErrorContains action needle = do
 spec :: Spec
 spec = describe "VM.Instruction.Variable" $ do
 
+  describe "instLoadGlobal" $ do
+    it "pushes globalEnv[idx] onto the stack" $ do
+      let vm0 =
+            (mkVM (beI32 1))
+              { globalEnv = V.fromList [VBool False, VInt (I64 42)]
+              , vStack = V.fromList [VInt (I64 1)]
+              }
+      vm1 <- execStateT instLoadGlobal vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (I64 1), VInt (I64 42)]
+
+    it "throws out of bounds" $ do
+      let vm0 =
+            (mkVM (beI32 3))
+              { globalEnv = V.fromList [VBool True]
+              }
+      expectVMErrorContains (execStateT instLoadGlobal vm0) "LOAD_GLOBAL out of bounds (3)"
+
+  describe "instStoreGlobal" $ do
+    it "pops a value and stores it into globalEnv[idx]" $ do
+      let vm0 =
+            (mkVM (beI32 0))
+              { globalEnv = V.fromList [VInt (I64 1)]
+              , vStack = V.fromList [VInt (I64 99)]
+              }
+      vm1 <- execStateT instStoreGlobal vm0
+      globalEnv vm1 `shouldBe` V.fromList [VInt (I64 99)]
+      vStack vm1 `shouldBe` V.empty
+
+    it "throws out of bounds" $ do
+      let vm0 =
+            (mkVM (beI32 0))
+              { globalEnv = V.empty
+              , vStack = V.fromList [VInt (I64 5)]
+              }
+      expectVMErrorContains (execStateT instStoreGlobal vm0) "STORE_GLOBAL out of bounds (0)"
+
   describe "instLoadLocal" $ do
     it "pushes the value at FP + offset onto the stack (positive offset)" $ do
       let vm0 = (mkVM (beI32 1))
@@ -68,7 +106,7 @@ spec = describe "VM.Instruction.Variable" $ do
       vm1 <- execStateT instLoadLocal vm0
       vStack vm1 `shouldBe` V.fromList [VInt (I64 10), VInt (I64 20), VBool False, VInt (I64 10)]
 
-    it "throws out of bounds and message includes Index and Size (covers line 53)" $ do
+    it "throws out of bounds and message includes Index and Size" $ do
       let vm0 = (mkVM (beI32 5))
                 { baseVStackIndex = 0
                 , vStack = V.fromList [VInt (I64 1), VInt (I64 2)]
@@ -92,7 +130,7 @@ spec = describe "VM.Instruction.Variable" $ do
       vm1 <- execStateT instStoreLocal vm0
       vStack vm1 `shouldBe` V.fromList [VInt (I64 99), VInt (I64 20), VBool False]
 
-    it "throws out of bounds and message includes Index and Size (covers line 79)" $ do
+    it "throws out of bounds and message includes Index and Size" $ do
       let vm0 = (mkVM (beI32 0))
                 { baseVStackIndex = 0
                 , vStack = V.fromList [VInt (I64 123)]
@@ -108,7 +146,7 @@ spec = describe "VM.Instruction.Variable" $ do
       vm1 <- execStateT instLoadCapture vm0
       vStack vm1 `shouldBe` V.fromList [VInt (I64 1), VBool True]
 
-    it "throws out of bounds and message includes idx (covers line 96)" $ do
+    it "throws out of bounds and message includes idx" $ do
       let vm0 = (mkVM (beI32 3))
                 { env = V.fromList [VInt (I64 7)]
                 }
@@ -124,7 +162,7 @@ spec = describe "VM.Instruction.Variable" $ do
       env vm1 `shouldBe` V.fromList [VInt (I64 99)]
       vStack vm1 `shouldBe` V.empty
 
-    it "throws out of bounds and message includes idx (covers line 115)" $ do
+    it "throws out of bounds and message includes idx" $ do
       let vm0 = (mkVM (beI32 0))
                 { env = V.empty
                 , vStack = V.fromList [VInt (I64 5)]

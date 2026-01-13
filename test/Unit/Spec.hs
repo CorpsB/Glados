@@ -40,6 +40,8 @@ import qualified VM.Instruction.LogicSpec
 import qualified VM.Instruction.StackSpec
 import qualified VM.Instruction.SystemSpec
 import qualified VM.Instruction.VariableSpec
+import qualified VM.Instruction.ListSpec
+import qualified VM.Instruction.StructSpec
 import qualified VM.CallSnapshotSpec
 import qualified VM.VMStateSpec
 import qualified VM.VMStackSpec
@@ -86,6 +88,8 @@ spec = do
     VM.Instruction.StackSpec.spec
     VM.Instruction.SystemSpec.spec
     VM.Instruction.VariableSpec.spec
+    VM.Instruction.ListSpec.spec
+    VM.Instruction.StructSpec.spec
     VM.CallSnapshotSpec.spec
     VM.VMStateSpec.spec
     VM.VMStackSpec.spec
