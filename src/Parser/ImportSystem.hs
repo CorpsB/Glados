@@ -5,7 +5,7 @@
 -- ImportSystem.hs
 -}
 
-module Parser.ImportSystem (resolveImports) where
+module Parser.ImportSystem (resolveImports, constructForAst) where
 
 import Control.Exception (try, IOException)
 import qualified Data.Text as T
@@ -108,6 +108,13 @@ processWhile cond body = do
         (Left err, _) -> return (Left err)
         (_, Left err) -> return (Left err)
 
+-- | Function exposed for testing purposes.
+-- Checks if the processed list has exactly 4 elements to rebuild the For loop.
+constructForAst :: [Ast] -> Either String [Ast]
+constructForAst [ni, nc, nu, nb] = Right [AFor ni nc nu nb]
+constructForAst _ = Left
+    "Internal Error: Invalid argument count in For loop processing"
+
 -- | Process For Loops.
 --
 -- Processes the four components of the loop:
@@ -119,10 +126,8 @@ processFor :: Ast -> Ast -> Ast -> Ast -> IO (Either String [Ast])
 processFor i c u b = do
     results <- mapM processSingleNode [i, c, u, b]
     return $ case sequence results of
-        Right [ni, nc, nu, nb] -> Right [AFor ni nc nu nb]
         Left err -> Left err
-        _ -> Left
-            "Internal Error: Invalid argument count in For loop processing"
+        Right list -> constructForAst list
 
 -- | Process If Conditions.
 processIf :: Ast -> Ast -> Ast -> IO (Either String [Ast])
