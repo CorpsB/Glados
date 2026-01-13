@@ -5,8 +5,6 @@ import Test.Hspec
 import qualified Compiler.InstructionSpec
 import qualified Compiler.PsInstructionSpec
 import qualified Compiler.CompilerStateSpec
-import qualified Compiler.SerializerSpec
-import qualified Compiler.ResolveLabelsSpec
 import qualified Compiler.ASM.CompilerMonadSpec
 import qualified Compiler.ASM.AstToAsmSpec
 import qualified Compiler.ASM.CompilerSpec
@@ -21,6 +19,19 @@ import qualified Parser.ExpressionSpec
 import qualified Parser.ConditionsSpec
 import qualified Parser.ImportSystemSpec
 import qualified Compiler.Bytecode.EncoderSpec
+import qualified Compiler.Bytecode.SerializerSpec
+
+import qualified Compiler.ResolveLabels.ResolveLabelsSpec
+import qualified Compiler.ResolveLabels.ResolveLabelsHelpersSpec
+import qualified Compiler.ResolveLabels.Step2CallLabelSpec
+import qualified Compiler.ResolveLabels.Step2GetFuncAddrLabelSpec
+import qualified Compiler.ResolveLabels.Step2JumpIfFalseLabelSpec
+import qualified Compiler.ResolveLabels.Step2JumpIfTrueLabelSpec
+import qualified Compiler.ResolveLabels.Step2JumpLabelSpec
+import qualified Compiler.ResolveLabels.Step2LabelDefSpec
+import qualified Compiler.ResolveLabels.Step2MakeClosureLabelSpec
+import qualified Compiler.ResolveLabels.Step2RealSpec
+import qualified Compiler.ResolveLabels.Step2TailCallLabelSpec
 
 import qualified Common.Type.IntegerSpec
 import qualified VM.Bytecode.ReaderSpec
@@ -52,11 +63,21 @@ spec = do
     Parser.ConditionsSpec.spec
     Parser.ImportSystemSpec.spec
     Compiler.Bytecode.EncoderSpec.spec
+    Compiler.Bytecode.SerializerSpec.spec
+    Compiler.ResolveLabels.ResolveLabelsSpec.spec
+    Compiler.ResolveLabels.ResolveLabelsHelpersSpec.spec
+    Compiler.ResolveLabels.Step2CallLabelSpec.spec
+    Compiler.ResolveLabels.Step2GetFuncAddrLabelSpec.spec
+    Compiler.ResolveLabels.Step2JumpIfFalseLabelSpec.spec
+    Compiler.ResolveLabels.Step2JumpIfTrueLabelSpec.spec
+    Compiler.ResolveLabels.Step2JumpLabelSpec.spec
+    Compiler.ResolveLabels.Step2LabelDefSpec.spec
+    Compiler.ResolveLabels.Step2MakeClosureLabelSpec.spec
+    Compiler.ResolveLabels.Step2RealSpec.spec
+    Compiler.ResolveLabels.Step2TailCallLabelSpec.spec
     Compiler.InstructionSpec.spec
     Compiler.PsInstructionSpec.spec
     Compiler.CompilerStateSpec.spec
-    Compiler.SerializerSpec.spec
-    Compiler.ResolveLabelsSpec.spec
     Compiler.ASM.CompilerMonadSpec.spec
     Compiler.ASM.AstToAsmSpec.spec
     Compiler.ASM.CompilerSpec.spec
