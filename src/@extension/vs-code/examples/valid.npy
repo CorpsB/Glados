@@ -1,0 +1,56 @@
+
+// 1. Déclarations primitives simples
+i: int = 42;
+b: bool = True;
+
+// 2. Inférence de type (Auto)
+val: auto = i;
+flag: auto = False;
+
+// 3. Instruction Conditionnelle (If Statement)
+// Syntaxe valide : bloc isolé (pas dans une variable)
+if (b) {
+    // Dans un vrai langage C, on ferait des assignations ici.
+    // Pour l'instant, on met juste une expression valide.
+    100;
+} else {
+    200;
+}
+
+// 4. Définition de Structures
+struct Vector2 {
+    x: int;
+    y: int;
+}
+
+struct Player {
+    pos: Vector2;
+    hp: int;
+    alive: bool;
+}
+
+// 5. Instanciation de Structure (Simple)
+v_zero: Vector2 = new Vector2 { 
+    x: 0, 
+    y: 0 
+};
+
+// 6. Instanciation avec Variables
+v_one: Vector2 = new Vector2 {
+    x: i,
+    y: val
+};
+
+// 7. Instanciation Imbriquée (Complexe)
+p1: Player = new Player {
+    pos: new Vector2 { x: 50, y: 50 },
+    hp: 100,
+    alive: True
+};
+
+// 8. Instanciation avec référence existante
+p2: Player = new Player {
+    pos: v_one,
+    hp: 75,
+    alive: b
+};

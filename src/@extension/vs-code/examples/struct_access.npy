@@ -1,0 +1,19 @@
+// 1. Définition de la structure
+struct Point {
+    x: int;
+    y: int;
+}
+
+// 2. Initialisation de la variable 'p'
+p: Point = new Point {
+    x: 0,
+    y: 0
+};
+
+// 3. Modification du champ (Test de set_field)
+p.x = 10;
+
+
+
+// 4. Lecture du champ (Test de l'accès)
+val = p.x;

@@ -1,0 +1,9 @@
+// Test: Boucle While avec condition entière
+count: int = 0;
+sum: int = 0;
+
+// 1 est vrai, 0 est faux
+while (count < 5) {
+    sum += count;
+    count++;
+}

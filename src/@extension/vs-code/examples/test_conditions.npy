@@ -1,0 +1,19 @@
+import "test_for.npy";
+
+// Test: Assignation simple et If (Expression et Statement)
+x: int = 10;
+
+// If Expression (valeur assignée à y)
+y: int = if (x > 5) { 100 } else { 0 };
+
+// If Statement (bloc d'instructions)
+if (y == 100) {
+    x = 20;
+} else {
+    x = 0;
+}
+
+// C-Style condition (int as bool)
+if (1) {
+    y = 50;
+}
