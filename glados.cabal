@@ -49,6 +49,7 @@ library
       Parser.Expression
       Parser.Statement
       Parser.Conditions
+      Parser.ImportSystem
       VM.VMState
       VM.VMValue
       VM.VMStack
