@@ -97,6 +97,7 @@ decodeMisc 0x61 = fmap (("GET_FUNC_ADDR " ++) . show) getInt32be
 decodeMisc 0x80 = fmap (("CAST " ++) . show) getWord8
 decodeMisc 0x70 = pure "PRINT"
 decodeMisc 0x71 = pure "HALT"
+decodeMisc 0x72 = pure "EXIT"
 decodeMisc _ = pure "UNKNOWN_MISC"
 
 lookupSimple :: Word8 -> Maybe String

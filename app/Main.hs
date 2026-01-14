@@ -23,6 +23,7 @@ import Compiler.ASM.Assembler (assemble)
 import Compiler.CompilerState (createCompilerState, csCode, csFuncs, CompilerState)
 import Compiler.PsInstruction (PsInstruction(Real))
 import Compiler.Instruction (Instruction(Halt))
+import AST.Semantics.Check (checkAst)
 import AST.Ast (Ast)
 
 -- | Print usage message on stdout.
@@ -70,10 +71,12 @@ runCompiler :: String -> String -> IO ()
 runCompiler inputPath outputPath = do
     file_content <- TIO.readFile inputPath
     parsed_ast <- parseSource file_content
-    state <- compileSource parsed_ast
 
-    let instructions = extractInstructions state
-    bytecode <- assembleCode instructions
+    case checkAst parsed_ast of
+        Left err -> die $ "Semantic Error: " ++ err
+        Right _  -> return ()
+    state <- compileSource parsed_ast
+    bytecode <- assembleCode (extractInstructions state)
     writeBinary outputPath bytecode
 
 main :: IO ()

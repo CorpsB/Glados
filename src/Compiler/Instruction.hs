@@ -152,6 +152,7 @@ data Instruction
     -- 8. System / Debug
     | Print                   -- ^ 0x70 PRINT
     | Halt                    -- ^ 0x71 HALT
+    | Exit                    -- ^ 0x72 EXIT
     | CheckStack Int          -- ^ 0xFE CHECK_STACK [N]
     | Nop                     -- ^ 0xFF NOP
     deriving (Show, Eq, Ord)
@@ -216,6 +217,7 @@ getInstCode Tail                 = 0x92
 
 getInstCode Print                = 0x70
 getInstCode Halt                 = 0x71
+getInstCode Exit                 = 0x72
 getInstCode (CheckStack _)       = 0xFE
 getInstCode Nop                  = 0xFF
 
@@ -287,5 +289,6 @@ instructionSize Tail                = 1
 -- System / Debug
 instructionSize Print               = 1
 instructionSize Halt                = 1
+instructionSize Exit                = 1
 instructionSize (CheckStack _)      = 1 + 4
 instructionSize Nop                 = 1

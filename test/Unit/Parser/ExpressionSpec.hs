@@ -121,3 +121,33 @@ spec = describe "Parser.Expression - Full Coverage" $ do
             parseExpr code `shouldSatisfy` \case
                 Right (ACall (ASymbol op) _) -> op == p "--"
                 _ -> False
+
+    describe "Expression Parser - Structure Access" $ do
+
+        it "Parses simple field access (obj.field)" $ do
+            let input = "player.hp"
+            parseExpr input `shouldBe` Right (AAccessStruct (ASymbol (p "player")) (p "hp"))
+
+        it "Parses nested field access (obj.sub.field)" $ do
+            let input = "game.player.pos"
+            parseExpr input `shouldBe` Right (AAccessStruct 
+                                                (AAccessStruct (ASymbol (p "game")) (p "player")) 
+                                                (p "pos"))
+
+        it "Parses mixed array and struct access (arr[0].x)" $ do
+            let input = "grid[0].x"
+            
+            case parseExpr input of
+                Right (AAccessStruct _ name) | name == p "x" -> return ()
+                
+                Right ast -> expectationFailure $ "Expected AAccessStruct, got: " ++ show ast
+                Left err -> expectationFailure $ "Parse error: " ++ show err
+
+        it "Parses complex chain (obj.method(arg).res)" $ do
+            let input = "getPlayer().stats.hp"
+            case parseExpr input of
+                Right (AAccessStruct (AAccessStruct (ACall _ _) sub) field) 
+                    | sub == p "stats" && field == p "hp" -> return ()
+                    
+                Right ast -> expectationFailure $ "Structure incorrecte: " ++ show ast
+                Left err -> expectationFailure $ "Parse error: " ++ show err

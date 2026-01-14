@@ -19,8 +19,9 @@ module VM.Bytecode.Runner
     , executeInstruction
     ) where
 
-import Control.Monad.State.Strict (get)
+import Control.Monad.State.Strict (get, liftIO)
 import Data.Word (Word8)
+import qualified Data.Vector as V
 
 import VM.VMState (VMState(..), VirtualMachine)
 import VM.Bytecode.Reader (readByte)
@@ -85,6 +86,7 @@ executeInstruction 0x63 = instGetStructField
 
 executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
+executeInstruction 0x72 = instExit
 executeInstruction 0x80 = instCast
 
 executeInstruction 0x90 = instCons
@@ -94,6 +96,13 @@ executeInstruction 0x92 = instTail
 executeInstruction 0xFE = instCheckStack
 executeInstruction 0xFF = return () -- NOP
 executeInstruction op = error $ "VM Error: Unknown Opcode 0x" ++ show op
+
+-- Helper function to display the status properly.
+--
+debugTrace :: VMState -> IO ()
+debugTrace vm = let ip = bytecodeIndex vm
+                    stack = vStack vm in
+    putStrLn $ "IP: " ++ show ip ++ " | Stack: " ++ show (V.toList stack)
 
 -- | The main execution loop of the Virtual Machine.
 --
@@ -113,6 +122,7 @@ runBytecode = do
     case isRunning vm of
         False -> return ()
         True -> do
+            if isDebug vm then liftIO $ debugTrace vm else return ()
             opcode <- readByte
             executeInstruction opcode
             runBytecode

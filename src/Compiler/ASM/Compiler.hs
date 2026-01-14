@@ -346,6 +346,7 @@ compileDefineStruct name fields = defineStruct name (map fst fields)
 --   Unit value wrapped in 'CompilerMonad'.
 --
 compileAst :: Ast -> CompilerMonad ()
+compileAst (APos _ _ ast) = compileAst ast
 compileAst (AInteger i) = astIntToAsm i
 compileAst (ABool b) = astBoolToAsm b
 compileAst (ASymbol s) = astSymbolToAsm s
