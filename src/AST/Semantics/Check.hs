@@ -39,6 +39,7 @@ checkExpr env (ASetStruct name fields) =
     checkStructInstantiation env name fields
 checkExpr env (ACall func args) = checkCall checkExpr env func args
 checkExpr env (AAccessStruct obj field) = checkStructAccess env obj field
+checkExpr env (AList list) = checkListExpr env list
 checkExpr env (APos line _ ast) =
     case checkExpr env ast of
         Left err -> 
@@ -249,3 +250,10 @@ validateField env expectedFields (fieldName, expr) = do
         Left $ "Error: Field '" ++ DT.unpack fieldName ++ 
                "' expected " ++ typeToString expectedType ++ 
                " but got " ++ typeToString actualType
+
+-- | Checks for list/strings
+checkListExpr :: CheckEnv -> [Ast] -> Either String Type
+checkListExpr _ [] = Right (TyList TyVoid)
+checkListExpr env (x:_) = do
+    elemType <- checkExpr env x
+    return (TyList elemType)
