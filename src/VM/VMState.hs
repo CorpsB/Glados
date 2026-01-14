@@ -90,8 +90,7 @@ createVMState code debug = VMState
     , env              = V.empty
     , globalEnv        = V.replicate 1024 (undefined)
     , isRunning        = True
-    , isDebug          = debug
-    }
+    , isDebug          = debug }
 
 -- | Creates a snapshot of the current VM context (IP, FP, Env).
 --
@@ -109,8 +108,7 @@ createSnapshot :: VMState -> CallSnapshot
 createSnapshot vm = CallSnapshot
     { callbackIndex = bytecodeIndex vm
     , vStackIndex   = baseVStackIndex vm
-    , vEnv          = env vm
-    }
+    , vEnv          = env vm }
 
 -- | Sets up a new stack frame for a function call (Shared Logic).
 --
