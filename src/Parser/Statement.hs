@@ -178,7 +178,7 @@ pSimpleDef name = do
     varType <- optional (symbol (DT.pack ":") >> pType)
     makeValue <- pAssignOp name
     val <- pExpr
-    _ <- semicolon
+    _ <- semicolon <?> "\";\" at the end of statement"
     let finalType = maybe (DT.pack "auto") id varType
     return (ASetVar name finalType (makeValue val))
 
@@ -274,11 +274,11 @@ pDeclarations =
     ]
 
 -- | Group of basic statement parsers (Return, Variable, Expression).
-pBasic:: [Parser Ast]
+pBasic :: [Parser Ast]
 pBasic =
     [ pReturn
     , try pVarDef 
-    , pExpr <* semicolon 
+    , pExpr <* (semicolon <?> "\";\" after expression") 
     ]
 
 -- | Main statement parser.

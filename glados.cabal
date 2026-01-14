@@ -24,6 +24,7 @@ library
       Common.Utils.List
       Common.Utils.Bytecode.Header
       Common.Utils.Bytecode.File
+      Common.Error
       Compiler.ASM.CompilerMonad
       Compiler.ASM.Compiler
       Compiler.ASM.AstToAsm
@@ -157,6 +158,7 @@ test-suite glados-unit
       Compiler.ASM.CompilerSpec
       Compiler.ASM.AstToAsmSpec
       Common.Type.IntegerSpec
+      Common.ErrorSpec
       VM.Bytecode.ReaderSpec
       VM.Bytecode.RunnerSpec
       VM.Instruction.ArithmeticSpec
