@@ -28,6 +28,14 @@ import Parser.Lexer
 import Parser.Expression (pExpr)
 import Data.Void (Void)
 import Parser.Conditions (pIf, pWhile, pFor)
+import Data.Char (ord)
+import Common.Type.Integer (IntValue(..))
+
+-- | Intermediate representation for assignment targets
+-- Allows handling chains like x.y[0].z = 10
+data Accessor
+    = AccIndex Ast      --  Array index: [expr]
+    | AccField DT.Text  --  Struct field: .name
 
 -- | Parse a list type syntax (e.g., [int]).
 --
@@ -120,21 +128,46 @@ pAssignOp name = choice
     , makeOpCall (DT.pack "div") name <$ symbol (DT.pack "/=")
     ]
 
--- | Recursively constructs a chain of 'update' and 'nth' calls.
---
--- This handles nested array modification (e.g., matrices).
--- Transforms `arr[i][j] = val` into a nested update structure.
-buildUpdateChain :: DT.Text -> [Ast] -> Ast -> Ast
-buildUpdateChain name indices finalVal =
-        foldUpdate (ASymbol name) indices finalVal
+-- | Converts a field name (Text) into an AST list of integers.
+-- This allows passing the field name as an argument to the 'set_field' runtime function.
+fieldToAst :: DT.Text -> Ast
+fieldToAst txt = AList $ map charToAst (DT.unpack txt)
     where
-        foldUpdate base [idx] val = 
-            ACall (ASymbol (DT.pack "update")) [base, idx, val]
-        foldUpdate base (idx:rest) val =
-            let inner = ACall (ASymbol (DT.pack "nth")) [base, idx]
-                newVal = foldUpdate inner rest val
-            in ACall (ASymbol (DT.pack "update")) [base, idx, newVal]
-        foldUpdate _ [] _ = error "Should not happen in buildUpdateChain"
+        charToAst c = AInteger (IChar (fromIntegral (ord c)))
+
+-- | Recursively constructs the chain of 'update' and 'set_field' calls.
+-- This function handles nested modifications for both arrays and structures.
+recursiveUpdate :: Ast -> [Accessor] -> Ast -> Ast
+recursiveUpdate base [AccIndex idx] val =
+    -- Case 1: End of chain on an Array (e.g. x[i] = val)
+    ACall (ASymbol (DT.pack "update")) [base, idx, val]
+
+-- Case 2: End of chain on a Structure (e.g. x.field = val)
+recursiveUpdate base [AccField field] val =
+    ACall (ASymbol (DT.pack "set_field")) [base, fieldToAst field, val]
+
+-- Case 3: Recursion on Array (e.g. x[i]... = val)
+-- We fetch the inner element using 'nth', update it recursively, and put it back using 'update'.
+recursiveUpdate base (AccIndex idx : rest) val =
+    let inner = ACall (ASymbol (DT.pack "nth")) [base, idx]
+        newVal = recursiveUpdate inner rest val
+    in ACall (ASymbol (DT.pack "update")) [base, idx, newVal]
+
+-- Case 4: Recursion on Structure (e.g. x.field... = val)
+-- We access the field, update it recursively, and put it back using 'set_field'.
+recursiveUpdate base (AccField field : rest) val =
+    let inner = AAccessStruct base field
+        newVal = recursiveUpdate inner rest val
+    in ACall (ASymbol (DT.pack "set_field")) 
+       [base, fieldToAst field, newVal]
+
+recursiveUpdate _ [] _ = error "Should not happen in buildUpdateChain"
+
+-- | Entry point to construct a chain of updates for arrays and structures.
+-- Transforms a complex assignment like `x.y[0] = 5` into nested function calls.
+buildUpdateChain :: DT.Text -> [Accessor] -> Ast -> Ast
+buildUpdateChain name accessors finalVal =
+        recursiveUpdate (ASymbol name) accessors finalVal
 
 -- | Parse a standard variable definition or assignment.
 --
@@ -149,29 +182,40 @@ pSimpleDef name = do
     let finalType = maybe (DT.pack "auto") id varType
     return (ASetVar name finalType (makeValue val))
 
--- | Parse an array element assignment.
---
--- Example: x[0] = 10; OR matrix[1][2] = 5;
--- Uses 'buildUpdateChain' to generate the AST.
-pArrayUpdate :: DT.Text -> [Ast] -> Parser Ast
-pArrayUpdate name indices = do
+-- | Parse a complex update (array or struct).
+pComplexUpdate :: DT.Text -> [Accessor] -> Parser Ast
+pComplexUpdate name accessors = do
     _ <- symbol (DT.pack "=")
     val <- pExpr
     _ <- semicolon
-    let updateExpr = buildUpdateChain name indices val
+    let updateExpr = buildUpdateChain name accessors val
     return (ASetVar name (DT.pack "auto") updateExpr)
 
--- | Parse a variable definition (declaration or assignment).
---
--- Syntax: name: type = value; or name = value;
--- The type annotation is optional and defaults to "auto" if omitted.
+-- | Parser for array index accessor: [expr]
+pAccIndex :: Parser Accessor
+pAccIndex = do
+    _ <- symbol (DT.pack "[")
+    expr <- pExpr
+    _ <- symbol (DT.pack "]")
+    return (AccIndex expr)
+
+-- | Parser for struct field accessor: .identifier
+pAccField :: Parser Accessor
+pAccField = do
+    _ <- symbol (DT.pack ".")
+    field <- pIdentifier
+    return (AccField field)
+
+-- | Parse a variable definition or assignment.
+-- Handles mixed chains: x = 1, x[0] = 1, x.y = 1, x.y[0].z = 1
 pVarDef :: Parser Ast
 pVarDef = do
     name <- pIdentifier
-    indices <- many (symbol (DT.pack "[") *> pExpr <* symbol (DT.pack "]"))
-    if null indices
+    -- Parse mixed chain of [indices] and .fields
+    accessors <- many (pAccIndex <|> pAccField)
+    if null accessors
         then pSimpleDef name
-        else pArrayUpdate name indices
+        else pComplexUpdate name accessors
 
 -- | Parse a single field definition within a structure.
 --

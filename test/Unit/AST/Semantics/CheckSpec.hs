@@ -660,3 +660,109 @@ spec = describe "Semantic Checker Coverage" $ do
         it "Passes TyInt condition (Right ())" $ do
             let stmt = AFor AVoid (AInteger (fitInteger 1)) AVoid AVoid
             checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+
+    describe "Struct Access Semantic Verification" $ do
+        
+        let pointFields = Map.fromList [(DT.pack "x", TyInt), (DT.pack "y", TyInt)]
+        let pointDef = StructDef (DT.pack "Point") pointFields
+        
+        let testEnv = emptyEnv {
+            envStructs = Map.insert (DT.pack "Point") pointDef (envStructs emptyEnv),
+            envVars = Map.fromList [
+                (DT.pack "p", TyStruct (DT.pack "Point")),
+                (DT.pack "i", TyInt)
+            ]
+        }
+
+        it "validates valid field access (p.x)" $ do
+            let ast = AAccessStruct (ASymbol (DT.pack "p")) (DT.pack "x")
+            checkExpr testEnv ast `shouldSatisfy` \case
+                Right TyInt -> True
+                _ -> False
+
+        it "validates valid field access (p.y)" $ do
+            let ast = AAccessStruct (ASymbol (DT.pack "p")) (DT.pack "y")
+            checkExpr testEnv ast `shouldSatisfy` \case
+                Right TyInt -> True
+                _ -> False
+
+        it "returns error for unknown field (p.z)" $ do
+            let ast = AAccessStruct (ASymbol (DT.pack "p")) (DT.pack "z")
+            checkExpr testEnv ast `shouldSatisfy` \case
+                Left err | err == "Field 'z' not found in struct 'Point'" -> True
+                _ -> False
+
+        it "returns error when accessing field on non-struct type (i.x)" $ do
+            let ast = AAccessStruct (ASymbol (DT.pack "i")) (DT.pack "x")
+            checkExpr testEnv ast `shouldSatisfy` \case
+                Left err | err == "Cannot access field 'x' on non-struct type int" -> True
+                _ -> False
+
+    describe "Control Flow and Environment Verification" $ do
+        
+        let empty = emptyEnv
+
+        it "checkFor: validates loop with boolean condition and scope (TyBool)" $ do
+            let initS = ASetVar (DT.pack "i") (DT.pack "int") (AInteger (fitInteger 0))
+            let condS = ACall (ASymbol (DT.pack "<")) [ASymbol (DT.pack "i"), AInteger (fitInteger 10)]
+            let loop = AFor initS condS AVoid AVoid
+            checkStmt empty loop `shouldSatisfy` \case
+                Right _ -> True
+                _ -> False
+
+        it "checkFor: validates loop with integer condition (TyInt)" $ do
+            let initS = ASetVar (DT.pack "k") (DT.pack "int") (AInteger (fitInteger 1))
+            let condS = ASymbol (DT.pack "k")
+            let loop = AFor initS condS AVoid AVoid
+            checkStmt empty loop `shouldSatisfy` \case
+                Right _ -> True
+                _ -> False
+
+        it "checkStmt: APos unwraps and returns updated environment" $ do
+            let stmt = APos 1 1 (ASetVar (DT.pack "x") (DT.pack "int") (AInteger (fitInteger 42)))
+            checkStmt empty stmt `shouldSatisfy` \case
+                Right newEnv -> case Map.lookup (DT.pack "x") (envVars newEnv) of
+                    Just TyInt -> True
+                    _ -> False
+                _ -> False
+
+        it "checkStmt: returns original environment for non-modifying statements" $ do
+            checkStmt empty AVoid `shouldSatisfy` \case
+                Right resEnv -> Map.null (envVars resEnv)
+                _ -> False
+
+        it "checkFor: propagates envAfterInit and accepts Boolean condition" $ do
+            let initS = ASetVar (DT.pack "i") (DT.pack "int") (AInteger (fitInteger 0))
+            let condS = ACall (ASymbol (DT.pack "<")) [ASymbol (DT.pack "i"), AInteger (fitInteger 10)]
+            let loop = AFor initS condS AVoid AVoid
+            
+            checkStmt empty loop `shouldSatisfy` \case
+                Right _ -> True
+                _ -> False
+
+        it "checkFor: accepts Integer condition (TyInt case)" $ do
+            let initS = ASetVar (DT.pack "k") (DT.pack "int") (AInteger (fitInteger 1))
+            let condS = ASymbol (DT.pack "k")
+            let loop = AFor initS condS AVoid AVoid
+            
+            checkStmt empty loop `shouldSatisfy` \case
+                Right _ -> True 
+                _ -> False
+
+        it "defineFunc: envWithFunc allows recursion (function visible in body)" $ do
+            let body = ACall (ASymbol (DT.pack "rec")) []
+            let funcDef = ADefineFunc (DT.pack "rec") [] (DT.pack "void") body
+            
+            checkStmt empty funcDef `shouldSatisfy` \case
+                Right _ -> True
+                _ -> False
+
+
+        it "defineFunc: envForBody includes arguments (lambda insertion check)" $ do
+            let args = [(DT.pack "x", DT.pack "int")]
+            let body = AReturn (ASymbol (DT.pack "x"))
+            let funcDef = ADefineFunc (DT.pack "getX") args (DT.pack "int") body
+            
+            checkStmt empty funcDef `shouldSatisfy` \case
+                Right _ -> True 
+                _ -> False

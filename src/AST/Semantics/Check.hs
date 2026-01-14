@@ -38,6 +38,7 @@ checkExpr env (AIf c t e)    = checkIf env c t e
 checkExpr env (ASetStruct name fields) =
     checkStructInstantiation env name fields
 checkExpr env (ACall func args) = checkCall checkExpr env func args
+checkExpr env (AAccessStruct obj field) = checkStructAccess env obj field
 checkExpr env (APos line _ ast) =
     case checkExpr env ast of
         Left err -> 
@@ -52,6 +53,48 @@ checkSymbol :: CheckEnv -> DT.Text -> Either String Type
 checkSymbol env name = case Map.lookup name (envVars env) of
     Just t  -> Right t
     Nothing -> Left $ "Undefined variable '" ++ DT.unpack name ++ "'"
+
+-- | Validates that a specific field exists within a defined structure.
+--
+-- @args
+--   - env: The current checking environment containing struct definitions.
+--   - sName: The name of the structure type to check against.
+--   - field: The name of the field to look up.
+--
+-- @return
+--   The 'Type' of the field if it exists, or an error message if the 
+--   struct is undefined or the field is missing.
+validateStructField :: CheckEnv -> DT.Text -> DT.Text -> Either String Type
+validateStructField env sName field = do
+    def <- getStructDef env sName
+    case Map.lookup field (structFields def) of
+        Just t -> Right t
+        Nothing -> Left $ "Field '" ++ DT.unpack field ++ 
+                          "' not found in struct '" ++ 
+                          DT.unpack sName ++ "'"
+
+-- | Validates a structure member access expression (e.g., 'obj.field').
+--
+-- @args
+--   - env: The current checking environment.
+--   - obj: The AST node representing the object being accessed.
+--   - field: The name of the field to access.
+--
+-- @details
+--   First, it verifies that the 'obj' expression evaluates to a structure type (`TyStruct`).
+--   Then, it delegates to 'validateStructField' to ensure the field exists 
+--   within that specific structure definition.
+--
+-- @return
+--   The semantic 'Type' of the accessed field, or an error if the object 
+--   is not a structure or the field is invalid.
+checkStructAccess :: CheckEnv -> Ast -> DT.Text -> Either String Type
+checkStructAccess env obj field = do
+    typeObj <- checkExpr env obj
+    case typeObj of
+        TyStruct name -> validateStructField env name field
+        _ -> Left $ "Cannot access field '" ++ DT.unpack field ++ 
+                    "' on non-struct type " ++ typeToString typeObj
 
 -- | IF logic
 checkIf :: CheckEnv -> Ast -> Ast -> Ast -> Either String Type

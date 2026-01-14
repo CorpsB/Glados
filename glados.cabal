@@ -138,10 +138,20 @@ test-suite glados-unit
       Parser.ConditionsSpec
       Parser.ImportSystemSpec
       Compiler.Bytecode.EncoderSpec
+      Compiler.Bytecode.SerializerSpec
+      Compiler.ResolveLabels.ResolveLabelsSpec
+      Compiler.ResolveLabels.ResolveLabelsHelpersSpec
+      Compiler.ResolveLabels.Step2CallLabelSpec
+      Compiler.ResolveLabels.Step2GetFuncAddrLabelSpec
+      Compiler.ResolveLabels.Step2JumpIfFalseLabelSpec
+      Compiler.ResolveLabels.Step2JumpIfTrueLabelSpec
+      Compiler.ResolveLabels.Step2JumpLabelSpec
+      Compiler.ResolveLabels.Step2LabelDefSpec
+      Compiler.ResolveLabels.Step2MakeClosureLabelSpec
+      Compiler.ResolveLabels.Step2RealSpec
+      Compiler.ResolveLabels.Step2TailCallLabelSpec
       Compiler.InstructionSpec
-      Compiler.SerializerSpec
       Compiler.PsInstructionSpec
-      Compiler.ResolveLabelsSpec
       Compiler.CompilerStateSpec
       Compiler.ASM.CompilerMonadSpec
       Compiler.ASM.CompilerSpec

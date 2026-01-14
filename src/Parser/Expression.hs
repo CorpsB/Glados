@@ -38,15 +38,13 @@ prefix name = \a -> ACall (ASymbol name) [a]
 -- | Parse a structure member access suffix.
 --
 -- Example: .field
--- Returns a function that wraps the preceding expression in a 'get_field' call.
+-- Returns a AStructAccess node instead of a function call.
 -- The field name is converted to a list of characters string for the AST.
 pMemberSuffix :: Parser (Ast -> Ast)
 pMemberSuffix = do
     _ <- symbol (DT.pack ".")
     fieldName <- pIdentifier
-    let fieldNameAst = AList (map (AInteger . IChar . fromIntegral . ord)
-                       (DT.unpack fieldName))
-    return (\obj -> ACall (ASymbol (DT.pack "get_field")) [obj, fieldNameAst])
+    return (\obj -> AAccessStruct obj fieldName)
 
 -- | Parse a decimal integer.
 --

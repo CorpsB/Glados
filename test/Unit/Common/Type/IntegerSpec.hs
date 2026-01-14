@@ -12,7 +12,7 @@ import Common.Type.Integer (IntValue(..), fitInteger, toInt64, fromInt64, intVal
 import Data.Char (ord)
 import Data.Int (Int8, Int64)
 import Data.Word (Word8)
-import Data.List (sort)
+import Data.List (sort, isInfixOf)
 
 cInt8 :: Char -> Int8
 cInt8 c = fromIntegral (ord c)
@@ -20,20 +20,23 @@ cInt8 c = fromIntegral (ord c)
 spec :: Spec
 spec = describe "Common.Type.Integer (full branch coverage)" $ do
 
-  describe "Derived instances (Show / Eq / Ord) - coverage for deriving" $ do
-    it "Show is usable (smoke)" $ do
-      show (I8 1) `shouldBe` "I8 1"
-      show (UI8 1) `shouldBe` "UI8 1"
-      show (IChar 65) `shouldBe` "IChar 65"
-      show (UIChar 65) `shouldBe` "UIChar 65"
+  describe "Derived instances (Show / Eq / Ord)" $ do
 
-    it "Eq works" $ do
+    it "Show works deeply (forces showsPrec with precedence)" $ do
+        show (I8 1) `shouldBe` "I8 1"
+
+        show (Just (I8 42)) `shouldSatisfy` ("(I8 42)" `isInfixOf`)
+        show [UI16 10, UI16 20] `shouldSatisfy` ("UI16 10" `isInfixOf`)
+
+    it "Eq works (Structural Equality)" $ do
       I16 10 `shouldBe` I16 10
       I16 10 `shouldNotBe` I16 11
+      I8 1 `shouldNotBe` UI8 1
+      IChar 65 `shouldNotBe` UIChar 65
 
-    it "Ord works (values + compare + sort)" $ do
+    it "Ord works (Constructor Order + Value Order)" $ do
       (I8 1 < I8 2) `shouldBe` True
-      compare (I8 1) (I16 1) `shouldBe` LT
+      compare (I8 100) (UI8 1) `shouldBe` LT 
       sort [I8 2, I8 1, I8 3] `shouldBe` [I8 1, I8 2, I8 3]
 
   describe "intValueToInt (covers ALL constructors)" $ do
@@ -62,43 +65,55 @@ spec = describe "Common.Type.Integer (full branch coverage)" $ do
       toInt64 (IChar (cInt8 'c')) `shouldBe` 99
       toInt64 (UIChar 99) `shouldBe` 99
 
-  describe "fromInt64 (forces every guard branch)" $ do
-    it "I8 branch" $ do
+  describe "fromInt64 (Boundary Checks)" $ do
+    it "I8 branch (-128 to 127)" $ do
       fromInt64 127 `shouldBe` I8 127
       fromInt64 (-128) `shouldBe` I8 (-128)
+      fromInt64 0 `shouldBe` I8 0
 
-    it "UI8 branch" $ do
-      fromInt64 200 `shouldBe` UI8 200
+    it "UI8 branch (128 to 255)" $ do
+      fromInt64 128 `shouldBe` UI8 128
+      fromInt64 255 `shouldBe` UI8 255
 
-    it "I16 branch" $ do
+    it "I16 branch (Outside 8-bit, up to 32767)" $ do
       fromInt64 256 `shouldBe` I16 256
       fromInt64 (-129) `shouldBe` I16 (-129)
+      fromInt64 32767 `shouldBe` I16 32767
 
-    it "UI16 branch" $ do
-      fromInt64 40000 `shouldBe` UI16 40000
+    it "UI16 branch (32768 to 65535)" $ do
+      fromInt64 32768 `shouldBe` UI16 32768
+      fromInt64 65535 `shouldBe` UI16 65535
 
-    it "I32 branch" $ do
-      fromInt64 70000 `shouldBe` I32 70000
+    it "I32 branch (Outside 16-bit)" $ do
+      fromInt64 65536 `shouldBe` I32 65536
+      fromInt64 (-32769) `shouldBe` I32 (-32769)
 
-    it "UI32 branch" $ do
-      fromInt64 3000000000 `shouldBe` UI32 3000000000
+    it "UI32 branch (High positive)" $ do
+      fromInt64 2147483648 `shouldBe` UI32 2147483648
 
-    it "I64 branch (otherwise)" $ do
-      fromInt64 5000000000 `shouldBe` I64 5000000000
-      fromInt64 (-(2147483648 :: Int64) - 1) `shouldBe` I64 (-(2147483648 :: Int64) - 1)
+    it "I64 branch (Everything else)" $ do
+      fromInt64 4294967296 `shouldBe` I64 4294967296
+      fromInt64 (-2147483649) `shouldBe` I64 (-2147483649)
 
-  describe "fitInteger (forces every guard branch, including I16)" $ do
-    it "I8 + UI8" $ do
+  describe "fitInteger (Boundary Checks)" $ do
+    it "I8 branch" $ do
       fitInteger 42 `shouldBe` I8 42
-      fitInteger 200 `shouldBe` UI8 200
+      fitInteger (-128) `shouldBe` I8 (-128)
+
+    it "UI8 branch" $ do
+      fitInteger 128 `shouldBe` UI8 128
 
     it "I16 branch" $ do
       fitInteger 256 `shouldBe` I16 256
-      fitInteger (-129) `shouldBe` I16 (-129)
+      fitInteger (-1000) `shouldBe` I16 (-1000)
 
-    it "UI16 / I32 / UI32" $ do
+    it "UI16 branch" $ do
       fitInteger 40000 `shouldBe` UI16 40000
+
+    it "I32 branch" $ do
       fitInteger 70000 `shouldBe` I32 70000
+
+    it "UI32 branch" $ do
       fitInteger 3000000000 `shouldBe` UI32 3000000000
 
     it "I64 otherwise" $ do

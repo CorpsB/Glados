@@ -105,6 +105,11 @@ data Ast
       --   @param Int The line number.
       --   @param Int The column number.
       --   @param Ast The wrapped AST node.
+    
+    | AAccessStruct Ast DT.Text
+      -- ^ Represents a field access (e.g., player.x).
+      --   @param Ast The object/structure being accessed.
+      --   @param Text The name of the field.
 
     deriving (Show, Eq)
 
@@ -145,4 +150,5 @@ cleanAst (AWhile c b) = AWhile (cleanAst c) (cleanAst b)
 cleanAst (AFor i c u b) =
     AFor (cleanAst i) (cleanAst c) (cleanAst u) (cleanAst b)
 cleanAst (AReturn e) = AReturn (cleanAst e)
+cleanAst (AAccessStruct obj field) = AAccessStruct (cleanAst obj) field
 cleanAst other = other

@@ -20,11 +20,19 @@ import Data.Int (Int8)
 import Data.Char (ord)
 import Data.Void (Void)
 import Text.Megaparsec.Error (ParseErrorBundle)
+import Common.Type.Integer (fitInteger)
+import Text.Megaparsec.Error (errorBundlePretty)
 
 p :: String -> DT.Text
 p = DT.pack
+
 c8 :: Char -> Int8
 c8 = fromIntegral . ord
+
+parseStmt :: String -> Either String [Ast]
+parseStmt input = case parseALL (DT.pack input) of
+    Left err -> Left (errorBundlePretty err)
+    Right asts -> Right (map cleanAst asts)
 
 parseClean :: DT.Text -> Either (ParseErrorBundle DT.Text Void) [Ast]
 parseClean input = fmap (map cleanAst) (parseALL input)
@@ -353,33 +361,34 @@ spec = describe "Parser - Statement & Expression" $ do
                 _ -> False
 
     describe "Struct Member Access (Dot Operator)" $ do
+        
         it "Parses simple member access: p.x" $ do
-            let code = "val = p.x;"
-            parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall getField [objArg, fieldArg])] -> 
-                    (case getField of ASymbol s -> s == p "get_field"; _ -> False) &&
-                    (case objArg of ASymbol s -> s == p "p"; _ -> False) &&
-                    (case fieldArg of AList [AInteger (IChar v)] -> v == c8 'x'; _ -> False)
-                _ -> False
+            let input = "val = p.x;"
+            parseStmt input `shouldBe` Right [
+                ASetVar (p "val") (p "auto") (
+                    AAccessStruct (ASymbol (p "p")) (p "x")
+                )]
 
         it "Parses nested access: user.profile.id" $ do
-            let code = "id = user.profile.id;"
-            parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall outerGet [innerCall, _])] -> 
-                    (case outerGet of ASymbol s -> s == p "get_field"; _ -> False) &&
-                    (case innerCall of
-                        ACall innerGet [userArg, _] ->
-                            (case innerGet of ASymbol s -> s == p "get_field"; _ -> False) &&
-                            (case userArg of ASymbol s -> s == p "user"; _ -> False)
-                        _ -> False)
-                _ -> False
+            let input = "id = user.profile.id;"
+            parseStmt input `shouldBe` Right [
+                ASetVar (p "id") (p "auto") (
+                    AAccessStruct 
+                        (AAccessStruct (ASymbol (p "user")) (p "profile"))
+                        (p "id")
+                )]
 
         it "Parses mixed array and member access: users[0].name" $ do
-            let code = "name = users[0].name;"
-            parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall getField [nthCall, _])] -> 
-                    (case getField of ASymbol s -> s == p "get_field"; _ -> False) &&
-                    (case nthCall of ACall (ASymbol nth) _ -> nth == p "nth"; _ -> False)
+            let input = "name = users[0].name;"
+            
+            parseStmt input `shouldSatisfy` \case
+                Right [ASetVar n a (AAccessStruct (ACall (ASymbol nth) [ASymbol u, AInteger val]) f)] 
+                    | n == p "name" && 
+                      a == p "auto" && 
+                      nth == p "nth" && 
+                      u == p "users" && 
+                      val == fitInteger 0 && 
+                      f == p "name" -> True
                 _ -> False
 
     describe "Struct Instantiation (new)" $ do
@@ -409,4 +418,100 @@ spec = describe "Parser - Statement & Expression" $ do
             let code = "import \"../lib/utils_v2.gld\";"
             parseClean (p code) `shouldSatisfy` \case
                 Right [AImport path] -> path == p "../lib/utils_v2.gld"
+                _ -> False
+
+    describe "Internal Helpers Verification" $ do
+
+        it "makeOpCall: constructs binary op call (tested via +=)" $ do
+            let input = "x += 5;"
+            parseStmt input `shouldSatisfy` \case
+                Right [ASetVar name _ (ACall (ASymbol op) [ASymbol var, val])] 
+                    | name == p "x" &&
+                      op == p "+" &&
+                      var == p "x" &&
+                      val == AInteger (fitInteger 5) 
+                    -> True
+                _ -> False
+
+        it "fieldToAst: converts text to AList of IChars (tested via set_field)" $ do
+            let input = "p.y = 10;"
+            let expectedChar = fromIntegral (ord 'y') :: Int8
+            
+            parseStmt input `shouldSatisfy` \case
+                Right [ASetVar _ _ (ACall (ASymbol func) [_, AList [AInteger (IChar c)], _])] 
+                    | func == p "set_field" && c == expectedChar -> True
+                _ -> False
+        
+        it "recursiveUpdate Case 2: Simple struct assignment (x.f = val)" $ do
+            let input = "x.f = 10;"
+            let charF = fromIntegral (ord 'f') :: Int8
+            
+            parseStmt input `shouldSatisfy` \case
+                Right [ASetVar name _ (ACall (ASymbol func) [ASymbol base, AList [AInteger (IChar c)], val])]
+                    | name == p "x" &&
+                      func == p "set_field" &&
+                      base == p "x" &&
+                      c == charF &&
+                      val == AInteger (fitInteger 10)
+                    -> True
+                _ -> False
+
+        it "recursiveUpdate Case 4: Nested struct assignment (x.y.z = val)" $ do
+            let input = "x.y.z = 10;"
+            let charY = fromIntegral (ord 'y') :: Int8
+            let charZ = fromIntegral (ord 'z') :: Int8
+            
+            parseStmt input `shouldSatisfy` \case
+                Right [ASetVar name _ (ACall (ASymbol funcOuter) [ASymbol baseX, AList [AInteger (IChar cY)], innerVal])]
+                    | name == p "x" &&
+                      funcOuter == p "set_field" &&
+                      baseX == p "x" &&
+                      cY == charY ->
+                        case innerVal of
+                            ACall (ASymbol funcInner) [AAccessStruct baseInner fieldInner, AList [AInteger (IChar cZ)], val]
+                                | funcInner == p "set_field" &&
+                                  baseInner == ASymbol (p "x") &&
+                                  fieldInner == p "y" &&
+                                  cZ == charZ &&
+                                  val == AInteger (fitInteger 10)
+                                -> True
+                            _ -> False
+                _ -> False
+
+
+        it "recursiveUpdate Case 3: Nested array assignment (x[0].y = 5)" $ do
+            let input = "x[0].y = 5;"
+            let charY = fromIntegral (ord 'y') :: Int8
+            
+            parseStmt input `shouldSatisfy` \case
+                Right [ASetVar name _ (ACall (ASymbol funcUpdate) [ASymbol base, AInteger idx, innerVal])]
+                    | name == p "x" &&
+                      funcUpdate == p "update" &&
+                      base == p "x" &&
+                      idx == fitInteger 0 ->
+                        (case innerVal of {
+                            ACall (ASymbol funcSet) [nthCall, AList [AInteger (IChar c)], val]
+                                | funcSet == p "set_field"
+                                , c == charY
+                                , val == AInteger (fitInteger 5)
+                                -> case nthCall of {
+                                    ACall (ASymbol funcNth) [ASymbol baseNth, AInteger idxNth]
+                                        | funcNth == p "nth"
+                                        , baseNth == p "x"
+                                        , idxNth == fitInteger 0
+                                        -> True;
+                                    _ -> False
+                                };
+                            _ -> False
+                        })
+                _ -> False
+        
+        it "pComplexUpdate: Sets variable type to 'auto' for complex updates" $ do
+            let input = "x[0] = 1;"
+            
+            parseStmt input `shouldSatisfy` \case
+                Right [ASetVar name typeStr _] 
+                    | name == p "x" && 
+                      typeStr == p "auto"
+                    -> True
                 _ -> False
