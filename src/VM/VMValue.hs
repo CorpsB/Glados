@@ -65,8 +65,8 @@ data VMValue
 --
 valueToString :: VMValue -> String
 valueToString (VInt i) = show (intValueToInt i)
-valueToString (VBool True) = "#t"
-valueToString (VBool False) = "#f"
+valueToString (VBool True) = "True"
+valueToString (VBool False) = "False"
 valueToString (VList v) = "'(" ++ unwords (
     map valueToString (V.toList v)) ++ ")"
 valueToString (VStruct v) = "{struct:" ++ unwords (
