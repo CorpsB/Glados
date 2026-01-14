@@ -19,7 +19,7 @@ It supports:
 module Parser.Expression (pExpr) where
 
 import Text.Megaparsec
-import Text.Megaparsec.Char (char, string)
+import Text.Megaparsec.Char
 import Control.Monad.Combinators.Expr
 import qualified Data.Text as DT
 import Data.Char (ord)
@@ -82,15 +82,14 @@ pBool = lexeme (choice
     , ABool False <$ string (DT.pack "False")
     ]) <?> "boolean"
 
--- | Parse a string literal enclosed in double quotes.
+-- | Parse a string literal with escape sequences support.
 --
--- Converts the string into a list of characters ([IChar]).
+-- Converts the string into a list of characters AST ([IChar]).
 pString :: Parser Ast
 pString = (lexeme $ do
-    _ <- char '"'
-    content <- manyTill L.charLiteral (char '"')
-    return $ AList (map (AInteger . IChar . fromIntegral . ord)
-        content)) <?> "string"
+    content <- between (char '"') (char '"') (many pStringChar)
+    return $ AList (map (AInteger . IChar . fromIntegral . ord) content)
+    ) <?> "string"
 
 -- | Parse a character literal enclosed in single quotes.
 --
@@ -170,6 +169,35 @@ pIfExpr = do
         _ <- pKeyword (DT.pack "else")
         braces pExpr
     return (AIf cond thenExpr elseExpr)
+
+-- | Parse an escaped character code following a backslash.
+--
+-- Supported sequences:
+-- * \\n : Newline
+-- * \\r : Carriage return
+-- * \\t : Tabulation
+-- * \\0 : Null byte
+-- * \\\\ : Literal backslash
+-- * \\" : Literal double quote
+pEscapeCode :: Parser Char
+pEscapeCode = choice
+    [ char 'n' >> return '\n'
+    , char 'r' >> return '\r'
+    , char 't' >> return '\t'
+    , char '0' >> return '\0'
+    , char '\\' >> return '\\'
+    , char '"' >> return '"'
+    ]
+
+-- | Parse a single character inside a string literal.
+--
+-- It attempts to parse an escape sequence first (starting with '\').
+-- If it is not an escape sequence, it consumes any character except 
+-- a double quote (which marks the end of the string).
+pStringChar :: Parser Char
+pStringChar = 
+        try (char '\\' >> pEscapeCode)
+    <|> noneOf "\""
 
 -- | Parse a term in an expression.
 --
