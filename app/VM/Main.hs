@@ -54,11 +54,11 @@ tryRunVM state = try (runStateT runBytecode state)
 --   3. Runs VM via 'tryRunVM'.
 --   4. Handles Runtime errors.
 --
-executeFile :: String -> IO ()
-executeFile path = do
+executeFile :: String -> Bool -> IO ()
+executeFile path debugMode = do
     rawContent <- getFileContent path
     content <- extractContentIfValidHeader rawContent
-    result <- tryRunVM (createVMState content)
+    result <- tryRunVM (createVMState content debugMode)
     case result of
         Left err -> putStrLn ("\ESC[31mRuntime Error:\ESC[0m " ++ show err) >>
             exitFailure
@@ -84,7 +84,8 @@ main = do
     case args of
         [] -> putStrLn "\ESC[31mError: No input file provided.\ESC[0m" >>
             printUsage >> exitFailure
-        [filename] -> executeFile filename
+        [filename] -> executeFile filename False
+        ["--debug", filename] -> executeFile filename True
         _  -> putStrLn "\ESC[31mError: Too many arguments.\ESC[0m" >>
             putStrLn "The VM accepts exactly one bytecode file execution." >>
             printUsage >> exitFailure
