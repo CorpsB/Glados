@@ -36,7 +36,7 @@ evalVM = evalStateT
 
 mkVM :: [VMValue] -> VMState
 mkVM stk =
-  (createVMState BS.empty)
+  (createVMState BS.empty False)
     { vStack = V.fromList stk
     }
 

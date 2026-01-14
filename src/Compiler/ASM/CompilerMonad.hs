@@ -191,17 +191,17 @@ generateUniqueLabel prefixName = do
 -- @return
 --   The allocated index (Int) or an error (Left Text).
 --
-defineSymbol :: Text -> CompilerMonad Int
+defineSymbol :: Text -> CompilerMonad (ScopeType, Int)
 defineSymbol name = do
     s <- get
-    if Map.member name (csSymbols s)
-        then lift $ Left (pack "Symbol already defined: " <> name)
-        else
-            let idx = csNextIndex s in
-            put s { 
-                csSymbols = Map.insert name (ScopeGlobal, idx) (csSymbols s), 
-                csNextIndex = idx + 1 
-            } >> return idx
+    case Map.lookup name (csSymbols s) of
+        Just definition -> return definition
+        Nothing -> let idx = csNextIndex s
+                       scope = csScopeContext s in
+            put s {
+                csSymbols = Map.insert name (scope, idx) (csSymbols s),
+                csNextIndex = idx + 1
+            } >> return (scope, idx)
 
 -- | Manually registers a symbol in the symbol table without code generation.
 --
@@ -286,7 +286,8 @@ compileInIsolatedFunctionScope :: CompilerMonad () -> CompilerMonad ()
 compileInIsolatedFunctionScope compileAction = do
     outerState <- get
     put $ outerState 
-        { csCode = Seq.empty, csSymbols = Map.empty, csNextIndex = 0 }
+        { csCode = Seq.empty, csSymbols = Map.empty, csNextIndex = 0,
+        csScopeContext = ScopeLocal }
     compileAction
     innerState <- get
     put $ outerState 

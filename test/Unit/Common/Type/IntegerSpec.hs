@@ -10,7 +10,7 @@ module Common.Type.IntegerSpec (spec) where
 import Test.Hspec
 import Common.Type.Integer (IntValue(..), fitInteger, toInt64, fromInt64, intValueToInt)
 import Data.Char (ord)
-import Data.Int (Int8, Int64)
+import Data.Int (Int8)
 import Data.Word (Word8)
 import Data.List (sort, isInfixOf)
 

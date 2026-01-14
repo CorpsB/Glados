@@ -76,7 +76,14 @@ runCompiler inputPath outputPath = do
         Left err -> die $ "Semantic Error: " ++ err
         Right _  -> return ()
     state <- compileSource parsed_ast
-    bytecode <- assembleCode (extractInstructions state)
+
+    print parsed_ast
+    print state
+    let instructions = extractInstructions state
+    print instructions
+
+    bytecode <- assembleCode instructions
+
     writeBinary outputPath bytecode
 
 main :: IO ()

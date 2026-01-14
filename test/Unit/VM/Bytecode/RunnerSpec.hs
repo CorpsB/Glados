@@ -27,7 +27,7 @@ i n = VInt (Common.fromInt64 (fromIntegral n))
 
 mkVM :: BS.ByteString -> VMState
 mkVM bc =
-  (createVMState bc)
+  (createVMState bc False)
     { bytecodeIndex = 0
     , isRunning = True
     }

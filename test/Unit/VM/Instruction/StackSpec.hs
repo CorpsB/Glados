@@ -34,7 +34,7 @@ evalVM = evalStateT
 
 mkVM :: [Word8] -> [VMValue] -> Int -> VMState
 mkVM bytes stk ip =
-  (createVMState (BS.pack bytes))
+  (createVMState (BS.pack bytes) False)
     { vStack = V.fromList stk
     , bytecodeIndex = ip
     }

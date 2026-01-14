@@ -10,7 +10,7 @@
 module VM.VMStateSpec (spec) where
 
 import Test.Hspec
-import Control.Monad.State.Strict (runStateT, evalStateT)
+import Control.Monad.State.Strict (runStateT)
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
 
@@ -29,7 +29,7 @@ spec = describe "VM.VMState" $ do
   describe "createVMState" $ do
     it "initializes fields correctly (bytecode, indices, stacks, envs, isRunning)" $ do
       let code = BS.pack [0x01, 0x02, 0x03]
-      let vm = createVMState code
+      let vm = createVMState code False
 
       bytecode vm `shouldBe` code
       bytecodeIndex vm `shouldBe` 0
@@ -41,14 +41,14 @@ spec = describe "VM.VMState" $ do
       isRunning vm `shouldBe` True
 
     it "does not force evaluation of globalEnv (it contains undefined cells)" $ do
-      let vm = createVMState (BS.pack [])
+      let vm = createVMState (BS.pack []) False
       -- This must not crash: only checking length, not elements
       V.length (globalEnv vm) `shouldBe` 1024
 
   describe "createSnapshot" $ do
     it "captures callbackIndex, vStackIndex and vEnv from the VM state" $ do
       let code = BS.pack [0xAA]
-      let vm0 = (createVMState code)
+      let vm0 = (createVMState code False)
                 { bytecodeIndex = 42
                 , baseVStackIndex = 7
                 , env = V.fromList [VInt (I8 1), VBool True]
@@ -62,7 +62,7 @@ spec = describe "VM.VMState" $ do
   describe "doSnapshot" $ do
     it "pushes a snapshot and updates baseVStackIndex, bytecodeIndex and env" $ do
       let code = BS.pack [0x00, 0x00]
-      let vm0 = (createVMState code)
+      let vm0 = (createVMState code False)
                 { bytecodeIndex = 10
                 , baseVStackIndex = 3
                 , vStack = V.fromList [VInt (I8 11), VBool False]  -- length = 2
@@ -92,7 +92,7 @@ spec = describe "VM.VMState" $ do
       V.length (globalEnv vm1) `shouldBe` 1024
 
     it "stacks snapshots (LIFO) when called multiple times" $ do
-      let vm0 = (createVMState (BS.pack [0x00]))
+      let vm0 = (createVMState (BS.pack [0x00]) False)
                 { bytecodeIndex = 1
                 , baseVStackIndex = 0
                 , vStack = V.fromList [VInt (I8 9)]  -- length=1
