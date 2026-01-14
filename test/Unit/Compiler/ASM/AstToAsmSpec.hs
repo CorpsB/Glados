@@ -66,9 +66,25 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
       Map.lookup "*" builtinMap `shouldBe` Just Mul
       Map.lookup "div" builtinMap `shouldBe` Just Div
       Map.lookup "mod" builtinMap `shouldBe` Just Mod
-      Map.lookup "==" builtinMap `shouldBe` Just Eq
+      Map.lookup "eq?" builtinMap `shouldBe` Just Eq
       Map.lookup "<" builtinMap `shouldBe` Just Lt
       Map.lookup "<=" builtinMap `shouldBe` Just Le
+      Map.lookup "print" builtinMap `shouldBe` Just Print
+      Map.lookup "exit" builtinMap `shouldBe` Just Exit
+      Map.lookup "cons" builtinMap `shouldBe` Just Cons
+      Map.lookup "head" builtinMap `shouldBe` Just Head
+      Map.lookup "tail" builtinMap `shouldBe` Just Tail
+      Map.lookup "nth" builtinMap `shouldBe` Just Nth
+      Map.lookup "int8" builtinMap `shouldBe` Just (Cast 0x01)
+      Map.lookup "uint8" builtinMap `shouldBe` Just (Cast 0x02)
+      Map.lookup "int16" builtinMap `shouldBe` Just (Cast 0x03)
+      Map.lookup "uint16" builtinMap `shouldBe` Just (Cast 0x04)
+      Map.lookup "int32" builtinMap `shouldBe` Just (Cast 0x05)
+      Map.lookup "uint32" builtinMap `shouldBe` Just (Cast 0x06)
+      Map.lookup "int64" builtinMap `shouldBe` Just (Cast 0x07)
+      Map.lookup "uint64" builtinMap `shouldBe` Just (Cast 0x08)
+      Map.lookup "char" builtinMap `shouldBe` Just (Cast 0x09)
+      Map.lookup "uchar" builtinMap `shouldBe` Just (Cast 0x10)
       Map.lookup "unknown" builtinMap `shouldBe` Nothing
 
   describe "astIntToAsm" $ do

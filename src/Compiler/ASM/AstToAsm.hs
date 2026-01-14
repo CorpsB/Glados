@@ -37,7 +37,7 @@ import AST.Ast (Ast(..))
 builtinMap :: Map.Map Text Instruction
 builtinMap = Map.fromList
     [ (pack "+", Add), (pack "-", Sub), (pack "*", Mul), (pack "div", Div)
-    , (pack "mod", Mod), (pack "==", Eq), (pack "<", Lt), (pack "<=", Le)
+    , (pack "mod", Mod), (pack "eq?", Eq), (pack "<", Lt), (pack "<=", Le)
     , (pack "print", Print), (pack "exit", Exit), (pack "cons", Cons)
     , (pack "head", Head), (pack "tail", Tail), (pack "nth", Nth)
     , (pack "int8", Cast 0x01), (pack "uint8", Cast 0x02)
