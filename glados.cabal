@@ -24,6 +24,7 @@ library
       Common.Utils.List
       Common.Utils.Bytecode.Header
       Common.Utils.Bytecode.File
+      Common.Error
       Compiler.ASM.CompilerMonad
       Compiler.ASM.Compiler
       Compiler.ASM.AstToAsm
