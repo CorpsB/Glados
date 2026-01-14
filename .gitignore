@@ -74,3 +74,5 @@ stack.yaml.lock
 # Nix & cache (si utilisé un jour)
 result
 .nix-*
+
+*.gla
