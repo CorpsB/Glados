@@ -9,6 +9,7 @@ module VM.Instruction.List
     ( instCons
     , instHead
     , instTail
+    , instNth
     ) where
 
 import qualified Data.Vector as V
@@ -65,3 +66,21 @@ instTail = do
             True  -> error "VM Error: TAIL called on empty list"
             False -> stackPush (VList (V.tail v))
         _ -> error "VM Error: TAIL expects a List"
+
+-- | Implements NTH (Opcode 0x93).
+--
+-- @details
+--   Access to a list element.
+--   Stack: [index, list] -> [element]
+--
+instNth :: VirtualMachine ()
+instNth = do
+    idxVal <- stackPop
+    listVal <- stackPop
+    let idx = valueToInt idxVal
+    case listVal of
+        VList v -> case idx >= 0 && idx < V.length v of
+            True  -> stackPush (v V.! idx)
+            False -> error $ "VM Error: Nth index out of bounds (" ++
+                show idx ++ ")"
+        _ -> error "VM Error: Nth expects a List"

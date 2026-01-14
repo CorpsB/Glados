@@ -39,7 +39,7 @@ builtinMap = Map.fromList
     [ (pack "+", Add), (pack "-", Sub), (pack "*", Mul), (pack "div", Div)
     , (pack "mod", Mod), (pack "==", Eq), (pack "<", Lt), (pack "<=", Le)
     , (pack "print", Print), (pack "exit", Exit), (pack "cons", Cons)
-    , (pack "head", Head), (pack "tail", Tail)
+    , (pack "head", Head), (pack "tail", Tail), (pack "nth", Nth)
     , (pack "int8", Cast 0x01), (pack "uint8", Cast 0x02)
     , (pack "int16", Cast 0x03), (pack "uint16", Cast 0x04)
     , (pack "int32", Cast 0x05), (pack "uint32", Cast 0x06)

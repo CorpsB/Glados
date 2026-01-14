@@ -146,8 +146,9 @@ data Instruction
 
     -- 9. List Operations
     | Cons                    -- ^ 0x90 CONS
-    | Head                    -- ^ 0x91 HEAD
-    | Tail                    -- ^ 0x92 TAIL
+    | Head                    -- ^ 0x91 HEAD [list]
+    | Tail                    -- ^ 0x92 TAIL [list]
+    | Nth                     -- ^ 0x93 NTH [list] [idx]
 
     -- 8. System / Debug
     | Print                   -- ^ 0x70 PRINT
@@ -214,6 +215,7 @@ getInstCode (Cast _)             = 0x80
 getInstCode Cons                 = 0x90
 getInstCode Head                 = 0x91
 getInstCode Tail                 = 0x92
+getInstCode Nth                  = 0x93
 
 getInstCode Print                = 0x70
 getInstCode Halt                 = 0x71
@@ -285,6 +287,7 @@ instructionSize (Cast _)            = 1 + 1
 instructionSize Cons                = 1
 instructionSize Head                = 1
 instructionSize Tail                = 1
+instructionSize Nth                 = 1
 
 -- System / Debug
 instructionSize Print               = 1
