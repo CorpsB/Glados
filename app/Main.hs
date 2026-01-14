@@ -71,11 +71,11 @@ runCompiler :: String -> String -> IO ()
 runCompiler inputPath outputPath = do
     file_content <- TIO.readFile inputPath
     parsed_ast <- parseSource file_content
-    state <- compileSource parsed_ast
 
     case checkAst parsed_ast of
         Left err -> die $ "Semantic Error: " ++ err
         Right _  -> return ()
+    state <- compileSource parsed_ast
     bytecode <- assembleCode (extractInstructions state)
     writeBinary outputPath bytecode
 
