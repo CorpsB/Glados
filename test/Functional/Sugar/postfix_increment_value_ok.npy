@@ -4,3 +4,5 @@ func main() {
     // i should now be 2
     print(i);
 }
+
+main();

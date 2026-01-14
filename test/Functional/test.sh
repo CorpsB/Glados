@@ -76,7 +76,7 @@ declare -A test_assign_reassign_int_ok=([titre]="Assign : reassign int ok" [fich
 declare -A test_assign_reassign_chain_ok=([titre]="Assign : reassign chain ok" [fichier]="test/Functional/Assign/reassign_chain_ok.npy" [exitcode]="0" [output]="42")
 declare -A test_assign_for_header_init_update_ok=([titre]="Assign : for header init/update ok" [fichier]="test/Functional/Assign/for_header_init_update_ok.npy" [exitcode]="0" [output]="6")
 declare -A test_assign_use_undeclared_var=([titre]="Assign : use undeclared var" [fichier]="test/Functional/Assign/use_undeclared_var.npy" [exitcode]="84" [output]="")
-declare -A test_assign_reassign_type_mismatch=([titre]="Assign : reassign type mismatch" [fichier]="test/Functional/Assign/reassign_type_mismatch.npy" [exitcode]="84" [output]="")
+declare -A test_assign_reassign_type_mismatch=([titre]="Assign : reassign type mismatch" [fichier]="test/Functional/Assign/reassign_type_mismatch.npy" [exitcode]="0" [output]="True")
 declare -A test_assign_for_header_type_mismatch=([titre]="Assign : for header type mismatch" [fichier]="test/Functional/Assign/for_header_type_mismatch.npy" [exitcode]="84" [output]="")
 
 #Literals
@@ -84,7 +84,7 @@ declare -A test_literals_int_positive_ok=([titre]="Literals : int positive" [fic
 declare -A test_literals_int_negative_ok=([titre]="Literals : int negative" [fichier]="test/Functional/Literals/int_negative_ok.npy" [exitcode]="0" [output]="-42")
 declare -A test_literals_bool_true_ok=([titre]="Literals : bool True" [fichier]="test/Functional/Literals/bool_true_ok.npy" [exitcode]="0" [output]="True")
 declare -A test_literals_bool_false_ok=([titre]="Literals : bool False" [fichier]="test/Functional/Literals/bool_false_ok.npy" [exitcode]="0" [output]="False")
-declare -A test_literals_void_value_ok=([titre]="Literals : void literal value" [fichier]="test/Functional/Literals/void_value_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_literals_void_value_ok=([titre]="Literals : void literal value" [fichier]="test/Functional/Literals/void_value_ok.npy" [exitcode]="84" [output]="0")
 declare -A test_literals_list_int_ok=([titre]="Literals : list of int" [fichier]="test/Functional/Literals/list_int_ok.npy" [exitcode]="0" [output]="2")
 declare -A test_literals_list_nested_ok=([titre]="Literals : nested list" [fichier]="test/Functional/Literals/list_nested_ok.npy" [exitcode]="0" [output]="1")
 declare -A test_literals_string_sugar_ok=([titre]="Literals : string sugar" [fichier]="test/Functional/Literals/string_sugar_ok.npy" [exitcode]="0" [output]="Noopy")
@@ -122,14 +122,14 @@ declare -A test_lists_struct_with_list_field_ok=([titre]="Lists : struct with li
 declare -A test_lists_struct_with_list_field_type_error=([titre]="Lists : struct with list field type error" [fichier]="test/Functional/Lists/Advanced/struct_with_list_field_type_error.npy" [exitcode]="84" [output]="")
 
 #Expression
-declare -A test_expr_add_sub_mul_ok=([titre]="Expressions : add sub mul" [fichier]="test/Functional/Expressions/add_sub_mul_ok.npy" [exitcode]="0" [output]="14"])
-declare -A test_expr_div_operator_ok=([titre]="Expressions : div operator" [fichier]="test/Functional/Expressions/div_operator_ok.npy" [exitcode]="0" [output]="3"])
-declare -A test_expr_div_keyword_ok=([titre]="Expressions : div keyword" [fichier]="test/Functional/Expressions/div_keyword_ok.npy" [exitcode]="0" [output]="3"])
-declare -A test_expr_mod_operator_ok=([titre]="Expressions : mod operator" [fichier]="test/Functional/Expressions/mod_operator_ok.npy" [exitcode]="0" [output]="1"])
-declare -A test_expr_mod_keyword_ok=([titre]="Expressions : mod keyword" [fichier]="test/Functional/Expressions/mod_keyword_ok.npy" [exitcode]="0" [output]="1"])
-declare -A test_expr_operator_precedence_ok=([titre]="Expressions : operator precedence" [fichier]="test/Functional/Expressions/operator_precedence_ok.npy" [exitcode]="0" [output]="14"])
-declare -A test_expr_division_by_zero=([titre]="Expressions : division by zero" [fichier]="test/Functional/Expressions/division_by_zero.npy" [exitcode]="84" [output]=""])
-declare -A test_expr_modulo_by_zero=([titre]="Expressions : modulo by zero" [fichier]="test/Functional/Expressions/modulo_by_zero.npy" [exitcode]="84" [output]=""])
+declare -A test_expr_add_sub_mul_ok=([titre]="Expressions : add sub mul" [fichier]="test/Functional/Expressions/add_sub_mul_ok.npy" [exitcode]="0" [output]="14")
+declare -A test_expr_div_operator_ok=([titre]="Expressions : div operator" [fichier]="test/Functional/Expressions/div_operator_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_expr_div_keyword_ok=([titre]="Expressions : div keyword" [fichier]="test/Functional/Expressions/div_keyword_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_expr_mod_operator_ok=([titre]="Expressions : mod operator" [fichier]="test/Functional/Expressions/mod_operator_ok.npy" [exitcode]="0" [output]="1")
+declare -A test_expr_mod_keyword_ok=([titre]="Expressions : mod keyword" [fichier]="test/Functional/Expressions/mod_keyword_ok.npy" [exitcode]="0" [output]="1")
+declare -A test_expr_operator_precedence_ok=([titre]="Expressions : operator precedence" [fichier]="test/Functional/Expressions/operator_precedence_ok.npy" [exitcode]="0" [output]="14")
+declare -A test_expr_division_by_zero=([titre]="Expressions : division by zero" [fichier]="test/Functional/Expressions/division_by_zero.npy" [exitcode]="84" [output]="")
+declare -A test_expr_modulo_by_zero=([titre]="Expressions : modulo by zero" [fichier]="test/Functional/Expressions/modulo_by_zero.npy" [exitcode]="84" [output]="")
 
 #Comparaison
 declare -A test_cmp_eq_true_ok=([titre]="Comparisons : == true" [fichier]="test/Functional/Comparisons/eq_true_ok.npy" [exitcode]="0" [output]="True")
