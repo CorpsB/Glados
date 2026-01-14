@@ -1,0 +1,3 @@
+import "lib.npy";
+
+print(42);

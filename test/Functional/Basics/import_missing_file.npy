@@ -1,0 +1,3 @@
+import "does_not_exist.npy";
+
+print(42);

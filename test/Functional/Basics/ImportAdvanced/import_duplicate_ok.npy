@@ -1,0 +1,6 @@
+import "lib/value.npy";
+import "lib/value.npy";
+
+func main() {
+    print(value());
+}

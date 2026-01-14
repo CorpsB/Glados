@@ -1,0 +1,4 @@
+import "math.npy";
+import "utils.npy";
+
+print(add(40, two()));

@@ -1,0 +1,2 @@
+nothing: void = void;
+print(42);

@@ -1,0 +1,7 @@
+func main() {
+    l: [int] = [];
+    t = tail(l);
+    // If tail([]) already errors, we never reach here.
+    // If tail([]) returns [], head([]) must error anyway.
+    print(head(t));
+}

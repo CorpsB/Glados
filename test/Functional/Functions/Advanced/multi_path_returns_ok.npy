@@ -1,0 +1,11 @@
+func clamp01(x: int) -> int {
+    if (x < 0) {
+        ret 0;
+    } else {
+        ret 10;
+    }
+}
+
+func main() {
+    print(clamp01(5));
+}

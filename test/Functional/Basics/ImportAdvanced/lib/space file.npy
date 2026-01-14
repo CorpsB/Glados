@@ -1,0 +1,3 @@
+func spaced() -> int {
+    ret 42;
+}

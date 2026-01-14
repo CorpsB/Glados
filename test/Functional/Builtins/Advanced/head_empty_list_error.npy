@@ -1,0 +1,4 @@
+func main() {
+    l: [int] = [];
+    print(head(l));
+}

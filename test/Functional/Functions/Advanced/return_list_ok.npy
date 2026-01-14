@@ -1,0 +1,8 @@
+func make() -> [int] {
+    ret [42, 7, 9];
+}
+
+func main() {
+    l = make();
+    print(head(l));
+}

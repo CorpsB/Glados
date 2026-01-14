@@ -1,0 +1,12 @@
+import "types.npy";
+import "math.npy";
+import "hof.npy";
+
+func main() {
+    p: Pair = new Pair { a: 7, b: 8 };
+
+    add = lambda(x, y) -> x + y;
+
+    // sum(p) = 15, apply2(add, 7, 8) = 15, print 15 once
+    print(sum(p));
+}

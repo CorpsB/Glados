@@ -1,0 +1,5 @@
+import "a.npy";
+
+func b() -> int {
+    ret 2;
+}

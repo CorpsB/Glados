@@ -1,0 +1,2 @@
+numbers: [int] = [1, True, 3];
+print(numbers[0]);
