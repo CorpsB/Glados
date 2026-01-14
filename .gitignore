@@ -76,3 +76,4 @@ result
 .nix-*
 
 *.gla
+generate.sh
