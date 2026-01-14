@@ -1,0 +1,2 @@
+matrix: [[int]] = [[1, 0], [0, 1]];
+print(matrix[0][0]);

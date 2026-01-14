@@ -1,0 +1,8 @@
+func v() {
+    // does not return -> void
+}
+
+func main() {
+    print(v());
+    print(42);
+}

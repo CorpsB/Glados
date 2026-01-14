@@ -1,0 +1,4 @@
+func main() {
+    s: [char] = [char(78), char(111), char(111), char(112), char(121)];
+    print(s);
+}

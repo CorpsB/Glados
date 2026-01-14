@@ -1,0 +1,5 @@
+import "b.npy";
+
+func wrapper() -> int {
+    ret 0;
+}

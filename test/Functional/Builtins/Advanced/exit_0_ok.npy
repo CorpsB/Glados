@@ -1,0 +1,5 @@
+func main() {
+    exit(0);
+    // unreachable
+    print(42);
+}

@@ -1,0 +1,8 @@
+func makeAdder(n: int) {
+    ret lambda(x) -> x + n;
+}
+
+func main() {
+    add10 = makeAdder(10);
+    print(add10(5));
+}

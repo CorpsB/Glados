@@ -1,0 +1,6 @@
+import "conflict/m1.npy";
+import "conflict/m2.npy";
+
+func main() {
+    print(foo());
+}

@@ -1,0 +1,6 @@
+func main() {
+    l: [int] = [1, 2, 3];
+    // wrong element type
+    l2 = cons(True, l);
+    print(head(l2));
+}

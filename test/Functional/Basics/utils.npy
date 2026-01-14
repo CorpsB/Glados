@@ -1,0 +1,3 @@
+func two() -> int {
+    ret 2;
+}

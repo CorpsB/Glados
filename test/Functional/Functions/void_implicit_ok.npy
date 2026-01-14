@@ -1,0 +1,5 @@
+func log_message(msg: [char]) {
+    print(msg);
+}
+
+log_message("Hi");

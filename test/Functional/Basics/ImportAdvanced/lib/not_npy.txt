@@ -1,0 +1,3 @@
+func should_not_be_importable() -> int {
+    ret 42;
+}

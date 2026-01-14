@@ -1,0 +1,11 @@
+struct Box {
+    value: int;
+}
+
+func main() {
+    base = 10;
+    f = lambda(x) -> x + base;
+
+    b: Box = new Box { value: f(2) };
+    print(b.value);
+}

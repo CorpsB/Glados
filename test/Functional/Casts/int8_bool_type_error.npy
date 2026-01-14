@@ -1,0 +1,3 @@
+func main() {
+    print(int8(True));
+}

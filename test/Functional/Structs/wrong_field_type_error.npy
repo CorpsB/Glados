@@ -1,0 +1,7 @@
+struct Vector2 {
+    x: int;
+    y: int;
+}
+
+v: Vector2 = new Vector2 { x: True, y: 2 };
+print(v.y);

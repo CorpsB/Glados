@@ -1,0 +1,8 @@
+func v() {
+    print(1);
+}
+
+func main() {
+    a = v();
+    print(a != 0);
+}
