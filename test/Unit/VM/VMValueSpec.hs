@@ -24,11 +24,11 @@ spec = describe "VM.VMValue" $ do
       valueToString (VInt (I8 (-1))) `shouldBe` "-1"
 
   describe "valueToString - VBool" $ do
-    it "prints True as #t" $ do
-      valueToString (VBool True) `shouldBe` "#t"
+    it "prints True as True" $ do
+      valueToString (VBool True) `shouldBe` "True"
 
-    it "prints False as #f" $ do
-      valueToString (VBool False) `shouldBe` "#f"
+    it "prints False as False" $ do
+      valueToString (VBool False) `shouldBe` "False"
 
   describe "valueToString - VList" $ do
     it "prints an empty list as '()" $ do
@@ -36,7 +36,7 @@ spec = describe "VM.VMValue" $ do
 
     it "prints a non-empty list with elements separated by spaces" $ do
       let v = V.fromList [VInt (I8 1), VBool True, VVoid]
-      valueToString (VList v) `shouldBe` "'(1 #t void)"
+      valueToString (VList v) `shouldBe` "'(1 True void)"
 
     it "prints nested lists recursively" $ do
       let inner = VList V.empty
@@ -49,12 +49,12 @@ spec = describe "VM.VMValue" $ do
 
     it "prints a non-empty struct with fields separated by spaces" $ do
       let fields = V.fromList [VInt (I8 1), VBool False, VVoid]
-      valueToString (VStruct fields) `shouldBe` "{struct:1 #f void}"
+      valueToString (VStruct fields) `shouldBe` "{struct:1 False void}"
 
     it "prints nested values inside a struct (including lists)" $ do
       let lst = VList (V.fromList [VInt (I8 2), VBool True])
       let st  = VStruct (V.fromList [VInt (I8 1), lst])
-      valueToString st `shouldBe` "{struct:1 '(2 #t)}"
+      valueToString st `shouldBe` "{struct:1 '(2 True)}"
 
   describe "valueToString - VClosure / VFuncPtr / VVoid" $ do
     it "prints a closure with address and capture count" $ do
