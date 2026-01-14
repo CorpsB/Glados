@@ -1,0 +1,4 @@
+func main() {
+    l: [int] = [10, 20, 30];
+    print(nth(l, -1));
+}

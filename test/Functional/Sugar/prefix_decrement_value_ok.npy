@@ -1,0 +1,6 @@
+func main() {
+    i = 1;
+    x = --i;
+    // x should be 0
+    print(x);
+}

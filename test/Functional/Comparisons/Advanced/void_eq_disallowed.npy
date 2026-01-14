@@ -1,0 +1,9 @@
+func v() {
+    print(1);
+}
+
+func main() {
+    a = v();
+    b = v();
+    print(a == b);
+}

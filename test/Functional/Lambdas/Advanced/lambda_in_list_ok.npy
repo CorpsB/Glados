@@ -1,0 +1,8 @@
+func main() {
+    f1 = lambda(x) -> x + 1;
+    f2 = lambda(x) -> x + 2;
+
+    fs = [f1, f2];
+    g = fs[1];
+    print(g(7));
+}

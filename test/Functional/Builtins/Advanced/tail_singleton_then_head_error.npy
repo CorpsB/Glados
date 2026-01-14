@@ -1,0 +1,4 @@
+func main() {
+    l: [int] = [7];
+    print(head(tail(l)));
+}

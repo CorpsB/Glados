@@ -1,0 +1,9 @@
+struct Point {
+    x: int;
+}
+
+func main() {
+    p1: Point = new Point { x: 1 };
+    p2: Point = new Point { x: 1 };
+    print(p1 == p2);
+}

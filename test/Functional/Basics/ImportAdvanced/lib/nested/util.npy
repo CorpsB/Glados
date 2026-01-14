@@ -1,0 +1,3 @@
+func util() -> int {
+    ret 42;
+}

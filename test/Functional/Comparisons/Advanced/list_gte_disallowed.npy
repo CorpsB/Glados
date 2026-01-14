@@ -1,0 +1,5 @@
+func main() {
+    a: [int] = [1, 2];
+    b: [int] = [1, 2];
+    print(a >= b);
+}

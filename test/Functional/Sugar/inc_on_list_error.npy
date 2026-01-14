@@ -1,0 +1,5 @@
+func main() {
+    l: [int] = [1, 2];
+    l++;
+    print(42);
+}

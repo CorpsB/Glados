@@ -1,0 +1,7 @@
+func (a: int) -> int {
+    ret a;
+}
+
+func main() {
+    print(42);
+}

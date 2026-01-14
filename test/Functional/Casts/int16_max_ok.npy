@@ -1,0 +1,3 @@
+func main() {
+    print(int16(32767));
+}
