@@ -184,8 +184,8 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
   describe "compileSetVar" $ do
     it "stores value and registers global symbol" $ do
-      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" (AInteger (Common.I32 3))) createCompilerState)
-      Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0)
+      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" "int" (AInteger (Common.I32 3))) createCompilerState)
+      Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0, "int")
       csNextIndex st `shouldBe` 1
       csCode st `shouldBe`
         Seq.fromList
@@ -195,13 +195,13 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
   describe "compileDefineStruct / compileSetStruct" $ do
     it "compileDefineStruct registers struct definition only" $ do
-      let action = compileDefineStruct "Point" [("x","Int"),("y","Int")]
+      let action = compileDefineStruct "Point" [("x", "int"), ("y", "int")]
       let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe` Seq.empty
-      Map.lookup "Point" (csStructs st) `shouldBe` Just ["x","y"]
+      Map.lookup "Point" (csStructs st) `shouldBe` Just [("x", "int"), ("y", "int")]
 
     it "compileSetStruct emits fields in struct order then BuildStruct" $ do
-      let st0 = createCompilerState { csStructs = Map.singleton "Point" ["x","y"] }
+      let st0 = createCompilerState { csStructs = Map.singleton "Point" [("x", "int"), ("y", "int")] }
       let action = compileSetStruct compileAst "Point"
             [ ("y", AInteger (Common.I32 2))
             , ("x", AInteger (Common.I32 1))
@@ -215,7 +215,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           ]
 
     it "compileSetStruct fails when a required field is missing" $ do
-      let st0 = createCompilerState { csStructs = Map.singleton "Point" ["x","y"] }
+      let st0 = createCompilerState { csStructs = Map.singleton "Point" [("x", "int"), ("y", "int")] }
       let err = expectLeft (runCM (compileSetStruct compileAst "Point" [("x", ABool True)]) st0)
       T.unpack err `shouldContain` "Missing field"
 
@@ -227,7 +227,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
     it "compiles isolated function; code goes to csFuncs, outer csCode preserved" $ do
       let action = do
             emitInstruction Nop
-            compileDefineFun compileAst "foo" ["x","y"] (ASymbol "x")
+            compileDefineFun compileAst "foo" [("x", "int"), ("y", "int")] (ASymbol "x")
             emitInstruction Halt
       let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe` Seq.fromList [Real Nop, Real Halt]
@@ -245,8 +245,8 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
             createCompilerState
               { csSymbols =
                   Map.fromList
-                    [ ("a", (ScopeGlobal, 2))
-                    , ("b", (ScopeGlobal, 7))
+                    [ ("a", (ScopeGlobal, 2, "int"))
+                    , ("b", (ScopeGlobal, 7, "int"))
                     ]
               }
       let body = AList [ASymbol "a", ASymbol "b"]
@@ -274,7 +274,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
     it "fails if a capture is undefined" $ do
       let err = expectLeft (runCM (compileDefineLambda compileAst ["x"] (ASymbol "y")) createCompilerState)
-      T.unpack err `shouldContain` "Undefined symbol: y"
+      T.unpack err `shouldContain` "Undefined symbol: \"y\""
 
   describe "compileTail" $ do
     it "builtin call in tail position emits builtin instruction then Ret" $ do

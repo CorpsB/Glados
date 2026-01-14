@@ -44,11 +44,11 @@ spec = describe "Compiler.CompilerState (max coverage)" $ do
       a `shouldNotBe` (b { csLabelCnt = 1 })
       a `shouldNotBe` (b { csCode = Seq.singleton (Real Halt) })
       a `shouldNotBe` (b { csFuncs = Seq.singleton (LabelDef "F") })
-      a `shouldNotBe` (b { csStructs = Map.singleton "S" ["x"] })
+      a `shouldNotBe` (b { csStructs = Map.singleton "S" [("x", "int")] })
 
     it "Map insertion order does not affect equality" $ do
-      let symA = Map.fromList [("x", (ScopeGlobal, 0)), ("y", (ScopeLocal, 1))]
-      let symB = Map.fromList [("y", (ScopeLocal, 1)), ("x", (ScopeGlobal, 0))]
+      let symA = Map.fromList [("x", (ScopeGlobal, 0, "int")), ("y", (ScopeLocal, 1, "int"))]
+      let symB = Map.fromList [("y", (ScopeLocal, 1, "int")), ("x", (ScopeGlobal, 0, "int"))]
       let sA = createCompilerState { csSymbols = symA }
       let sB = createCompilerState { csSymbols = symB }
       sA `shouldBe` sB
@@ -56,8 +56,8 @@ spec = describe "Compiler.CompilerState (max coverage)" $ do
     it "Show contains key structural hints" $ do
       let s =
             createCompilerState
-              { csSymbols = Map.fromList [("x", (ScopeGlobal, 0))]
-              , csStructs = Map.fromList [("S", ["a","b"])]
+              { csSymbols = Map.fromList [("x", (ScopeGlobal, 0, "int"))]
+              , csStructs = Map.fromList [("S", [("a", "int"), ("b", "int")])]
               , csNextIndex = 1
               , csLabelCnt = 2
               , csCode = Seq.fromList [LabelDef "L1", Real Halt]

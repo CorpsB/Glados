@@ -81,8 +81,8 @@ spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
   describe "defineSymbol" $ do
     it "allocates ScopeGlobal indices and increments csNextIndex" $ do
       let action = do
-            resA <- defineSymbol "varA"
-            resB <- defineSymbol "varB"
+            resA <- defineSymbol "varA" "int"
+            resB <- defineSymbol "varB" "int"
             pure (resA, resB)
       let ((scopeA, i0), (scopeB, i1)) = fst $ expectRight (runCM action createCompilerState)
       let finalState = snd $ expectRight (runCM action createCompilerState)
@@ -91,51 +91,51 @@ spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
       scopeB `shouldBe` ScopeGlobal
       i1 `shouldBe` 1
       csNextIndex finalState `shouldBe` 2
-      Map.lookup "varA" (csSymbols finalState) `shouldBe` Just (ScopeGlobal, 0)
-      Map.lookup "varB" (csSymbols finalState) `shouldBe` Just (ScopeGlobal, 1)
+      Map.lookup "varA" (csSymbols finalState) `shouldBe` Just (ScopeGlobal, 0, "int")
+      Map.lookup "varB" (csSymbols finalState) `shouldBe` Just (ScopeGlobal, 1, "int")
 
   describe "registerSymbol" $ do
     it "ScopeLocal adjusts csNextIndex to max(old, idx+1)" $ do
       let action = do
-            registerSymbol "x" ScopeLocal 0
-            registerSymbol "y" ScopeLocal 3
+            registerSymbol "x" "int" ScopeLocal 0
+            registerSymbol "y" "int" ScopeLocal 3
       let (_, st) = expectRight (runCM action createCompilerState)
       csNextIndex st `shouldBe` 4
-      Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeLocal, 0)
-      Map.lookup "y" (csSymbols st) `shouldBe` Just (ScopeLocal, 3)
+      Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeLocal, 0, "int")
+      Map.lookup "y" (csSymbols st) `shouldBe` Just (ScopeLocal, 3, "int")
 
     it "ScopeGlobal adjusts csNextIndex similarly" $ do
       let action = do
-            registerSymbol "g" ScopeGlobal 10
+            registerSymbol "g" "int" ScopeGlobal 10
       let (_, st) = expectRight (runCM action createCompilerState)
       csNextIndex st `shouldBe` 11
-      Map.lookup "g" (csSymbols st) `shouldBe` Just (ScopeGlobal, 10)
+      Map.lookup "g" (csSymbols st) `shouldBe` Just (ScopeGlobal, 10, "int")
 
     it "ScopeCapture does NOT touch csNextIndex" $ do
       let st0 = createCompilerState { csNextIndex = 7 }
-      let (_, st) = expectRight (runCM (registerSymbol "c" ScopeCapture 2) st0)
+      let (_, st) = expectRight (runCM (registerSymbol "c" "int" ScopeCapture 2) st0)
       csNextIndex st `shouldBe` 7
-      Map.lookup "c" (csSymbols st) `shouldBe` Just (ScopeCapture, 2)
+      Map.lookup "c" (csSymbols st) `shouldBe` Just (ScopeCapture, 2, "int")
 
   describe "defineStruct / getStructDefinition" $ do
     it "defineStruct stores field order" $ do
-      let action = defineStruct "Point" ["x","y","z"]
+      let action = defineStruct "Point" [("x", "int"),("y", "int"),("z", "int")]
       let (_, st) = expectRight (runCM action createCompilerState)
-      Map.lookup "Point" (csStructs st) `shouldBe` Just ["x","y","z"]
+      Map.lookup "Point" (csStructs st) `shouldBe` Just [("x", "int"), ("y", "int"), ("z", "int")]
 
     it "defineStruct overwrites existing definition" $ do
       let action = do
-            defineStruct "S" ["a"]
-            defineStruct "S" ["b","c"]
+            defineStruct "S" [("a", "int")]
+            defineStruct "S" [("b", "int"), ("c", "int")]
       let (_, st) = expectRight (runCM action createCompilerState)
-      Map.lookup "S" (csStructs st) `shouldBe` Just ["b","c"]
+      Map.lookup "S" (csStructs st) `shouldBe` Just [("b", "int"), ("c", "int")]
 
     it "getStructDefinition returns stored definition" $ do
       let action = do
-            defineStruct "S" ["a","b"]
+            defineStruct "S" [("a", "int"), ("b", "int")]
             getStructDefinition "S"
       let (fields, _) = expectRight (runCM action createCompilerState)
-      fields `shouldBe` ["a","b"]
+      fields `shouldBe` [("a", "int"), ("b", "int")]
 
     it "getStructDefinition fails for unknown struct" $ do
       let err = expectLeft (runCM (getStructDefinition "Unknown") createCompilerState)

@@ -282,7 +282,7 @@ getSymbolType name = do
     s <- get
     case Map.lookup name (csSymbols s) of
         Just (_, _, t) -> return t
-        Nothing -> lift $ Left (pack $ "Variable not found: " ++ show name)
+        Nothing -> lift $ Left (pack $ "Undefined symbol: " ++ show name)
 
 -- | Searches for a field index and its type within a list of fields.
 --

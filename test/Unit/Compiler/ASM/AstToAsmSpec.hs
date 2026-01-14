@@ -83,17 +83,17 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
 
   describe "astSymbolToAsm" $ do
     it "ScopeGlobal -> LoadGlobal" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 5) }
+      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 5, "int") }
       let (_, st) = expectRight (runCM (astSymbolToAsm "x") st0)
       csCode st `shouldBe` Seq.singleton (Real (LoadGlobal 5))
 
     it "ScopeLocal -> LoadLocal" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeLocal, 1) }
+      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeLocal, 1, "int") }
       let (_, st) = expectRight (runCM (astSymbolToAsm "x") st0)
       csCode st `shouldBe` Seq.singleton (Real (LoadLocal 1))
 
     it "ScopeCapture -> LoadCapture" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeCapture, 2) }
+      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeCapture, 2, "int") }
       let (_, st) = expectRight (runCM (astSymbolToAsm "x") st0)
       csCode st `shouldBe` Seq.singleton (Real (LoadCapture 2))
 
@@ -153,7 +153,7 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
 
   describe "mockCompile (extra coverage)" $ do
     it "covers ASymbol branch" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 9) }
+      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 9, "int") }
       let (_, st) = expectRight (runCM (mockCompile (ASymbol "x")) st0)
       csCode st `shouldBe` Seq.singleton (Real (LoadGlobal 9))
 
