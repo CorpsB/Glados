@@ -93,9 +93,9 @@ astSymbolToAsm :: Text -> CompilerMonad ()
 astSymbolToAsm name = do
     currentState <- get
     case Map.lookup name (csSymbols currentState) of
-        Just (ScopeGlobal, idx)  -> emitInstruction (LoadGlobal idx)
-        Just (ScopeLocal, idx)   -> emitInstruction (LoadLocal idx)
-        Just (ScopeCapture, idx) -> emitInstruction (LoadCapture idx)
+        Just (ScopeGlobal, idx, _)  -> emitInstruction (LoadGlobal idx)
+        Just (ScopeLocal, idx, _)   -> emitInstruction (LoadLocal idx)
+        Just (ScopeCapture, idx, _) -> emitInstruction (LoadCapture idx)
         Nothing  -> lift $ Left (pack "Undefined symbol: " <> name)
 
 -- | Converts a literal AST list to assembly instructions.

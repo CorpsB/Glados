@@ -22,7 +22,9 @@ module Compiler.ASM.Compiler
     , compileDefineStruct
     , compileTail
     , compileLoop
+    , compileAccessStruct
     , getLambdaFreeVariables
+    , inferType
     ) where
 
 import Data.Text (Text, pack)
@@ -44,6 +46,7 @@ import Compiler.ASM.AstToAsm
 import Compiler.Instruction (Instruction(..))
 import Compiler.PsInstruction (PsInstruction(..))
 import Compiler.CompilerState (ScopeType(..))
+import Common.Utils.List (zipWith3M_)
 import AST.Ast (Ast(..))
 
 -- | Analyzes an AST node to find free variables (variables used but not defined locally).
@@ -227,10 +230,10 @@ compileFor compileFn initAst cond body updateAst = do
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
 --
-compileSetVar :: (Ast -> CompilerMonad ()) -> Text -> Ast -> CompilerMonad ()
-compileSetVar compileFn name body = do
+compileSetVar :: (Ast -> CompilerMonad ()) -> Text -> Text -> Ast -> CompilerMonad ()
+compileSetVar compileFn name typeName body = do
     compileFn body
-    (scope, idx) <- defineSymbol name
+    (scope, idx) <- defineSymbol name typeName
     case scope of
         ScopeGlobal  -> emitInstruction (StoreGlobal idx)
         ScopeLocal   -> emitInstruction (StoreLocal idx)
@@ -256,7 +259,7 @@ compileSetStruct :: (Ast -> CompilerMonad ()) -> Text -> [(Text, Ast)] ->
     CompilerMonad ()
 compileSetStruct compileFn name assignedFields = do
     defFields <- getStructDefinition name
-    forM_ defFields $ \fName ->
+    forM_ defFields $ \(fName, _fType) ->
         case Map.lookup fName (Map.fromList assignedFields) of
             Just valAst -> compileFn valAst
             Nothing -> lift $ Left (pack (
@@ -279,12 +282,14 @@ compileSetStruct compileFn name assignedFields = do
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
 --
-compileDefineFun :: (Ast -> CompilerMonad ()) -> Text -> [Text] -> Ast -> CompilerMonad ()
+compileDefineFun :: (Ast -> CompilerMonad ()) -> Text -> [(Text, Text)] ->
+    Ast -> CompilerMonad ()
 compileDefineFun compileFn name args body = do
     ulabel <- generateUniqueLabel (pack "fun_" <> name)
     compileInIsolatedFunctionScope $
         emitLabelDefinition ulabel >>
-        zipWithM_ (\arg idx -> registerSymbol arg ScopeLocal idx) args [0..] >>
+        zipWithM_ (\(argName, argType) idx -> 
+            registerSymbol argName argType ScopeLocal idx) args [0..] >>
         compileFn body >>
         emitInstruction Ret
     return ()
@@ -310,11 +315,12 @@ compileDefineLambda :: (Ast -> CompilerMonad ()) -> [Text] -> Ast ->
 compileDefineLambda compileFn params body = do
     let fvars = Set.toList (getLambdaFreeVariables (ADefineLambda params body))
     let ncaptures = length fvars
-    mapM_ astSymbolToAsm fvars
-    ulabel <- generateUniqueLabel (pack "lambda")
+    capTypes <- mapM getSymbolType fvars
+    mapM_ astSymbolToAsm fvars; ulabel <- generateUniqueLabel (pack "lambda")
     compileInIsolatedFunctionScope $ emitLabelDefinition ulabel >>
-        zipWithM_ (\c i -> registerSymbol c ScopeCapture i) fvars [0..] >>
-        zipWithM_ (\p i -> registerSymbol p ScopeLocal (
+        zipWith3M_ (\name tName i ->
+            registerSymbol name tName ScopeCapture i) fvars capTypes [0..] >>
+        zipWithM_ (\pName i -> registerSymbol pName (pack "auto") ScopeLocal (
             ncaptures + i)) params [0..] >> compileTail compileFn body
     appendPseudoInstruction (MakeClosureLabel ulabel ncaptures)
 
@@ -333,7 +339,37 @@ compileDefineLambda compileFn params body = do
 --   Unit value wrapped in 'CompilerMonad'.
 --
 compileDefineStruct :: Text -> [(Text, Text)] -> CompilerMonad ()
-compileDefineStruct name fields = defineStruct name (map fst fields)
+compileDefineStruct name fields = defineStruct name fields
+
+-- | Infers the type of an AST expression.
+--
+-- @details
+--   - ASymbol: Look up the variable in the symbol table.
+--   - AAccessStruct: Recursively infer the parent object's type,
+--   then look up the field's type.
+--
+inferType :: Ast -> CompilerMonad Text
+inferType (ASymbol name) = getSymbolType name
+inferType (AAccessStruct obj field) = do
+    parentType <- inferType obj
+    (_, fieldType) <- getStructField parentType field
+    return fieldType
+inferType _ = lift $ Left (pack
+    "Cannot infer type of expression (too complex AST).")
+
+-- | Compiles a struct field access.
+--
+-- @details
+--   1. Infers the type of the object being accessed (e.g., "Player").
+--   2. Looks up the field index in the struct definition.
+--   3. Emits the code for the object followed by GET_STRUCT_FIELD.
+--
+compileAccessStruct :: (Ast -> CompilerMonad ()) -> Ast -> Text -> CompilerMonad ()
+compileAccessStruct compileFn obj fieldName = do
+    structType <- inferType obj
+    (idx, _) <- getStructField structType fieldName
+    compileFn obj
+    emitInstruction (GetStructField idx)
 
 -- | Main Dispatcher Function: Compiles any AST node.
 --
@@ -356,16 +392,17 @@ compileAst (ASymbol s) = astSymbolToAsm s
 compileAst AVoid = return ()
 compileAst (AList xs) = astListToAsm compileAst xs
 compileAst (ADefineFunc name args _ body) =
-    compileDefineFun compileAst name (map fst args) body
+    compileDefineFun compileAst name args body
 compileAst (ADefineLambda params body) =
     compileDefineLambda compileAst params body
 compileAst (ADefineStruct name fields) = compileDefineStruct name fields
-compileAst (ASetVar name _ body) = compileSetVar compileAst name body
+compileAst (ASetVar name typeName body) =
+    compileSetVar compileAst name typeName body
 compileAst (ASetStruct name fields) = compileSetStruct compileAst name fields
+compileAst (AAccessStruct obj field) = compileAccessStruct compileAst obj field
 compileAst (AIf cond t f) = compileIf compileAst cond t f
 compileAst (AWhile cond body) = compileWhile compileAst cond body
 compileAst (AFor i cond body u) = compileFor compileAst i cond body u
 compileAst (ACall func args) = astCallToAsm compileAst func args
 compileAst (AReturn expr) = compileAst expr >> emitInstruction Ret
 compileAst (AImport _) = return ()
-compileAst _ = return ()

@@ -23,6 +23,8 @@ module Compiler.ASM.CompilerMonad
     , registerSymbol
     , defineStruct
     , getStructDefinition
+    , getSymbolType
+    , getStructField
     , compileInIsolatedFunctionScope
     , appendPseudoInstruction
     ) where
@@ -182,24 +184,22 @@ generateUniqueLabel prefixName = do
 --
 -- @args
 --   - name: The name of the symbol to define.
+--   - tName: The type name of the symbol to define.
 --
 -- @details
 --   Checks if the symbol is already defined in 'csSymbols'. If it is, returns
---   an error. Otherwise, allocates the current 'csNextIndex', inserts the
+--   its current info. Otherwise, allocates the current 'csNextIndex', inserts the
 --   symbol into the map, and increments the index counter.
 --
--- @return
---   The allocated index (Int) or an error (Left Text).
---
-defineSymbol :: Text -> CompilerMonad (ScopeType, Int)
-defineSymbol name = do
+defineSymbol :: Text -> Text -> CompilerMonad (ScopeType, Int)
+defineSymbol name tName = do
     s <- get
     case Map.lookup name (csSymbols s) of
-        Just definition -> return definition
+        Just (scope, idx, _) -> return (scope, idx)
         Nothing -> let idx = csNextIndex s
                        scope = csScopeContext s in
             put s {
-                csSymbols = Map.insert name (scope, idx) (csSymbols s),
+                csSymbols = Map.insert name (scope, idx, tName) (csSymbols s),
                 csNextIndex = idx + 1
             } >> return (scope, idx)
 
@@ -207,6 +207,7 @@ defineSymbol name = do
 --
 -- @args
 --   - name: Name of the symbol
+--   - tName: The type of the variable (e.g., "int", "Player") <-- NOUVEAU
 --   - scopeType: The scope type (Local, Global, or Capture)
 --   - idx: The specific memory index to assign
 --
@@ -219,10 +220,10 @@ defineSymbol name = do
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
 --
-registerSymbol :: Text -> ScopeType -> Int -> CompilerMonad ()
-registerSymbol name scopeType idx = do
+registerSymbol :: Text -> Text -> ScopeType -> Int -> CompilerMonad ()
+registerSymbol name tName scopeType idx = do
     s <- get
-    let newSymbols = Map.insert name (scopeType, idx) (csSymbols s)
+    let newSymbols = Map.insert name (scopeType, idx, tName) (csSymbols s)
     case scopeType of
         ScopeCapture -> put $ s { csSymbols = newSymbols }
         _ -> put $ s { 
@@ -243,7 +244,7 @@ registerSymbol name scopeType idx = do
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
 --
-defineStruct :: Text -> [Text] -> CompilerMonad ()
+defineStruct :: Text -> [(Text, Text)] -> CompilerMonad ()
 defineStruct name fields = do
     s <- get
     put $ s { csStructs = Map.insert name fields (csStructs s) }
@@ -260,12 +261,63 @@ defineStruct name fields = do
 -- @return
 --   The list of field names wrapped in 'CompilerMonad', or an error.
 --
-getStructDefinition :: Text -> CompilerMonad [Text]
+getStructDefinition :: Text -> CompilerMonad [(Text, Text)]
 getStructDefinition name = do
     s <- get
     case Map.lookup name (csStructs s) of
         Just fields -> return fields
         Nothing -> lift $ Left (pack $ "Undefined struct: " ++ show name)
+
+-- | Retrieves the type name of an existing variable.
+--
+-- @args
+--   - name: The variable name.
+--
+-- @return
+--   The type string (e.g., "Player") wrapped in CompilerMonad.
+--   Throws an error if the variable is not defined.
+--
+getSymbolType :: Text -> CompilerMonad Text
+getSymbolType name = do
+    s <- get
+    case Map.lookup name (csSymbols s) of
+        Just (_, _, t) -> return t
+        Nothing -> lift $ Left (pack $ "Variable not found: " ++ show name)
+
+-- | Searches for a field index and its type within a list of fields.
+--
+-- @args
+--   - currentIndex: Accumulator for the index (start at 0).
+--   - targetField: The name of the field to find.
+--   - fields: The list of (Name, Type) pairs defining the struct.
+--
+-- @return
+--   - Just (Index, Type) if found.
+--   - Nothing if the field does not exist in the list.
+findFieldIndex :: Int -> Text -> [(Text, Text)] -> Maybe (Int, Text)
+findFieldIndex _ _ [] = Nothing
+findFieldIndex idx target ((fName, fType):rest)
+    | fName == target = Just (idx, fType)
+    | otherwise       = findFieldIndex (idx + 1) target rest
+
+-- | Retreives index and type of a field within a specific structure.
+--
+-- @args
+--   - structName: The name of the structure type (e.g. "Player").
+--   - fieldName: The name of the field to access (e.g. "hp").
+--
+-- @return
+--   (FieldIndex, FieldType)
+--
+getStructField :: Text -> Text -> CompilerMonad (Int, Text)
+getStructField name fieldName = do
+    s <- get
+    case Map.lookup name (csStructs s) of
+        Nothing -> lift $ Left (pack $ "Unknown struct: " ++ show name)
+        Just fields -> case findFieldIndex 0 fieldName fields of
+            Just (idx, fieldType) -> return (idx, fieldType)
+            Nothing -> lift $ Left (pack $ "Field '" ++ show fieldName ++
+                "' not found in struct '" ++ show name ++ "'")
 
 -- | Compiles an action within an isolated function scope.
 --

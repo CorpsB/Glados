@@ -15,7 +15,7 @@ module VM.Instruction.List
 import qualified Data.Vector as V
 
 import VM.VMState (VirtualMachine)
-import VM.VMValue (VMValue(..))
+import VM.VMValue (VMValue(..), valueToInt)
 import VM.VMStack (stackPop, stackPush)
 
 -- | Implements CONS (Opcode 0x90).
