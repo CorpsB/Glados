@@ -39,7 +39,7 @@ beI32 n =
      ]
 
 mkVM :: [Word8] -> VMState
-mkVM bytes = createVMState (BS.pack bytes)
+mkVM bytes = createVMState (BS.pack bytes) False
 
 expectVMErrorContains :: IO a -> String -> Expectation
 expectVMErrorContains action needle = do

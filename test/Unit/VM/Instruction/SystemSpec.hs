@@ -30,7 +30,7 @@ evalVM = evalStateT
 
 mkVM :: [VMValue] -> Bool -> VMState
 mkVM stk running =
-  (createVMState BS.empty)
+  (createVMState BS.empty False)
     { vStack = V.fromList stk
     , isRunning = running
     }

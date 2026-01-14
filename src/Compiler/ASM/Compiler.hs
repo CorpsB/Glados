@@ -230,8 +230,11 @@ compileFor compileFn initAst cond body updateAst = do
 compileSetVar :: (Ast -> CompilerMonad ()) -> Text -> Ast -> CompilerMonad ()
 compileSetVar compileFn name body = do
     compileFn body
-    idx <- defineSymbol name
-    emitInstruction (StoreGlobal idx)
+    (scope, idx) <- defineSymbol name
+    case scope of
+        ScopeGlobal  -> emitInstruction (StoreGlobal idx)
+        ScopeLocal   -> emitInstruction (StoreLocal idx)
+        ScopeCapture -> emitInstruction (StoreCapture idx)
 
 -- | Compiles a structure instantiation.
 --

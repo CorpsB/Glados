@@ -64,6 +64,7 @@ data CompilerState = CompilerState
     , csStructs   :: Map Text [Text]     -- ^ Struct definitions (Name -> Field Names in order)
     , csNextIndex :: Int                 -- ^ Next available local index
     , csLabelCnt  :: Int                 -- ^ Counter for unique label generation
+    , csScopeContext :: ScopeType        -- ^ Scope context (used to determine variables scopes)
     } deriving (Show, Eq)
 
 -- | Initial, empty compiler state.
@@ -83,4 +84,5 @@ createCompilerState = CompilerState
     , csStructs = Map.empty
     , csNextIndex = 0
     , csLabelCnt = 0
+    , csScopeContext = ScopeGlobal
     }

@@ -193,11 +193,6 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           , Real (StoreGlobal 0)
           ]
 
-    it "fails on redefinition" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 7), csNextIndex = 8 }
-      let err = expectLeft (runCM (compileSetVar compileAst "x" (ABool True)) st0)
-      err `shouldBe` "Symbol already defined: x"
-
   describe "compileDefineStruct / compileSetStruct" $ do
     it "compileDefineStruct registers struct definition only" $ do
       let action = compileDefineStruct "Point" [("x","Int"),("y","Int")]

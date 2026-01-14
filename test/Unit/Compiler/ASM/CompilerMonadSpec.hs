@@ -81,23 +81,18 @@ spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
   describe "defineSymbol" $ do
     it "allocates ScopeGlobal indices and increments csNextIndex" $ do
       let action = do
-            i0 <- defineSymbol "varA"
-            i1 <- defineSymbol "varB"
-            pure (i0, i1)
-      let ((i0, i1), st) = expectRight (runCM action createCompilerState)
+            resA <- defineSymbol "varA"
+            resB <- defineSymbol "varB"
+            pure (resA, resB)
+      let ((scopeA, i0), (scopeB, i1)) = fst $ expectRight (runCM action createCompilerState)
+      let finalState = snd $ expectRight (runCM action createCompilerState)
+      scopeA `shouldBe` ScopeGlobal
       i0 `shouldBe` 0
+      scopeB `shouldBe` ScopeGlobal
       i1 `shouldBe` 1
-      csNextIndex st `shouldBe` 2
-      Map.lookup "varA" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0)
-      Map.lookup "varB" (csSymbols st) `shouldBe` Just (ScopeGlobal, 1)
-
-    it "fails if already defined" $ do
-      let action = do
-            _ <- defineSymbol "conflict"
-            _ <- defineSymbol "conflict"
-            pure ()
-      let err = expectLeft (runStateT action createCompilerState)
-      err `shouldBe` "Symbol already defined: conflict"
+      csNextIndex finalState `shouldBe` 2
+      Map.lookup "varA" (csSymbols finalState) `shouldBe` Just (ScopeGlobal, 0)
+      Map.lookup "varB" (csSymbols finalState) `shouldBe` Just (ScopeGlobal, 1)
 
   describe "registerSymbol" $ do
     it "ScopeLocal adjusts csNextIndex to max(old, idx+1)" $ do

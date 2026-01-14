@@ -34,6 +34,7 @@ import qualified Compiler.ResolveLabels.Step2RealSpec
 import qualified Compiler.ResolveLabels.Step2TailCallLabelSpec
 
 import qualified Common.Type.IntegerSpec
+import qualified Common.ErrorSpec
 import qualified VM.Bytecode.ReaderSpec
 import qualified VM.Bytecode.RunnerSpec
 import qualified VM.Instruction.ArithmeticSpec
@@ -82,6 +83,7 @@ spec = do
     Compiler.ASM.AstToAsmSpec.spec
     Compiler.ASM.CompilerSpec.spec
     Common.Type.IntegerSpec.spec
+    Common.ErrorSpec.spec
     VM.Bytecode.ReaderSpec.spec
     VM.Bytecode.RunnerSpec.spec
     VM.Instruction.ArithmeticSpec.spec
