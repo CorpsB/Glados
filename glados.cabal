@@ -158,6 +158,7 @@ test-suite glados-unit
       Compiler.ASM.CompilerSpec
       Compiler.ASM.AstToAsmSpec
       Common.Type.IntegerSpec
+      Common.ErrorSpec
       VM.Bytecode.ReaderSpec
       VM.Bytecode.RunnerSpec
       VM.Instruction.ArithmeticSpec
