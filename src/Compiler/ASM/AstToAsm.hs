@@ -23,6 +23,7 @@ import Control.Monad.State (get, lift)
 import Data.Text (Text, pack)
 import qualified Data.Map.Strict as Map
 
+import Compiler.ASM.Builtins (builtinMap)
 import Compiler.ASM.CompilerMonad
     ( CompilerMonad
     , emitInstruction
@@ -32,19 +33,6 @@ import Compiler.CompilerState (CompilerState(..), ScopeType(..))
 import Compiler.Instruction (Instruction(..), Immediate(..))
 import Common.Type.Integer (IntValue(..))
 import AST.Ast (Ast(..))
-
--- | Mapping of builtin operator names to their VM instructions.
-builtinMap :: Map.Map Text Instruction
-builtinMap = Map.fromList
-    [ (pack "+", Add), (pack "-", Sub), (pack "*", Mul), (pack "div", Div)
-    , (pack "mod", Mod), (pack "eq?", Eq), (pack "<", Lt), (pack "<=", Le)
-    , (pack "print", Print), (pack "exit", Exit), (pack "cons", Cons)
-    , (pack "head", Head), (pack "tail", Tail), (pack "nth", Nth)
-    , (pack "int8", Cast 0x01), (pack "uint8", Cast 0x02)
-    , (pack "int16", Cast 0x03), (pack "uint16", Cast 0x04)
-    , (pack "int32", Cast 0x05), (pack "uint32", Cast 0x06)
-    , (pack "int64", Cast 0x07), (pack "uint64", Cast 0x08)
-    , (pack "char", Cast 0x09), (pack "uchar", Cast 0x10) ]
 
 -- | Pushes an Integer AST value directly to the stack.
 --
@@ -131,9 +119,11 @@ astListToAsm compileFn elements = mapM_ compileFn elements >>
 --   Unit value wrapped in 'CompilerMonad'.
 --
 astCallToAsm :: (Ast -> CompilerMonad ()) -> Ast -> [Ast] -> CompilerMonad ()
-astCallToAsm compileFn callee args = case callee of
-    ASymbol name -> 
-        case Map.lookup name builtinMap of
-            Just instr -> mapM_ compileFn args >> emitInstruction instr
-            Nothing -> mapM_ compileFn args >> emitCallToLabel name
-    _ -> lift $ Left (pack "Error: Higher calls are not supported yet.")
+astCallToAsm compileFn (ASymbol name) [a, b] | name == pack "!=" =
+    compileFn a >> compileFn b >>
+    emitInstruction Eq >> emitInstruction Not
+astCallToAsm compileFn (ASymbol name) args = case Map.lookup name builtinMap of
+    Just instr -> mapM_ compileFn args >> emitInstruction instr
+    Nothing -> mapM_ compileFn args >> emitCallToLabel name
+astCallToAsm _ _ _ =
+    lift $ Left (pack "Error: Higher calls are not supported yet.")

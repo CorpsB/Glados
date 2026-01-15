@@ -92,6 +92,7 @@ instrCtorName inst = case inst of
     CheckStack _  -> "CheckStack"
     Nop           -> "Nop"
     Exit          -> "Exit"
+    Nth           -> "Nth"
 
 immCtorName :: Immediate -> String
 immCtorName im = case im of
