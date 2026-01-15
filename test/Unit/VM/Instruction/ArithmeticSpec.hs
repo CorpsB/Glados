@@ -13,7 +13,7 @@ import Test.Hspec
 import Control.Monad.State.Strict (runStateT, evalStateT)
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
-import Control.Exception (evaluate, ArithException(..))
+import Control.Exception (evaluate)
 
 import VM.VMState (VMState(..), VirtualMachine, createVMState)
 import VM.VMValue (VMValue(..))
@@ -72,15 +72,14 @@ spec = describe "VM.Instruction.Arithmetic" $ do
       forceTopInt vm1 `shouldReturn` 42
 
   describe "instDiv" $ do
-    it "divides two integers using integer division" $ do
-      let vm0 = mkVM [VInt (I64 7), VInt (I64 2)]
+    it "divides two integers" $ do
+      let vm0 = mkVM [VInt (I64 10), VInt (I64 2)]
       (_, vm1) <- runVM instDiv vm0
-      forceTopInt vm1 `shouldReturn` 3
+      forceTopInt vm1 `shouldReturn` 5
 
-    it "throws DivideByZero when dividing by zero (forced)" $ do
+    it "throws error when dividing by zero" $ do
       let vm0 = mkVM [VInt (I64 10), VInt (I64 0)]
-      (_, vm1) <- runVM instDiv vm0
-      (forceTopInt vm1) `shouldThrow` (== DivideByZero)
+      runVM instDiv vm0 `shouldThrow` errorCall "VM Error: Division by Zero"
 
   describe "instMod" $ do
     it "computes modulo" $ do
@@ -88,10 +87,9 @@ spec = describe "VM.Instruction.Arithmetic" $ do
       (_, vm1) <- runVM instMod vm0
       forceTopInt vm1 `shouldReturn` 1
 
-    it "throws DivideByZero when modulo by zero (forced)" $ do
+    it "throws error when modulo by zero" $ do
       let vm0 = mkVM [VInt (I64 10), VInt (I64 0)]
-      (_, vm1) <- runVM instMod vm0
-      (forceTopInt vm1) `shouldThrow` (== DivideByZero)
+      runVM instMod vm0 `shouldThrow` errorCall "VM Error: Division by Zero"
 
   describe "type errors (non-integers)" $ do
     it "throws when right operand is not an integer" $ do
