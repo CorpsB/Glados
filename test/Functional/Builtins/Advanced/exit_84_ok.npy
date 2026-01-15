@@ -3,3 +3,4 @@ func main() {
     // unreachable
     print(42);
 }
+main();

@@ -12,3 +12,4 @@ func main() {
     p.pos.x = 42;
     print(p.pos.x);
 }
+main();

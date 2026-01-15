@@ -1,3 +1,4 @@
 func main() {
     print(head(42));
 }
+main();

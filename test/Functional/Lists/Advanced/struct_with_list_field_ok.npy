@@ -6,3 +6,4 @@ func main() {
     b: Bag = new Bag { items: [1, 2, 3] };
     print(b.items[2]);
 }
+main();

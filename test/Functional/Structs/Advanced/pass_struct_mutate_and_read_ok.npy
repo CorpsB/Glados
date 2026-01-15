@@ -11,3 +11,4 @@ func main() {
     p: Player = new Player { hp: 1 };
     print(boost(p));
 }
+main();

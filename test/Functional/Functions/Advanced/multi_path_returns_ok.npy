@@ -9,3 +9,4 @@ func clamp01(x: int) -> int {
 func main() {
     print(clamp01(5));
 }
+main();

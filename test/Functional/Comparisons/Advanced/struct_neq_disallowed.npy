@@ -7,3 +7,4 @@ func main() {
     p2: Point = new Point { x: 2 };
     print(p1 != p2);
 }
+main();

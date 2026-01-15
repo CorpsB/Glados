@@ -1,3 +1,4 @@
 func main() {
     print(uchar(255));
 }
+main();

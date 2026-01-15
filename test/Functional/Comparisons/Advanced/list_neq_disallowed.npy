@@ -3,3 +3,4 @@ func main() {
     b: [int] = [1, 2];
     print(a != b);
 }
+main();

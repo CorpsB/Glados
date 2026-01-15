@@ -7,3 +7,4 @@ func main() {
     b: Bag = new Bag { items: "Hey" };
     print(42);
 }
+main();

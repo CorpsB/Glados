@@ -5,3 +5,4 @@ func add(a, b: int) -> int {
 func main() {
     print(42);
 }
+main();

@@ -4,3 +4,5 @@ import "conflict/m2.npy";
 func main() {
     print(foo());
 }
+
+main();

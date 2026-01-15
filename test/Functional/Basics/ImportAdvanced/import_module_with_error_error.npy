@@ -3,3 +3,5 @@ import "lib/bad.npy";
 func main() {
     print(42);
 }
+
+main();

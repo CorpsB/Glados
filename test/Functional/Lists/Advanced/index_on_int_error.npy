@@ -2,3 +2,4 @@ func main() {
     x = 42;
     print(x[0]);
 }
+main();

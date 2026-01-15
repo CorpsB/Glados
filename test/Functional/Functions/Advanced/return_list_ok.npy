@@ -6,3 +6,4 @@ func main() {
     l = make();
     print(head(l));
 }
+main();

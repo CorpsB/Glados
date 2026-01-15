@@ -10,3 +10,4 @@ func main() {
     p: Point = new Point { x: 7 };
     print(getx(p));
 }
+main();

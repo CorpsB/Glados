@@ -2,3 +2,4 @@ func main() {
     x = 1 + ;
     print(x);
 }
+main();

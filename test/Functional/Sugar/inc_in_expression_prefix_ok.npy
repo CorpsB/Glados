@@ -4,3 +4,4 @@ func main() {
     // y = 3 + 1 = 4
     print(y);
 }
+main();

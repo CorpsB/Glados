@@ -3,3 +3,4 @@ import "lib/nested/util.npy";
 func main() {
     print(util());
 }
+main();

@@ -1,3 +1,4 @@
 func main() {
     print(uint8(255));
 }
+main();

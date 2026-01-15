@@ -2,3 +2,4 @@ func main() {
     l: [int] = [10, 20, 30, 40];
     print(nth(l, 2));
 }
+main();

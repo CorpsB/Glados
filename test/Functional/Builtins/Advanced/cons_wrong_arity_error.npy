@@ -4,3 +4,4 @@ func main() {
     l2 = cons(l);
     print(head(l2));
 }
+main();

@@ -6,3 +6,4 @@ func main() {
     a = v();
     print(a != 0);
 }
+main();

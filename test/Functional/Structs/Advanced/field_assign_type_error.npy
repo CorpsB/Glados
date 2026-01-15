@@ -7,3 +7,4 @@ func main() {
     p.hp = True;
     print(p.hp);
 }
+main();

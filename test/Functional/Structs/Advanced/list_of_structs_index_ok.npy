@@ -6,3 +6,4 @@ func main() {
     items: [Item] = [new Item { id: 1 }, new Item { id: 3 }];
     print(items[1].id);
 }
+main();

@@ -9,3 +9,4 @@ func main() {
     // print local x from f(): 2
     print(f());
 }
+main();

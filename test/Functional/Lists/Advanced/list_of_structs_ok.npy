@@ -6,3 +6,4 @@ func main() {
     pts: [Point] = [new Point { x: 7 }, new Point { x: 9 }];
     print(pts[0].x);
 }
+main();

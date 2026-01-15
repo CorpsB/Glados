@@ -12,3 +12,4 @@ func main() {
     p.pos.x = "Noopy";
     print(42);
 }
+main();

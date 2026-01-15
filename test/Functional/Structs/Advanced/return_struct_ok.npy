@@ -10,3 +10,4 @@ func main() {
     p = mk(7);
     print(p.hp);
 }
+main();

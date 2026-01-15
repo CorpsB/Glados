@@ -3,3 +3,4 @@ import "lib/space file.npy";
 func main() {
     print(spaced());
 }
+main();

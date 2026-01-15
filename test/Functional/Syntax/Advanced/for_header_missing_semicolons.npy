@@ -3,3 +3,4 @@ func main() {
         print(i);
     }
 }
+main();

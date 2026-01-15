@@ -3,3 +3,4 @@ func main() {
     l[True] = 5;
     print(l[0]);
 }
+main();

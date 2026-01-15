@@ -6,3 +6,4 @@ func main() {
     print(v());
     print(42);
 }
+main();

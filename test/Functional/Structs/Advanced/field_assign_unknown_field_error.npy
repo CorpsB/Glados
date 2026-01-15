@@ -7,3 +7,4 @@ func main() {
     p.mana = 10;
     print(42);
 }
+main();

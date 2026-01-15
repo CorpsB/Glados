@@ -3,3 +3,5 @@ import "cycle/a.npy";
 func main() {
     print(a());
 }
+
+main();

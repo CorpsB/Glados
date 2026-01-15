@@ -6,3 +6,4 @@ func main() {
     g = fs[1];
     print(g(7));
 }
+main();

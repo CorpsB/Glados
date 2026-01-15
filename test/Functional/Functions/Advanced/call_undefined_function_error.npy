@@ -1,3 +1,4 @@
 func main() {
     print(doesNotExist(1));
 }
+main();

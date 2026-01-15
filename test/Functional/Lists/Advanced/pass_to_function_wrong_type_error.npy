@@ -10,3 +10,4 @@ func main() {
     s: [char] = "Hi";
     print(sum(s));
 }
+main();

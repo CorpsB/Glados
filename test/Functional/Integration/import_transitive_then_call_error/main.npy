@@ -3,3 +3,4 @@ import "a.npy";
 func main() {
     print(hidden());
 }
+main();

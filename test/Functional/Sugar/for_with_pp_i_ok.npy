@@ -5,3 +5,4 @@ func main() {
     }
     print(sum);
 }
+main();

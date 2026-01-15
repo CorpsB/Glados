@@ -6,3 +6,4 @@ func main() {
     twice = lambda(a) -> a * 2;
     print(apply(twice, 6));
 }
+main();

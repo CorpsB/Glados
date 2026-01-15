@@ -5,3 +5,4 @@ func main() {
     // If tail([]) returns [], head([]) must error anyway.
     print(head(t));
 }
+main();

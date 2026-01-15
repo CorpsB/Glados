@@ -3,3 +3,4 @@ func main() {
     x = x + 2;
     print(x);
 }
+main();

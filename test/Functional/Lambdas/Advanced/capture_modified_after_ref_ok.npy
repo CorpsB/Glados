@@ -4,3 +4,4 @@ func main() {
     base = 19;
     print(f(1));
 }
+main();

@@ -3,3 +3,4 @@ func main() {
     l[3] = 9;
     print(l[0]);
 }
+main();

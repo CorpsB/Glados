@@ -8,3 +8,4 @@ func fact(n: int) -> int {
 func main() {
     print(fact(5));
 }
+main();

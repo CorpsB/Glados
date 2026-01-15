@@ -4,3 +4,5 @@ import "lib/value.npy";
 func main() {
     print(value());
 }
+
+main();

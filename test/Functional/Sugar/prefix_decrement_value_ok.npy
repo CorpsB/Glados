@@ -4,3 +4,4 @@ func main() {
     // x should be 0
     print(x);
 }
+main();
