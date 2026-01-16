@@ -1,0 +1,14 @@
+kind: pipeline
+name: Functional tests
+
+when:
+  - event: push
+  
+steps:
+  - name: Basic tests
+    image: haskell:9.10.3
+    volumes:
+      - /var/lib/woodpecker/stack:/root/.stack
+    commands:
+      - make
+      - ./test/Functional/test.sh
