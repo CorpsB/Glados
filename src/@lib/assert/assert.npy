@@ -1,0 +1,103 @@
+func strlen(s: [char]) -> int {
+    if (s[0] == char(0)) {
+        ret 0;
+    }
+    ret 1 + strlen(tail(s));
+}
+
+func concat(s1: [char], s2: [char]) -> [char] {
+    if (s1[0] == char(0)) {
+        ret s2;
+    }
+    ret cons(head(s1), concat(tail(s1), s2));
+}
+
+func streq(s1: [char], s2: [char]) -> bool {
+    c1 = s1[0];
+    c2 = s2[0];
+    if (c1 == char(0) && c2 == char(0)) {
+        ret True;
+    }
+    if (c1 != c2) {
+        ret False;
+    }
+    ret streq(tail(s1), tail(s2));
+}
+
+func itoa(n: int) -> [char] {
+    if (n == 0) {
+        ret "0";
+    }
+    if (n < 0) {
+        ret cons('-', itoa_positive(-n));
+    }
+    ret itoa_positive(n);
+}
+
+func itoa_positive(n: int) -> [char] {
+    if (n == 0) {
+        ret "\0";
+    }
+    digit = n % 10;
+    c = char(digit + 48);
+    ret concat(itoa_positive(n / 10), cons(c, "\0"));
+}
+
+func bool_to_str(b: bool) -> [char] {
+    if (b) {
+        ret "True\0";
+    }
+    ret "False\0";
+}
+
+func assert(cond: bool, msg: [char]) {
+    if (!cond) {
+        print("Assertion check failed: ");
+        print(msg);
+        exit(1);
+    }
+}
+
+func assert_eq_int(a: int, b: int) {
+    if (a != b) {
+        print("Assertion failed: ");
+        print(itoa(a));
+        print(" == ");
+        print(itoa(b));
+        exit(1);
+    }
+}
+
+func assert_neq_int(a: int, b: int) {
+    if (a == b) {
+        print("Assertion failed: ");
+        print(itoa(a));
+        print(" != ");
+        print(itoa(b));
+        exit(1);
+    }
+}
+
+func assert_eq_bool(a: bool, b: bool) {
+    if (a != b) {
+        print("Assertion failed: ");
+        print(bool_to_str(a));
+        print(" == ");
+        print(bool_to_str(b));
+        exit(1);
+    }
+}
+
+func assert_true(cond: bool) {
+    if (!cond) {
+        print("Assertion failed: Expected True, got False");
+        exit(1);
+    }
+}
+
+func assert_false(cond: bool) {
+    if (cond) {
+        print("Assertion failed: Expected False, got True");
+        exit(1);
+    }
+}
