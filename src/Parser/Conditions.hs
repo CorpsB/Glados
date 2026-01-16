@@ -94,4 +94,4 @@ pFor pVarDefParam pBlockParam = do
         updateS <- pForUpdate
         return (initS, condS, updateS)
     body <- pBlockParam
-    return (AFor initStmt cond updateStmt body)
+    return (AFor initStmt cond body updateStmt)

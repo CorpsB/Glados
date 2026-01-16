@@ -84,13 +84,12 @@ pReturn = do
 
 -- | Parse a block of code enclosed in braces.
 --
--- Returns an AList containing all statements, or AVoid if the block is empty.
 pBlock :: Parser Ast
 pBlock = braces $ do
     stmts <- many pStatement
     case stmts of
         [] -> return AVoid
-        xs -> return (AList xs)
+        xs -> return (ABlock xs)
 
 -- | Parse a function definition.
 --

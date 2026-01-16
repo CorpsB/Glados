@@ -38,7 +38,7 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
         it "Parses if-else statement" $ do
             let code = "if (True) { 1; } else { 0; }"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AIf (ABool True) (AList [AInteger (I8 1)]) (AList [AInteger (I8 0)])] -> True
+                Right [AIf (ABool True) (ABlock [AInteger (I8 1)]) (ABlock [AInteger (I8 0)])] -> True
                 _ -> False
         it "Parses nested if-else (else if chain)" $ do
             let code = "if (a) { 1; } else if (b) { 2; } else { 3; }"
@@ -67,7 +67,7 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
             parseClean (p code) `shouldSatisfy` \case
                 Right [AWhile cond body] -> 
                     case (cond, body) of
-                        (ACall (ASymbol op) _, AList _) -> op == p "<"
+                        (ACall (ASymbol op) _, ABlock _) -> op == p "<"
                         _ -> False
                 _ -> False
         it "Parses while(true) infinite loop" $ do
@@ -80,7 +80,7 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
         it "Parses a standard for loop" $ do
             let code = "for (i = 0; i < 10; i = i + 1) { print(i); }"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AFor initS cond updateS _] -> 
+                Right [AFor initS cond _ updateS] -> 
                     case (initS, cond, updateS) of
                         (ASetVar _ _ _, ACall (ASymbol op) _, ASetVar _ _ _) -> op == p "<"
                         _ -> False
@@ -90,9 +90,9 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
         it "Parses a standard for loop (init; cond; step)" $ do
             let code = "for (i = 0; i < 10; i = i + 1) { print(i); }"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AFor initS cond updateS body] -> 
+                Right [AFor initS cond body updateS] -> 
                     case (initS, cond, updateS, body) of
-                        (ASetVar _ _ _, ACall (ASymbol op) _, ASetVar _ _ _, AList _) -> op == p "<"
+                        (ASetVar _ _ _, ACall (ASymbol op) _, ASetVar _ _ _, ABlock _) -> op == p "<"
                         _ -> False
                 _ -> False
         it "Parses a for loop with boolean logic in condition" $ do
@@ -106,7 +106,7 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
         it "Parses a for loop with multiplication update" $ do
             let code = "for (n = 1; n < 100; n = n * 2) { print(n); }"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AFor _ _ updateS _] -> 
+                Right [AFor _ _ _ updateS] -> 
                     case updateS of
                         ASetVar _ _ (ACall (ASymbol op) _) -> op == p "*"
                         _ -> False
@@ -122,5 +122,5 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
         it "Parses a for loop with empty body" $ do
             let code = "for (i=0; i<10; i=i+1) {}"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AFor _ _ _ AVoid] -> True
+                Right [AFor _ _ AVoid _] -> True
                 _ -> False

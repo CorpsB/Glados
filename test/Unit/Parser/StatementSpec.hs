@@ -83,7 +83,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Returns a list of statements for a block" $ do
             let code = "func last() { 1; 2; 3; }"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ADefineFunc _ _ _ (AList [AInteger (I8 1), AInteger (I8 2), AInteger (I8 3)])] -> True
+                Right [ADefineFunc _ _ _ (ABlock [AInteger (I8 1), AInteger (I8 2), AInteger (I8 3)])] -> True
                 _ -> False
 
         it "Triggers parse error (covers parseALL error formatting)" $ do

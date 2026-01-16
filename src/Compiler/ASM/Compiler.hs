@@ -385,6 +385,7 @@ compileAccessStruct compileFn obj fieldName = do
 --
 compileAst :: Ast -> CompilerMonad ()
 compileAst (APos _ _ ast) = compileAst ast
+compileAst (ABlock xs) = mapM_ compileAst xs
 compileAst (AInteger i) = astIntToAsm i
 compileAst (ABool b) = astBoolToAsm b
 compileAst (ASymbol s) = astSymbolToAsm s

@@ -22,6 +22,7 @@ module VM.Instruction.Logic
 import VM.VMState (VirtualMachine)
 import VM.VMValue (VMValue(..))
 import VM.VMStack (stackPush, stackPop)
+import Common.Type.Integer (intValueToInt)
 
 -- | Implements Logical NOT (Opcode 0x22).
 --
@@ -79,9 +80,11 @@ instEq = do
     v2 <- stackPop
     v1 <- stackPop
     case (v1, v2) of
-        (VInt i1, VInt i2) -> stackPush (VBool (i1 == i2))
+        (VInt i1, VInt i2) -> stackPush (VBool (
+            intValueToInt i1 == intValueToInt i2))
         (VBool b1, VBool b2) -> stackPush (VBool (b1 == b2))
-        _ -> error "VM Error: EQ Type Mismatch"
+        (VVoid, VVoid) -> stackPush (VBool True)
+        _ -> stackPush (VBool False)
 
 -- | Implements Less Than Comparison (Opcode 0x21).
 --
@@ -94,7 +97,8 @@ instLt = do
     v2 <- stackPop
     v1 <- stackPop
     case (v1, v2) of
-        (VInt i1, VInt i2) -> stackPush (VBool (i1 < i2))
+        (VInt i1, VInt i2) -> stackPush (VBool (
+            intValueToInt i1 < intValueToInt i2))
         _ -> error "VM Error: LT expects Integers"
 
 -- | Implements Less or Equal Comparison (Opcode 0x25).
@@ -108,5 +112,6 @@ instLe = do
     v2 <- stackPop
     v1 <- stackPop
     case (v1, v2) of
-        (VInt i1, VInt i2) -> stackPush (VBool (i1 <= i2))
+        (VInt i1, VInt i2) -> stackPush (VBool (
+            intValueToInt i1 <= intValueToInt i2))
         _ -> error "VM Error: LE expects Integers"

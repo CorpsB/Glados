@@ -123,8 +123,8 @@ spec = describe "VM.Instruction.Logic" $ do
       vStack vm1 `shouldBe` V.fromList [VBool False]
 
     it "throws on type mismatch (int vs bool)" $ do
-      let vm0 = mkVM [VInt (I64 1), VBool True]
-      evalVM instEq vm0 `shouldThrow` errorCall "VM Error: EQ Type Mismatch"
+      vm1 <- execOp instEq [VInt (I64 1), VBool False]
+      vStack vm1 `shouldBe` V.fromList [VBool False]
 
     it "propagates Stack Underflow when operands are missing" $ do
       evalVM instEq (mkVM []) `shouldThrow` errorCall "VM Error: Stack Underflow"
