@@ -149,6 +149,7 @@ data Instruction
     | Head                    -- ^ 0x91 HEAD [list]
     | Tail                    -- ^ 0x92 TAIL [list]
     | Nth                     -- ^ 0x93 NTH [list] [idx]
+    | BuildList Int           -- ^ 0x94 BUILD_LIST [n_elements]
 
     -- 8. System / Debug
     | Print                   -- ^ 0x70 PRINT
@@ -216,6 +217,7 @@ getInstCode Cons                 = 0x90
 getInstCode Head                 = 0x91
 getInstCode Tail                 = 0x92
 getInstCode Nth                  = 0x93
+getInstCode (BuildList _)        = 0x94
 
 getInstCode Print                = 0x70
 getInstCode Halt                 = 0x71
@@ -288,6 +290,7 @@ instructionSize Cons                = 1
 instructionSize Head                = 1
 instructionSize Tail                = 1
 instructionSize Nth                 = 1
+instructionSize (BuildList _)       = 1 + 4
 
 -- System / Debug
 instructionSize Print               = 1

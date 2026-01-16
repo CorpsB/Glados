@@ -10,11 +10,14 @@ module VM.Instruction.List
     , instHead
     , instTail
     , instNth
+    , instBuildList
     ) where
 
 import qualified Data.Vector as V
+import Control.Monad.State.Strict (get, put)
+import VM.Bytecode.Reader (readInt32)
 
-import VM.VMState (VirtualMachine)
+import VM.VMState (VirtualMachine, VMState(..))
 import VM.VMValue (VMValue(..), valueToInt)
 import VM.VMStack (stackPop, stackPush)
 
@@ -84,3 +87,21 @@ instNth = do
             False -> error $ "VM Error: Nth index out of bounds (" ++
                 show idx ++ ")"
         _ -> error "VM Error: Nth expects a List"
+
+-- | Implements BUILD_LIST (Opcode 0x94).
+--
+-- @details
+--   Pop 'n' elements from the stack and creates a VList.
+--   Preserves the order: [e1, e2] -> push e1 -> push e2 -> BuildList 2 -> VList [e1, e2]
+--
+instBuildList :: VirtualMachine ()
+instBuildList = do
+    count <- readInt32
+    vm <- get
+    let size = V.length (vStack vm)
+    case size < count of
+        True -> error "VM Error: BUILD_LIST Stack Underflow"
+        False -> let start = size - count
+                     elements = V.slice start count (vStack vm) in
+                put (vm { vStack = V.take start (vStack vm) }) >>
+                stackPush (VList elements)

@@ -101,7 +101,7 @@ astSymbolToAsm name = do
 --
 astListToAsm :: (Ast -> CompilerMonad ()) -> [Ast] -> CompilerMonad ()
 astListToAsm compileFn elements = mapM_ compileFn elements >>
-    emitCallToLabel (pack "list")
+    emitInstruction (BuildList (length elements))
 
 -- | Compiles a function call (Builtin or User-defined).
 --

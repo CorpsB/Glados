@@ -93,6 +93,7 @@ executeInstruction 0x90 = instCons
 executeInstruction 0x91 = instHead
 executeInstruction 0x92 = instTail
 executeInstruction 0x93 = instNth
+executeInstruction 0x94 = instBuildList
 
 executeInstruction 0xFE = instCheckStack
 executeInstruction 0xFF = return () -- NOP

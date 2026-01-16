@@ -147,6 +147,9 @@ serializeInstruction Cons = encodeWord8 0x90
 serializeInstruction Head = encodeWord8 0x91
 serializeInstruction Tail = encodeWord8 0x92
 serializeInstruction Nth = encodeWord8 0x93
+serializeInstruction (BuildList n) =
+    encodeWord8 0x94 <>
+    encodeInt32BE (fromIntegral n)
 
 serializeInstruction Print = encodeWord8 0x70
 serializeInstruction Halt = encodeWord8 0x71
