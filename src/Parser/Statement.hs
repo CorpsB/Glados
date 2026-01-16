@@ -62,15 +62,19 @@ pType = choice
     , pIdentifier
     ] <?> "type"
 
--- | Parse a function argument declaration (name and type).
+-- | Parse a function argument declaration (name and optional type).
 --
--- Example: x: int
+-- Example: 
+--   x: int  -> ("x", "int")
+--   x       -> ("x", "auto")
 pArgDeclaration :: Parser (DT.Text, DT.Text)
 pArgDeclaration = do
     name <- pIdentifier
-    _ <- colon
-    t <- pType
-    return (name, t)
+    maybeType <- optional (colon >> pType)
+    let finalType = case maybeType of
+            Just t  -> t
+            Nothing -> DT.pack "auto"
+    return (name, finalType)
 
 -- | Parse a return statement.
 --
