@@ -314,15 +314,14 @@ compileDefineLambda :: (Ast -> CompilerMonad ()) -> [Text] -> Ast ->
     CompilerMonad ()
 compileDefineLambda compileFn params body = do
     let fvars = Set.toList (getLambdaFreeVariables (ADefineLambda params body))
-    let ncaptures = length fvars
     capTypes <- mapM getSymbolType fvars
     mapM_ astSymbolToAsm fvars; ulabel <- generateUniqueLabel (pack "lambda")
     compileInIsolatedFunctionScope $ emitLabelDefinition ulabel >>
         zipWith3M_ (\name tName i ->
             registerSymbol name tName ScopeCapture i) fvars capTypes [0..] >>
         zipWithM_ (\pName i -> registerSymbol pName (pack "auto") ScopeLocal (
-            ncaptures + i)) params [0..] >> compileTail compileFn body
-    appendPseudoInstruction (MakeClosureLabel ulabel ncaptures)
+            (length fvars) + i)) params [0..] >> compileTail compileFn body
+    appendPseudoInstruction (MakeClosureLabel ulabel (length fvars))
 
 -- | Registers a structure definition.
 --

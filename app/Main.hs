@@ -29,16 +29,14 @@ import AST.Ast (Ast)
 -- | Print usage message on stdout.
 --
 usage :: IO ()
-usage = do
-    putStrLn "Usage: ./glados <input_file> <output_file>"
-    putStrLn "  input_file:  Path to the source code."
-    putStrLn "  output_file: Path to the generated binary (.gla)."
+usage = putStrLn ("Usage: ./glados <input_file> <output_file>"
+    ++ "  input_file:  Path to the source code."
+    ++ "  output_file: Path to the generated binary (.gla).")
 
 -- | Print the given error message then exit 84.
 --
 die :: String -> IO a
-die msg = do
-    hPutStrLn stderr $ "\ESC[31mError:\ESC[0m " ++ msg
+die msg = hPutStrLn stderr ("\ESC[31mError:\ESC[0m " ++ msg) >>
     exitWith (ExitFailure 84)
 
 parseSource :: T.Text -> IO [Ast]
