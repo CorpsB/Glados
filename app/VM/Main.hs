@@ -63,7 +63,7 @@ executeFile path debugMode = do
         Left err -> case fromException err of
             Just ExitSuccess -> exitSuccess
             Just (ExitFailure n) -> exitWith (ExitFailure n)
-            Nothing -> putStrLn ("Runtime Error: " ++ show err) >> exitFailure
+            Nothing -> putStrLn (show err) >> exitWith (ExitFailure 84)
         Right _ -> exitSuccess
 
 -- | Prints the usage instructions to stdout.
