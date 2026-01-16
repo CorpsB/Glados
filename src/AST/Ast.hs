@@ -96,8 +96,8 @@ data Ast
       -- ^ Represents a For loop.
       --   @param Ast The initialization step.
       --   @param Ast The loop condition.
-      --   @param Ast The loop body.
       --   @param Ast The update/increment step.
+      --   @param Ast The loop body.
 
     | AReturn Ast
       -- ^ Represents an explicit return statement.

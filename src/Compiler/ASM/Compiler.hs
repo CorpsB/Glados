@@ -194,8 +194,8 @@ compileWhile compileFn cond body = do
 --   - compileFn: The recursive compilation function.
 --   - initAst: The initialization AST (executed once).
 --   - cond: The loop condition AST.
---   - body: The loop body AST.
 --   - updateAst: The update/increment AST (executed after each iteration).
+--   - body: The loop body AST.
 --
 -- @details
 --   Compiles the initialization step first. Then uses 'compileLoop' for the
@@ -206,7 +206,7 @@ compileWhile compileFn cond body = do
 --
 compileFor :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Ast -> Ast ->
     CompilerMonad ()
-compileFor compileFn initAst cond body updateAst = do
+compileFor compileFn initAst cond updateAst body = do
     lStart <- generateUniqueLabel (pack "for_start")
     lEnd   <- generateUniqueLabel (pack "for_end")
     compileFn initAst
@@ -284,42 +284,74 @@ compileSetStruct compileFn name assignedFields = do
 --
 compileDefineFun :: (Ast -> CompilerMonad ()) -> Text -> [(Text, Text)] ->
     Ast -> CompilerMonad ()
-compileDefineFun compileFn name args body = do
-    compileInIsolatedFunctionScope $
+compileDefineFun compileFn name args body =
+    compileInIsolatedFunctionScope (
         emitLabelDefinition (pack "fun_" <> name) >>
-        zipWithM_ (\(argName, argType) idx -> 
-            registerSymbol argName argType ScopeLocal idx) args [0..] >>
+        let nArgs = length args in
+        zipWithM_ (\(aName, aType) i ->
+            registerSymbol aName aType ScopeLocal (i - nArgs)) args [0..] >>
         compileFn body >>
         emitInstruction Ret
-    return ()
+    ) >> return ()
 
--- | Compiles a Lambda (anonymous function/closure).
+-- | Registers lambda parameters with negative offsets.
 --
 -- @args
---   - compileFn: The recursive compilation function.
 --   - params: The list of parameter names.
---   - body: The function body AST.
 --
 -- @details
---   Identifies free variables (captures), pushes their current values onto
---   the stack, and emits a 'MakeClosure' instruction pointing to a new label.
---   The body is compiled in an isolated scope where captures are registered
---   as 'ScopeCapture' and parameters as 'ScopeLocal'.
+--   Calculates indices relative to the Frame Pointer.
+--   Arg 0 is at (0 - N), Last Arg is at -1.
 --
--- @return
---   Unit value wrapped in 'CompilerMonad'.
+registerLambdaParams :: [Text] -> CompilerMonad ()
+registerLambdaParams params =
+    let count = length params in
+    zipWithM_ (\p i ->
+        registerSymbol p (pack "auto") ScopeLocal (i - count)) params [0..]
+
+-- | Internal helper to compile the isolated scope of a lambda.
+--
+-- @args
+--   - compileFn: Recursion callback.
+--   - params: Lambda parameters.
+--   - body: Lambda body.
+--   - label: The unique label for this function.
+--   - fvars: List of captured variable names.
+--   - types: List of captured variable types.
+--
+compileLambdaScope :: (Ast -> CompilerMonad ()) -> [Text] -> Ast -> Text ->
+    [Text] -> [Text] -> CompilerMonad ()
+compileLambdaScope compileFn params body label fvars types =
+    emitLabelDefinition label >>
+    zipWith3M_ (
+        \n t i -> registerSymbol n t ScopeCapture i) fvars types [0..] >>
+    registerLambdaParams params >>
+    compileTail compileFn body
+
+-- | Compiles a lambda definition.
+--
+-- @args
+--   - compileFn: The main compilation function (recursion).
+--   - params: List of parameter names.
+--   - body: The body of the lambda.
+--
+-- @details
+--   1. Identifies free variables (captures).
+--   2. Emits code to push captures onto the stack.
+--   3. Generates a unique label for the lambda body.
+--   4. Compiles the body in an isolated scope.
+--   5. Emits 'MakeClosure' to create the closure object at runtime.
 --
 compileDefineLambda :: (Ast -> CompilerMonad ()) -> [Text] -> Ast ->
     CompilerMonad ()
 compileDefineLambda compileFn params body = do
-    let fvars = Set.toList (getLambdaFreeVariables (ADefineLambda params body))
+    let ast = ADefineLambda params body
+    let fvars = Set.toList (getLambdaFreeVariables ast)
     capTypes <- mapM getSymbolType fvars
-    mapM_ astSymbolToAsm fvars; ulabel <- generateUniqueLabel (pack "lambda")
-    compileInIsolatedFunctionScope $ emitLabelDefinition ulabel >>
-        zipWith3M_ (\name tName i ->
-            registerSymbol name tName ScopeCapture i) fvars capTypes [0..] >>
-        zipWithM_ (\pName i -> registerSymbol pName (pack "auto") ScopeLocal (
-            (length fvars) + i)) params [0..] >> compileTail compileFn body
+    mapM_ astSymbolToAsm fvars
+    ulabel <- generateUniqueLabel (pack "lambda")
+    compileInIsolatedFunctionScope $
+        compileLambdaScope compileFn params body ulabel fvars capTypes
     appendPseudoInstruction (MakeClosureLabel ulabel (length fvars))
 
 -- | Registers a structure definition.
@@ -401,7 +433,7 @@ compileAst (ASetStruct name fields) = compileSetStruct compileAst name fields
 compileAst (AAccessStruct obj field) = compileAccessStruct compileAst obj field
 compileAst (AIf cond t f) = compileIf compileAst cond t f
 compileAst (AWhile cond body) = compileWhile compileAst cond body
-compileAst (AFor i cond body u) = compileFor compileAst i cond body u
+compileAst (AFor i cond u body) = compileFor compileAst i cond u body
 compileAst (ACall func args) = astCallToAsm compileAst func args
 compileAst (AReturn expr) = compileAst expr >> emitInstruction Ret
 compileAst (AImport _) = return ()

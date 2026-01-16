@@ -131,6 +131,12 @@ astCallToAsm compileFn (ASymbol name) [a, b] | name == pack "neq?" =
 astCallToAsm compileFn (ASymbol name) args = case Map.lookup name builtinMap of
     Just instr -> mapM_ compileFn args >> emitInstruction instr
     Nothing -> mapM_ compileFn args >> emitCallToLabel (pack "fun_" <> name)
+astCallToAsm _ (AInteger _) _ =
+    lift $ Left (pack "Error: Cannot call an Integer")
+astCallToAsm _ (ABool _) _ =
+    lift $ Left (pack "Error: Cannot call a Boolean")
+astCallToAsm _ AVoid _ =
+    lift $ Left (pack "Error: Cannot call Void")
 astCallToAsm compileFn expr args =
     mapM_ compileFn args >> compileFn expr >>
     emitInstruction CallIndirect

@@ -156,11 +156,11 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
       let code = csCode st
       Seq.length code `shouldBe` 2
       Seq.index code 0 `shouldBe` Real (Push (ImmInt (Common.I32 7)))
-      Seq.index code 1 `shouldBe` CallLabel "myFunc"
+      Seq.index code 1 `shouldBe` CallLabel "fun_myFunc"
 
     it "callee not symbol: returns Left" $ do
       let err = expectLeft (runCM (astCallToAsm mockCompile (ABool True) []) createCompilerState)
-      unpack err `shouldContain` "Higher calls are not supported yet"
+      unpack err `shouldContain` "Error: Cannot call a Boolean"
 
     it "propagates compileFn errors from an argument" $ do
       let bad _ = lift (Left "arg error")

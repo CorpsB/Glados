@@ -27,6 +27,7 @@ module VM.Instruction.Variable
 import Control.Monad.State.Strict (get, put)
 import qualified Data.Vector as V
 
+import VM.VMValue (VMValue)
 import VM.VMState (VirtualMachine, VMState(..))
 import VM.Bytecode.Reader (readInt32)
 import VM.VMStack (stackPush, stackPop)
@@ -55,31 +56,53 @@ instLoadLocal = do
             show baseIdx ++ ", Size: " ++ show (V.length stack) ++ ")"
         True -> stackPush (stack V.! baseIdx)
 
+-- | Helper to format and throw the Out of Bounds error.
+--
+-- @args
+--   - idx: The invalid index accessed.
+--   - size: The current stack size.
+--
+throwStoreError :: Int -> Int -> VirtualMachine ()
+throwStoreError idx size = error $
+    "VM Error: STORE_LOCAL out of bounds (Idx: " ++ show idx ++
+    ", Size: " ++ show size ++ ")"
+
+-- | Safe helper to update the stack at a specific index.
+--
+-- @args
+--   - vm: Current VM state.
+--   - idx: Absolute index to write to.
+--   - val: Value to store.
+--
+-- @details
+--   - If idx < length: Overwrites existing value.
+--   - If idx == length: Appends value (stack growth).
+--   - Otherwise: Throws an Out of Bounds error.
+--
+updateLocalVar :: VMState -> Int -> VMValue -> VirtualMachine ()
+updateLocalVar vm idx val
+    | idx < 0 = throwStoreError idx (V.length (vStack vm))
+    | idx == V.length (vStack vm) =
+        put $ vm { vStack = V.snoc (vStack vm) val }
+    | idx < V.length (vStack vm) =
+        put $ vm { vStack = (vStack vm) V.// [(idx, val)] }
+    | otherwise = throwStoreError idx (V.length (vStack vm))
+
 -- | Implements STORE_LOCAL (Opcode 0x51).
 --
 -- @details
---   1. Reads the signed 32-bit index (offset) from the bytecode.
---   2. Pops the value to store from the top of the stack.
---   3. Calculates the absolute index: Frame Pointer (FP) + Offset.
---   4. Updates the stack at that index with the popped value.
---
---   This instruction is used to assign values to existing variables.
---
--- @throws
---   Error "VM Error: STORE_LOCAL out of bounds" if the calculated index 
---   is outside the valid stack range.
+--   1. Reads the relative index.
+--   2. Pops the value to store.
+--   3. Calculates the absolute index (FP + offset).
+--   4. Delegates to 'updateLocalVar' to handle stack growth or update.
 --
 instStoreLocal :: VirtualMachine ()
 instStoreLocal = do
     idx <- readInt32
     v <- stackPop
     vm <- get
-    let baseIdx = baseVStackIndex vm + idx
-    let stack = vStack vm
-    case baseIdx >= 0 && baseIdx < V.length stack of
-        False -> error $ "VM Error: STORE_LOCAL out of bounds (Index: " ++
-            show baseIdx ++ ", Size: " ++ show (V.length stack) ++ ")"
-        True -> put $ vm { vStack = stack V.// [(baseIdx, v)] }
+    let absIdx = baseVStackIndex vm + idx
+    updateLocalVar vm absIdx v
 
 -- | Implements LOAD_CAPTURE (Opcode 0x54).
 --

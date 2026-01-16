@@ -146,7 +146,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
   describe "compileFor" $ do
     it "emits init, loop, update, jump back, end label" $ do
-      let action = compileFor compileAst (ABool True) (ABool False) (ABool True) (ABool False)
+      let action = compileFor compileAst (ABool True) (ABool False) (ABool False) (ABool True)
       let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe`
         Seq.fromList
@@ -233,11 +233,11 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
       csCode st `shouldBe` Seq.fromList [Real Nop, Real Halt]
       csFuncs st `shouldBe`
         Seq.fromList
-          [ LabelDef "fun_foo_0"
-          , Real (LoadLocal 0)
+          [ LabelDef "fun_foo"
+          , Real (LoadLocal (-2))
           , Real Ret
           ]
-      csLabelCnt st `shouldBe` 1
+      csLabelCnt st `shouldBe` 0
 
   describe "compileDefineLambda" $ do
     it "multi-capture: loads captures, builds closure, lambda loads captures then Ret" $ do
@@ -269,7 +269,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
     it "no-capture lambda: builds closure with 0 captures and uses LoadLocal for args" $ do
       let (_, st) = expectRight (runCM (compileDefineLambda compileAst ["x"] (ASymbol "x")) createCompilerState)
       csCode st `shouldBe` Seq.fromList [MakeClosureLabel "lambda_0" 0]
-      csFuncs st `shouldBe` Seq.fromList [LabelDef "lambda_0", Real (LoadLocal 0), Real Ret]
+      csFuncs st `shouldBe` Seq.fromList [LabelDef "lambda_0", Real (LoadLocal (-1)), Real Ret]
       csLabelCnt st `shouldBe` 1
 
     it "fails if a capture is undefined" $ do
