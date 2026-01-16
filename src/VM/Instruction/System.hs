@@ -20,6 +20,7 @@ module VM.Instruction.System
 import System.Exit (exitWith, ExitCode(..))
 import Control.Monad.State.Strict (liftIO, modify, get)
 import qualified Data.Vector as V
+import qualified Data.Text.IO as TIO
 
 import VM.VMState (VirtualMachine, VMState(..))
 import VM.VMValue (valueToString, valueToInt)
@@ -36,7 +37,7 @@ import VM.Bytecode.Reader (readInt32)
 instPrint :: VirtualMachine ()
 instPrint = do
     val <- stackPop
-    liftIO $ putStrLn (valueToString val)
+    liftIO $ TIO.putStrLn (valueToString val)
 
 -- | Implements HALT (Opcode 0x71).
 --
