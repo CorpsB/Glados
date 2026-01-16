@@ -93,6 +93,7 @@ instrCtorName inst = case inst of
     Nop           -> "Nop"
     Exit          -> "Exit"
     Nth           -> "Nth"
+    BuildList _   -> "BuildList"
 
 immCtorName :: Immediate -> String
 immCtorName im = case im of

@@ -125,11 +125,11 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
       Seq.length code `shouldBe` 3
       Seq.index code 0 `shouldBe` Real (Push (ImmBool True))
       Seq.index code 1 `shouldBe` Real (Push (ImmInt (Common.I32 1)))
-      Seq.index code 2 `shouldBe` CallLabel "list"
+      Seq.index code 2 `shouldBe` Real (BuildList 2)
 
     it "empty: only CallLabel \"list\"" $ do
       let (_, st) = expectRight (runCM (astListToAsm mockCompile []) createCompilerState)
-      csCode st `shouldBe` Seq.singleton (CallLabel "list")
+      csCode st `shouldBe` Seq.singleton (Real (BuildList 0))
 
     it "propagates compileFn errors from an element" $ do
       let bad _ = lift (Left "elem error")
@@ -180,7 +180,7 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
         Seq.fromList
           [ Real (Push (ImmInt (Common.I32 1)))
           , Real (Push (ImmInt (Common.I32 2)))
-          , CallLabel "list"
+          , Real (BuildList 2)
           ]
 
     it "mockCompile fallback returns Left" $ do

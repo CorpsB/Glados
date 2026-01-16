@@ -76,6 +76,7 @@ getCharFromValue _ = Nothing
 -- @return Just Text if all elements are characters, Nothing otherwise.
 --
 tryExtractString :: [VMValue] -> Maybe Text
+tryExtractString [] = Nothing
 tryExtractString vals = fmap T.pack maybeChars
     where maybeChars = mapM getCharFromValue vals
 
