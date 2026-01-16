@@ -1,0 +1,10 @@
+import "src/@lib/maths/basic.npy";
+import "src/@lib/maths/div.npy";
+import "src/@lib/maths/gcd.npy";
+import "src/@lib/maths/power.npy";
+import "src/@lib/maths/pow2.npy";
+import "src/@lib/maths/sqrt.npy";
+import "src/@lib/maths/prime.npy";
+import "src/@lib/maths/range.npy";
+import "src/@lib/maths/combin.npy";
+import "src/@lib/maths/ntheory.npy";
