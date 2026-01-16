@@ -324,6 +324,13 @@ BLUE="\e[34m"
 BOLD="\e[1m"
 RESET="\e[0m"
 
+SHOW_ONLY_KO=0
+for arg in "$@"; do
+  case "$arg" in
+    -ko) SHOW_ONLY_KO=1 ;;
+  esac
+done
+
 run_test() {
     local test_name="$1"
     declare -n test="$test_name"
@@ -376,13 +383,24 @@ run_test() {
     fi
 
     if [[ $has_error -eq 0 ]]; then
-        echo -e "[${GREEN}OK${RESET}] ${titre}"
+        if [[ $SHOW_ONLY_KO -eq 0 ]]; then
+            echo -e "[${GREEN}OK${RESET}] ${titre}"
+        fi
         return 0
     else
-        echo -e "[${RED}KO${RESET}] ${titre}"
-        echo -e "${YELLOW}----------------------------------------${RESET}"
-        echo -e "$err_msg" | sed 's/^/    /'
-        echo -e "${YELLOW}----------------------------------------${RESET}"
+        if [[ $SHOW_ONLY_KO -eq 0 ]]; then
+            echo -e "[${RED}KO${RESET}] ${titre}"
+            echo -e "${YELLOW}----------------------------------------${RESET}"
+            echo -e "$err_msg" | sed 's/^/    /'
+            echo -e "${YELLOW}----------------------------------------${RESET}"
+        else
+            # En mode -ko, on renvoie un bloc formaté via stdout
+            # (run_all_tests va le capturer et l'afficher à la fin)
+            echo -e "[${RED}KO${RESET}] ${titre}"
+            echo -e "${YELLOW}----------------------------------------${RESET}"
+            echo -e "$err_msg" | sed 's/^/    /'
+            echo -e "${YELLOW}----------------------------------------${RESET}"
+        fi
         return 1
     fi
 }
@@ -714,18 +732,39 @@ run_all_tests() {
     local passed=0
     local failed=0
 
+    local -a ko_blocks=()
+
     for t in "${tests[@]}"; do
-        if run_test "$t"; then
-            ((passed++))
+        if [[ $SHOW_ONLY_KO -eq 1 ]]; then
+            local out
+            if out="$(run_test "$t")"; then
+                ((passed++))
+            else
+                ko_blocks+=("$out")
+                failed=1
+            fi
         else
-            failed=1
+            if run_test "$t"; then
+                ((passed++))
+            else
+                failed=1
+            fi
         fi
     done
+
+    if [[ $SHOW_ONLY_KO -eq 1 ]]; then
+        if ((${#ko_blocks[@]} > 0)); then
+            for b in "${ko_blocks[@]}"; do
+                echo -e "$b"
+            done
+        fi
+    fi
 
     echo
     echo "Résultat : $passed / $total tests OK"
     return $failed
 }
+
 
 run_all_tests
 exit $?

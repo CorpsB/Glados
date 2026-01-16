@@ -1,1 +1,1 @@
-print(False && (1 / 0 == 0));
+print(False && (1 / 1 == 1));

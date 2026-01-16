@@ -1,0 +1,1123 @@
+[[32mOK[0m] Basics : import simple
+[[31mKO[0m] Basics : import function
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Basics : import multiple
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Basics : import missing file
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 0
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Basics : symbol visibility (no import)
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 0
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Basics : import unused
+[[31mKO[0m] Basics : import duplicate (idempotent)
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Basics : import circular (A<->B) error
+[[32mOK[0m] Basics : import transitive visibility error
+[[32mOK[0m] Basics : import name conflict error
+[[32mOK[0m] Basics : import wrong extension error
+[[31mKO[0m] Basics : import relative path ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Basics : import path with spaces ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Basics : import module with internal error
+[[31mKO[0m] Casts : int8 max ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '127'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : int8 min ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '-128'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : uint8 max ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '255'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : int16 max ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '32767'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : uint16 max ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '65535'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : int32 max ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '2147483647'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : uint32 max ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '4294967295'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : int64 negative ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '-42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : uint64 positive ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : char(65) prints A
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'A'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : uchar max ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '255'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Casts : string from [char(...)] ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'Noopy'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Casts : int8 overflow error
+[[32mOK[0m] Casts : int8 underflow error
+[[32mOK[0m] Casts : uint8 overflow error
+[[32mOK[0m] Casts : uint8 negative error
+[[32mOK[0m] Casts : char overflow error
+[[32mOK[0m] Casts : uint16 overflow error
+[[32mOK[0m] Casts : int8(True) type error
+[[32mOK[0m] Casts : uint32("Noopy") type error
+[[32mOK[0m] Casts : char([1,2]) type error
+[[31mKO[0m] 
+[33m----------------------------------------[0m
+    Exit code attendu : 
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] 
+[33m----------------------------------------[0m
+    Exit code attendu : 
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] 
+[33m----------------------------------------[0m
+    Exit code attendu : 
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] 
+[33m----------------------------------------[0m
+    Exit code attendu : 
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] 
+[33m----------------------------------------[0m
+    Exit code attendu : 
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] 
+[33m----------------------------------------[0m
+    Exit code attendu : 
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Syntax : for missing parentheses
+[[32mOK[0m] Syntax : for header missing semicolons
+[[32mOK[0m] Syntax : func missing name
+[[32mOK[0m] Syntax : func missing braces
+[[32mOK[0m] Syntax : func malformed arrow
+[[32mOK[0m] Syntax : func param missing type
+[[32mOK[0m] Syntax : struct field missing semicolon
+[[32mOK[0m] Syntax : struct field missing type
+[[32mOK[0m] Syntax : struct missing closing brace
+[[32mOK[0m] Syntax : lambda missing arrow
+[[32mOK[0m] Syntax : lambda trailing comma
+[[32mOK[0m] Syntax : expr missing RHS
+[[32mOK[0m] Syntax : expr unclosed parenthesis
+[[32mOK[0m] Syntax : string unclosed quote
+[[32mOK[0m] Declarations : infer int ok
+[[32mOK[0m] Declarations : explicit int ok
+[[32mOK[0m] Declarations : infer bool ok
+[[32mOK[0m] Declarations : explicit bool ok
+[[31mKO[0m] Declarations : void declaration ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Declarations : explicit init type mismatch
+[[31mKO[0m] Declarations : infer then assign wrong type
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 0
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Declarations : explicit then assign wrong type
+[[31mKO[0m] Declarations : bool then assign int
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 0
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Assign : reassign int ok
+[[32mOK[0m] Assign : reassign chain ok
+[[31mKO[0m] Assign : for header init/update ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '6'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Assign : use undeclared var
+[[32mOK[0m] Assign : reassign type mismatch
+[[32mOK[0m] Assign : for header type mismatch
+[[32mOK[0m] Literals : int positive
+[[32mOK[0m] Literals : int negative
+[[32mOK[0m] Literals : bool True
+[[32mOK[0m] Literals : bool False
+[[31mKO[0m] Literals : void literal value
+[33m----------------------------------------[0m
+    Output attendu : '0'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Literals : list of int
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '2'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Literals : nested list
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '1'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Literals : string sugar
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'Noopy'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Strings : print literal
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'Hello'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Strings : assign to [char]
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'World'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Strings : pass to function [char]
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'Noopy'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Strings : string to [int] error
+[[32mOK[0m] Strings : pass string to wrong param
+[[31mKO[0m] Lists : literal + index
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '10'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lists : index 0-based
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '1'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lists : element to var
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lists : nested index
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '1'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Lists : inconsistent literal type
+[[32mOK[0m] Lists : nested inconsistent type
+[[32mOK[0m] Lists : index out of bounds
+[[32mOK[0m] Lists : index with bool error
+[[32mOK[0m] Lists : index with string error
+[[32mOK[0m] Lists : negative index error
+[[32mOK[0m] Lists : index on int error
+[[32mOK[0m] Lists : index on bool error
+[[32mOK[0m] Lists : index on struct error
+[[31mKO[0m] Lists : assign element ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Lists : assign element type mismatch
+[[32mOK[0m] Lists : assign element index bool error
+[[32mOK[0m] Lists : assign element out of bounds error
+[[31mKO[0m] Lists : pass [int] to function sum ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '6'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Lists : pass wrong list type to function error
+[[31mKO[0m] Lists : list of structs ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '7'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lists : struct with list field ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Lists : struct with list field type error
+[[32mOK[0m] Expressions : add sub mul
+[[32mOK[0m] Expressions : div operator
+[[31mKO[0m] Expressions : div keyword
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Expressions : mod operator
+[[31mKO[0m] Expressions : mod keyword
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '1'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Expressions : operator precedence
+[[31mKO[0m] Expressions : division by zero
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Expressions : modulo by zero
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Comparisons : == true
+[33m----------------------------------------[0m
+    Output attendu : 'True'
+    Output obtenu  : 'False'
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Comparisons : == false
+[[32mOK[0m] Comparisons : != true
+[[32mOK[0m] Comparisons : <
+[[31mKO[0m] Comparisons : >
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'True'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Comparisons : <=
+[[31mKO[0m] Comparisons : >=
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'True'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Comparisons : bool ==
+[[31mKO[0m] Comparisons : type mismatch ==
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Comparisons : list == disallowed
+[[31mKO[0m] Comparisons : bool != ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'True'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Comparisons : bool < disallowed
+[[32mOK[0m] Comparisons : bool >= disallowed
+[[32mOK[0m] Comparisons : void == disallowed
+[[32mOK[0m] Comparisons : void != disallowed
+[[32mOK[0m] Comparisons : struct == disallowed
+[[32mOK[0m] Comparisons : struct != disallowed
+[[32mOK[0m] Comparisons : list < disallowed
+[[32mOK[0m] Comparisons : list >= disallowed
+[[32mOK[0m] Comparisons : list != disallowed
+[[32mOK[0m] Logical : && true
+[[32mOK[0m] Logical : && false
+[[32mOK[0m] Logical : || true
+[[32mOK[0m] Logical : || false
+[[32mOK[0m] Logical : !
+[[31mKO[0m] Logical : compose with comparisons
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'True'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Logical : short-circuit &&
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 1
+    Output attendu : 'False'
+    Output obtenu  : '[31mRuntime Error:[0m VM Error: Division by Zero
+    CallStack (from HasCallStack):
+      error, called at src/VM/Instruction/Arithmetic.hs:72:25 in glados-0.1.0.0-IS6BjnhSVrq4t8PXXmL1Gn:VM.Instruction.Arithmetic'
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Logical : short-circuit ||
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 1
+    Output attendu : 'True'
+    Output obtenu  : '[31mRuntime Error:[0m VM Error: Division by Zero
+    CallStack (from HasCallStack):
+      error, called at src/VM/Instruction/Arithmetic.hs:72:25 in glados-0.1.0.0-IS6BjnhSVrq4t8PXXmL1Gn:VM.Instruction.Arithmetic'
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Logical : ! type error
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Logical : && type error
+[33m----------------------------------------[0m
+    Exit code attendu : 84
+    Exit code obtenu : 1
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Conditions : if true
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '1'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Conditions : if false
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '2'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Conditions : if else
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '2'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Conditions : else if chain
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'B'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Conditions : nested if
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Conditions : block scope
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '1'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Conditions : if condition type error
+[[32mOK[0m] Conditions : scope outside block error
+[[31mKO[0m] Loops : while basic
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Loops : while zero iter
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '0'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Loops : for basic sum
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '6'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Loops : for side effect update
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Loops : nested loops
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '4'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Loops : while condition type error
+[[32mOK[0m] Loops : for condition type error
+[[32mOK[0m] Loops : for update type error
+[[31mKO[0m] Functions : return int
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Functions : void implicit
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'Hi'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Functions : multiple args
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Functions : call in expression
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '45'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Functions : wrong arity
+[[32mOK[0m] Functions : wrong arg type
+[[32mOK[0m] Functions : return type mismatch
+[[32mOK[0m] Functions : missing ret in nonvoid
+[[31mKO[0m] Functions Adv : recursion factorial ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '120'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Functions Adv : shadowing local over global ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '2'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Functions Adv : return list ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Functions Adv : pass struct and return int ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '7'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Functions Adv : return struct then access field ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '9'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Functions Adv : void used in expression error
+[[31mKO[0m] Functions Adv : multi-path returns ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '10'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Functions Adv : call undefined function error
+[[31mKO[0m] Lambdas : basic multiply
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '12'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lambdas : capture var
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lambdas : used in expression
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '45'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lambdas : nested call
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '16'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Lambdas : wrong arity
+[[32mOK[0m] Lambdas : wrong arg type
+[[32mOK[0m] Lambdas : non callable used as func
+[[31mKO[0m] Lambdas Adv : pass lambda as param ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '12'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lambdas Adv : return lambda ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '15'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Lambdas Adv : capture modified after (by ref)
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '20'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Lambdas Adv : capture out of scope error
+[[31mKO[0m] Lambdas Adv : lambda stored in list ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '9'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Lambdas Adv : lambda list element type error
+[[31mKO[0m] Structs : basic new + access
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Structs : assign struct to var
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '7'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Structs : nested struct
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '9'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Structs : multiple fields
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Structs : missing field
+[[32mOK[0m] Structs : extra field
+[[32mOK[0m] Structs : wrong field type
+[[32mOK[0m] Structs : unknown field access
+[[31mKO[0m] Structs Adv : field assign ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '10'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Structs Adv : field assign type error
+[[32mOK[0m] Structs Adv : field assign unknown field error
+[[31mKO[0m] Structs Adv : nested field assign ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Structs Adv : nested field assign type error
+[[31mKO[0m] Structs Adv : pass struct mutate and read ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '99'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Structs Adv : return struct ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '7'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Structs Adv : list of structs index ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Structs Adv : list of structs type error
+[[31mKO[0m] Structs Adv : copy vs ref observe
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '2'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Builtins : print int
+[[32mOK[0m] Builtins : print bool
+[[31mKO[0m] Builtins : print string
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : 'Noopy'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Builtins : print [int] (observe)
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Builtins : print [[int]] (observe)
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Builtins : print struct (observe)
+[[31mKO[0m] Builtins : print void (observe)
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Builtins : exit(0) ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Builtins : exit(84) ok
+[[32mOK[0m] Builtins : exit(True) type error
+[[31mKO[0m] Builtins : head([int]) ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '10'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Builtins : head([]) error
+[[32mOK[0m] Builtins : head(non-list) error
+[[31mKO[0m] Builtins : tail then head ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '20'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Builtins : tail([]) error
+[[32mOK[0m] Builtins : head(tail([x])) error
+[[32mOK[0m] Builtins : tail(non-list) error
+[[31mKO[0m] Builtins : nth ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '30'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Builtins : nth out of bounds error
+[[32mOK[0m] Builtins : nth negative index error
+[[32mOK[0m] Builtins : nth non-int index error
+[[32mOK[0m] Builtins : nth on empty list error
+[[32mOK[0m] Builtins : nth(non-list, i) error
+[[31mKO[0m] Builtins : cons(int, [int]) ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '5'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Builtins : cons type mismatch error
+[[32mOK[0m] Builtins : cons wrong arity error
+[[32mOK[0m] Builtins : cons second arg non-list error
+[[31mKO[0m] Print : expression format ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '14'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Print : [int] format ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '[1, 2, 3]'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Print : [[int]] format ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '[[1, 2], [3]]'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Print : struct format ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '{x: 1, y: 2}'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Print : void prints nothing (no newline) ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '42'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : postfix i++ value ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '2'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : prefix ++i value ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : postfix i-- value ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '1'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : prefix --i value ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '0'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : i++ in expression ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : ++i in expression ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '4'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : += ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '12'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : -= ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '7'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : *= ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '20'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : /= ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '5'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : %= ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '1'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : for with i++ ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Sugar : for with ++i ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Sugar : True++ type error
+[[32mOK[0m] Sugar : bool += int type error
+[[32mOK[0m] Sugar : list++ type error
+[[32mOK[0m] Sugar : struct += int type error
+[[32mOK[0m] Sugar : /= by zero error
+[[32mOK[0m] Sugar : %= by zero error
+[[31mKO[0m] Integration : import + struct + function + lambda ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '15'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Integration : loops + lists + builtins ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '6'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Integration : type inference chain ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '3'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[31mKO[0m] Integration : lambda closure in struct ok
+[33m----------------------------------------[0m
+    Exit code attendu : 0
+    Exit code obtenu : 84
+    Output attendu : '12'
+    Output obtenu  : ''
+    
+[33m----------------------------------------[0m
+[[32mOK[0m] Integration : transitive import then call error
+[[32mOK[0m] Integration : multiple errors in same file
+
+Résultat : 135 / 263 tests OK
