@@ -1,0 +1,171 @@
+struct ParsedArgs {
+    number: [char];
+    str: [char];
+    str_len: int;
+}
+
+func get_str_at(l: [[char]], i: int) -> [char] {
+    if (i == 0) {
+        ret head(l);
+    }
+    ret get_str_at(tail(l), i - 1);
+}
+
+func concat(s1: [char], s2: [char]) -> [char] {
+    if (head(s1) == char(0)) {
+        ret s2;
+    }
+    ret cons(head(s1), concat(tail(s1), s2));
+}
+
+func strlen(s: [char]) -> int {
+    if (head(s) == char(0)) {
+        ret 0;
+    }
+    ret 1 + strlen(tail(s));
+}
+
+func strcmp(s1: [char], s2: [char]) -> int {
+    c1 = head(s1);
+    c2 = head(s2);
+    if (c1 == char(0) && c2 == char(0)) {
+        ret 0;
+    }
+    if (c1 != c2) {
+        ret int32(c1) - int32(c2);
+    }
+    ret strcmp(tail(s1), tail(s2));
+}
+
+func is_digit(c: char) -> bool {
+    val = int32(c);
+    ret val >= 48 && val <= 57;
+}
+
+func is_number(s: [char]) -> bool {
+    if (head(s) == char(0)) {
+        ret True;
+    }
+    if (!is_digit(head(s))) {
+        ret False;
+    }
+    ret is_number(tail(s));
+}
+
+func is_valid_char(c: char) -> bool {
+    // Valid chars: 33 (!) to 126 (~)
+    val = int32(c);
+    ret val >= 33 && val <= 126;
+}
+
+func is_valid_chars(s: [char]) -> bool {
+    if (head(s) == char(0)) {
+        ret True;
+    }
+    if (!is_valid_char(head(s))) {
+        ret False;
+    }
+    ret is_valid_chars(tail(s));
+}
+
+func get_nums() -> [[[char]]] {
+    zero = [" 000 \0", "0   0\0", "0   0\0", "0   0\0", " 000 \0"];
+    one = [" 000 \0", "0 00 \0", "  00 \0", "  00 \0", " 0000\0"];
+    two = [" 000 \0", "0   0\0", "   0 \0", " 0   \0", "00000\0"];
+    three = ["0000 \0", "    0\0", " 000 \0", "    0\0", "0000 \0"];
+    four = ["  00 \0", " 0 0 \0", "0  0 \0", "00000\0", "   0 \0"];
+    five = ["00000\0", "0    \0", "0000 \0", "    0\0", "0000 \0"];
+    six = [" 000 \0", "0    \0", "0000 \0", "0   0\0", " 000 \0"];
+    seven = ["00000\0", "    0\0", "   0 \0", "  0  \0", " 0   \0"];
+    eight = [" 000 \0", "0   0\0", " 000 \0", "0   0\0", " 000 \0"];
+    nine = [" 000 \0", "0   0\0", " 0000\0", "    0\0", " 000 \0"];
+
+    ret [zero, one, two, three, four, five, six, seven, eight, nine];
+}
+
+func print_crocus(args: ParsedArgs) {
+    line_idx = 0;
+    nums_data = get_nums();
+
+    for (line_idx = 0; line_idx < 5; line_idx = line_idx + 1) {
+        line_buffer = "\0";
+
+        num_str = args.number;
+
+        curr_num_ptr = num_str;
+
+        while (head(curr_num_ptr) != char(0)) {
+            digit_char = head(curr_num_ptr);
+            digit = int32(digit_char) - 48;
+
+            digit_block = get_str_at(nums_data, digit);
+            pattern = get_str_at(digit_block, line_idx);
+
+            pattern_char_idx = digit % args.str_len;
+            fill_char = args.str[pattern_char_idx];
+
+            p_ptr = pattern;
+            str_chunk = "\0";
+
+            for (k = 0; k < 5; k = k + 1) {
+                 pc = pattern[k];
+                 to_add = ' ';
+                 if (pc != ' ') {
+                     to_add = fill_char;
+                 }
+            }
+
+            for (k = 0; k < 5; k = k + 1) {
+                 pc = pattern[k];
+                 to_add = ' ';
+                 if (pc != ' ') {
+                     to_add = fill_char;
+                 }
+
+                 tmp_list = cons(to_add, "\0");
+                 line_buffer = concat(line_buffer, tmp_list);
+            }
+
+            curr_num_ptr = tail(curr_num_ptr);
+
+            if (head(curr_num_ptr) != char(0)) {
+                 tmp_list = cons(' ', "\0");
+                 line_buffer = concat(line_buffer, tmp_list);
+            }
+        }
+
+        print(line_buffer);
+    }
+}
+
+func parse_default_s(n_str: [char]) -> ParsedArgs {
+    ret new ParsedArgs { number: n_str, str: "0\0", str_len: 1 }
+}
+
+
+func main() {
+    // Hardcoded arguments for demonstration equivalent to: ./crocus -n "4242" -s "hey"
+    n_arg = "4242\0";
+    s_arg = "hey\0";
+
+
+    if (!is_number(n_arg)) {
+        print("Error: Invalid number");
+        ret;
+    }
+
+    if (!is_valid_chars(s_arg)) {
+        print("Error: Invalid string");
+        ret;
+    }
+
+    len_s = strlen(s_arg);
+    if (len_s == 0) {
+        s_arg = "0\0";
+        len_s = 1;
+    }
+
+    args = new ParsedArgs { number: n_arg, str: s_arg, str_len: len_s };
+
+    print_crocus(args);
+}
