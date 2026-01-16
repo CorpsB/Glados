@@ -285,9 +285,8 @@ compileSetStruct compileFn name assignedFields = do
 compileDefineFun :: (Ast -> CompilerMonad ()) -> Text -> [(Text, Text)] ->
     Ast -> CompilerMonad ()
 compileDefineFun compileFn name args body = do
-    ulabel <- generateUniqueLabel (pack "fun_" <> name)
     compileInIsolatedFunctionScope $
-        emitLabelDefinition ulabel >>
+        emitLabelDefinition (pack "fun_" <> name) >>
         zipWithM_ (\(argName, argType) idx -> 
             registerSymbol argName argType ScopeLocal idx) args [0..] >>
         compileFn body >>

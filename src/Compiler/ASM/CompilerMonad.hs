@@ -24,6 +24,7 @@ module Compiler.ASM.CompilerMonad
     , defineStruct
     , getStructDefinition
     , getSymbolType
+    , lookupSymbol
     , getStructField
     , compileInIsolatedFunctionScope
     , appendPseudoInstruction
@@ -268,6 +269,13 @@ getStructDefinition name = do
         Just fields -> return fields
         Nothing -> lift $ Left (pack $ "Undefined struct: " ++ show name)
 
+-- | Retrieves all informations about a symbol.
+--
+lookupSymbol :: Text -> CompilerMonad (Maybe (ScopeType, Int, Text))
+lookupSymbol name = do
+    s <- get
+    return $ Map.lookup name (csSymbols s)
+
 -- | Retrieves the type name of an existing variable.
 --
 -- @args
@@ -279,8 +287,8 @@ getStructDefinition name = do
 --
 getSymbolType :: Text -> CompilerMonad Text
 getSymbolType name = do
-    s <- get
-    case Map.lookup name (csSymbols s) of
+    result <- lookupSymbol name
+    case result of
         Just (_, _, t) -> return t
         Nothing -> lift $ Left (pack $ "Undefined symbol: " ++ show name)
 

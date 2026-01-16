@@ -130,6 +130,7 @@ astCallToAsm compileFn (ASymbol name) [a, b] | name == pack "neq?" =
     emitInstruction Eq >> emitInstruction Not
 astCallToAsm compileFn (ASymbol name) args = case Map.lookup name builtinMap of
     Just instr -> mapM_ compileFn args >> emitInstruction instr
-    Nothing -> mapM_ compileFn args >> emitCallToLabel name
-astCallToAsm _ _ _ =
-    lift $ Left (pack "Error: Higher calls are not supported yet.")
+    Nothing -> mapM_ compileFn args >> emitCallToLabel (pack "fun_" <> name)
+astCallToAsm compileFn expr args =
+    mapM_ compileFn args >> compileFn expr >>
+    emitInstruction CallIndirect
