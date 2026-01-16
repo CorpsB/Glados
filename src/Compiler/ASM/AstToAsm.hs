@@ -119,6 +119,12 @@ astListToAsm compileFn elements = mapM_ compileFn elements >>
 --   Unit value wrapped in 'CompilerMonad'.
 --
 astCallToAsm :: (Ast -> CompilerMonad ()) -> Ast -> [Ast] -> CompilerMonad ()
+astCallToAsm compileFn (ASymbol name) [a, b] | name == pack ">" =
+    compileFn b >> compileFn a >>
+    emitInstruction Lt
+astCallToAsm compileFn (ASymbol name) [a, b] | name == pack ">=" =
+    compileFn b >> compileFn a >>
+    emitInstruction Le
 astCallToAsm compileFn (ASymbol name) [a, b] | name == pack "neq?" =
     compileFn a >> compileFn b >>
     emitInstruction Eq >> emitInstruction Not
