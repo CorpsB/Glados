@@ -19,8 +19,8 @@ This module handles:
 module Main (main) where
 
 import System.Environment (getArgs)
-import System.Exit (exitFailure, exitSuccess)
-import Control.Exception (try, SomeException)
+import System.Exit (exitFailure, exitSuccess, exitWith, ExitCode(..))
+import Control.Exception (try, SomeException, fromException)
 import Control.Monad.State.Strict (runStateT)
 
 import VM.VMState (VMState, createVMState)
@@ -60,8 +60,10 @@ executeFile path debugMode = do
     content <- extractContentIfValidHeader rawContent
     result <- tryRunVM (createVMState content debugMode)
     case result of
-        Left err -> putStrLn ("\ESC[31mRuntime Error:\ESC[0m " ++ show err) >>
-            exitFailure
+        Left err -> case fromException err of
+            Just ExitSuccess -> exitSuccess
+            Just (ExitFailure n) -> exitWith (ExitFailure n)
+            Nothing -> putStrLn ("Runtime Error: " ++ show err) >> exitFailure
         Right _ -> exitSuccess
 
 -- | Prints the usage instructions to stdout.
