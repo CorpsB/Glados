@@ -197,6 +197,7 @@ processFuncDef env name args ret body = do
             Right e -> e
             Left _ -> envForBody 
     (newBody, _) <- checkStmt envWithRet body
+    _ <- checkMissingReturn name retTy newBody
     return (ADefineFunc name args ret newBody, envWithFunc)
 
 -- | Helper to setup the environment for a function.
@@ -375,3 +376,23 @@ checkListExpr env (x:xs) = do
                    typeToString expectedType ++
                    " but got " ++ typeToString elemType
     return (TyList expectedType)
+
+-- | Checks if the AST contains a Return statement.
+hasReturn :: Ast -> Bool
+hasReturn (AReturn _) = True
+hasReturn (ABlock stmts) = any hasReturn stmts
+hasReturn (AList stmts) = any hasReturn stmts
+hasReturn (AIf _ t e) = hasReturn t || hasReturn e
+hasReturn (AWhile _ body) = hasReturn body
+hasReturn (AFor _ _ _ body) = hasReturn body
+hasReturn (APos _ _ ast) = hasReturn ast
+hasReturn _ = False
+
+-- | Validates that a non-void function actually returns.
+checkMissingReturn :: DT.Text -> Type -> Ast -> Either String ()
+checkMissingReturn _ TyVoid _ = Right () -- Les fonctions void n'ont pas besoin de return
+checkMissingReturn name retTy body = 
+    if hasReturn body
+    then Right ()
+    else Left $ "Error: Function '" ++ DT.unpack name ++ "' declared as " ++ 
+                typeToString retTy ++ " but has no return statement"
