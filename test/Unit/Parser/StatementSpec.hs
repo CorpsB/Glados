@@ -401,7 +401,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses instantiation with expressions" $ do
             let code = "c = new Circle { r: 5 + 5, origin: p };"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ASetStruct name fields)] -> 
+                Right [AExprStmt (ASetVar _ _ (ASetStruct name fields))] -> 
                     name == p "Circle" &&
                     (case lookup (p "r") fields of
                         Just (ACall (ASymbol s) _) -> s == p "+"
@@ -425,7 +425,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "makeOpCall: constructs binary op call (tested via +=)" $ do
             let input = "x += 5;"
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol op) [ASymbol var, val])] 
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol op) [ASymbol var, val]))] 
                     | name == p "x" &&
                       op == p "+" &&
                       var == p "x" &&
@@ -438,7 +438,7 @@ spec = describe "Parser - Statement & Expression" $ do
             let expectedChar = fromIntegral (ord 'y') :: Int8
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall (ASymbol func) [_, AList [AInteger (IChar c)], _])] 
+                Right [AExprStmt (ASetVar _ _ (ACall (ASymbol func) [_, AList [AInteger (IChar c)], _]))] 
                     | func == p "attr_update" && c == expectedChar -> True
                 _ -> False
         
@@ -447,7 +447,7 @@ spec = describe "Parser - Statement & Expression" $ do
             let charF = fromIntegral (ord 'f') :: Int8
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol func) [ASymbol base, AList [AInteger (IChar c)], val])]
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol func) [ASymbol base, AList [AInteger (IChar c)], val]))]
                     | name == p "x" &&
                       func == p "attr_update" &&
                       base == p "x" &&
@@ -462,7 +462,7 @@ spec = describe "Parser - Statement & Expression" $ do
             let charZ = fromIntegral (ord 'z') :: Int8
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol funcOuter) [ASymbol baseX, AList [AInteger (IChar cY)], innerVal])]
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol funcOuter) [ASymbol baseX, AList [AInteger (IChar cY)], innerVal]))]
                     | name == p "x" &&
                       funcOuter == p "attr_update" &&
                       baseX == p "x" &&
@@ -484,7 +484,7 @@ spec = describe "Parser - Statement & Expression" $ do
             let charY = fromIntegral (ord 'y') :: Int8
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol funcUpdate) [ASymbol base, AInteger idx, innerVal])]
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol funcUpdate) [ASymbol base, AInteger idx, innerVal]))]
                     | name == p "x" &&
                       funcUpdate == p "nth_update" &&
                       base == p "x" &&
@@ -510,7 +510,7 @@ spec = describe "Parser - Statement & Expression" $ do
             let input = "x[0] = 1;"
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name typeStr _] 
+                Right [AExprStmt (ASetVar name typeStr _)] 
                     | name == p "x" && 
                       typeStr == p "auto"
                     -> True
