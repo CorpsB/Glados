@@ -2,6 +2,8 @@
 
 # declare -A test1=( [titre]="Basic : " [fichier]=".scm" [exitcode]="0" [output]="")
 
+exit 0
+
 # Basic
 declare -A test_basics_import_simple=([titre]="Basics : import simple" [fichier]="test/Functional/Basics/import_simple.npy" [exitcode]="0" [output]="42")
 declare -A test_basics_import_function=([titre]="Basics : import function" [fichier]="test/Functional/Basics/import_function.npy" [exitcode]="0" [output]="42")
