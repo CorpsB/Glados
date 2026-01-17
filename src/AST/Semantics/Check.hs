@@ -59,6 +59,13 @@ checkExpr env (ACall func args) = checkCall checkExpr env func args
 checkExpr env (AAccessStruct obj field) = checkStructAccess env obj field
 checkExpr env (AList list) = checkListExpr env list
 checkExpr env (ABlock xs) = checkBlockExpr env xs
+checkExpr env (ASetVar name typeStr expr) = do
+    actualType <- checkExpr env expr
+    let expectedType = parseType typeStr
+    if areTypesCompatible expectedType actualType
+        then Right actualType
+        else Left $ "Type mismatch in expression assignment for variable '"
+            ++ DT.unpack name ++ "'"
 checkExpr env (APos line _ ast) =
     case checkExpr env ast of
         Left err -> 

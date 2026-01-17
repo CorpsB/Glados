@@ -129,6 +129,7 @@ pAssignOp name = choice
     , makeOpCall (DT.pack "-") name <$ symbol (DT.pack "-=")
     , makeOpCall (DT.pack "*") name <$ symbol (DT.pack "*=")
     , makeOpCall (DT.pack "div") name <$ symbol (DT.pack "/=")
+    , makeOpCall (DT.pack "mod") name <$ symbol (DT.pack "%=")
     ]
 
 -- | Converts a field name (Text) into an AST list of integers.

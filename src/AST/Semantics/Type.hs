@@ -72,10 +72,11 @@ typeToString (TyFunc args ret) =
 -- | Checks if two types are semantically compatible.
 -- Replaces usage of (==) with explicit pattern matching.
 areTypesCompatible :: Type -> Type -> Bool
+areTypesCompatible TyAuto _ = True
+areTypesCompatible _ TyAuto = True
 areTypesCompatible TyInt TyInt   = True
 areTypesCompatible TyBool TyBool = True
 areTypesCompatible TyVoid TyVoid = True
-areTypesCompatible TyAuto TyAuto = True
 areTypesCompatible (TyList a) (TyList b) = areTypesCompatible a b
 areTypesCompatible (TyStruct a) (TyStruct b) = a == b
 areTypesCompatible (TyFunc args1 ret1) (TyFunc args2 ret2) = 
