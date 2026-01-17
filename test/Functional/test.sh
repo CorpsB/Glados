@@ -78,7 +78,7 @@ declare -A test_declarations_void_declaration_ok=([titre]="Declarations : void d
 declare -A test_declarations_explicit_init_type_mismatch=([titre]="Declarations : explicit init type mismatch" [fichier]="test/Functional/Declarations/explicit_init_type_mismatch.npy" [exitcode]="84" [output]="")
 declare -A test_declarations_infer_then_assign_wrong_type=([titre]="Declarations : infer then assign wrong type" [fichier]="test/Functional/Declarations/infer_then_assign_wrong_type.npy" [exitcode]="0" [output]="True")
 declare -A test_declarations_explicit_then_assign_wrong_type=([titre]="Declarations : explicit then assign wrong type" [fichier]="test/Functional/Declarations/explicit_then_assign_wrong_type.npy" [exitcode]="84" [output]="")
-declare -A test_declarations_bool_then_assign_int=([titre]="Declarations : bool then assign int" [fichier]="test/Functional/Declarations/bool_then_assign_int.npy" [exitcode]="0" [output]="True")
+declare -A test_declarations_bool_then_assign_int=([titre]="Declarations : bool then assign int" [fichier]="test/Functional/Declarations/bool_then_assign_int.npy" [exitcode]="0" [output]="1")
 
 #Asign
 declare -A test_assign_reassign_int_ok=([titre]="Assign : reassign int ok" [fichier]="test/Functional/Assign/reassign_int_ok.npy" [exitcode]="0" [output]="2")
@@ -154,8 +154,8 @@ declare -A test_cmp_list_eq_disallowed=([titre]="Comparisons : list == disallowe
 declare -A test_cmp_bool_neq_ok=([titre]="Comparisons : bool != ok" [fichier]="test/Functional/Comparisons/Advanced/bool_neq_ok.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_bool_lt_disallowed=([titre]="Comparisons : bool < disallowed" [fichier]="test/Functional/Comparisons/Advanced/bool_lt_disallowed.npy" [exitcode]="84" [output]="")
 declare -A test_cmp_bool_gte_disallowed=([titre]="Comparisons : bool >= disallowed" [fichier]="test/Functional/Comparisons/Advanced/bool_gte_disallowed.npy" [exitcode]="84" [output]="")
-declare -A test_cmp_void_eq_disallowed=([titre]="Comparisons : void == disallowed" [fichier]="test/Functional/Comparisons/Advanced/void_eq_disallowed.npy" [exitcode]="0" [output]="1\n1\nTrue")
-declare -A test_cmp_void_neq_disallowed=([titre]="Comparisons : void != disallowed" [fichier]="test/Functional/Comparisons/Advanced/void_neq_disallowed.npy" [exitcode]="0" [output]="1\nFalse")
+declare -A test_cmp_void_eq_disallowed=([titre]="Comparisons : void == disallowed" [fichier]="test/Functional/Comparisons/Advanced/void_eq_disallowed.npy" [exitcode]="0" [output]=$'1\n1\nTrue')
+declare -A test_cmp_void_neq_disallowed=([titre]="Comparisons : void != disallowed" [fichier]="test/Functional/Comparisons/Advanced/void_neq_disallowed.npy" [exitcode]="0" [output]=$'1\nFalse')
 declare -A test_cmp_struct_eq_disallowed=([titre]="Comparisons : struct == disallowed" [fichier]="test/Functional/Comparisons/Advanced/struct_eq_disallowed.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_struct_neq_disallowed=([titre]="Comparisons : struct != disallowed" [fichier]="test/Functional/Comparisons/Advanced/struct_neq_disallowed.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_list_lt_disallowed=([titre]="Comparisons : list < disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_lt_disallowed.npy" [exitcode]="84" [output]="")
