@@ -235,6 +235,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
         Seq.fromList
           [ LabelDef "fun_foo"
           , Real (LoadLocal (-2))
+          , Real (Push (ImmInt (Common.I64 0)))
           , Real Ret
           ]
       csLabelCnt st `shouldBe` 0
