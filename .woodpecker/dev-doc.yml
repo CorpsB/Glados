@@ -16,8 +16,7 @@ steps:
     commands:
       - stack setup
       - stack build --haddock --no-haddock-deps
-      - DOC_ROOT=$(stack path --local-doc-root)
-      - DOC_DIR=$(find "$DOC_ROOT" -maxdepth 1 -type d -name "glados-*" -print -quit)
+      - DOC_DIR=$(find .stack-work -type f -path '*/doc/html/glados/index.html' -print -quit | xargs -r dirname)
       - test -n "$DOC_DIR"
       - rm -rf public && mkdir -p public
       - cp -a "$DOC_DIR"/. public/
@@ -30,5 +29,5 @@ steps:
       - cp -a public/. .
       - touch .nojekyll
       - git add -A
-      - 'git commit -m "📝 Documentation : publish Haddock for ${CI_COMMIT_SHA}" || true'
+      - 'git commit -m "📝 Documentation: publish Haddock for ${CI_COMMIT_SHA}" || true'
       - git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" gh-pages
