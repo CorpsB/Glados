@@ -1,6 +1,6 @@
-import "types.npy";
-import "math.npy";
-import "hof.npy";
+import "test/Functional/Integration/import_struct_function_lambda_ok/types.npy";
+import "test/Functional/Integration/import_struct_function_lambda_ok/math.npy";
+import "test/Functional/Integration/import_struct_function_lambda_ok/hof.npy";
 
 func main() {
     p: Pair = new Pair { a: 7, b: 8 };
