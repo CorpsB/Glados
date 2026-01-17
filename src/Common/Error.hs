@@ -14,7 +14,7 @@ This module provides tools to transform technical Megaparsec errors into
 human-readable, colored error messages. It helps standardize error reporting
 across the entire application (Parsing, Semantics, Imports).
 -}
-module Common.Error (formatParseError, formatError) where
+module Common.Error (formatParseError, formatError, formatFancyError, getExpected, getUnexpected) where
 
 import Data.Text (Text)
 import Data.Void (Void)

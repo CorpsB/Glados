@@ -10,13 +10,16 @@ import AST.Ast (Ast(..))
 import Common.Type.Integer (fitInteger)
 import qualified Data.Text as DT
 import qualified Data.Map.Strict as Map
-import qualified Data.List
+import Data.List (isInfixOf)
 
 p :: String -> DT.Text
 p = DT.pack
 
 isInfixOfStr :: String -> String -> Bool
 isInfixOfStr needle haystack = needle `Data.List.isInfixOf` haystack
+
+testEnv :: CheckEnv
+testEnv = emptyEnv
 
 spec :: Spec
 spec = describe "Semantic Checker Coverage" $ do
@@ -103,7 +106,6 @@ spec = describe "Semantic Checker Coverage" $ do
         it "ASetVar: Auto Type (Inference Check)" $ do
             let stmt = ASetVar (p "x") (p "auto") (AInteger (fitInteger 1))
             checkStmt emptyEnv stmt `shouldSatisfy` \case 
-                -- On vérifie que l'AST retourné a bien "int" au lieu de "auto"
                 Right (ASetVar "x" "int" _, _) -> True
                 _ -> False
 
@@ -120,7 +122,6 @@ spec = describe "Semantic Checker Coverage" $ do
             checkStmt emptyEnv stmt `shouldSatisfy` \case Left msg -> "Undefined" `isInfixOfStr` msg; _ -> False
 
         it "Unknown Statement (Fallback to checkExpr with valid expression)" $ do
-            -- CHANGED: Utilisation de AVoid au lieu de AImport, car AImport n'est pas une expression
             checkStmt emptyEnv AVoid `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
     describe "checkAst" $ do
@@ -229,7 +230,6 @@ spec = describe "Semantic Checker Coverage" $ do
                 _ -> False
 
         it "Preserves environment in fallback statement" $ do
-            -- CHANGED: Utilisation de AVoid au lieu de AImport
             checkStmt env AVoid `shouldSatisfy` \case
                 Right (_, resEnv) -> case Map.lookup (p "i") (envVars resEnv) of
                     Just TyInt -> True
@@ -617,7 +617,7 @@ spec = describe "Semantic Checker Coverage" $ do
         let pointFields = Map.fromList [(DT.pack "x", TyInt), (DT.pack "y", TyInt)]
         let pointDef = StructDef (DT.pack "Point") pointFields
         
-        let testEnv = emptyEnv {
+        let customEnv = emptyEnv {
             envStructs = Map.insert (DT.pack "Point") pointDef (envStructs emptyEnv),
             envVars = Map.fromList [
                 (DT.pack "p", TyStruct (DT.pack "Point")),
@@ -627,25 +627,25 @@ spec = describe "Semantic Checker Coverage" $ do
 
         it "validates valid field access (p.x)" $ do
             let ast = AAccessStruct (ASymbol (DT.pack "p")) (DT.pack "x")
-            checkExpr testEnv ast `shouldSatisfy` \case
+            checkExpr customEnv ast `shouldSatisfy` \case
                 Right TyInt -> True
                 _ -> False
 
         it "validates valid field access (p.y)" $ do
             let ast = AAccessStruct (ASymbol (DT.pack "p")) (DT.pack "y")
-            checkExpr testEnv ast `shouldSatisfy` \case
+            checkExpr customEnv ast `shouldSatisfy` \case
                 Right TyInt -> True
                 _ -> False
 
         it "returns error for unknown field (p.z)" $ do
             let ast = AAccessStruct (ASymbol (DT.pack "p")) (DT.pack "z")
-            checkExpr testEnv ast `shouldSatisfy` \case
+            checkExpr customEnv ast `shouldSatisfy` \case
                 Left err | err == "Field 'z' not found in struct 'Point'" -> True
                 _ -> False
 
         it "returns error when accessing field on non-struct type (i.x)" $ do
             let ast = AAccessStruct (ASymbol (DT.pack "i")) (DT.pack "x")
-            checkExpr testEnv ast `shouldSatisfy` \case
+            checkExpr customEnv ast `shouldSatisfy` \case
                 Left err | err == "Cannot access field 'x' on non-struct type int" -> True
                 _ -> False
 
@@ -717,3 +717,177 @@ spec = describe "Semantic Checker Coverage" $ do
             checkStmt empty funcDef `shouldSatisfy` \case
                 Right (_, _) -> True 
                 _ -> False
+
+    describe "List Literals and Missing Return Checks" $ do
+
+        describe "List Literal Validation (checkListExpr)" $ do
+            it "Validates empty list (Void list)" $ do
+                checkExpr testEnv (AList []) `shouldSatisfy` \case
+                    Right (TyList TyVoid) -> True
+                    _ -> False
+
+            it "Validates homogeneous list [int]" $ do
+                let l = AList [AInteger (fitInteger 1), AInteger (fitInteger 2)]
+                checkExpr testEnv l `shouldSatisfy` \case
+                    Right (TyList TyInt) -> True
+                    _ -> False
+
+            it "Validates homogeneous list [bool]" $ do
+                let l = AList [ABool True, ABool False]
+                checkExpr testEnv l `shouldSatisfy` \case
+                    Right (TyList TyBool) -> True
+                    _ -> False
+
+            it "Rejects heterogeneous list [int, bool]" $ do
+                let l = AList [AInteger (fitInteger 1), ABool True]
+                checkExpr testEnv l `shouldSatisfy` \case
+                    Left err | "List type mismatch" `isInfixOf` err -> True
+                    _ -> False
+
+        describe "Missing Return Validation (checkMissingReturn)" $ do
+            
+            let makeFunc retType body = 
+                    ADefineFunc (DT.pack "f") [] (DT.pack retType) body
+
+            it "Validates non-void function WITH return" $ do
+                let body = ABlock [AReturn (AInteger (fitInteger 1))]
+                checkStmt testEnv (makeFunc "int" body) `shouldSatisfy` \case
+                    Right _ -> True
+                    _ -> False
+
+            it "Rejects non-void function WITHOUT return" $ do
+                let body = ABlock [AVoid]
+                checkStmt testEnv (makeFunc "int" body) `shouldSatisfy` \case
+                    Left err | "has no return statement" `isInfixOf` err -> True
+                    _ -> False
+
+            it "Accepts void function WITHOUT return" $ do
+                let body = ABlock [] 
+                checkStmt testEnv (makeFunc "void" body) `shouldSatisfy` \case
+                    Right _ -> True
+                    _ -> False
+
+            it "Detects return inside nested control flow (If)" $ do
+                let body = ABlock [
+                        AIf (ABool True) 
+                            (ABlock [AReturn (AInteger (fitInteger 1))]) 
+                            AVoid
+                     ]
+                checkStmt testEnv (makeFunc "int" body) `shouldSatisfy` \case
+                    Right _ -> True
+                    _ -> False
+            
+            it "Detects return inside nested control flow (While)" $ do
+                let body = ABlock [
+                        AWhile (ABool True) 
+                               (ABlock [AReturn (AInteger (fitInteger 1))])
+                     ]
+                checkStmt testEnv (makeFunc "int" body) `shouldSatisfy` \case
+                    Right _ -> True
+                    _ -> False
+        describe "Core Expression & Statement Checks" $ do
+
+            let baseEnv = emptyEnv { 
+                envVars = Map.fromList [
+                    (DT.pack "x", TyInt),
+                    (DT.pack "b", TyBool)
+                ]
+            }
+
+            describe "checkExpr: Basic Literals & Symbols" $ do
+                it "Validates Integer literal" $ do
+                    checkExpr baseEnv (AInteger (fitInteger 10)) `shouldSatisfy` \case
+                        Right TyInt -> True
+                        _ -> False
+
+                it "Validates Boolean literal" $ do
+                    checkExpr baseEnv (ABool True) `shouldSatisfy` \case
+                        Right TyBool -> True
+                        _ -> False
+
+                it "Validates Void literal" $ do
+                    checkExpr baseEnv AVoid `shouldSatisfy` \case
+                        Right TyVoid -> True
+                        _ -> False
+
+                it "Validates existing Symbol lookup" $ do
+                    checkExpr baseEnv (ASymbol (DT.pack "x")) `shouldSatisfy` \case
+                        Right TyInt -> True
+                        _ -> False
+
+                it "Rejects undefined Symbol" $ do
+                    checkExpr baseEnv (ASymbol (DT.pack "unknown")) `shouldSatisfy` \case
+                        Left err | "Undefined variable 'unknown'" `isInfixOf` err -> True
+                        _ -> False
+
+            describe "checkExpr: Blocks (checkBlockExpr)" $ do
+                it "Returns TyVoid for empty block" $ do
+                    checkExpr baseEnv (ABlock []) `shouldSatisfy` \case
+                        Right TyVoid -> True
+                        _ -> False
+
+                it "Returns type of single instruction" $ do
+                    checkExpr baseEnv (ABlock [AInteger (fitInteger 1)]) `shouldSatisfy` \case
+                        Right TyInt -> True
+                        _ -> False
+
+                it "Returns type of the LAST instruction in sequence" $ do
+                    let block = ABlock [AInteger (fitInteger 1), ABool True]
+                    checkExpr baseEnv block `shouldSatisfy` \case
+                        Right TyBool -> True
+                        _ -> False
+
+            describe "checkExpr: Lambdas (checkLambda)" $ do
+                it "Infers Lambda type (Assumes arguments are Int)" $ do
+                    let args = [DT.pack "a"]
+                    let body = ASymbol (DT.pack "a")
+                    checkExpr baseEnv (ADefineLambda args body) `shouldSatisfy` \case
+                        Right (TyFunc [TyInt] TyInt) -> True
+                        _ -> False
+
+                it "Infers Lambda return type correctly" $ do
+                    let args = [DT.pack "a"]
+                    let body = ABool True
+                    checkExpr baseEnv (ADefineLambda args body) `shouldSatisfy` \case
+                        Right (TyFunc [TyInt] TyBool) -> True
+                        _ -> False
+
+            describe "checkExpr: Variable Assignment (ASetVar as Expr)" $ do
+                it "Validates correct assignment and returns type" $ do
+                    let assign = ASetVar (DT.pack "x") (DT.pack "int") (AInteger (fitInteger 10))
+                    checkExpr baseEnv assign `shouldSatisfy` \case
+                        Right TyInt -> True
+                        _ -> False
+
+                it "Rejects type mismatch in assignment" $ do
+                    let assign = ASetVar (DT.pack "x") (DT.pack "int") (ABool True)
+                    checkExpr baseEnv assign `shouldSatisfy` \case
+                        Left err | "Type mismatch" `isInfixOf` err -> True
+                        _ -> False
+
+            describe "checkExpr: Error Position Wrapping (APos)" $ do
+                it "Prepends line number to error message" $ do
+                    let errorNode = APos 42 0 (ASymbol (DT.pack "ghost"))
+                    checkExpr baseEnv errorNode `shouldSatisfy` \case
+                        Left err | "Error line 42:" `isInfixOf` err -> True
+                        _ -> False
+
+                it "Does not double-wrap existing line error" $ do
+                    let inner = APos 42 0 (ASymbol (DT.pack "ghost"))
+                    let outer = APos 100 0 inner
+                    checkExpr baseEnv outer `shouldSatisfy` \case
+                        Left err -> "Error line 42" `isInfixOf` err && not ("Error line 100" `isInfixOf` err)
+                        _ -> False
+
+            describe "checkStmt: AList Processing" $ do
+                it "Processes a list of statements and updates environment" $ do
+                    let stmt1 = ASetVar (DT.pack "y") (DT.pack "int") (AInteger (fitInteger 10))
+                    let stmt2 = ASetVar (DT.pack "z") (DT.pack "int") (ASymbol (DT.pack "y"))
+                    let listAst = AList [stmt1, stmt2]
+
+                    checkStmt baseEnv listAst `shouldSatisfy` \case
+                        Right (AList _, newEnv) -> 
+                            case Map.lookup (DT.pack "z") (envVars newEnv) of
+                                Just TyInt -> True
+                                _ -> False
+                        _ -> False
