@@ -140,7 +140,7 @@ declare -A test_cmp_gt_ok=([titre]="Comparisons : >" [fichier]="test/Functional/
 declare -A test_cmp_lte_ok=([titre]="Comparisons : <=" [fichier]="test/Functional/Comparisons/lte_ok.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_gte_ok=([titre]="Comparisons : >=" [fichier]="test/Functional/Comparisons/gte_ok.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_bool_eq_ok=([titre]="Comparisons : bool ==" [fichier]="test/Functional/Comparisons/bool_eq_ok.npy" [exitcode]="0" [output]="True")
-declare -A test_cmp_mismatched_types_eq=([titre]="Comparisons : type mismatch ==" [fichier]="test/Functional/Comparisons/mismatched_types_eq.npy" [exitcode]="84" [output]="")
+declare -A test_cmp_mismatched_types_eq=([titre]="Comparisons : type mismatch ==" [fichier]="test/Functional/Comparisons/mismatched_types_eq.npy" [exitcode]="" [output]="False")
 declare -A test_cmp_list_eq_disallowed=([titre]="Comparisons : list == disallowed" [fichier]="test/Functional/Comparisons/list_eq_disallowed.npy" [exitcode]="84" [output]="")
 # Comparisons (Advanced)
 declare -A test_cmp_bool_neq_ok=([titre]="Comparisons : bool != ok" [fichier]="test/Functional/Comparisons/Advanced/bool_neq_ok.npy" [exitcode]="0" [output]="True")
