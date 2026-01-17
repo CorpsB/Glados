@@ -103,6 +103,8 @@ data Ast
       -- ^ Represents an explicit return statement.
       --   @param Ast The expression to return.
 
+    | AExprStmt Ast
+
     | ABlock [Ast]
 
     | APos Int Int Ast

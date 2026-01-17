@@ -244,10 +244,14 @@ compileFor compileFn initAst cond updateAst body = do
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
 --
-compileSetVar :: (Ast -> CompilerMonad ()) -> Text -> Text -> Ast -> CompilerMonad ()
-compileSetVar compileFn name typeName body = do
+compileSetVar :: (Ast -> CompilerMonad ()) -> Text -> Text -> Ast ->
+    Bool -> CompilerMonad ()
+compileSetVar compileFn name typeName body isStatement = do
     compileFn body
     (scope, idx) <- defineSymbol name typeName
+    case not isStatement of
+        True -> emitInstruction Dup
+        False -> return ()
     case scope of
         ScopeGlobal  -> emitInstruction (StoreGlobal idx)
         ScopeLocal   -> emitInstruction (StoreLocal idx)
@@ -483,8 +487,10 @@ compileAst (ADefineFunc name args _ body) =
 compileAst (ADefineLambda params body) =
     compileDefineLambda compileAst params body
 compileAst (ADefineStruct name fields) = compileDefineStruct name fields
+compileAst (AExprStmt (ASetVar name typeName body)) =
+    compileSetVar compileAst name typeName body True
 compileAst (ASetVar name typeName body) =
-    compileSetVar compileAst name typeName body
+    compileSetVar compileAst name typeName body False
 compileAst (ASetStruct name fields) = compileSetStruct compileAst name fields
 compileAst (AAccessStruct obj field) = compileAccessStruct compileAst obj field
 compileAst (AIf cond t f) = compileIf compileAst cond t f
@@ -498,3 +504,4 @@ compileAst (AReturn expr) = do
     s <- get
     emitInstruction (Ret (csCurrentArgCount s))
 compileAst (AImport _) = return ()
+compileAst _ = return ()
