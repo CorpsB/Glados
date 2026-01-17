@@ -8,7 +8,7 @@
 module Main (main) where
 
 import System.Environment (getArgs)
-import System.Exit (exitFailure, exitWith, ExitCode(..))
+import System.Exit (exitWith, ExitCode(..))
 import System.IO (hPutStrLn, stderr)
 import qualified Data.Text.IO as TIO
 import qualified Data.ByteString as BS
@@ -82,4 +82,4 @@ main = do
     args <- getArgs
     case args of
         [input, output] -> runCompiler input output
-        _ -> usage >> exitFailure
+        _ -> usage >> exitWith (ExitFailure 84)

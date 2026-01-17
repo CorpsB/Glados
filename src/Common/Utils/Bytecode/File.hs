@@ -12,7 +12,7 @@ module Common.Utils.Bytecode.File
 
 import qualified Data.ByteString as BS
 import Control.Exception (try, SomeException)
-import System.Exit (exitFailure)
+import System.Exit (exitWith, ExitCode(..))
 
 -- | Helper to attempt reading a file with explicit typing.
 --
@@ -39,5 +39,5 @@ getFileContent path = do
     result <- tryReadFile path
     case result of
         Left err -> putStrLn ("\ESC[31mIO Error:\ESC[0m " ++ show err) >>
-            exitFailure
+            exitWith (ExitFailure 84)
         Right content -> return content
