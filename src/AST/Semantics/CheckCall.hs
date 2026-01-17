@@ -302,12 +302,9 @@ checkEqualityOp :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
 checkEqualityOp checker env args =
     case args of
         [left, right] -> do
-            tLeft <- checker env left
-            tRight <- checker env right
-            if areTypesCompatible tLeft tRight
-                then Right TyBool
-                else Left $ "Equality requires compatible types, got " ++
-                        typeToString tLeft ++ " and " ++ typeToString tRight
+            _ <- checker env left
+            _ <- checker env right
+            Right TyBool
         _ -> Left "Equality operator expects 2 arguments"
 
 -- | Validates unary operators (like !).
