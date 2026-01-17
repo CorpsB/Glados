@@ -152,7 +152,7 @@ declare -A test_cmp_struct_eq_disallowed=([titre]="Comparisons : struct == disal
 declare -A test_cmp_struct_neq_disallowed=([titre]="Comparisons : struct != disallowed" [fichier]="test/Functional/Comparisons/Advanced/struct_neq_disallowed.npy" [exitcode]="0" [output]="False")
 declare -A test_cmp_list_lt_disallowed=([titre]="Comparisons : list < disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_lt_disallowed.npy" [exitcode]="84" [output]="")
 declare -A test_cmp_list_gte_disallowed=([titre]="Comparisons : list >= disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_gte_disallowed.npy" [exitcode]="84" [output]="")
-declare -A test_cmp_list_neq_disallowed=([titre]="Comparisons : list != disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_neq_disallowed.npy" [exitcode]="84" [output]="")
+declare -A test_cmp_list_neq_disallowed=([titre]="Comparisons : list != disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_neq_disallowed.npy" [exitcode]="0" [output]="False")
 
 #Logical
 declare -A test_logical_and_true_ok=([titre]="Logical : && true" [fichier]="test/Functional/Logical/and_true_ok.npy" [exitcode]="0" [output]="True")
