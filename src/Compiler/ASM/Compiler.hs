@@ -43,9 +43,10 @@ import Compiler.ASM.AstToAsm
     , astListToAsm
     , astCallToAsm
     )
-import Compiler.Instruction (Instruction(..))
+import Compiler.Instruction (Instruction(..), Immediate(..))
 import Compiler.PsInstruction (PsInstruction(..))
 import Compiler.CompilerState (ScopeType(..))
+import Common.Type.Integer (IntValue(..))
 import Common.Utils.List (zipWith3M_)
 import AST.Ast (Ast(..))
 
@@ -291,6 +292,7 @@ compileDefineFun compileFn name args body =
         zipWithM_ (\(aName, aType) i ->
             registerSymbol aName aType ScopeLocal (i - nArgs)) args [0..] >>
         compileFn body >>
+        emitInstruction (Push (ImmInt (I64 0))) >>
         emitInstruction Ret
     ) >> return ()
 
