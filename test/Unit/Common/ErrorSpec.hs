@@ -53,8 +53,8 @@ spec = do
                     Right _ -> expectationFailure "Parser should have failed"
                     Left bundle -> do
                         let output = formatParseError bundle
-                        output `shouldSatisfy` (\s -> "expected custom error" `isInfixOf` s)
-                        output `shouldSatisfy` (\s -> "but got custom error" `isInfixOf` s)
+                        output `shouldSatisfy` (\s -> "Boom" `isInfixOf` s)
+                        output `shouldSatisfy` (\s -> "\x1b[31m[Parse Error]\x1b[0m" `isInfixOf` s)
     
         describe "formatError" $ do
             it "formats error message correctly" $ do

@@ -390,7 +390,7 @@ spec = describe "Import System Resolution" $ do
                 result <- resolveImports input
                 
                 result `shouldSatisfy` \case
-                    Left err -> "Circular import detected" `isInfixOf` err 
+                    Left err -> "Circular or duplicate import detected" `isInfixOf` err 
                                 && "self_loop.npy" `isInfixOf` err
                     _ -> False
 
@@ -407,7 +407,7 @@ spec = describe "Import System Resolution" $ do
                     result <- resolveImports input
                     
                     result `shouldSatisfy` \case
-                        Left err -> "Circular import detected" `isInfixOf` err
+                        Left err -> "Circular or duplicate import detected" `isInfixOf` err
                         _ -> False
     
     it "Includes visited stack in circular import error message" $ do

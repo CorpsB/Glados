@@ -138,6 +138,24 @@ checkFor env initStmt cond updateStmt body = do
     _ <- checkStmt envAfterInit body
     Right env
 
+checkReturns :: CheckEnv -> Type -> Ast -> Either String ()
+checkReturns env expected (AReturn expr) = do
+    actual <- checkExpr env expr
+    if areTypesCompatible expected actual
+        then Right ()
+        else Left $ "Return type mismatch: expected " ++
+            typeToString expected ++ " but got " ++ typeToString actual
+checkReturns env expected (AList list) =
+    mapM_ (checkReturns env expected) list
+checkReturns env expected (ABlock list) =
+    mapM_ (checkReturns env expected) list
+checkReturns env expected (AIf _ t e) =
+    checkReturns env expected t >> checkReturns env expected e
+checkReturns env expected (AWhile _ body) = checkReturns env expected body
+checkReturns env expected (AFor _ _ _ body) = checkReturns env expected body
+checkReturns env expected (APos _ _ ast) = checkReturns env expected ast
+checkReturns _ _ _ = Right ()
+
 -- | Branches comparison
 checkBranches :: CheckEnv -> Ast -> Ast -> Either String Type
 checkBranches env thenB elseB = do
@@ -198,11 +216,11 @@ defineFunc env name args retType body = do
     let argTypes = map (parseType . snd) args
     let retTy = parseType retType
     let funcType = TyFunc argTypes retTy
-    
     envWithFunc <- insertVar env name funcType
     envForBody <- foldM (\e (n, t) -> insertVar e n (parseType t))
                         envWithFunc args
     _ <- checkStmt envForBody body
+    _ <- checkReturns envForBody retTy body
     Right envWithFunc
 
 -- | Applies the assignment logic based on types compatibility
