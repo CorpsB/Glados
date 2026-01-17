@@ -512,4 +512,4 @@ compileAst (AReturn expr) = do
     s <- get
     emitInstruction (Ret (csCurrentArgCount s))
 compileAst (AImport _) = return ()
-compileAst _ = return ()
+compileAst (AExprStmt expr) = compileAst expr

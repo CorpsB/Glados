@@ -184,12 +184,13 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
   describe "compileSetVar" $ do
     it "stores value and registers global symbol" $ do
-      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" "int" (AInteger (Common.I32 3))) createCompilerState)
+      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" "int" (AInteger (Common.I32 3)) False) createCompilerState)
       Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0, "int")
       csNextIndex st `shouldBe` 1
       csCode st `shouldBe`
         Seq.fromList
           [ Real (Push (ImmInt (Common.I32 3)))
+          , Real Dup
           , Real (StoreGlobal 0)
           ]
 
