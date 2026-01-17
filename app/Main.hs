@@ -70,10 +70,10 @@ runCompiler inputPath outputPath = do
     file_content <- TIO.readFile inputPath
     parsed_ast <- parseSource file_content
 
-    case checkAst parsed_ast of
+    checked_ast <- case checkAst parsed_ast of
         Left err -> die $ "Semantic Error: " ++ err
-        Right _  -> return ()
-    state <- compileSource parsed_ast
+        Right asts -> return asts
+    state <- compileSource checked_ast
     bytecode <- assembleCode (extractInstructions state)
     writeBinary outputPath bytecode
 
