@@ -255,6 +255,7 @@ checkIfExpr env cond thenB elseB = do
     tCond <- checkExpr env cond
     case tCond of
         TyBool -> checkBranches env thenB elseB
+        TyInt  -> checkBranches env thenB elseB
         _ -> Left "Error: 'if' condition must be boolean"
 
 -- | Verifies that both branches of an 'if' expression return compatible types.

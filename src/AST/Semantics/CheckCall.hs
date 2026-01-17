@@ -67,23 +67,59 @@ checkMathComp c e n a
         mathOps = map DT.pack ["+", "-", "*", "div", "mod"]
         compOps = map DT.pack ["<", ">", "<=", ">="]
 
--- | Sub-dispatcher for Logic, Equality, Unary, and Special functions.
+-- | Validates 'print'. Accepts 1 argument of ANY type. Returns Void.
+checkPrint :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkPrint checker env [arg] = do
+    _ <- checker env arg
+    Right TyVoid
+checkPrint _ _ _ = Left "Function 'print' expects exactly 1 argument"
+
+-- | Validates strict operators (===, !==). Always returns Bool.
+-- Accepts any types (even incompatible ones).
+checkStrictOp :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkStrictOp checker env [left, right] = do
+    _ <- checker env left
+    _ <- checker env right
+    Right TyBool
+checkStrictOp _ _ _ = Left "Strict comparison operator expects 2 arguments"
+
+-- | Sub-dispatcher for Logic and Strict Comparison operators.
 --
--- Handles:
--- * Logic: &&, ||
--- * Equality: eq? (==)
--- * Unary: !
--- * Internal: set_field (Structure mutation)
+-- This function handles boolean logic (&&, ||) and strict comparison (===, !==).
+-- For other special keywords (like 'print' or 'eq?'), it delegates to 'checkKeywordFuncs'
+-- to keep the function size small and manageable.
+--
+-- @param c (checker): The callback function to verify sub-expressions.
+-- @param e (env): The current semantic environment.
+-- @param n (name): The operator/function name (e.g. "&&", "===").
+-- @param a (args): The list of arguments passed to the operator.
 checkLogicSpecial :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
                   -> Maybe (Either String Type)
 checkLogicSpecial c e n a
     | n `elem` logicOps = Just $ checkBinaryOp c e n a TyBool TyBool
+    | n `elem` strictOps = Just $ checkStrictOp c e a
+    | otherwise = checkKeywordFuncs c e n a
+    where
+        logicOps = map DT.pack ["&&", "||"]
+        strictOps = map DT.pack ["===", "!=="]
+
+-- | Helper dispatcher for named keyword functions.
+--
+-- This function isolates the matching logic for built-in functions that are
+-- not symbolic operators, such as 'print', 'eq?', or internal helpers like 'set_field'.
+--
+-- @param c (checker): The callback function to verify sub-expressions.
+-- @param e (env): The current semantic environment.
+-- @param n (name): The keyword name (e.g. "print", "eq?").
+-- @param a (args): The list of arguments passed to the function.
+checkKeywordFuncs :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
+                  -> Maybe (Either String Type)
+checkKeywordFuncs c e n a
     | n == DT.pack "eq?" = Just $ checkEqualityOp c e a
     | n == DT.pack "!" = Just $ checkUnaryOp c e n a TyBool TyBool
     | n == DT.pack "set_field" = Just $ checkSetField c e a
+    | n == DT.pack "print" = Just $ checkPrint c e a
     | otherwise = Nothing
-    where
-        logicOps = map DT.pack ["&&", "||"]
 
 -- | Validates the special internal function 'set_field'.
 --

@@ -439,12 +439,10 @@ spec = describe "Semantic Checker Coverage" $ do
                             AVoid
             checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
-    describe "If Condition Strictness" $ do
-        it "Rejects TyInt as condition (Strict Boolean Mode)" $ do
+    describe "If Condition C-Style" $ do
+        it "Accepts TyInt as condition and checks branches" $ do
             let expr = AIf (AInteger (fitInteger 1)) (AInteger (fitInteger 1)) (AInteger (fitInteger 1))
-            checkExpr env expr `shouldSatisfy` \case 
-                Left msg -> "condition must be boolean" `isInfixOfStr` msg
-                _ -> False
+            checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
 
     describe "Coverage: Loop Logic" $ do
         it "Validates While with TyBool" $ do
@@ -495,8 +493,8 @@ spec = describe "Semantic Checker Coverage" $ do
                 _ -> False
 
     describe "Coverage: Environment Propagation" $ do
-        it "Propagates env to branches (Boolean condition)" $ do
-            let expr = AIf (ABool True) (ASymbol (p "i")) (ASymbol (p "i"))
+        it "Propagates env to branches when condition is Int" $ do
+            let expr = AIf (AInteger (fitInteger 1)) (ASymbol (p "i")) (ASymbol (p "i"))
             checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
 
         it "Propagates env to checkCall" $ do
