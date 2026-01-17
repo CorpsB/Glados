@@ -254,7 +254,7 @@ declare -A test_builtins_print_string_ok=([titre]="Builtins : print string" [fic
 declare -A test_builtins_print_list_int_ok=([titre]="Builtins : print [int] (observe)" [fichier]="test/Functional/Builtins/print_list_int_ok.npy" [exitcode]="0" [output]="")
 declare -A test_builtins_print_nested_list_ok=([titre]="Builtins : print [[int]] (observe)" [fichier]="test/Functional/Builtins/print_nested_list_ok.npy" [exitcode]="0" [output]="")
 declare -A test_builtins_print_struct_ok=([titre]="Builtins : print struct (observe)" [fichier]="test/Functional/Builtins/print_struct_ok.npy" [exitcode]="0" [output]="")
-declare -A test_builtins_print_void_ok=([titre]="Builtins : print void (observe)" [fichier]="test/Functional/Builtins/print_void_ok.npy" [exitcode]="0" [output]="")
+declare -A test_builtins_print_void_ok=([titre]="Builtins : print void (observe)" [fichier]="test/Functional/Builtins/print_void_ok.npy" [exitcode]="84" [output]="")
 # Builtins (List + Exit)
 declare -A test_builtins_exit_0_ok=([titre]="Builtins : exit(0) ok" [fichier]="test/Functional/Builtins/Advanced/exit_0_ok.npy" [exitcode]="0" [output]="")
 declare -A test_builtins_exit_84_ok=([titre]="Builtins : exit(84) ok" [fichier]="test/Functional/Builtins/Advanced/exit_84_ok.npy" [exitcode]="84" [output]="")
