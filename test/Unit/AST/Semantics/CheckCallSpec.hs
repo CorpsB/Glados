@@ -527,3 +527,229 @@ spec = describe "AST.Semantics.CheckCall" $ do
             checkExpr env call `shouldSatisfy` \case
                 Left err | "call to 'testFunc'" `isInfixOf` err -> True
                 _ -> False
+
+    describe "List Operators (cons, head, tail, nth, nth_update)" $ do
+        let listEnv = emptyEnv {
+            envVars = Map.fromList [
+                (DT.pack "lInt", TyList TyInt),
+                (DT.pack "lBool", TyList TyBool),
+                (DT.pack "val", TyInt),
+                (DT.pack "idx", TyInt),
+                (DT.pack "b", TyBool),
+                (DT.pack "notAList", TyInt)
+            ]
+        }
+        let lInt = ASymbol (DT.pack "lInt")
+        let lBool = ASymbol (DT.pack "lBool")
+        let val = ASymbol (DT.pack "val")
+        let idx = ASymbol (DT.pack "idx")
+        let b = ASymbol (DT.pack "b")
+        let notAList = ASymbol (DT.pack "notAList")
+
+        describe "cons(elem, list)" $ do
+            it "Validates adding an int to [int]" $ do
+                let args = [val, lInt]
+                -- CORRECTION : On passe le Symbole et les args séparément
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "cons")) args `shouldSatisfy` \case
+                    Right (TyList TyInt) -> True
+                    _ -> False
+
+            it "Rejects adding a bool to [int] (Type mismatch)" $ do
+                let args = [b, lInt]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "cons")) args `shouldSatisfy` \case
+                    Left err | "cons type mismatch" `isInfixOf` err -> True
+                    _ -> False
+
+            it "Rejects if second argument is not a list" $ do
+                let args = [val, val]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "cons")) args `shouldSatisfy` \case
+                    Left err | "expects a list as second argument" `isInfixOf` err -> True
+                    _ -> False
+
+        describe "head(list)" $ do
+            it "Returns the inner type (int) of [int]" $ do
+                let args = [lInt]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "head")) args `shouldSatisfy` \case
+                    Right TyInt -> True
+                    _ -> False
+
+            it "Rejects if argument is not a list" $ do
+                let args = [val]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "head")) args `shouldSatisfy` \case
+                    Left err | "head expects a list" `isInfixOf` err -> True
+                    _ -> False
+
+        describe "tail(list)" $ do
+            it "Returns the list type ([int])" $ do
+                let args = [lInt]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "tail")) args `shouldSatisfy` \case
+                    Right (TyList TyInt) -> True
+                    _ -> False
+
+            it "Rejects if argument is not a list" $ do
+                let args = [val]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "tail")) args `shouldSatisfy` \case
+                    Left err | "tail expects a list" `isInfixOf` err -> True
+                    _ -> False
+
+        describe "nth(list, index)" $ do
+            it "Returns the inner type (int) at index" $ do
+                let args = [lInt, idx]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth")) args `shouldSatisfy` \case
+                    Right TyInt -> True
+                    _ -> False
+
+            it "Rejects if index is not an int" $ do
+                let args = [lInt, b]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth")) args `shouldSatisfy` \case
+                    Left err | "index must be an integer" `isInfixOf` err -> True
+                    _ -> False
+
+            it "Rejects if first argument is not a list" $ do
+                let args = [notAList, idx]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth")) args `shouldSatisfy` \case
+                    Left err | "expects a list as first argument" `isInfixOf` err -> True
+                    _ -> False
+
+        describe "nth_update(list, index, value)" $ do
+            it "Validates correct update on [int]" $ do
+                let args = [lInt, idx, val]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth_update")) args `shouldSatisfy` \case
+                    Right (TyList TyInt) -> True
+                    _ -> False
+
+            it "Rejects if index is not an int" $ do
+                let args = [lInt, b, val]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth_update")) args `shouldSatisfy` \case
+                    Left err | "index must be an integer" `isInfixOf` err -> True
+                    _ -> False
+
+            it "Rejects if value type matches list type mismatch (bool into [int])" $ do
+                let args = [lInt, idx, b]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth_update")) args `shouldSatisfy` \case
+                    Left err | "Type mismatch in list update" `isInfixOf` err -> True
+                    _ -> False
+
+            it "Rejects if first argument is not a list" $ do
+                let args = [notAList, idx, val]
+                checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth_update")) args `shouldSatisfy` \case
+                    Left err | "expects a list as first argument" `isInfixOf` err -> True
+                    _ -> False
+            
+            it "Rejects incorrect argument count" $ do
+                 let args = [lInt, idx]
+                 checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth_update")) args `shouldSatisfy` \case
+                    Left err | "expects 3 arguments" `isInfixOf` err -> True
+                    _ -> False
+
+        describe "Built-in Functions (print) and Strict Operators (===, !==)" $ do
+
+            describe "print(arg)" $ do
+                it "Validates print with an Integer" $ do
+                    let args = [AInteger (fitInteger 42)]
+                    checkCall mockCheckExpr testEnv (ASymbol (DT.pack "print")) args `shouldSatisfy` \case
+                        Right TyVoid -> True
+                        _ -> False
+
+                it "Validates print with a Boolean" $ do
+                    let args = [ABool True]
+                    checkCall mockCheckExpr testEnv (ASymbol (DT.pack "print")) args `shouldSatisfy` \case
+                        Right TyVoid -> True
+                        _ -> False
+
+                it "Rejects print with no arguments" $ do
+                    let args = []
+                    checkCall mockCheckExpr testEnv (ASymbol (DT.pack "print")) args `shouldSatisfy` \case
+                        Left err | "expects exactly 1 argument" `isInfixOf` err -> True
+                        _ -> False
+
+                it "Rejects print with too many arguments" $ do
+                    let args = [AInteger (fitInteger 1), AInteger (fitInteger 2)]
+                    checkCall mockCheckExpr testEnv (ASymbol (DT.pack "print")) args `shouldSatisfy` \case
+                        Left err | "expects exactly 1 argument" `isInfixOf` err -> True
+                        _ -> False
+
+            describe "Strict Equality (===) [teq?]" $ do
+                let teq = ASymbol (DT.pack "teq?")
+
+                it "Validates strict equality between same types (int === int)" $ do
+                    let args = [AInteger (fitInteger 1), AInteger (fitInteger 1)]
+                    checkCall mockCheckExpr testEnv teq args `shouldSatisfy` \case
+                        Right TyBool -> True
+                        _ -> False
+
+                it "Validates strict equality between different types (int === bool)" $ do
+                    let args = [AInteger (fitInteger 1), ABool True]
+                    checkCall mockCheckExpr testEnv teq args `shouldSatisfy` \case
+                        Right TyBool -> True
+                        _ -> False
+
+                it "Rejects incorrect argument count" $ do
+                    let args = [AInteger (fitInteger 1)]
+                    checkCall mockCheckExpr testEnv teq args `shouldSatisfy` \case
+                        Left err | "Strict comparison operator expects 2 arguments" `isInfixOf` err -> True
+                        _ -> False
+
+            describe "Strict Inequality (!==) [tneq?]" $ do
+                let tneq = ASymbol (DT.pack "tneq?")
+
+                it "Validates strict inequality (int !== bool)" $ do
+                    let args = [AInteger (fitInteger 1), ABool False]
+                    checkCall mockCheckExpr testEnv tneq args `shouldSatisfy` \case
+                        Right TyBool -> True
+                        _ -> False
+        
+        describe "System Function (exit) and List Operator Argument Errors" $ do
+
+            describe "exit(code)" $ do
+                it "Validates exit with an Integer code" $ do
+                    let args = [AInteger (fitInteger 0)]
+                    checkCall mockCheckExpr testEnv (ASymbol (DT.pack "exit")) args `shouldSatisfy` \case
+                        Right TyVoid -> True
+                        _ -> False
+
+                it "Rejects exit with a Boolean (expects int)" $ do
+                    let args = [ABool True]
+                    checkCall mockCheckExpr testEnv (ASymbol (DT.pack "exit")) args `shouldSatisfy` \case
+                        Left err | "exit expects an integer code" `isInfixOf` err -> True
+                        _ -> False
+
+                it "Rejects exit with incorrect argument count (0 args)" $ do
+                    let args = []
+                    checkCall mockCheckExpr testEnv (ASymbol (DT.pack "exit")) args `shouldSatisfy` \case
+                        Left err | "exit expects 1 argument" `isInfixOf` err -> True
+                        _ -> False
+
+            describe "List Operators Argument Count Checks" $ do
+                
+                let lInt = ASymbol (DT.pack "lInt")
+
+                it "head: Rejects incorrect argument count (0 args)" $ do
+                    let args = []
+                    checkCall mockCheckExpr listEnv (ASymbol (DT.pack "head")) args `shouldSatisfy` \case
+                        Left err | "head expects 1 argument" `isInfixOf` err -> True
+                        _ -> False
+
+                it "head: Rejects incorrect argument count (2 args)" $ do
+                    let args = [lInt, lInt]
+                    checkCall mockCheckExpr listEnv (ASymbol (DT.pack "head")) args `shouldSatisfy` \case
+                        Left err | "head expects 1 argument" `isInfixOf` err -> True
+                        _ -> False
+
+                it "tail: Rejects incorrect argument count (0 args)" $ do
+                    let args = []
+                    checkCall mockCheckExpr listEnv (ASymbol (DT.pack "tail")) args `shouldSatisfy` \case
+                        Left err | "tail expects 1 argument" `isInfixOf` err -> True
+                        _ -> False
+
+                it "nth: Rejects incorrect argument count (1 arg)" $ do
+                    let args = [lInt]
+                    checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth")) args `shouldSatisfy` \case
+                        Left err | "nth expects 2 arguments" `isInfixOf` err -> True
+                        _ -> False
+
+                it "nth: Rejects incorrect argument count (3 args)" $ do
+                    let args = [lInt, AInteger (fitInteger 0), AInteger (fitInteger 0)]
+                    checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth")) args `shouldSatisfy` \case
+                        Left err | "nth expects 2 arguments" `isInfixOf` err -> True
+                        _ -> False

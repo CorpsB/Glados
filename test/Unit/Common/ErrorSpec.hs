@@ -3,15 +3,19 @@
 module Common.ErrorSpec (spec) where
 
 import Test.Hspec
-import Text.Megaparsec (parse, chunk, Parsec, label, failure, ErrorItem(..), (<|>))
+import Text.Megaparsec
 import Data.Void (Void)
 import Data.Text (Text)
 import Data.List (isInfixOf)
 import qualified Data.Set as Set
 import qualified Data.List.NonEmpty as NE
-import Common.Error (formatError, formatParseError)
+import Common.Error
+import Data.List.NonEmpty (fromList)
 
 type Parser = Parsec Void Text
+
+dummyPos :: Int
+dummyPos = 0
 
 spec :: Spec
 spec = do
@@ -128,3 +132,40 @@ spec = do
                     Left bundle -> do
                         let output = formatParseError bundle
                         output `shouldSatisfy` (\s -> "but got end of input" `isInfixOf` s)
+
+        describe "formatFancyError" $ do
+            it "Formats ErrorFail correctly" $ do
+                let errs = Set.singleton (ErrorFail "Something went wrong")
+                formatFancyError errs `shouldBe` "Something went wrong"
+
+            it "Formats ErrorIndentation correctly" $ do
+                let err = ErrorIndentation EQ (mkPos 4) (mkPos 2)
+                let errs = Set.singleton err
+                formatFancyError errs `shouldBe` "incorrect indentation (got 2, should be 4)"
+
+            it "Joins multiple fancy errors with semicolon" $ do
+                let err1 = ErrorFail "Error 1"
+                let err2 = ErrorFail "Error 2"
+                let errs = Set.fromList [err1, err2]
+                let res = formatFancyError errs
+                res `shouldSatisfy` (\s -> "Error 1" `isInfixOf` s && "Error 2" `isInfixOf` s)
+
+    describe "getExpected" $ do
+        it "Returns 'custom error' for FancyError" $ do
+            let err = FancyError dummyPos (Set.singleton (ErrorFail "Boom")) :: ParseError Text Void
+            getExpected err `shouldBe` "custom error"
+
+    describe "getUnexpected" $ do
+        it "Returns 'end of input' for TrivialError with Nothing" $ do
+            let err = TrivialError dummyPos Nothing Set.empty :: ParseError Text Void
+            getUnexpected err `shouldBe` "end of input"
+
+        it "Returns 'custom error' for FancyError" $ do
+            let err = FancyError dummyPos (Set.singleton (ErrorFail "Boom")) :: ParseError Text Void
+            getUnexpected err `shouldBe` "custom error"
+
+        it "Returns the unexpected item for TrivialError with Just" $ do
+            let unex = Label (fromList "foo")
+            let err = TrivialError dummyPos (Just unex) Set.empty :: ParseError Text Void
+            getUnexpected err `shouldNotBe` "end of input"
+            getUnexpected err `shouldNotBe` "custom error"
