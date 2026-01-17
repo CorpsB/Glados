@@ -102,7 +102,7 @@ checkLogicSpecial c e n a
     | otherwise = checkKeywordFuncs c e n a
     where
         logicOps = map DT.pack ["&&", "||"]
-        strictOps = map DT.pack ["?teq", "?tneq"]
+        strictOps = map DT.pack ["teq?", "tneq?"]
 
 -- | Helper dispatcher for named keyword functions.
 --

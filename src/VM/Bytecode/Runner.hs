@@ -62,6 +62,7 @@ executeInstruction 0x22 = instNot
 executeInstruction 0x23 = instAnd
 executeInstruction 0x24 = instOr
 executeInstruction 0x25 = instLe
+executeInstruction 0x26 = instTEq
 
 executeInstruction 0x30 = instJump
 executeInstruction 0x31 = instJumpIfFalse

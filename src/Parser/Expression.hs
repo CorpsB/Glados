@@ -262,8 +262,8 @@ additiveOps =
 -- | Table of comparison operators (==, <, >, etc).
 comparisonOps :: [Operator Parser Ast]
 comparisonOps =
-    [ InfixL (binary (DT.pack "?teq")  <$ try (symbol (DT.pack "===")))
-    , InfixL (binary (DT.pack "?tneq") <$ try (symbol (DT.pack "!==")))
+    [ InfixL (binary (DT.pack "teq?")  <$ try (symbol (DT.pack "===")))
+    , InfixL (binary (DT.pack "tneq?") <$ try (symbol (DT.pack "!==")))
     , InfixL (binary (DT.pack "eq?") <$ symbol (DT.pack "=="))
     , InfixL (binary (DT.pack "neq?") <$ symbol (DT.pack "!="))
     , InfixL (binary (DT.pack "<=")  <$ try (symbol (DT.pack "<=")))

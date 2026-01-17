@@ -33,7 +33,7 @@ builtinStackList =
 
 builtinLogicList :: [(Text, Instruction)]
 builtinLogicList =
-    [ (pack "eq?", Eq), (pack "?teq", TEq)
+    [ (pack "eq?", Eq), (pack "teq?", TEq)
     , (pack "<", Lt), (pack "<=", Le)
     , (pack "&&", And), (pack "||", Or), (pack "!", Not) ]
 
