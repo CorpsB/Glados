@@ -1,6 +1,2 @@
-<<<<<<< HEAD
-mul = lambda(a, b) -> a * b;
-=======
 mul = lambda(a, b) a * b;
->>>>>>> preprod
 print(mul(2, True));
