@@ -3,7 +3,7 @@ func apply(f, x: int) -> int {
 }
 
 func main() {
-    twice = lambda(a) -> a * 2;
+    twice = lambda(a) a * 2;
     print(apply(twice, 6));
 }
 main();
