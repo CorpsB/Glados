@@ -1,4 +1,4 @@
-import "math.npy";
-import "utils.npy";
+import "test/Functional/Basics/math.npy";
+import "test/Functional/Basics/utils.npy";
 
 print(add(40, two()));

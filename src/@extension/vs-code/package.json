@@ -1,0 +1,46 @@
+{
+  "name": "noupy-language-support",
+  "displayName": "Noupy Language Support",
+  "description": "Syntax highlighting and basic language configuration for the Noupy programming language.",
+  "version": "0.0.1",
+  "publisher": "noupy",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "noupy",
+        "aliases": [
+          "Noupy",
+          "noupy"
+        ],
+        "extensions": [
+          ".npy"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "noupy",
+        "scopeName": "source.noupy",
+        "path": "./syntaxes/noupy.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "noupy",
+        "path": "./snippets/noupy.code-snippets"
+      }
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,215 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Noupy",
+  "scopeName": "source.noupy",
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#imports"
+    },
+    {
+      "include": "#functionDecl"
+    },
+    {
+      "include": "#structDecl"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#constants"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#memberAccess"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.noupy",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.noupy",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.noupy",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.noupy",
+              "match": "\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}|x[0-9a-fA-F]{2}|.)"
+            }
+          ]
+        }
+      ]
+    },
+    "imports": {
+      "patterns": [
+        {
+          "name": "meta.import.noupy",
+          "match": "\\b(import)\\b\\s*(\"[^\"]*\")\\s*;",
+          "captures": {
+            "1": {
+              "name": "keyword.control.import.noupy"
+            },
+            "2": {
+              "name": "string.quoted.double.noupy"
+            }
+          }
+        }
+      ]
+    },
+    "functionDecl": {
+      "patterns": [
+        {
+          "name": "meta.function.declaration.noupy",
+          "begin": "\\b(func)\\b\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.declaration.function.noupy"
+            },
+            "2": {
+              "name": "entity.name.function.noupy"
+            }
+          },
+          "end": "\\)",
+          "patterns": [
+            {
+              "include": "#comments"
+            },
+            {
+              "include": "#strings"
+            },
+            {
+              "include": "#types"
+            },
+            {
+              "include": "#constants"
+            },
+            {
+              "include": "#numbers"
+            }
+          ]
+        }
+      ]
+    },
+    "structDecl": {
+      "patterns": [
+        {
+          "name": "meta.struct.declaration.noupy",
+          "match": "\\b(struct)\\b\\s+([A-Za-z_][A-Za-z0-9_]*)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.struct.noupy"
+            },
+            "2": {
+              "name": "entity.name.type.struct.noupy"
+            }
+          }
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.noupy",
+          "match": "\\b(if|else|while|for|break|continue|ret|return)\\b"
+        },
+        {
+          "name": "keyword.declaration.noupy",
+          "match": "\\b(let|const|new|auto)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.noupy",
+          "match": "\\b(bool|int|int8|int16|int32|int64|uint8|uint16|uint32|uint64|float|float32|float64|string|void|auto)\\b"
+        },
+        {
+          "name": "entity.name.type.user.noupy",
+          "match": "\\b([A-Z][A-Za-z0-9_]*)\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.noupy",
+          "match": "\\b(True|False)\\b"
+        },
+        {
+          "name": "constant.language.null.noupy",
+          "match": "\\b(null)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.noupy",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.float.noupy",
+          "match": "\\b\\d+\\.\\d+(?:[eE][+-]?\\d+)?\\b"
+        },
+        {
+          "name": "constant.numeric.int.noupy",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.noupy",
+          "match": "(\\+=|-=|\\*=|/=|%=|==|!=|<=|>=|&&|\\|\\||\\+\\+|--|->|=|<|>|\\+|-|\\*|/|%|!|\\.|:|,|;)"
+        }
+      ]
+    },
+    "memberAccess": {
+      "patterns": [
+        {
+          "name": "meta.member.access.noupy",
+          "match": "([A-Za-z_][A-Za-z0-9_]*)\\s*(\\.)\\s*([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "variable.other.noupy"
+            },
+            "2": {
+              "name": "punctuation.accessor.dot.noupy"
+            },
+            "3": {
+              "name": "variable.other.member.noupy"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

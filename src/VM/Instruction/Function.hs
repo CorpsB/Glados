@@ -123,11 +123,11 @@ instMakeClosure = do
 -- @details
 --   Restores IP, FP, Env, and cleans the stack before pushing the return value.
 --
-execReturn :: VMState -> CallSnapshot -> [CallSnapshot] -> VMValue ->
+execReturn :: VMState -> CallSnapshot -> [CallSnapshot] -> VMValue -> Int ->
     VirtualMachine ()
-execReturn vm snap rest v = put (vm { bytecodeIndex = callbackIndex snap,
+execReturn vm snap rest v nArgs = put (vm { bytecodeIndex = callbackIndex snap,
     baseVStackIndex = vStackIndex snap, env = vEnv snap, snapshotStack = rest,
-    vStack = V.take (baseVStackIndex vm) (vStack vm) }) >> stackPush v
+    vStack = V.take (baseVStackIndex vm - nArgs) (vStack vm) }) >> stackPush v
 
 -- | Implements RET (Opcode 0x43).
 --
@@ -144,11 +144,12 @@ execReturn vm snap rest v = put (vm { bytecodeIndex = callbackIndex snap,
 --
 instRet :: VirtualMachine ()
 instRet = do
+    nArgs <- readInt32
     retVal <- stackPop
     vm <- get
     case snapshotStack vm of
         [] -> error "VM Error: Return called with empty call stack"
-        (snap:rest) -> execReturn vm snap rest retVal
+        (snap:rest) -> execReturn vm snap rest retVal nArgs
 
 -- | Implements GET_FUNC_ADDR (Opcode 0x61).
 --

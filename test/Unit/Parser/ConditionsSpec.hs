@@ -124,6 +124,8 @@ spec = describe "Parser C-Style - Control Flow (Conditions)" $ do
                 _ -> False
 
 checkBlockContent :: Ast -> Int -> Bool
+checkBlockContent (AList [AExprStmt (AInteger (I8 v))]) target = fromIntegral v == target
+checkBlockContent (ABlock [AExprStmt (AInteger (I8 v))]) target = fromIntegral v == target
 checkBlockContent (AList [AInteger (I8 v)]) target = fromIntegral v == target
 checkBlockContent (ABlock [AInteger (I8 v)]) target = fromIntegral v == target
 checkBlockContent _ _ = False

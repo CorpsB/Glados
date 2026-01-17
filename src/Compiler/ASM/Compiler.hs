@@ -27,12 +27,13 @@ module Compiler.ASM.Compiler
     , inferType
     ) where
 
-import Data.Text (Text, pack)
+import Data.Char (chr)
+import Data.Text (Text, pack, unpack)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import Control.Monad (zipWithM_, forM_)
-import Control.Monad.State (lift)
+import Control.Monad.State (lift, get, modify)
 
 import Compiler.ASM.CompilerMonad
 import Compiler.ASM.AstToAsm
@@ -43,9 +44,11 @@ import Compiler.ASM.AstToAsm
     , astListToAsm
     , astCallToAsm
     )
-import Compiler.Instruction (Instruction(..))
+import Compiler.Instruction (Instruction(..), Immediate(..))
 import Compiler.PsInstruction (PsInstruction(..))
-import Compiler.CompilerState (ScopeType(..))
+import Compiler.CompilerState (CompilerState(..), ScopeType(..))
+import Compiler.ASM.Builtins (getBuiltinReturnType)
+import Common.Type.Integer (IntValue(..))
 import Common.Utils.List (zipWith3M_)
 import AST.Ast (Ast(..))
 
@@ -95,14 +98,21 @@ getLambdaFreeVariables _ = Set.empty
 --   context recursively. Otherwise, compiles normally and emits 'Ret'.
 --
 compileTail :: (Ast -> CompilerMonad ()) -> Ast -> CompilerMonad ()
-compileTail compileFn (ACall func args) = case func of
-    ASymbol name -> case Map.lookup name builtinMap of
-        Just instr -> mapM_ compileFn args >>
-            emitInstruction instr >> emitInstruction Ret
+compileTail compileFn (ACall (ASymbol name) args) =
+    case Map.lookup name builtinMap of
+        Just instr -> do
+            mapM_ compileFn args
+            emitInstruction instr
+            s <- get
+            emitInstruction (Ret (csCurrentArgCount s))
         Nothing -> mapM_ compileFn args >>
             appendPseudoInstruction (TailCallLabel name)
-    _ -> compileFn func >> mapM_ compileFn args >>
-        emitInstruction CallIndirect >> emitInstruction Ret
+compileTail compileFn (ACall func args) = do
+    compileFn func
+    mapM_ compileFn args
+    emitInstruction CallIndirect
+    s <- get
+    emitInstruction (Ret (csCurrentArgCount s))
 compileTail compileFn (AIf cond t e) = do
     lElse <- generateUniqueLabel (pack "else")
     lEnd  <- generateUniqueLabel (pack "endif")
@@ -114,10 +124,15 @@ compileTail compileFn (AIf cond t e) = do
     compileTail compileFn e
     emitLabelDefinition lEnd
 compileTail compileFn (AList exprs)
-    | null exprs = emitInstruction Ret
+    | null exprs = do
+        s <- get
+        emitInstruction (Ret (csCurrentArgCount s))
     | otherwise = mapM_ compileFn (init exprs) >>
         compileTail compileFn (last exprs)
-compileTail compileFn other = compileFn other >> emitInstruction Ret
+compileTail compileFn other = do
+    compileFn other
+    s <- get
+    emitInstruction (Ret (csCurrentArgCount s))
 
 -- | Compiles a conditional expression (If-Then-Else).
 --
@@ -230,10 +245,14 @@ compileFor compileFn initAst cond updateAst body = do
 -- @return
 --   Unit value wrapped in 'CompilerMonad'.
 --
-compileSetVar :: (Ast -> CompilerMonad ()) -> Text -> Text -> Ast -> CompilerMonad ()
-compileSetVar compileFn name typeName body = do
+compileSetVar :: (Ast -> CompilerMonad ()) -> Text -> Text -> Ast ->
+    Bool -> CompilerMonad ()
+compileSetVar compileFn name typeName body isStatement = do
     compileFn body
     (scope, idx) <- defineSymbol name typeName
+    case not isStatement of
+        True -> emitInstruction Dup
+        False -> return ()
     case scope of
         ScopeGlobal  -> emitInstruction (StoreGlobal idx)
         ScopeLocal   -> emitInstruction (StoreLocal idx)
@@ -284,14 +303,15 @@ compileSetStruct compileFn name assignedFields = do
 --
 compileDefineFun :: (Ast -> CompilerMonad ()) -> Text -> [(Text, Text)] ->
     Ast -> CompilerMonad ()
-compileDefineFun compileFn name args body =
+compileDefineFun compileFn name args body = let nArgs = length args in
     compileInIsolatedFunctionScope (
+        modify (\s -> s { csCurrentArgCount = nArgs }) >>
         emitLabelDefinition (pack "fun_" <> name) >>
-        let nArgs = length args in
         zipWithM_ (\(aName, aType) i ->
             registerSymbol aName aType ScopeLocal (i - nArgs)) args [0..] >>
         compileFn body >>
-        emitInstruction Ret
+        emitInstruction (Push (ImmInt (I64 0))) >>
+        emitInstruction (Ret nArgs)
     ) >> return ()
 
 -- | Registers lambda parameters with negative offsets.
@@ -379,7 +399,15 @@ compileDefineStruct name fields = defineStruct name fields
 --   then look up the field's type.
 --
 inferType :: Ast -> CompilerMonad Text
+inferType (APos _ _ ast) = inferType ast
 inferType (ASymbol name) = getSymbolType name
+inferType (AInteger _) = return (pack "int")
+inferType (ABool _) = return (pack "bool")
+inferType (ACall (ASymbol name) args) = do
+    argTypes <- mapM inferType args
+    case getBuiltinReturnType (unpack name) argTypes of
+        Right builtinType -> return builtinType
+        Left _ -> getSymbolType name
 inferType (AAccessStruct obj field) = do
     parentType <- inferType obj
     (_, fieldType) <- getStructField parentType field
@@ -400,6 +428,46 @@ compileAccessStruct compileFn obj fieldName = do
     (idx, _) <- getStructField structType fieldName
     compileFn obj
     emitInstruction (GetStructField idx)
+
+extractChar :: Ast -> CompilerMonad Char
+extractChar (AInteger (IChar c)) = return (chr (fromIntegral c))
+extractChar _ =
+    lift $ Left (pack "attr_update: Field name must be a string of characters")
+
+-- | Convert an AST list of IChar to Haskell Text
+--
+extractFieldName :: Ast -> CompilerMonad Text
+extractFieldName (ASymbol s) = return s
+extractFieldName (AList xs) = do
+    chars <- mapM extractChar xs
+    return (pack chars)
+extractFieldName _ =
+    lift $ Left (pack "attr_update: Second argument must be a Sym or String")
+
+-- | Compiles the 'attr_update' builtin special form.
+--
+-- @args
+--   - compileFn: Recursive compiler.
+--   - obj: The AST for the structure object.
+--   - fieldArg: The AST for the field name (must be a Symbol).
+--   - v: The AST for the new value.
+--
+-- @details
+--   1. Infers the type of 'obj' to find its struct definition.
+--   2. Resolves 'fieldArg' to an integer index.
+--   3. Pushes Obj, Index, and Value onto the stack.
+--   4. Emits AttrUpdate.
+--
+compileAttrUpdate :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Ast ->
+    CompilerMonad ()
+compileAttrUpdate compileFn obj fieldArg v = do
+    fieldName <- extractFieldName fieldArg
+    structType <- inferType obj
+    (idx, _) <- getStructField structType fieldName
+    compileFn obj
+    emitInstruction (Push (ImmInt (I64 (fromIntegral idx))))
+    compileFn v
+    emitInstruction AttrUpdate
 
 -- | Main Dispatcher Function: Compiles any AST node.
 --
@@ -427,13 +495,21 @@ compileAst (ADefineFunc name args _ body) =
 compileAst (ADefineLambda params body) =
     compileDefineLambda compileAst params body
 compileAst (ADefineStruct name fields) = compileDefineStruct name fields
+compileAst (AExprStmt (ASetVar name typeName body)) =
+    compileSetVar compileAst name typeName body True
 compileAst (ASetVar name typeName body) =
-    compileSetVar compileAst name typeName body
+    compileSetVar compileAst name typeName body False
 compileAst (ASetStruct name fields) = compileSetStruct compileAst name fields
 compileAst (AAccessStruct obj field) = compileAccessStruct compileAst obj field
 compileAst (AIf cond t f) = compileIf compileAst cond t f
 compileAst (AWhile cond body) = compileWhile compileAst cond body
 compileAst (AFor i cond u body) = compileFor compileAst i cond u body
+compileAst (ACall (ASymbol name) [obj, fieldArg, v]) 
+    | name == pack "attr_update" = compileAttrUpdate compileAst obj fieldArg v
 compileAst (ACall func args) = astCallToAsm compileAst func args
-compileAst (AReturn expr) = compileAst expr >> emitInstruction Ret
+compileAst (AReturn expr) = do
+    compileAst expr
+    s <- get
+    emitInstruction (Ret (csCurrentArgCount s))
 compileAst (AImport _) = return ()
+compileAst (AExprStmt expr) = compileAst expr

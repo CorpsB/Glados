@@ -10,6 +10,7 @@ module VM.Instruction.List
     , instHead
     , instTail
     , instNth
+    , instNthUpdate
     , instBuildList
     ) where
 
@@ -20,6 +21,7 @@ import VM.Bytecode.Reader (readInt32)
 import VM.VMState (VirtualMachine, VMState(..))
 import VM.VMValue (VMValue(..), valueToInt)
 import VM.VMStack (stackPop, stackPush)
+import Common.Type.Integer (intValueToInt)
 
 -- | Implements CONS (Opcode 0x90).
 --
@@ -84,9 +86,31 @@ instNth = do
     case listVal of
         VList v -> case idx >= 0 && idx < V.length v of
             True  -> stackPush (v V.! idx)
-            False -> error $ "VM Error: Nth index out of bounds (" ++
-                show idx ++ ")"
+            False -> error $ "VM Error: Nth OOB (" ++ show idx ++ ")"
         _ -> error "VM Error: Nth expects a List"
+
+-- | Implements NTH_UPDATE (Opcode 0x95).
+--
+-- @details
+--   Updates an element in a list at a given index.
+--   Note: Since VMValues are immutable, this pushes a NEW list.
+--
+--   Stack Order (arg order: list, index, value):
+--     Top    -> Value
+--     Next   -> Index
+--     Bottom -> List
+--
+instNthUpdate :: VirtualMachine ()
+instNthUpdate = do
+    val <- stackPop
+    idxVal <- stackPop
+    listVal <- stackPop
+    case (listVal, idxVal) of
+        (VList vec, VInt i) -> let idx = intValueToInt i in
+            case idx >= 0 && idx < V.length vec of
+                True -> stackPush (VList (vec V.// [(idx, val)]))
+                False -> error $ "VM Error: NthUpdate OOB (" ++ show idx ++ ")"
+        _ -> error "VM Error: NthUpdate expects List and Integer idx"
 
 -- | Implements BUILD_LIST (Opcode 0x94).
 --

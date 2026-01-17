@@ -8,7 +8,7 @@
 module Main (main) where
 
 import System.Environment (getArgs)
-import System.Exit (exitFailure, exitWith, ExitCode(..))
+import System.Exit (exitWith, ExitCode(..))
 import System.IO (hPutStrLn, stderr)
 import qualified Data.Text.IO as TIO
 import qualified Data.ByteString as BS
@@ -16,13 +16,16 @@ import Control.Monad.State (runStateT)
 import Data.Foldable (toList)
 import qualified Data.Sequence as Seq
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 
 import Parser.Statement (parseALL)
+import Parser.ImportSystem (resolveImports)
 import Compiler.ASM.Compiler (compileAst)
 import Compiler.ASM.Assembler (assemble)
 import Compiler.CompilerState (createCompilerState, csCode, csFuncs, CompilerState)
 import Compiler.PsInstruction (PsInstruction(Real))
 import Compiler.Instruction (Instruction(Halt))
+import Common.Utils.Bytecode.File (getFileContent)
 import AST.Semantics.Check (checkAst)
 import AST.Ast (Ast)
 
@@ -43,6 +46,20 @@ parseSource :: T.Text -> IO [Ast]
 parseSource src = case parseALL src of
     Left err -> die $ "Parsing failed:\n" ++ show err
     Right asts -> return asts
+
+
+handleImports :: [Ast] -> IO [Ast]
+handleImports asts = do
+    res <- resolveImports asts
+    case res of
+        Left err -> die $ "Import Error: " ++ err
+        Right r -> return r
+
+checkSemantics :: [Ast] -> IO [Ast]
+checkSemantics asts =
+    case checkAst asts of
+        Left err -> die $ "Semantic Error: " ++ err
+        Right checkedAsts -> return checkedAsts
 
 compileSource :: [Ast] -> IO CompilerState
 compileSource asts =
@@ -67,13 +84,10 @@ writeBinary path bs = BS.writeFile path bs >>
 
 runCompiler :: String -> String -> IO ()
 runCompiler inputPath outputPath = do
-    file_content <- TIO.readFile inputPath
-    parsed_ast <- parseSource file_content
-
-    case checkAst parsed_ast of
-        Left err -> die $ "Semantic Error: " ++ err
-        Right _  -> return ()
-    state <- compileSource parsed_ast
+    rawContent <- getFileContent inputPath
+    let src = TE.decodeUtf8 rawContent
+    ast <- parseSource src >>= handleImports >>= checkSemantics
+    state <- compileSource ast
     bytecode <- assembleCode (extractInstructions state)
     writeBinary outputPath bytecode
 
@@ -82,4 +96,4 @@ main = do
     args <- getArgs
     case args of
         [input, output] -> runCompiler input output
-        _ -> usage >> exitFailure
+        _ -> usage >> exitWith (ExitFailure 84)

@@ -12,6 +12,7 @@ Stability   : stable
 -}
 module VM.Instruction.Logic
     ( instEq
+    , instTEq
     , instLt
     , instLe
     , instNot
@@ -20,7 +21,7 @@ module VM.Instruction.Logic
     ) where
 
 import VM.VMState (VirtualMachine)
-import VM.VMValue (VMValue(..))
+import VM.VMValue (VMValue(..), eqValue)
 import VM.VMStack (stackPush, stackPop)
 import Common.Type.Integer (intValueToInt)
 
@@ -71,20 +72,27 @@ instOr = do
 -- | Implements Equality Comparison (Opcode 0x20).
 --
 -- @details
---   Pops two values and checks if they are strictly equal.
---   Supports both Integer and Boolean comparisons.
---   Stack: [a, b] -> [a == b] (Push VBool)
+--   Pops two values and performs a deep equality check.
+--   Supports: Ints (loose), Bools, Lists (recursive), Structs, FuncPtrs.
 --
 instEq :: VirtualMachine ()
 instEq = do
     v2 <- stackPop
     v1 <- stackPop
-    case (v1, v2) of
-        (VInt i1, VInt i2) -> stackPush (VBool (
-            intValueToInt i1 == intValueToInt i2))
-        (VBool b1, VBool b2) -> stackPush (VBool (b1 == b2))
-        (VVoid, VVoid) -> stackPush (VBool True)
-        _ -> stackPush (VBool False)
+    stackPush (VBool (eqValue v1 v2))
+
+-- | Implements Typed Equality (Strict ===).
+--
+-- @details
+--   Checks if two values are identical in Type AND Value.
+--   No implicit casting (I8 5 !== I64 5).
+--   Standard Haskell '==' on VMValue does exactly this.
+--
+instTEq :: VirtualMachine ()
+instTEq = do
+    v2 <- stackPop
+    v1 <- stackPop
+    stackPush (VBool (v1 == v2))
 
 -- | Implements Less Than Comparison (Opcode 0x21).
 --

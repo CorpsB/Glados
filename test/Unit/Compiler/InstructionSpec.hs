@@ -36,7 +36,7 @@ allInstructions =
     , Add, Sub, Mul, Div, Mod
     , Eq, Lt, Le, Not, And, Or
     , Jump 0, JumpIfFalse 0, JumpIfTrue 0
-    , Call 0, TailCall 0, CallIndirect, Ret
+    , Call 0, TailCall 0, CallIndirect, Ret 0
     , LoadLocal 0, StoreLocal 0
     , LoadGlobal 0, StoreGlobal 0
     , LoadCapture 0, StoreCapture 0
@@ -72,7 +72,7 @@ instrCtorName inst = case inst of
     Call _        -> "Call"
     TailCall _    -> "TailCall"
     CallIndirect  -> "CallIndirect"
-    Ret           -> "Ret"
+    Ret _         -> "Ret"
     LoadLocal _   -> "LoadLocal"
     StoreLocal _  -> "StoreLocal"
     LoadGlobal _  -> "LoadGlobal"
@@ -94,6 +94,9 @@ instrCtorName inst = case inst of
     Exit          -> "Exit"
     Nth           -> "Nth"
     BuildList _   -> "BuildList"
+    TEq           -> "TEq"
+    AttrUpdate    -> "AttrUpdate"
+    NthUpdate     -> "NthUpdate"
 
 immCtorName :: Immediate -> String
 immCtorName im = case im of
@@ -167,7 +170,7 @@ spec = describe "Compiler.Instruction" $ do
             getInstCode (Call 0) `shouldBe` 0x40
             getInstCode (TailCall 0) `shouldBe` 0x41
             getInstCode CallIndirect `shouldBe` 0x42
-            getInstCode Ret `shouldBe` 0x43
+            getInstCode (Ret 0) `shouldBe` 0x43
 
             getInstCode (LoadLocal 0) `shouldBe` 0x50
             getInstCode (StoreLocal 0) `shouldBe` 0x51
@@ -257,7 +260,7 @@ spec = describe "Compiler.Instruction" $ do
             it "Call 55" $ length (runBuilder (serializeInstruction (Call 55))) `shouldBe` instructionSize (Call 55)
             it "TailCall 60" $ length (runBuilder (serializeInstruction (TailCall 60))) `shouldBe` instructionSize (TailCall 60)
             it "CallIndirect" $ length (runBuilder (serializeInstruction CallIndirect)) `shouldBe` instructionSize CallIndirect
-            it "Ret" $ length (runBuilder (serializeInstruction Ret)) `shouldBe` instructionSize Ret
+            it "Ret" $ length (runBuilder (serializeInstruction (Ret 0))) `shouldBe` instructionSize (Ret 0)
 
         describe "Memory" $ do
             it "LoadLocal 1" $ length (runBuilder (serializeInstruction (LoadLocal 1))) `shouldBe` instructionSize (LoadLocal 1)

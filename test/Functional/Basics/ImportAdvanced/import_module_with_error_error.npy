@@ -1,4 +1,4 @@
-import "lib/bad.npy";
+import "test/Functional/Basics/ImportAdvanced/lib/bad.npy";
 
 func main() {
     print(42);

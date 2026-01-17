@@ -1,3 +1,3 @@
-import "lib.npy";
+import "test/Functional/Basics/lib.npy";
 
 print(42);

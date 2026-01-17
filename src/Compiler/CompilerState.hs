@@ -67,6 +67,7 @@ data CompilerState = CompilerState
     , csNextIndex :: Int                      -- ^ Next available local index
     , csLabelCnt  :: Int                      -- ^ Counter for unique label generation
     , csScopeContext :: ScopeType             -- ^ Scope context (used to determine variables scopes)
+    , csCurrentArgCount :: Int                -- ^ Number of args on the stack (atomic return clean)
     } deriving (Show, Eq)
 
 -- | Initial, empty compiler state.
@@ -87,4 +88,5 @@ createCompilerState = CompilerState
     , csNextIndex = 0
     , csLabelCnt = 0
     , csScopeContext = ScopeGlobal
+    , csCurrentArgCount = 0
     }

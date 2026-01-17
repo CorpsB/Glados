@@ -347,7 +347,7 @@ compileInIsolatedFunctionScope compileAction = do
     outerState <- get
     put $ outerState 
         { csCode = Seq.empty, csSymbols = Map.empty, csNextIndex = 0,
-        csScopeContext = ScopeLocal }
+        csScopeContext = ScopeLocal, csFuncs = Seq.empty }
     compileAction
     innerState <- get
     put $ outerState 

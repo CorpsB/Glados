@@ -87,6 +87,7 @@ serializeInstruction Not = encodeWord8 0x22
 serializeInstruction And = encodeWord8 0x23
 serializeInstruction Or = encodeWord8 0x24
 serializeInstruction Le = encodeWord8 0x25
+serializeInstruction TEq = encodeWord8 0x26
 
 serializeInstruction (Jump addr) =
     encodeWord8 0x30 <>
@@ -105,7 +106,9 @@ serializeInstruction (TailCall addr) =
     encodeWord8 0x41 <>
     encodeInt32BE (fromIntegral addr)
 serializeInstruction CallIndirect = encodeWord8 0x42
-serializeInstruction Ret = encodeWord8 0x43
+serializeInstruction (Ret n) = 
+    encodeWord8 0x43 <>
+    encodeInt32BE (fromIntegral n)
 
 serializeInstruction (LoadLocal idx) =
     encodeWord8 0x50 <>
@@ -139,6 +142,7 @@ serializeInstruction (BuildStruct n) =
 serializeInstruction (GetStructField idx) =
     encodeWord8 0x63 <>
     encodeInt32BE (fromIntegral idx)
+serializeInstruction AttrUpdate = encodeWord8 0x64
 serializeInstruction (Cast typeId) =
     encodeWord8 0x80 <>
     encodeWord8 typeId
@@ -150,6 +154,7 @@ serializeInstruction Nth = encodeWord8 0x93
 serializeInstruction (BuildList n) =
     encodeWord8 0x94 <>
     encodeInt32BE (fromIntegral n)
+serializeInstruction NthUpdate = encodeWord8 0x95
 
 serializeInstruction Print = encodeWord8 0x70
 serializeInstruction Halt = encodeWord8 0x71

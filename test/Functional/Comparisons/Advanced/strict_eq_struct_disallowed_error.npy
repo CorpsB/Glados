@@ -1,0 +1,10 @@
+struct V {
+    x: int;
+}
+
+func main() {
+    a = new V { x: 1 };
+    b = new V { x: 1 };
+    print(a === b);
+}
+main();

@@ -103,6 +103,8 @@ data Ast
       -- ^ Represents an explicit return statement.
       --   @param Ast The expression to return.
 
+    | AExprStmt Ast
+
     | ABlock [Ast]
 
     | APos Int Int Ast
@@ -154,5 +156,6 @@ cleanAst (AWhile c b) = AWhile (cleanAst c) (cleanAst b)
 cleanAst (AFor i c u b) =
     AFor (cleanAst i) (cleanAst c) (cleanAst u) (cleanAst b)
 cleanAst (AReturn e) = AReturn (cleanAst e)
+cleanAst (AExprStmt e) = AExprStmt (cleanAst e)
 cleanAst (AAccessStruct obj field) = AAccessStruct (cleanAst obj) field
 cleanAst other = other

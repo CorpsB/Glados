@@ -1,7 +1,7 @@
 func main() {
     if (True) {
         tmp = 7;
-        f = lambda(x) -> x + tmp;
+        f = lambda(x) x + tmp;
     }
     // tmp is out of scope here; depending on your semantics,
     // either 'f' is out of scope OR 'tmp' capture is invalid -> must error.

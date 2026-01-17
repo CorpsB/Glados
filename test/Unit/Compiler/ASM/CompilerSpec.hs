@@ -184,12 +184,13 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
   describe "compileSetVar" $ do
     it "stores value and registers global symbol" $ do
-      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" "int" (AInteger (Common.I32 3))) createCompilerState)
+      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" "int" (AInteger (Common.I32 3)) False) createCompilerState)
       Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0, "int")
       csNextIndex st `shouldBe` 1
       csCode st `shouldBe`
         Seq.fromList
           [ Real (Push (ImmInt (Common.I32 3)))
+          , Real Dup
           , Real (StoreGlobal 0)
           ]
 
@@ -235,7 +236,8 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
         Seq.fromList
           [ LabelDef "fun_foo"
           , Real (LoadLocal (-2))
-          , Real Ret
+          , Real (Push (ImmInt (Common.I64 0)))
+          , Real (Ret 2)
           ]
       csLabelCnt st `shouldBe` 0
 
@@ -262,14 +264,14 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           [ LabelDef "lambda_0"
           , Real (LoadCapture 0)
           , Real (LoadCapture 1)
-          , Real Ret
+          , Real (Ret 0)
           ]
       csLabelCnt st `shouldBe` 1
 
     it "no-capture lambda: builds closure with 0 captures and uses LoadLocal for args" $ do
       let (_, st) = expectRight (runCM (compileDefineLambda compileAst ["x"] (ASymbol "x")) createCompilerState)
       csCode st `shouldBe` Seq.fromList [MakeClosureLabel "lambda_0" 0]
-      csFuncs st `shouldBe` Seq.fromList [LabelDef "lambda_0", Real (LoadLocal (-1)), Real Ret]
+      csFuncs st `shouldBe` Seq.fromList [LabelDef "lambda_0", Real (LoadLocal (-1)), Real (Ret 0)]
       csLabelCnt st `shouldBe` 1
 
     it "fails if a capture is undefined" $ do
@@ -285,7 +287,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           [ Real (Push (ImmInt (Common.I32 1)))
           , Real (Push (ImmInt (Common.I32 2)))
           , Real Add
-          , Real Ret
+          , Real (Ret 0)
           ]
 
     it "non-builtin call in tail position emits TailCallLabel" $ do
@@ -305,7 +307,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           [ Real (Push (ImmBool True))
           , Real (Push (ImmBool False))
           , Real CallIndirect
-          , Real Ret
+          , Real (Ret 0)
           ]
 
     it "tail If uses compileTail recursively on branches" $ do
@@ -316,11 +318,11 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           [ Real (Push (ImmBool True))
           , JumpIfFalseLabel "else_0"
           , Real (Push (ImmBool True))
-          , Real Ret
+          , Real (Ret 0)
           , JumpLabel "endif_1"
           , LabelDef "else_0"
           , Real (Push (ImmBool False))
-          , Real Ret
+          , Real (Ret 0)
           , LabelDef "endif_1"
           ]
       csLabelCnt st `shouldBe` 2
@@ -332,18 +334,18 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
         Seq.fromList
           [ Real (Push (ImmBool True))
           , Real (Push (ImmBool False))
-          , Real Ret
+          , Real (Ret 0)
           ]
 
     it "tail empty List emits Ret" $ do
       let action = compileTail compileAst (AList [])
       let (_, st) = expectRight (runCM action createCompilerState)
-      csCode st `shouldBe` Seq.singleton (Real Ret)
+      csCode st `shouldBe` Seq.singleton (Real (Ret 0))
 
   describe "compileAst" $ do
     it "AReturn compiles expr then Ret" $ do
       let (_, st) = expectRight (runCM (compileAst (AReturn (ABool True))) createCompilerState)
-      csCode st `shouldBe` Seq.fromList [Real (Push (ImmBool True)), Real Ret]
+      csCode st `shouldBe` Seq.fromList [Real (Push (ImmBool True)), Real (Ret 0)]
 
     it "AVoid produces no code" $ do
       let (_, st) = expectRight (runCM (compileAst AVoid) createCompilerState)

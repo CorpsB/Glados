@@ -10,6 +10,7 @@ module VM.VMValue
     , castValue
     , valueToString
     , valueToInt
+    , eqValue
     ) where
 
 import Data.Word (Word8)
@@ -150,3 +151,23 @@ castValue 0x08 v = VInt (UI64 (fromIntegral (valueToInt v)))
 castValue 0x09 v = VInt (IChar (fromIntegral (valueToInt v)))
 castValue 0x10 v = VInt (UIChar (fromIntegral (valueToInt v)))
 castValue _ v = v
+
+-- | Helper to compare two vectors using the custom equality logic.
+checkVectorEq :: V.Vector VMValue -> V.Vector VMValue -> Bool
+checkVectorEq v1 v2 =
+    V.length v1 == V.length v2 && V.and (V.zipWith eqValue v1 v2)
+
+-- | Recursive equality check for VMValues.
+--
+-- @details
+--   Handles loose integer comparison inside Lists and Structs.
+--   e.g., [I8 5] == [I64 5] returns True.
+--
+eqValue :: VMValue -> VMValue -> Bool
+eqValue (VInt a) (VInt b) = intValueToInt a == intValueToInt b
+eqValue (VBool a) (VBool b) = a == b
+eqValue (VFuncPtr a) (VFuncPtr b) = a == b
+eqValue VVoid VVoid = True
+eqValue (VList a) (VList b) = checkVectorEq a b
+eqValue (VStruct a) (VStruct b) = checkVectorEq a b
+eqValue _ _ = False

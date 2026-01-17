@@ -1,4 +1,4 @@
-import "lib/not_npy.txt";
+import "test/Functional/Basics/ImportAdvanced/lib/not_npy.txt";
 
 func main() {
     print(42);

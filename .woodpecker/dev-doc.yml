@@ -1,0 +1,33 @@
+autoscaling: false
+when:
+  - event: push
+    branch: preprod
+
+steps:
+  - name: publish_docs
+    image: haskell:9.10.3
+    environment:
+      GIT_AUTHOR_NAME: "Woodpecker CI"
+      GIT_AUTHOR_EMAIL: "ci@glados"
+      GIT_COMMITTER_NAME: "Woodpecker CI"
+      GIT_COMMITTER_EMAIL: "ci@glados"
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - stack setup
+      - stack build --haddock --no-haddock-deps
+      - DOC_DIR=$(find .stack-work -type f -path '*/doc/html/glados/index.html' -print -quit | xargs -r dirname)
+      - test -n "$DOC_DIR"
+      - rm -rf public && mkdir -p public
+      - cp -a "$DOC_DIR"/. public/
+      - test -f public/index.html
+      - git config user.name "$GIT_AUTHOR_NAME"
+      - git config user.email "$GIT_AUTHOR_EMAIL"
+      - git fetch origin gh-pages || true
+      - git checkout --orphan gh-pages
+      - git rm -rf . || true
+      - cp -a public/. .
+      - touch .nojekyll
+      - git add -A
+      - 'git commit -m "📝 Documentation: publish Haddock for ${CI_COMMIT_SHA}" || true'
+      - 'git push -f "https://x-access-token:$${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" gh-pages'

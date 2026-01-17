@@ -1,4 +1,4 @@
-import "lib/nested/util.npy";
+import "test/Functional/Basics/ImportAdvanced/lib/nested/util.npy";
 
 func main() {
     print(util());

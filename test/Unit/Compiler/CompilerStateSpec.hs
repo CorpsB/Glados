@@ -61,7 +61,7 @@ spec = describe "Compiler.CompilerState (max coverage)" $ do
               , csNextIndex = 1
               , csLabelCnt = 2
               , csCode = Seq.fromList [LabelDef "L1", Real Halt]
-              , csFuncs = Seq.fromList [LabelDef "F1", Real Ret]
+              , csFuncs = Seq.fromList [LabelDef "F1", Real (Ret 0)]
               }
       let sh = show s
       sh `shouldSatisfy` ("CompilerState" `isInfixOf`)

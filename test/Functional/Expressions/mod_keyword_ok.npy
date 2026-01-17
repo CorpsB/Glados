@@ -1,1 +1,1 @@
-print(7 mod 2);
+print(7 % 2);

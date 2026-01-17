@@ -19,7 +19,7 @@ This module handles:
 module Main (main) where
 
 import System.Environment (getArgs)
-import System.Exit (exitFailure, exitSuccess, exitWith, ExitCode(..))
+import System.Exit (exitSuccess, exitWith, ExitCode(..))
 import Control.Exception (try, SomeException, fromException)
 import Control.Monad.State.Strict (runStateT)
 
@@ -85,9 +85,9 @@ main = do
     args <- getArgs
     case args of
         [] -> putStrLn "\ESC[31mError: No input file provided.\ESC[0m" >>
-            printUsage >> exitFailure
+            printUsage >> exitWith (ExitFailure 84)
         [filename] -> executeFile filename False
         ["--debug", filename] -> executeFile filename True
         _  -> putStrLn "\ESC[31mError: Too many arguments.\ESC[0m" >>
             putStrLn "The VM accepts exactly one bytecode file execution." >>
-            printUsage >> exitFailure
+            printUsage >> exitWith (ExitFailure 84)
