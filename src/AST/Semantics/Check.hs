@@ -281,7 +281,13 @@ validateField env expectedFields (fieldName, expr) = do
 
 -- | Checks for list/strings
 checkListExpr :: CheckEnv -> [Ast] -> Either String Type
-checkListExpr _ [] = Right (TyList TyVoid)
-checkListExpr env (x:_) = do
-    elemType <- checkExpr env x
-    return (TyList elemType)
+checkListExpr _ [] = Right (TyList TyVoid) 
+checkListExpr env (x:xs) = do
+    expectedType <- checkExpr env x
+    forM_ xs $ \elemAst -> do
+        elemType <- checkExpr env elemAst
+        unless (areTypesCompatible expectedType elemType) $
+            Left $ "List type mismatch: expected "
+                ++ typeToString expectedType ++
+                   " but got " ++ typeToString elemType
+    return (TyList expectedType)
