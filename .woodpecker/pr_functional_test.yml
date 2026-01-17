@@ -1,15 +1,9 @@
 kind: pipeline
 name: Functional tests
 
-<<<<<<< HEAD:.woodpecker/pr_functional_test.yml
-when:
-  - event: pull_request
-  
-=======
 depends_on:
   - build
 
->>>>>>> preprod:.woodpecker/functional_test.yml
 steps:
   - name: Basic tests
     when:
