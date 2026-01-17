@@ -18,6 +18,7 @@ import qualified Data.Sequence as Seq
 import qualified Data.Text as T
 
 import Parser.Statement (parseALL)
+import Parser.ImportSystem (resolveImports)
 import Compiler.ASM.Compiler (compileAst)
 import Compiler.ASM.Assembler (assemble)
 import Compiler.CompilerState (createCompilerState, csCode, csFuncs, CompilerState)
@@ -44,6 +45,20 @@ parseSource src = case parseALL src of
     Left err -> die $ "Parsing failed:\n" ++ show err
     Right asts -> return asts
 
+
+handleImports :: [Ast] -> IO [Ast]
+handleImports asts = do
+    res <- resolveImports asts
+    case res of
+        Left err -> die $ "Import Error: " ++ err
+        Right r -> return r
+
+checkSemantics :: [Ast] -> IO [Ast]
+checkSemantics asts =
+    case checkAst asts of
+        Left err -> die $ "Semantic Error: " ++ err
+        Right checkedAsts -> return checkedAsts
+
 compileSource :: [Ast] -> IO CompilerState
 compileSource asts =
     case runStateT (mapM_ compileAst asts) createCompilerState of
@@ -67,13 +82,9 @@ writeBinary path bs = BS.writeFile path bs >>
 
 runCompiler :: String -> String -> IO ()
 runCompiler inputPath outputPath = do
-    file_content <- TIO.readFile inputPath
-    parsed_ast <- parseSource file_content
-
-    checked_ast <- case checkAst parsed_ast of
-        Left err -> die $ "Semantic Error: " ++ err
-        Right asts -> return asts
-    state <- compileSource checked_ast
+    src <- TIO.readFile inputPath
+    ast <- parseSource src >>= handleImports >>= checkSemantics
+    state <- compileSource ast
     bytecode <- assembleCode (extractInstructions state)
     writeBinary outputPath bytecode
 

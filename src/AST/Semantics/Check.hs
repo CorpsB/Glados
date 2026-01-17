@@ -126,6 +126,7 @@ checkStmt env (ADefineStruct name fields) = do
 checkStmt env (AReturn expr) = do
     _ <- checkExpr env expr
     return (AReturn expr, env)
+checkStmt env (AImport _) = Right (AVoid, env)
 checkStmt env ast = do
     _ <- checkExpr env ast
     return (ast, env)
