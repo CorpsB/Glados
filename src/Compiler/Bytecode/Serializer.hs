@@ -106,7 +106,9 @@ serializeInstruction (TailCall addr) =
     encodeWord8 0x41 <>
     encodeInt32BE (fromIntegral addr)
 serializeInstruction CallIndirect = encodeWord8 0x42
-serializeInstruction Ret = encodeWord8 0x43
+serializeInstruction (Ret n) = 
+    encodeWord8 0x43 <>
+    encodeInt32BE (fromIntegral n)
 
 serializeInstruction (LoadLocal idx) =
     encodeWord8 0x50 <>

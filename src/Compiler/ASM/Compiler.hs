@@ -32,7 +32,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
 import Control.Monad (zipWithM_, forM_)
-import Control.Monad.State (lift)
+import Control.Monad.State (lift, get, modify)
 
 import Compiler.ASM.CompilerMonad
 import Compiler.ASM.AstToAsm
@@ -45,7 +45,7 @@ import Compiler.ASM.AstToAsm
     )
 import Compiler.Instruction (Instruction(..), Immediate(..))
 import Compiler.PsInstruction (PsInstruction(..))
-import Compiler.CompilerState (ScopeType(..))
+import Compiler.CompilerState (CompilerState(..), ScopeType(..))
 import Common.Type.Integer (IntValue(..))
 import Common.Utils.List (zipWith3M_)
 import AST.Ast (Ast(..))
@@ -98,12 +98,19 @@ getLambdaFreeVariables _ = Set.empty
 compileTail :: (Ast -> CompilerMonad ()) -> Ast -> CompilerMonad ()
 compileTail compileFn (ACall func args) = case func of
     ASymbol name -> case Map.lookup name builtinMap of
-        Just instr -> mapM_ compileFn args >>
-            emitInstruction instr >> emitInstruction Ret
+        Just instr -> do
+            mapM_ compileFn args
+            emitInstruction instr
+            s <- get
+            emitInstruction (Ret (csCurrentArgCount s))
         Nothing -> mapM_ compileFn args >>
             appendPseudoInstruction (TailCallLabel name)
-    _ -> compileFn func >> mapM_ compileFn args >>
-        emitInstruction CallIndirect >> emitInstruction Ret
+    _ -> do
+        compileFn func
+        mapM_ compileFn args
+        emitInstruction CallIndirect
+        s <- get
+        emitInstruction (Ret (csCurrentArgCount s))
 compileTail compileFn (AIf cond t e) = do
     lElse <- generateUniqueLabel (pack "else")
     lEnd  <- generateUniqueLabel (pack "endif")
@@ -115,10 +122,15 @@ compileTail compileFn (AIf cond t e) = do
     compileTail compileFn e
     emitLabelDefinition lEnd
 compileTail compileFn (AList exprs)
-    | null exprs = emitInstruction Ret
+    | null exprs = do
+        s <- get
+        emitInstruction (Ret (csCurrentArgCount s))
     | otherwise = mapM_ compileFn (init exprs) >>
         compileTail compileFn (last exprs)
-compileTail compileFn other = compileFn other >> emitInstruction Ret
+compileTail compileFn other = do
+    compileFn other
+    s <- get
+    emitInstruction (Ret (csCurrentArgCount s))
 
 -- | Compiles a conditional expression (If-Then-Else).
 --
@@ -285,15 +297,15 @@ compileSetStruct compileFn name assignedFields = do
 --
 compileDefineFun :: (Ast -> CompilerMonad ()) -> Text -> [(Text, Text)] ->
     Ast -> CompilerMonad ()
-compileDefineFun compileFn name args body =
+compileDefineFun compileFn name args body = let nArgs = length args in
     compileInIsolatedFunctionScope (
+        modify (\s -> s { csCurrentArgCount = nArgs }) >>
         emitLabelDefinition (pack "fun_" <> name) >>
-        let nArgs = length args in
         zipWithM_ (\(aName, aType) i ->
             registerSymbol aName aType ScopeLocal (i - nArgs)) args [0..] >>
         compileFn body >>
         emitInstruction (Push (ImmInt (I64 0))) >>
-        emitInstruction Ret
+        emitInstruction (Ret nArgs)
     ) >> return ()
 
 -- | Registers lambda parameters with negative offsets.
@@ -438,5 +450,8 @@ compileAst (AIf cond t f) = compileIf compileAst cond t f
 compileAst (AWhile cond body) = compileWhile compileAst cond body
 compileAst (AFor i cond u body) = compileFor compileAst i cond u body
 compileAst (ACall func args) = astCallToAsm compileAst func args
-compileAst (AReturn expr) = compileAst expr >> emitInstruction Ret
+compileAst (AReturn expr) = do
+    compileAst expr
+    s <- get
+    emitInstruction (Ret (csCurrentArgCount s))
 compileAst (AImport _) = return ()

@@ -127,8 +127,8 @@ data Instruction
     -- 5. Functions & Calls
     | Call Int                -- ^ 0x40 CALL [off]
     | TailCall Int            -- ^ 0x41 TAILCALL [off]
-    | CallIndirect            -- ^ 0x42 CALL_INDIRECT (address on stack)
-    | Ret                     -- ^ 0x43 RET
+    | CallIndirect            -- ^ 0x42 CALL_INDIRECT [address on stack]
+    | Ret Int                 -- ^ 0x43 RET [stack size]
 
     -- 6. Memory (Variables)
     | LoadLocal Int           -- ^ 0x50 LOAD_LOCAL [idx]
@@ -200,7 +200,7 @@ getInstCode (JumpIfTrue _)       = 0x32
 getInstCode (Call _)             = 0x40
 getInstCode (TailCall _)         = 0x41
 getInstCode CallIndirect         = 0x42
-getInstCode Ret                  = 0x43
+getInstCode (Ret _)              = 0x43
 
 getInstCode (LoadLocal _)        = 0x50
 getInstCode (StoreLocal _)       = 0x51
@@ -271,7 +271,7 @@ instructionSize (JumpIfTrue _)      = 1 + 4
 instructionSize (Call _)            = 1 + 4
 instructionSize (TailCall _)        = 1 + 4
 instructionSize CallIndirect        = 1
-instructionSize Ret                 = 1
+instructionSize (Ret _)             = 1 + 4
 
 -- Memory (Variables)
 instructionSize (LoadLocal _)       = 1 + 4
