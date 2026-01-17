@@ -18,6 +18,8 @@ declare -A test_basics_import_wrong_extension_error=([titre]="Basics : import wr
 declare -A test_basics_import_relative_path_ok=([titre]="Basics : import relative path ok" [fichier]="test/Functional/Basics/ImportAdvanced/import_relative_path_ok.npy" [exitcode]="0" [output]="42")
 declare -A test_basics_import_path_with_spaces_ok=([titre]="Basics : import path with spaces ok" [fichier]="test/Functional/Basics/ImportAdvanced/import_path_with_spaces_ok.npy" [exitcode]="0" [output]="42")
 declare -A test_basics_import_module_with_error_error=([titre]="Basics : import module with internal error" [fichier]="test/Functional/Basics/ImportAdvanced/import_module_with_error_error.npy" [exitcode]="84" [output]="")
+declare -A test_basics_open_inexistant_file=([titre]="Basics : compile an inexistant file" [fichier]="truc.npy" [exitcode]="84" [output]="")
+
 
 # Casts
 declare -A test_casts_int8_max_ok=([titre]="Casts : int8 max ok" [fichier]="test/Functional/Casts/int8_max_ok.npy" [exitcode]="0" [output]="127")
@@ -43,6 +45,15 @@ declare -A test_casts_uint16_overflow_error=([titre]="Casts : uint16 overflow er
 declare -A test_casts_int8_bool_type_error=([titre]="Casts : int8(True) type error" [fichier]="test/Functional/Casts/int8_bool_type_error.npy" [exitcode]="84" [output]="")
 declare -A test_casts_uint32_string_type_error=([titre]="Casts : uint32(\"Noopy\") type error" [fichier]="test/Functional/Casts/uint32_string_type_error.npy" [exitcode]="84" [output]="")
 declare -A test_casts_char_list_type_error=([titre]="Casts : char([1,2]) type error" [fichier]="test/Functional/Casts/char_list_type_error.npy" [exitcode]="84" [output]="")
+
+#Syntax
+declare -A test_syntax_semicolon_ok=([titre]="Syntax : semilicon ok" [fichier]="test/Functional/Syntax/semilcolon_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_syntax_semicolon_missing=([titre]="Syntax : missing semilicon" [fichier]="test/Functional/Syntax/semicolon_missing.npy" [exitcode]="84" [output]="")
+declare -A test_syntax_block_ok=([titre]="Syntax : Standard syntax block" [fichier]="test/Functional/Syntax/block_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_syntax_block_missing=([titre]="Syntax : Bad block syntax" [fichier]="test/Functional/Syntax/block_missing.npy" [exitcode]="84" [output]="")
+declare -A test_syntax_if_parentheses_missing=([titre]="Syntax : Missing parenthesis" [fichier]="test/Functional/Syntax/if_parentheses_missing.npy" [exitcode]="84" [output]="")
+declare -A test_syntax_while_parentheses_missing=([titre]="Syntax : While parenthesis missing" [fichier]="test/Functional/Syntax/while_parentheses_missing.npy" [exitcode]="84" [output]="")
+
 
 # Syntax (Advanced)
 declare -A test_syntax_for_parentheses_missing=([titre]="Syntax : for missing parentheses" [fichier]="test/Functional/Syntax/Advanced/for_parentheses_missing.npy" [exitcode]="84" [output]="")
@@ -441,6 +452,7 @@ run_all_tests() {
         test_basics_import_missing_file
         test_basics_import_symbol_visibility
         test_basics_import_unused
+        test_basics_open_inexistant_file
 
         # Basics (Import Advanced)
         test_basics_import_duplicate_ok
