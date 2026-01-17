@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-# declare -A test1=( [titre]="Basic : " [fichier]=".scm" [exitcode]="0" [output]="")
-
 # Basic
 declare -A test_basics_import_simple=([titre]="Basics : import simple" [fichier]="test/Functional/Basics/import_simple.npy" [exitcode]="0" [output]="42")
 declare -A test_basics_import_function=([titre]="Basics : import function" [fichier]="test/Functional/Basics/import_function.npy" [exitcode]="0" [output]="42")
@@ -164,6 +162,22 @@ declare -A test_cmp_struct_neq_disallowed=([titre]="Comparisons : struct != disa
 declare -A test_cmp_list_lt_disallowed=([titre]="Comparisons : list < disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_lt_disallowed.npy" [exitcode]="84" [output]="")
 declare -A test_cmp_list_gte_disallowed=([titre]="Comparisons : list >= disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_gte_disallowed.npy" [exitcode]="84" [output]="")
 declare -A test_cmp_list_neq_disallowed=([titre]="Comparisons : list != disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_neq_disallowed.npy" [exitcode]="0" [output]="False")
+
+# Comparisons (Triple Eq ===)
+declare -A test_cmp_strict_eq_int_true_ok=([titre]="Comparisons : === int true" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_int_true_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_strict_eq_int_false_ok=([titre]="Comparisons : === int false" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_int_false_ok.npy" [exitcode]="0" [output]="False")
+
+declare -A test_cmp_strict_eq_bool_true_ok=([titre]="Comparisons : === bool true" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_bool_true_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_strict_eq_bool_false_ok=([titre]="Comparisons : === bool false" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_bool_false_ok.npy" [exitcode]="0" [output]="False")
+
+declare -A test_cmp_strict_eq_string_true_ok=([titre]="Comparisons : === string true" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_string_true_ok.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_strict_eq_string_false_ok=([titre]="Comparisons : === string false" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_string_false_ok.npy" [exitcode]="0" [output]="False")
+
+# Errors (proposés) : mismatch types / void / list / struct
+declare -A test_cmp_strict_eq_mismatched_types_error=([titre]="Comparisons : === mismatched types error" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_mismatched_types_error.npy" [exitcode]="0" [output]="False")
+declare -A test_cmp_strict_eq_list_disallowed_error=([titre]="Comparisons : === list disallowed" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_list_disallowed_error.npy" [exitcode]="0" [output]="True")
+declare -A test_cmp_strict_eq_struct_disallowed_error=([titre]="Comparisons : === struct disallowed" [fichier]="test/Functional/Comparisons/Advanced/strict_eq_struct_disallowed_error.npy" [exitcode]="0" [output]="True")
+
 
 #Logical
 declare -A test_logical_and_true_ok=([titre]="Logical : && true" [fichier]="test/Functional/Logical/and_true_ok.npy" [exitcode]="0" [output]="True")
@@ -365,23 +379,16 @@ run_test() {
     ret=0
 
     if [[ "$compile_ret" -ne 0 ]]; then
-        # Compilation failed; propagate the compiler's exit status and leave the
-        # runtime output empty.
+
         ret="$compile_ret"
         runtime_raw=""
     else
-        # Run the generated binary and capture both its output and any error
-        # messages.  We deliberately do not strip NUL bytes here so that any
-        # runtime error messages are preserved for the user.
         runtime_raw=$(./glados-vm "$bin" 2>&1)
         ret=$?
     fi
 
     rm -f "$bin"
 
-    # Trim the runtime output only for the purpose of comparing against
-    # expected_output.  This leaves newline‑terminated messages intact in
-    # `runtime_raw` for error reporting.
     output="$runtime_raw"
     output=${output%$'\n'}
     output=${output%$'\r'}
@@ -403,17 +410,12 @@ run_test() {
         fi
     fi
 
-    # If the test failed, include any compiler and runtime messages to aid
-    # debugging.  Both executables may emit diagnostics on stderr, and these
-    # should be visible when a test reports KO.
     if [[ $has_error -eq 1 ]]; then
         if [[ "$compile_ret" -ne 0 ]]; then
-            # Show compiler diagnostics only when compilation failed.
             if [[ -n "$compile_out" ]]; then
                 err_msg+="Message du compilateur :\n$compile_out\n"
             fi
         else
-            # Show runtime diagnostics if available.
             if [[ -n "$runtime_raw" ]]; then
                 err_msg+="Message du programme :\n$runtime_raw\n"
             fi
@@ -432,8 +434,6 @@ run_test() {
             echo -e "$err_msg" | sed 's/^/    /'
             echo -e "${YELLOW}----------------------------------------${RESET}"
         else
-            # En mode -ko, on renvoie un bloc formaté via stdout
-            # (run_all_tests va le capturer et l'afficher à la fin)
             echo -e "[${RED}KO${RESET}] ${titre}"
             echo -e "${YELLOW}----------------------------------------${RESET}"
             echo -e "$err_msg" | sed 's/^/    /'
@@ -594,6 +594,16 @@ run_all_tests() {
         test_cmp_bool_eq_ok
         test_cmp_mismatched_types_eq
         test_cmp_list_eq_disallowed
+
+        test_cmp_strict_eq_int_true_ok
+        test_cmp_strict_eq_int_false_ok
+        test_cmp_strict_eq_bool_true_ok
+        test_cmp_strict_eq_bool_false_ok
+        test_cmp_strict_eq_string_true_ok
+        test_cmp_strict_eq_string_false_ok
+        test_cmp_strict_eq_mismatched_types_error
+        test_cmp_strict_eq_list_disallowed_error
+        test_cmp_strict_eq_struct_disallowed_error
 
         # Comparisons (Advanced)
         test_cmp_bool_neq_ok
