@@ -133,13 +133,13 @@ pAssignOp name = choice
     ]
 
 -- | Converts a field name (Text) into an AST list of integers.
--- This allows passing the field name as an argument to the 'set_field' runtime function.
+-- This allows passing the field name as an argument to the 'attr_update' runtime function.
 fieldToAst :: DT.Text -> Ast
 fieldToAst txt = AList $ map charToAst (DT.unpack txt)
     where
         charToAst c = AInteger (IChar (fromIntegral (ord c)))
 
--- | Recursively constructs the chain of 'update' and 'set_field' calls.
+-- | Recursively constructs the chain of 'update' and 'attr_update' calls.
 -- This function handles nested modifications for both arrays and structures.
 recursiveUpdate :: Ast -> [Accessor] -> Ast -> Ast
 recursiveUpdate base [AccIndex idx] val =
@@ -148,7 +148,7 @@ recursiveUpdate base [AccIndex idx] val =
 
 -- Case 2: End of chain on a Structure (e.g. x.field = val)
 recursiveUpdate base [AccField field] val =
-    ACall (ASymbol (DT.pack "set_field")) [base, fieldToAst field, val]
+    ACall (ASymbol (DT.pack "attr_update")) [base, fieldToAst field, val]
 
 -- Case 3: Recursion on Array (e.g. x[i]... = val)
 -- We fetch the inner element using 'nth', update it recursively, and put it back using 'update'.
@@ -158,11 +158,11 @@ recursiveUpdate base (AccIndex idx : rest) val =
     in ACall (ASymbol (DT.pack "nth_update")) [base, idx, newVal]
 
 -- Case 4: Recursion on Structure (e.g. x.field... = val)
--- We access the field, update it recursively, and put it back using 'set_field'.
+-- We access the field, update it recursively, and put it back using 'attr_update'.
 recursiveUpdate base (AccField field : rest) val =
     let inner = AAccessStruct base field
         newVal = recursiveUpdate inner rest val
-    in ACall (ASymbol (DT.pack "set_field")) 
+    in ACall (ASymbol (DT.pack "attr_update")) 
        [base, fieldToAst field, newVal]
 
 recursiveUpdate _ [] _ = error "Should not happen in buildUpdateChain"

@@ -143,6 +143,7 @@ data Instruction
     | GetFuncAddr Int         -- ^ 0x61 GET_FUNC_ADDR [id]
     | BuildStruct Int         -- ^ 0x62 BUILD_STRUCT [n_fields]
     | GetStructField Int      -- ^ 0x63 GET_STRUCT_FIELD [idx]
+    | AttrUpdate              -- ^ 0x64 ATTR_UPDATE [struct] [idx] [value]
     | Cast Word8              -- ^ 0x80 CAST [TypeID]
 
     -- 9. List Operations
@@ -214,6 +215,7 @@ getInstCode (MakeClosure _ _)    = 0x60
 getInstCode (GetFuncAddr _)      = 0x61
 getInstCode (BuildStruct _)      = 0x62
 getInstCode (GetStructField _)   = 0x63
+getInstCode AttrUpdate           = 0x64
 getInstCode (Cast _)             = 0x80
 
 getInstCode Cons                 = 0x90
@@ -288,6 +290,7 @@ instructionSize (MakeClosure _ _)   = 1 + 4 + 4
 instructionSize (GetFuncAddr _)     = 1 + 4
 instructionSize (BuildStruct _)     = 1 + 4
 instructionSize (GetStructField _)  = 1 + 4
+instructionSize AttrUpdate          = 1
 instructionSize (Cast _)            = 1 + 1
 
 -- List Operations

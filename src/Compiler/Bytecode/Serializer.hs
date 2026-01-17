@@ -142,6 +142,7 @@ serializeInstruction (BuildStruct n) =
 serializeInstruction (GetStructField idx) =
     encodeWord8 0x63 <>
     encodeInt32BE (fromIntegral idx)
+serializeInstruction AttrUpdate = encodeWord8 0x64
 serializeInstruction (Cast typeId) =
     encodeWord8 0x80 <>
     encodeWord8 typeId

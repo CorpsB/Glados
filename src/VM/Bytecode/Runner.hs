@@ -84,6 +84,7 @@ executeInstruction 0x60 = instMakeClosure
 executeInstruction 0x61 = instGetFuncAddr
 executeInstruction 0x62 = instBuildStruct
 executeInstruction 0x63 = instGetStructField
+executeInstruction 0x64 = instAttrUpdate
 
 executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt

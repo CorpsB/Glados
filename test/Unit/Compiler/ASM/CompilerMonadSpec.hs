@@ -68,7 +68,7 @@ spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
         ]
 
   describe "generateUniqueLabel" $ do
-    it "increments csLabelCnt and returns unique labels" $ do
+    it "increments csLabelCnt and (ret 0)urns unique labels" $ do
       let action = do
             l0 <- generateUniqueLabel "label"
             l1 <- generateUniqueLabel "label"
@@ -130,7 +130,7 @@ spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
       let (_, st) = expectRight (runCM action createCompilerState)
       Map.lookup "S" (csStructs st) `shouldBe` Just [("b", "int"), ("c", "int")]
 
-    it "getStructDefinition returns stored definition" $ do
+    it "getStructDefinition (ret 0)urns stored definition" $ do
       let action = do
             defineStruct "S" [("a", "int"), ("b", "int")]
             getStructDefinition "S"
@@ -150,17 +150,17 @@ spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
               emitInstruction Nop
               compileInIsolatedFunctionScope $ do
                 emitLabelDefinition "nested"
-                emitInstruction Ret
-              emitInstruction Ret
+                emitInstruction (Ret 0)
+              emitInstruction (Ret 0)
             emitInstruction Halt
       let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe` Seq.fromList [Real Halt, Real Halt]
       csFuncs st `shouldBe` Seq.fromList
         [ LabelDef "inner"
         , Real Nop
-        , Real Ret
+        , Real (Ret 0)
         , LabelDef "nested"
-        , Real Ret
+        , Real (Ret 0)
         ]
 
     it "propagates Left from isolated scope" $ do

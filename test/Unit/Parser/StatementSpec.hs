@@ -433,13 +433,13 @@ spec = describe "Parser - Statement & Expression" $ do
                     -> True
                 _ -> False
 
-        it "fieldToAst: converts text to AList of IChars (tested via set_field)" $ do
+        it "fieldToAst: converts text to AList of IChars (tested via attr_update)" $ do
             let input = "p.y = 10;"
             let expectedChar = fromIntegral (ord 'y') :: Int8
             
             parseStmt input `shouldSatisfy` \case
                 Right [ASetVar _ _ (ACall (ASymbol func) [_, AList [AInteger (IChar c)], _])] 
-                    | func == p "set_field" && c == expectedChar -> True
+                    | func == p "attr_update" && c == expectedChar -> True
                 _ -> False
         
         it "recursiveUpdate Case 2: Simple struct assignment (x.f = val)" $ do
@@ -449,7 +449,7 @@ spec = describe "Parser - Statement & Expression" $ do
             parseStmt input `shouldSatisfy` \case
                 Right [ASetVar name _ (ACall (ASymbol func) [ASymbol base, AList [AInteger (IChar c)], val])]
                     | name == p "x" &&
-                      func == p "set_field" &&
+                      func == p "attr_update" &&
                       base == p "x" &&
                       c == charF &&
                       val == AInteger (fitInteger 10)
@@ -464,12 +464,12 @@ spec = describe "Parser - Statement & Expression" $ do
             parseStmt input `shouldSatisfy` \case
                 Right [ASetVar name _ (ACall (ASymbol funcOuter) [ASymbol baseX, AList [AInteger (IChar cY)], innerVal])]
                     | name == p "x" &&
-                      funcOuter == p "set_field" &&
+                      funcOuter == p "attr_update" &&
                       baseX == p "x" &&
                       cY == charY ->
                         case innerVal of
                             ACall (ASymbol funcInner) [AAccessStruct baseInner fieldInner, AList [AInteger (IChar cZ)], val]
-                                | funcInner == p "set_field" &&
+                                | funcInner == p "attr_update" &&
                                   baseInner == ASymbol (p "x") &&
                                   fieldInner == p "y" &&
                                   cZ == charZ &&
@@ -491,7 +491,7 @@ spec = describe "Parser - Statement & Expression" $ do
                       idx == fitInteger 0 ->
                         (case innerVal of {
                             ACall (ASymbol funcSet) [nthCall, AList [AInteger (IChar c)], val]
-                                | funcSet == p "set_field"
+                                | funcSet == p "attr_update"
                                 , c == charY
                                 , val == AInteger (fitInteger 5)
                                 -> case nthCall of {

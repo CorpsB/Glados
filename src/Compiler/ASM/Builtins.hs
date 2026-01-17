@@ -30,7 +30,7 @@ builtinStackList :: [(Text, Instruction)]
 builtinStackList =
     [ (pack "cons", Cons), (pack "head", Head),
     (pack "tail", Tail), (pack "nth", Nth),
-    (pack "nth_update", NthUpdate) ]
+    (pack "nth_update", NthUpdate), (pack "attr_update", AttrUpdate) ]
 
 builtinLogicList :: [(Text, Instruction)]
 builtinLogicList =

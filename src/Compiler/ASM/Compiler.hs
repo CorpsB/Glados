@@ -27,6 +27,7 @@ module Compiler.ASM.Compiler
     , inferType
     ) where
 
+import Data.Char (chr)
 import Data.Text (Text, pack)
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -416,6 +417,46 @@ compileAccessStruct compileFn obj fieldName = do
     compileFn obj
     emitInstruction (GetStructField idx)
 
+extractChar :: Ast -> CompilerMonad Char
+extractChar (AInteger (IChar c)) = return (chr (fromIntegral c))
+extractChar _ =
+    lift $ Left (pack "attr_update: Field name must be a string of characters")
+
+-- | Convert an AST list of IChar to Haskell Text
+--
+extractFieldName :: Ast -> CompilerMonad Text
+extractFieldName (ASymbol s) = return s
+extractFieldName (AList xs) = do
+    chars <- mapM extractChar xs
+    return (pack chars)
+extractFieldName _ =
+    lift $ Left (pack "attr_update: Second argument must be a Sym or String")
+
+-- | Compiles the 'attr_update' builtin special form.
+--
+-- @args
+--   - compileFn: Recursive compiler.
+--   - obj: The AST for the structure object.
+--   - fieldArg: The AST for the field name (must be a Symbol).
+--   - v: The AST for the new value.
+--
+-- @details
+--   1. Infers the type of 'obj' to find its struct definition.
+--   2. Resolves 'fieldArg' to an integer index.
+--   3. Pushes Obj, Index, and Value onto the stack.
+--   4. Emits AttrUpdate.
+--
+compileAttrUpdate :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Ast ->
+    CompilerMonad ()
+compileAttrUpdate compileFn obj fieldArg v = do
+    fieldName <- extractFieldName fieldArg
+    structType <- inferType obj
+    (idx, _) <- getStructField structType fieldName
+    compileFn obj
+    emitInstruction (Push (ImmInt (I64 (fromIntegral idx))))
+    compileFn v
+    emitInstruction AttrUpdate
+
 -- | Main Dispatcher Function: Compiles any AST node.
 --
 -- @args
@@ -449,6 +490,8 @@ compileAst (AAccessStruct obj field) = compileAccessStruct compileAst obj field
 compileAst (AIf cond t f) = compileIf compileAst cond t f
 compileAst (AWhile cond body) = compileWhile compileAst cond body
 compileAst (AFor i cond u body) = compileFor compileAst i cond u body
+compileAst (ACall (ASymbol name) [obj, fieldArg, v]) 
+    | name == pack "attr_update" = compileAttrUpdate compileAst obj fieldArg v
 compileAst (ACall func args) = astCallToAsm compileAst func args
 compileAst (AReturn expr) = do
     compileAst expr

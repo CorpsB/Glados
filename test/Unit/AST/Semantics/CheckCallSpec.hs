@@ -270,7 +270,7 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 Right TyBool -> True
                 _ -> False
 
-        it "passes env to set_field to resolve struct definition and variable" $ do
+        it "passes env to attr_update to resolve struct definition and variable" $ do
             let sName = DT.pack "MyStruct"
             let fName = DT.pack "f"
             let varName = DT.pack "s"
@@ -282,7 +282,7 @@ spec = describe "AST.Semantics.CheckCall" $ do
             }
             
             let fieldNameAst = AList [AInteger (IChar 102)]
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol varName, fieldNameAst, AInteger (fitInteger 123)]
 
             checkExpr structEnv call `shouldSatisfy` \case
@@ -304,24 +304,24 @@ spec = describe "AST.Semantics.CheckCall" $ do
 
         it "checkSetField: fails when first argument is not a struct" $ do
             let fieldName = AList [AInteger (IChar 120)]
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol (DT.pack "num"), fieldName, AInteger (fitInteger 10)]
             
             checkExpr fieldEnv call `shouldSatisfy` \case
-                Left err | err == "set_field expects a structure as first argument" -> True
+                Left err | err == "attr_update expects a structure as first argument" -> True
                 _ -> False
 
         it "checkSetField: fails when argument count is incorrect" $ do
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol (DT.pack "p")]
             
             checkExpr fieldEnv call `shouldSatisfy` \case
-                Left err | err == "set_field expects 3 arguments" -> True
+                Left err | err == "attr_update expects 3 arguments" -> True
                 _ -> False
 
         it "checkFieldInStruct: fails when field does not exist in struct" $ do
             let fieldZ = AList [AInteger (IChar 122)]
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol (DT.pack "p"), fieldZ, AInteger (fitInteger 10)]
             
             checkExpr fieldEnv call `shouldSatisfy` \case
@@ -345,7 +345,7 @@ spec = describe "AST.Semantics.CheckCall" $ do
         let fNameAst = AList [AInteger (IChar 120)] 
 
         it "validateAssignment: succeeds and uses env to resolve value type" $ do
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol (DT.pack "p"), fNameAst, ASymbol (DT.pack "y")]
             
             checkExpr fieldEnv call `shouldSatisfy` \case
@@ -353,7 +353,7 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 _ -> False
 
         it "validateAssignment: fails with specific error message on type mismatch" $ do
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol (DT.pack "p"), fNameAst, ASymbol (DT.pack "b")]
             
             let expectedErr = "Type mismatch in field assignment 'x'. Expected int, got bool"
@@ -371,7 +371,7 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 envStructs = Map.singleton (DT.pack "S") sDef,
                 envVars = Map.singleton (DT.pack "s") (TyStruct (DT.pack "S"))
             }
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol (DT.pack "s"), badString, AInteger (fitInteger 1)]
             
             checkExpr env call `shouldSatisfy` \case
@@ -385,11 +385,11 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 envStructs = Map.singleton (DT.pack "S") sDef,
                 envVars = Map.singleton (DT.pack "s") (TyStruct (DT.pack "S"))
             }
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol (DT.pack "s"), notAList, AInteger (fitInteger 1)]
             
             checkExpr env call `shouldSatisfy` \case
-                Left err | err == "Invalid field name format in set_field" -> True
+                Left err | err == "Invalid field name format in attr_update" -> True
                 _ -> False
 
         it "getStructDef: returns error when struct definition is missing in env" $ do
@@ -397,7 +397,7 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 envVars = Map.singleton (DT.pack "ghost") (TyStruct (DT.pack "GhostStruct"))
             }
             let fieldName = AList [AInteger (IChar 120)]
-            let call = ACall (ASymbol (DT.pack "set_field")) 
+            let call = ACall (ASymbol (DT.pack "attr_update")) 
                              [ASymbol (DT.pack "ghost"), fieldName, AInteger (fitInteger 1)]
             
             checkExpr env call `shouldSatisfy` \case
