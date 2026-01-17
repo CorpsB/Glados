@@ -19,6 +19,6 @@ func lcm(a: int, b: int) -> int {
     ret abs((a / g) * b);
 }
 
-func coprime(a: int, b: int) -> bool {
+func coPrime(a: int, b: int) -> bool {
     ret gcd(a, b) == 1;
 }

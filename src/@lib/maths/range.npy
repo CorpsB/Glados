@@ -1,4 +1,4 @@
-func sumrange(from: int, to: int) -> int {
+func sumRange(from: int, to: int) -> int {
     if (from > to) { ret 0; }
     s: int = 0;
     i: int = from;
@@ -9,7 +9,7 @@ func sumrange(from: int, to: int) -> int {
     ret s;
 }
 
-func prodrange(from: int, to: int) -> int {
+func prodRange(from: int, to: int) -> int {
     if (from > to) { ret 1; }
     p: int = 1;
     i: int = from;

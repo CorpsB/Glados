@@ -24,7 +24,7 @@ _Documentation technique des modules mathématiques._
 
 - **Emplacement :** src/@lib/maths/
 - **But :** fournir des utilitaires mathématiques (arithmétique entière, théorie des nombres, puissances, racines, etc.).
-- **Remarque sur les dépendances internes :** plusieurs fonctions utilisent `modPos` (ou `pmod`) et `isqrt` ; `modPos` garantit un reste positif, `isqrt` calcule la racine entière.
+- **Remarque sur les dépendances internes :** plusieurs fonctions utilisent `modPos` (ou `pmod`) et `isSqrt` ; `modPos` garantit un reste positif, `isSqrt` calcule la racine entière.
 
 ---
 
@@ -158,7 +158,7 @@ func lcm(a: int, b: int) -> int
 
 - **Prototype :**
 ```
-func coprime(a: int, b: int) -> bool
+func coPrime(a: int, b: int) -> bool
 ```
 *Retourne `True` si `gcd(a,b) == 1`.*
 
@@ -212,13 +212,13 @@ func modinv(a: int, m: int) -> int
 
 - **Prototype :**
 ```
-func ispow2(n: int) -> bool
+func isPow2(n: int) -> bool
 ```
 *Retourne `True` si `n` est une puissance de deux strictement positive.*
 
 - **Prototype :**
 ```
-func nextpow2(n: int) -> int
+func nextPow2(n: int) -> int
 ```
 *Renvoie la plus petite puissance de deux >= `n`. Si `n <= 1` retourne `1`.*
 
@@ -262,13 +262,13 @@ func modPow(base: int, exp: int, m: int) -> int
 
 - **Prototype :**
 ```
-func isprime(n: int) -> bool
+func isPrime(n: int) -> bool
 ```
-*Test naïf : rejette `n <= 1`, accepte `n <= 3`, élimine pairs, teste les diviseurs impairs jusqu'à `isqrt(n)`. Retourne `True` si premier.*
+*Test naïf : rejette `n <= 1`, accepte `n <= 3`, élimine pairs, teste les diviseurs impairs jusqu'à `isSqrt(n)`. Retourne `True` si premier.*
 
 - **Prototype :**
 ```
-func nextprime(n: int) -> int
+func nextPrime(n: int) -> int
 ```
 *Renvoie le premier nombre premier >= `n` (gère la parité en incrémentant par 2). Si `n <= 2` retourne `2`.*
 
@@ -284,13 +284,13 @@ func nextprime(n: int) -> int
 
 - **Prototype :**
 ```
-func sumrange(from: int, to: int) -> int
+func sumRange(from: int, to: int) -> int
 ```
 *Somme des entiers de `from` à `to` inclus ; si `from > to` retourne `0`.*
 
 - **Prototype :**
 ```
-func prodrange(from: int, to: int) -> int
+func prodRange(from: int, to: int) -> int
 ```
 *Produit des entiers de `from` à `to` inclus ; si `from > to` retourne `1`.*
 
@@ -306,15 +306,15 @@ func prodrange(from: int, to: int) -> int
 
 - **Prototype :**
 ```
-func isqrt(n: int) -> int
+func isSqrt(n: int) -> int
 ```
 *Recherche binaire pour la racine entière (plancher). Si `n <= 0` retourne `0`.*
 
 - **Prototype :**
 ```
-func issquare(n: int) -> bool
+func isSquare(n: int) -> bool
 ```
-*Retourne `True` si `n` est un carré parfait (utilise `isqrt`). Retourn `False` pour `n < 0`.*
+*Retourne `True` si `n` est un carré parfait (utilise `isSqrt`). Retourn `False` pour `n < 0`.*
 
 ---
 
@@ -353,7 +353,7 @@ divCeil(-7, 3)  // -> -2 (selon gestion des signes)
 ```
 gcd(12, 18)    // -> 6
 lcm(4, 6)      // -> 12
-coprime(14,15) // -> True
+coPrime(14,15) // -> True
 ```
 
 ### module.npy
@@ -370,8 +370,8 @@ modinv(3, 11) // -> 4  (car 3*4 % 11 == 1)
 
 ### pow2.npy
 ```
-ispow2(8)   // -> True
-nextpow2(5) // -> 8
+isPow2(8)   // -> True
+nextPow2(5) // -> 8
 ```
 
 ### power.npy
@@ -383,20 +383,20 @@ modPow(3, 13, 17) // -> 3^13 % 17 -> 12 (exemple)
 
 ### prime.npy
 ```
-isprime(17)   // -> True
-nextprime(14) // -> 17
+isPrime(17)   // -> True
+nextPrime(14) // -> 17
 ```
 
 ### range.npy
 ```
-sumrange(1, 5)  // -> 15
-prodrange(1, 4) // -> 24
+sumRange(1, 5)  // -> 15
+prodRange(1, 4) // -> 24
 ```
 
 ### sqrt.npy
 ```
-isqrt(17)   // -> 4
-issquare(16) // -> True
+isSqrt(17)   // -> 4
+isSquare(16) // -> True
 ```
 
 ---

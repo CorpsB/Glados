@@ -1,4 +1,4 @@
-func isqrt(n: int) -> int {
+func isSqrt(n: int) -> int {
     if (n <= 0) { ret 0; }
 
     lo: int = 1;
@@ -22,8 +22,8 @@ func isqrt(n: int) -> int {
     ret ans;
 }
 
-func issquare(n: int) -> bool {
+func isSquare(n: int) -> bool {
     if (n < 0) { ret False; }
-    r: int = isqrt(n);
+    r: int = isSqrt(n);
     ret (r * r) == n;
 }
