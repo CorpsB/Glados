@@ -27,7 +27,7 @@ data Type
     | TyFunc [Type] Type   -- Function type (Args -> Return)
     | TyStruct DT.Text      -- Custom structure type identified by name
     | TyAuto               -- Placeholder for type inference
-    deriving (Show)
+    deriving (Show, Eq)
 
 -- | Definition of a structure (Name + Field Map).
 data StructDef = StructDef

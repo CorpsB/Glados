@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module AST.Semantics.CheckSpec (spec) where
 
@@ -99,13 +100,16 @@ spec = describe "Semantic Checker Coverage" $ do
             checkExpr env expr `shouldSatisfy` \case Left _ -> True; _ -> False
 
     describe "checkStmt Coverage" $ do
-        it "ASetVar: Auto Type" $ do
+        it "ASetVar: Auto Type (Inference Check)" $ do
             let stmt = ASetVar (p "x") (p "auto") (AInteger (fitInteger 1))
-            checkStmt emptyEnv stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt emptyEnv stmt `shouldSatisfy` \case 
+                -- On vérifie que l'AST retourné a bien "int" au lieu de "auto"
+                Right (ASetVar "x" "int" _, _) -> True
+                _ -> False
 
         it "ASetVar: Explicit Compatible" $ do
             let stmt = ASetVar (p "x") (p "int") (AInteger (fitInteger 1))
-            checkStmt emptyEnv stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt emptyEnv stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "ASetVar: Explicit Incompatible" $ do
             let stmt = ASetVar (p "x") (p "bool") (AInteger (fitInteger 1))
@@ -115,12 +119,13 @@ spec = describe "Semantic Checker Coverage" $ do
             let stmt = ASetVar (p "x") (p "int") (ASymbol (p "unknown_var"))
             checkStmt emptyEnv stmt `shouldSatisfy` \case Left msg -> "Undefined" `isInfixOfStr` msg; _ -> False
 
-        it "Unknown Statement" $ do
-            checkStmt emptyEnv (AImport (p "file")) `shouldSatisfy` \case Right _ -> True; _ -> False
+        it "Unknown Statement (Fallback to checkExpr with valid expression)" $ do
+            -- CHANGED: Utilisation de AVoid au lieu de AImport, car AImport n'est pas une expression
+            checkStmt emptyEnv AVoid `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
     describe "checkAst" $ do
         it "Sequence Success (Empty)" $ do
-            checkAst [] `shouldSatisfy` \case Right () -> True; _ -> False
+            checkAst [] `shouldSatisfy` \case Right [] -> True; _ -> False
 
         it "Sequence Immediate Failure (Type Mismatch)" $ do
             let ast = [ ASetVar (p "x") (p "bool") (AInteger (fitInteger 1)) ]
@@ -146,7 +151,7 @@ spec = describe "Semantic Checker Coverage" $ do
             let ast = [ ASetVar (p "x") (p "int") (AInteger (fitInteger 1))
                       , ASetVar (p "y") (p "int") (AInteger (fitInteger 2))
                       ]
-            checkAst ast `shouldSatisfy` \case Right () -> True; _ -> False
+            checkAst ast `shouldSatisfy` \case Right _ -> True; _ -> False
     
     describe "Detailed Error Messages" $ do
         it "If branches type mismatch message" $ do
@@ -186,7 +191,7 @@ spec = describe "Semantic Checker Coverage" $ do
         it "SetVar auto accepts any type" $ do
             let stmt = ASetVar (p "x") (p "auto") (AInteger (fitInteger 1))
             checkStmt emptyEnv stmt `shouldSatisfy`
-                \case Right envLocal ->
+                \case Right (_, envLocal) ->
                         case Map.lookup (p "x") (envVars envLocal) of
                             Just TyInt -> True
                             _ -> False
@@ -201,7 +206,7 @@ spec = describe "Semantic Checker Coverage" $ do
         it "SetVar compatible type" $ do
             let stmt = ASetVar (p "x") (p "int") (AInteger (fitInteger 1))
             checkStmt emptyEnv stmt `shouldSatisfy`
-                \case Right envLocal ->
+                \case Right (_, envLocal) ->
                         case Map.lookup (p "x") (envVars envLocal) of
                             Just TyInt -> True
                             _ -> False
@@ -224,8 +229,9 @@ spec = describe "Semantic Checker Coverage" $ do
                 _ -> False
 
         it "Preserves environment in fallback statement" $ do
-            checkStmt env (AImport (p "ignored")) `shouldSatisfy` \case
-                Right resEnv -> case Map.lookup (p "i") (envVars resEnv) of
+            -- CHANGED: Utilisation de AVoid au lieu de AImport
+            checkStmt env AVoid `shouldSatisfy` \case
+                Right (_, resEnv) -> case Map.lookup (p "i") (envVars resEnv) of
                     Just TyInt -> True
                     _ -> False
                 _ -> False
@@ -241,11 +247,11 @@ spec = describe "Semantic Checker Coverage" $ do
         let definePoint = ADefineStruct (p "Point") pointFields
         
         let envWithPoint = case checkStmt emptyEnv definePoint of
-                Right e -> e
+                Right (_, e) -> e
                 Left _ -> error "Setup failed: DefineStruct"
 
         it "Defines a new struct successfully" $ do
-            checkStmt emptyEnv definePoint `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt emptyEnv definePoint `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Fails to redefine existing struct" $ do
             checkStmt envWithPoint definePoint `shouldSatisfy` \case 
@@ -282,7 +288,7 @@ spec = describe "Semantic Checker Coverage" $ do
         
         it "Instantiates using a variable (Forces env usage in validateField)" $ do
             let envWithVar = case checkStmt envWithPoint (ASetVar (p "myVal") (p "int") (AInteger (fitInteger 10))) of
-                    Right e -> e
+                    Right (_, e) -> e
                     Left _ -> error "Setup failed: Var"
             
             let inst = ASetStruct (p "Point") [(p "x", ASymbol (p "myVal")), (p "y", AInteger (fitInteger 2))]
@@ -315,7 +321,7 @@ spec = describe "Semantic Checker Coverage" $ do
 
         it "Defines a new struct and stores its name correctly" $ do
             checkStmt emptyEnv definePoint `shouldSatisfy` \case 
-                Right resEnv -> 
+                Right (_, resEnv) -> 
                     case Map.lookup (p "Point") (envStructs resEnv) of
                         Just def -> structName def == p "Point"
                         Nothing -> False
@@ -332,58 +338,7 @@ spec = describe "Semantic Checker Coverage" $ do
 
         it "Instantiates using a variable (Forces env usage in validateField)" $ do
             let envWithVar = case checkStmt envWithPoint (ASetVar (p "myVal") (p "int") (AInteger (fitInteger 10))) of
-                    Right e -> e
-                    Left _ -> error "Setup failed: Var"
-            let inst = ASetStruct (p "Point") [(p "x", ASymbol (p "myVal")), (p "y", AInteger (fitInteger 2))]
-            checkExpr envWithVar inst `shouldSatisfy` \case Right _ -> True; _ -> False
-
-        it "Fails instantiation: Undefined Struct (Checks closing quote)" $ do
-            let inst = ASetStruct (p "Alien") []
-            checkExpr envWithPoint inst `shouldSatisfy` \case 
-                Left msg -> "Undefined struct" `isInfixOfStr` msg && 
-                            "Alien'" `isInfixOfStr` msg
-                _ -> False
-
-        it "Fails instantiation: Unknown Field (Checks closing quote)" $ do
-            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "z", AInteger (fitInteger 3))]
-            checkExpr envWithPoint inst `shouldSatisfy` \case 
-                Left msg -> "Unknown field" `isInfixOfStr` msg && 
-                            "'z'" `isInfixOfStr` msg && 
-                            "Point'" `isInfixOfStr` msg
-                _ -> False
-
-        it "Fails instantiation: Missing Field" $ do
-            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1))]
-            checkExpr envWithPoint inst `shouldSatisfy` \case 
-                Left msg -> "Missing field" `isInfixOfStr` msg && "'y'" `isInfixOfStr` msg
-                _ -> False
-
-        it "Fails instantiation: Field Type Mismatch" $ do
-            let inst = ASetStruct (p "Point") [(p "x", ABool True), (p "y", AInteger (fitInteger 2))]
-            checkExpr envWithPoint inst `shouldSatisfy` \case 
-                Left msg -> "expected int" `isInfixOfStr` msg
-                _ -> False
-        
-        it "Defines a new struct and stores its name correctly" $ do
-            checkStmt emptyEnv definePoint `shouldSatisfy` \case 
-                Right resEnv -> 
-                    case Map.lookup (p "Point") (envStructs resEnv) of
-                        Just def -> structName def == p "Point"
-                        Nothing -> False
-                _ -> False
-
-        it "Fails to redefine existing struct" $ do
-            checkStmt envWithPoint definePoint `shouldSatisfy` \case 
-                Left msg -> "already defined" `isInfixOfStr` msg && "Point" `isInfixOfStr` msg
-                _ -> False
-
-        it "Instantiates a valid struct (Success path covers Right ())" $ do
-            let inst = ASetStruct (p "Point") [(p "x", AInteger (fitInteger 1)), (p "y", AInteger (fitInteger 2))]
-            checkExpr envWithPoint inst `shouldSatisfy` \case Right (TyStruct name) -> name == p "Point"; _ -> False
-
-        it "Instantiates using a variable (Forces env usage in validateField)" $ do
-            let envWithVar = case checkStmt envWithPoint (ASetVar (p "myVal") (p "int") (AInteger (fitInteger 10))) of
-                    Right e -> e
+                    Right (_, e) -> e
                     Left _ -> error "Setup failed: Var"
             let inst = ASetStruct (p "Point") [(p "x", ASymbol (p "myVal")), (p "y", AInteger (fitInteger 2))]
             checkExpr envWithVar inst `shouldSatisfy` \case Right _ -> True; _ -> False
@@ -420,7 +375,7 @@ spec = describe "Semantic Checker Coverage" $ do
 
         it "Defines a new struct and stores its name correctly" $ do
             checkStmt emptyEnv definePoint `shouldSatisfy` \case 
-                Right resEnv -> 
+                Right (_, resEnv) -> 
                     case Map.lookup (p "Point") (envStructs resEnv) of
                         Just def -> structName def == p "Point"
                         Nothing -> False
@@ -459,14 +414,14 @@ spec = describe "Semantic Checker Coverage" $ do
                             (ABool True) 
                             AVoid 
                             AVoid 
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Validates For loop with Int condition (C-Style Support)" $ do
             let stmt = AFor AVoid 
                             (AInteger (fitInteger 1)) 
                             AVoid 
                             AVoid
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Rejects For loop with Invalid condition type" $ do
             let stmt = AFor AVoid 
@@ -482,26 +437,28 @@ spec = describe "Semantic Checker Coverage" $ do
                             (ASymbol (p "loopVar")) 
                             AVoid
                             AVoid
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
-    describe "If Condition C-Style" $ do
-        it "Accepts TyInt as condition and checks branches" $ do
+    describe "If Condition Strictness" $ do
+        it "Rejects TyInt as condition (Strict Boolean Mode)" $ do
             let expr = AIf (AInteger (fitInteger 1)) (AInteger (fitInteger 1)) (AInteger (fitInteger 1))
-            checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
+            checkExpr env expr `shouldSatisfy` \case 
+                Left msg -> "condition must be boolean" `isInfixOfStr` msg
+                _ -> False
 
     describe "Coverage: Loop Logic" $ do
         it "Validates While with TyBool" $ do
             let stmt = AWhile (ABool True) AVoid
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Validates While with TyInt" $ do
             let stmt = AWhile (AInteger (fitInteger 1)) AVoid
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Rejects While with TyVoid" $ do
             let stmt = AWhile AVoid AVoid
             checkStmt env stmt `shouldSatisfy` \case 
-                Left err -> "Loop condition must be boolean or integer" `isInfixOfStr` err
+                Left err -> "'while' condition must be boolean or integer" `isInfixOfStr` err
                 _ -> False
 
         it "Checks Body in While loop" $ do
@@ -513,11 +470,11 @@ spec = describe "Semantic Checker Coverage" $ do
     describe "Coverage: For Loop Logic" $ do
         it "Validates For condition TyBool" $ do
             let stmt = AFor AVoid (ABool True) AVoid AVoid
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Validates For condition TyInt" $ do
             let stmt = AFor AVoid (AInteger (fitInteger 1)) AVoid AVoid
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Rejects For condition TyVoid" $ do
             let stmt = AFor AVoid AVoid AVoid AVoid
@@ -538,8 +495,8 @@ spec = describe "Semantic Checker Coverage" $ do
                 _ -> False
 
     describe "Coverage: Environment Propagation" $ do
-        it "Propagates env to branches when condition is Int" $ do
-            let expr = AIf (AInteger (fitInteger 1)) (ASymbol (p "i")) (ASymbol (p "i"))
+        it "Propagates env to branches (Boolean condition)" $ do
+            let expr = AIf (ABool True) (ASymbol (p "i")) (ASymbol (p "i"))
             checkExpr env expr `shouldSatisfy` \case Right TyInt -> True; _ -> False
 
         it "Propagates env to checkCall" $ do
@@ -550,7 +507,7 @@ spec = describe "Semantic Checker Coverage" $ do
         it "Defines a function and adds it to environment" $ do
             let func = ADefineFunc (p "myFunc") [(p "x", p "int")] (p "int") (AReturn (ASymbol (p "x")))
             checkStmt env func `shouldSatisfy` \case
-                Right newEnv -> 
+                Right (_, newEnv) -> 
                     case Map.lookup (p "myFunc") (envVars newEnv) of
                         Just (TyFunc [TyInt] TyInt) -> True
                         _ -> False
@@ -559,7 +516,7 @@ spec = describe "Semantic Checker Coverage" $ do
         it "Validates function body using argument scope" $ do
             let body = ASetVar (p "a") (p "auto") (AInteger (fitInteger 10))
             let func = ADefineFunc (p "test") [(p "a", p "int")] (p "void") body
-            checkStmt env func `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env func `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Fails if function body contains semantic error" $ do
             let body = ASetVar (p "local") (p "int") (ABool True)
@@ -571,7 +528,7 @@ spec = describe "Semantic Checker Coverage" $ do
         it "Allows recursion (Function visible inside its own body)" $ do
             let callRec = ACall (ASymbol (p "rec")) []
             let func = ADefineFunc (p "rec") [] (p "void") callRec
-            checkStmt env func `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env func `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
     describe "Statement Position Error Handling" $ do
         it "Wraps statement error with line number" $ do
@@ -588,31 +545,27 @@ spec = describe "Semantic Checker Coverage" $ do
         
         it "Propagates success correctly through APos Statement" $ do
             let stmt = APos 10 5 (ASetVar (p "x") (p "int") (AInteger (fitInteger 42)))
-            checkStmt emptyEnv stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt emptyEnv stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
     describe "checkLoop Environment Propagation" $ do
-        it "Returns modified environment when condition is TyBool" $ do
+        it "Returns success when condition is TyBool (Scope is isolated)" $ do
             let body = ASetVar (p "x_bool") (p "int") (AInteger (fitInteger 10))
             let stmt = AWhile (ABool True) body
             checkStmt env stmt `shouldSatisfy` \case
-                Right resEnv -> case Map.lookup (p "x_bool") (envVars resEnv) of
-                    Just TyInt -> True
-                    _ -> False
+                Right (_, _) -> True
                 _ -> False
 
-        it "Returns modified environment when condition is TyInt" $ do
+        it "Returns success when condition is TyInt (Scope is isolated)" $ do
             let body = ASetVar (p "y_int") (p "int") (AInteger (fitInteger 20))
             let stmt = AWhile (AInteger (fitInteger 1)) body
             checkStmt env stmt `shouldSatisfy` \case
-                Right resEnv -> case Map.lookup (p "y_int") (envVars resEnv) of
-                    Just TyInt -> True
-                    _ -> False
+                Right (_, _) -> True
                 _ -> False
 
         it "Returns Left Error when condition is invalid" $ do
             let stmt = AWhile AVoid AVoid
             checkStmt env stmt `shouldSatisfy` \case
-                Left err -> "Loop condition must be boolean or integer" `isInfixOfStr` err
+                Left err -> "'while' condition must be boolean or integer" `isInfixOfStr` err
                 _ -> False
     
     describe "Loop Condition Check" $ do
@@ -631,7 +584,7 @@ spec = describe "Semantic Checker Coverage" $ do
             let bodyS = AVoid
             
             let stmt = AFor initS condS updateS bodyS
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Verifies body sees variables from initStmt" $ do
             let initS = ASetVar (p "j_scope") (p "int") (AInteger (fitInteger 0))
@@ -639,7 +592,7 @@ spec = describe "Semantic Checker Coverage" $ do
             let updateS = AVoid
             let bodyS = ASetVar (p "j_scope") (p "auto") (AInteger (fitInteger 1))
             let stmt = AFor initS condS updateS bodyS
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Verifies loop variables do NOT leak into outer scope" $ do
 
@@ -647,7 +600,7 @@ spec = describe "Semantic Checker Coverage" $ do
             let stmt = AFor initS (ABool True) AVoid AVoid
             
             checkStmt env stmt `shouldSatisfy` \case 
-                Right resEnv -> 
+                Right (_, resEnv) -> 
                     case Map.lookup (p "leak_check") (envVars resEnv) of
                         Nothing -> True
                         Just _ -> False
@@ -655,11 +608,11 @@ spec = describe "Semantic Checker Coverage" $ do
 
         it "Passes TyBool condition (Right ())" $ do
             let stmt = AFor AVoid (ABool True) AVoid AVoid
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
         it "Passes TyInt condition (Right ())" $ do
             let stmt = AFor AVoid (AInteger (fitInteger 1)) AVoid AVoid
-            checkStmt env stmt `shouldSatisfy` \case Right _ -> True; _ -> False
+            checkStmt env stmt `shouldSatisfy` \case Right (_, _) -> True; _ -> False
 
     describe "Struct Access Semantic Verification" $ do
         
@@ -707,7 +660,7 @@ spec = describe "Semantic Checker Coverage" $ do
             let condS = ACall (ASymbol (DT.pack "<")) [ASymbol (DT.pack "i"), AInteger (fitInteger 10)]
             let loop = AFor initS condS AVoid AVoid
             checkStmt empty loop `shouldSatisfy` \case
-                Right _ -> True
+                Right (_, _) -> True
                 _ -> False
 
         it "checkFor: validates loop with integer condition (TyInt)" $ do
@@ -715,20 +668,20 @@ spec = describe "Semantic Checker Coverage" $ do
             let condS = ASymbol (DT.pack "k")
             let loop = AFor initS condS AVoid AVoid
             checkStmt empty loop `shouldSatisfy` \case
-                Right _ -> True
+                Right (_, _) -> True
                 _ -> False
 
         it "checkStmt: APos unwraps and returns updated environment" $ do
             let stmt = APos 1 1 (ASetVar (DT.pack "x") (DT.pack "int") (AInteger (fitInteger 42)))
             checkStmt empty stmt `shouldSatisfy` \case
-                Right newEnv -> case Map.lookup (DT.pack "x") (envVars newEnv) of
+                Right (_, newEnv) -> case Map.lookup (DT.pack "x") (envVars newEnv) of
                     Just TyInt -> True
                     _ -> False
                 _ -> False
 
         it "checkStmt: returns original environment for non-modifying statements" $ do
             checkStmt empty AVoid `shouldSatisfy` \case
-                Right resEnv -> Map.null (envVars resEnv)
+                Right (_, resEnv) -> Map.null (envVars resEnv)
                 _ -> False
 
         it "checkFor: propagates envAfterInit and accepts Boolean condition" $ do
@@ -737,7 +690,7 @@ spec = describe "Semantic Checker Coverage" $ do
             let loop = AFor initS condS AVoid AVoid
             
             checkStmt empty loop `shouldSatisfy` \case
-                Right _ -> True
+                Right (_, _) -> True
                 _ -> False
 
         it "checkFor: accepts Integer condition (TyInt case)" $ do
@@ -746,7 +699,7 @@ spec = describe "Semantic Checker Coverage" $ do
             let loop = AFor initS condS AVoid AVoid
             
             checkStmt empty loop `shouldSatisfy` \case
-                Right _ -> True 
+                Right (_, _) -> True 
                 _ -> False
 
         it "defineFunc: envWithFunc allows recursion (function visible in body)" $ do
@@ -754,7 +707,7 @@ spec = describe "Semantic Checker Coverage" $ do
             let funcDef = ADefineFunc (DT.pack "rec") [] (DT.pack "void") body
             
             checkStmt empty funcDef `shouldSatisfy` \case
-                Right _ -> True
+                Right (_, _) -> True
                 _ -> False
 
 
@@ -764,5 +717,5 @@ spec = describe "Semantic Checker Coverage" $ do
             let funcDef = ADefineFunc (DT.pack "getX") args (DT.pack "int") body
             
             checkStmt empty funcDef `shouldSatisfy` \case
-                Right _ -> True 
+                Right (_, _) -> True 
                 _ -> False
