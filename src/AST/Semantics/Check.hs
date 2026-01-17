@@ -2,7 +2,7 @@
 -- EPITECH PROJECT, 2025
 -- Glados
 -- File description:
--- Semantic Checker Engine
+-- Semantic Checker Engine with AST Transformation (Type Inference)
 -}
 
 module AST.Semantics.Check (checkAst, checkExpr, checkStmt) where
@@ -16,29 +16,57 @@ import AST.Ast (Ast(..))
 import AST.Semantics.Type
 import AST.Semantics.CheckCall (checkCall)
 
--- | Main entry point: validates a list of AST nodes.
-checkAst :: [Ast] -> Either String ()
-checkAst asts = case foldM checkStmt emptyEnv asts of
-    Left err -> Left err
-    Right _  -> Right ()
+-- | Main entry point: validates AND transforms a list of AST nodes.
+--
+-- This function iterates over the top-level AST nodes, threading the
+-- environment state. It returns a new AST where 'auto' types have been
+-- resolved to concrete types.
+--
+-- @param asts: The list of raw AST nodes from the parser.
+-- @return: Either an error message or the transformed AST list.
+checkAst :: [Ast] -> Either String [Ast]
+checkAst asts = do
+    (finalAsts, _) <- foldM processNode ([], emptyEnv) asts
+    return (reverse finalAsts)
+  where
+    -- acc = Accumulator (list of processed nodes)
+    -- env = Current Environment state
+    processNode (acc, env) node = do
+        (newNode, newEnv) <- checkStmt env node
+        return (newNode : acc, newEnv)
 
--- | Helper to insert a variable into the environment
+-- | Helper to insert a variable into the environment.
+-- Used to update the scope with new variable definitions.
 insertVar :: CheckEnv -> DT.Text -> Type -> Either String CheckEnv
 insertVar env name t =
     let newVars = Map.insert name t (envVars env)
     in Right $ env { envVars = newVars }
 
 -- | Check Expression: Verifies an expression and returns its Semantic Type.
+--
+-- Does not modify the AST, only extracts the type.
+-- Handles literals (Int, Bool), variables (Symbol), and complex structures.
 checkExpr :: CheckEnv -> Ast -> Either String Type
 checkExpr _ (AInteger _) = Right TyInt
 checkExpr _ (ABool _)    = Right TyBool
 checkExpr _ AVoid        = Right TyVoid
+checkExpr _ (ABlock []) = Right TyVoid
 checkExpr env (ASymbol name) = checkSymbol env name
-checkExpr env (AIf c t e)    = checkIf env c t e
+checkExpr env (AIf c t e)    = checkIfExpr env c t e
 checkExpr env (ASetStruct name fields) =
     checkStructInstantiation env name fields
 checkExpr env (ACall func args) = checkCall checkExpr env func args
 checkExpr env (AAccessStruct obj field) = checkStructAccess env obj field
+checkExpr env (AList list) = checkListExpr env list
+checkExpr env (ABlock xs) = checkBlockExpr env xs
+checkExpr env (ASetVar name typeStr expr) = do
+    actualType <- checkExpr env expr
+    let expectedType = parseType typeStr
+    if areTypesCompatible expectedType actualType
+        then Right actualType
+        else Left $ "Type mismatch in expression assignment for variable '"
+            ++ DT.unpack name ++ "'"
+checkExpr env (ADefineLambda args body) = checkLambda env args body
 checkExpr env (APos line _ ast) =
     case checkExpr env ast of
         Left err -> 
@@ -48,116 +76,186 @@ checkExpr env (APos line _ ast) =
         Right t  -> Right t
 checkExpr _ _ = Left "Error: Expression type not supported"
 
--- | Symbol lookup
+-- | Helper to check a block used as an expression.
+-- Returns the type of the *last* instruction in the block.
+checkBlockExpr :: CheckEnv -> [Ast] -> Either String Type
+checkBlockExpr _ [] = Right TyVoid
+checkBlockExpr env [x] = checkExpr env x
+checkBlockExpr env (x:xs) = do
+    _ <- checkExpr env x
+    checkBlockExpr env xs
+
+-- | Looks up a variable symbol in the environment.
 checkSymbol :: CheckEnv -> DT.Text -> Either String Type
 checkSymbol env name = case Map.lookup name (envVars env) of
     Just t  -> Right t
     Nothing -> Left $ "Undefined variable '" ++ DT.unpack name ++ "'"
 
--- | Validates that a specific field exists within a defined structure.
+-- | Checks a Lambda expression.
+-- Infers the return type based on the body.
+-- Assumes arguments are Integers (default behavior for untyped lambdas in this grammar).
+checkLambda :: CheckEnv -> [DT.Text] -> Ast -> Either String Type
+checkLambda env args body = do
+    let argTypes = map (\_ -> TyInt) args
+
+    envWithArgs <- foldM (\e (n, t) -> insertVar e n t) env (zip args argTypes)
+    retType <- checkExpr envWithArgs body
+    Right (TyFunc argTypes retType)
+
+-- | Check Statement: Verifies AND transforms a statement.
 --
--- @args
---   - env: The current checking environment containing struct definitions.
---   - sName: The name of the structure type to check against.
---   - field: The name of the field to look up.
+-- Dispatcher function that routes AST nodes to specific handlers.
+-- Returns a tuple containing the transformed AST node (with inferred types)
+-- and the updated environment.
 --
--- @return
---   The 'Type' of the field if it exists, or an error message if the 
---   struct is undefined or the field is missing.
-validateStructField :: CheckEnv -> DT.Text -> DT.Text -> Either String Type
-validateStructField env sName field = do
-    def <- getStructDef env sName
-    case Map.lookup field (structFields def) of
-        Just t -> Right t
-        Nothing -> Left $ "Field '" ++ DT.unpack field ++ 
-                          "' not found in struct '" ++ 
-                          DT.unpack sName ++ "'"
-
--- | Validates a structure member access expression (e.g., 'obj.field').
---
--- @args
---   - env: The current checking environment.
---   - obj: The AST node representing the object being accessed.
---   - field: The name of the field to access.
---
--- @details
---   First, it verifies that the 'obj' expression evaluates to a structure type (`TyStruct`).
---   Then, it delegates to 'validateStructField' to ensure the field exists 
---   within that specific structure definition.
---
--- @return
---   The semantic 'Type' of the accessed field, or an error if the object 
---   is not a structure or the field is invalid.
-checkStructAccess :: CheckEnv -> Ast -> DT.Text -> Either String Type
-checkStructAccess env obj field = do
-    typeObj <- checkExpr env obj
-    case typeObj of
-        TyStruct name -> validateStructField env name field
-        _ -> Left $ "Cannot access field '" ++ DT.unpack field ++ 
-                    "' on non-struct type " ++ typeToString typeObj
-
--- | IF logic
-checkIf :: CheckEnv -> Ast -> Ast -> Ast -> Either String Type
-checkIf env cond thenB elseB = do
-    tCond <- checkExpr env cond
-    case tCond of
-        TyBool -> checkBranches env thenB elseB
-        TyInt  -> checkBranches env thenB elseB
-        _ -> Left "Error: 'if' condition must be boolean"
-
--- | Loop logic (While)
-checkLoop :: CheckEnv -> Ast -> Ast -> Either String CheckEnv
-checkLoop env cond body = do
-    tCond <- checkExpr env cond
-    case tCond of
-        TyBool -> checkStmt env body
-        TyInt  -> checkStmt env body
-        _ -> Left "Error: Loop condition must be boolean or integer"
-
--- | Loop logic (For)
-checkFor :: CheckEnv -> Ast -> Ast -> Ast -> Ast -> Either String CheckEnv
-checkFor env initStmt cond updateStmt body = do
-    envAfterInit <- checkStmt env initStmt
-    tCond <- checkExpr envAfterInit cond
-    case tCond of
-        TyBool -> Right ()
-        TyInt  -> Right ()
-        _ -> Left "Error: 'for' condition must be boolean or integer"
-    _ <- checkStmt envAfterInit updateStmt
-    _ <- checkStmt envAfterInit body
-    Right env
-
--- | Branches comparison
-checkBranches :: CheckEnv -> Ast -> Ast -> Either String Type
-checkBranches env thenB elseB = do
-    tThen <- checkExpr env thenB
-    tElse <- checkExpr env elseB
-    if areTypesCompatible tThen tElse
-        then Right tThen
-        else Left $ "Type mismatch in 'if' branches (" ++
-                    typeToString tThen ++ " vs " ++
-                    typeToString tElse ++ ")"
-
--- | Check Statement: Verifies a statement and returns the updated environment.
-checkStmt :: CheckEnv -> Ast -> Either String CheckEnv
-checkStmt env (ADefineStruct name fields) = defineStruct env name fields
-checkStmt env (ASetVar name typeStr expr) = checkSetVar env name typeStr expr
+-- @param env: Current Semantic Environment.
+-- @param node: AST node to process.
+checkStmt :: CheckEnv -> Ast -> Either String (Ast, CheckEnv)
+checkStmt env (ASetVar name typeStr expr) =
+    processSetVar env name typeStr expr
 checkStmt env (ADefineFunc name args ret body) =
-    defineFunc env name args ret body
-checkStmt env (AWhile cond body) = checkLoop env cond body
-checkStmt env (AFor i c u b) = checkFor env i c u b
-checkStmt env (APos line _ ast) = 
+    processFuncDef env name args ret body
+checkStmt env (AIf c t e) = processIfStmt env c t e
+checkStmt env (AWhile c body) = processWhileStmt env c body
+checkStmt env (AFor i c u b) = processForLoop env i c u b
+checkStmt env (AList list) = do
+    (newList, newEnv) <- foldM processList ([], env) list
+    return (AList (reverse newList), newEnv)
+  where
+    processList (acc, e) node = do
+        (newNode, nEnv) <- checkStmt e node
+        return (newNode : acc, nEnv)
+checkStmt env (ABlock list) = do
+    (newList, _) <- foldM processList ([], env) list
+    return (ABlock (reverse newList), env)
+  where
+    processList (acc, e) node = do
+        (newNode, nEnv) <- checkStmt e node
+        return (newNode : acc, nEnv)
+checkStmt env (APos l c ast) = 
     case checkStmt env ast of
         Left err -> 
             if "Error line" `isPrefixOf` err
                 then Left err
-                else Left $ "Error line " ++ show line ++ ": " ++ err
-        Right newEnv -> Right newEnv
-checkStmt env _ = Right env
+                else Left $ "Error line " ++ show l ++ ": " ++ err
+        Right (newAst, newEnv) -> Right (APos l c newAst, newEnv)
+checkStmt env (ADefineStruct name fields) = do
+    newEnv <- defineStruct env name fields
+    return (ADefineStruct name fields, newEnv)
+checkStmt env (AReturn expr) = do
+    actualType <- checkExpr env expr
+    case Map.lookup (DT.pack "$RET") (envVars env) of
+        Just expectedType -> 
+            unless (areTypesCompatible expectedType actualType) $
+                Left $ "Return type mismatch: expected " ++
+                       typeToString expectedType ++ " but got " ++
+                       typeToString actualType
+        Nothing -> Right ()
+    return (AReturn expr, env)
+checkStmt env (AImport _) = Right (AVoid, env)
+checkStmt env (AExprStmt stmt) = do
+    (newStmt, newEnv) <- checkStmt env stmt
+    return (AExprStmt newStmt, newEnv)
+checkStmt env ast = do
+    _ <- checkExpr env ast
+    return (ast, env)
 
--- | Define a new structure in the environment.
--- Handles parsing of field types and duplicate checks.
-defineStruct :: CheckEnv -> DT.Text -> [(DT.Text, DT.Text)] -> Either String CheckEnv
+-- | Helper to validate boolean/int condition for loops/if.
+--
+-- @param c: The Condition AST to check.
+-- @param context: String name of the structure (e.g. "if", "while").
+validateCondition :: CheckEnv -> Ast -> String -> Either String ()
+validateCondition env c context = do
+    tCond <- checkExpr env c
+    unless (areTypesCompatible TyBool tCond ||
+        areTypesCompatible TyInt tCond) $
+        Left $ "Error: '" ++ context ++
+               "' condition must be boolean or integer"
+
+-- | Process variable assignment (handles auto).
+-- Calculates the actual type of the expression and replaces 'auto'.
+processSetVar :: CheckEnv -> DT.Text -> DT.Text -> Ast ->
+    Either String (Ast, CheckEnv)
+processSetVar env name typeStr expr = do
+    actualType <- checkExpr env expr
+    let (declaredType, finalTypeStr) = 
+            if typeStr == DT.pack "auto"
+            then (actualType, DT.pack (typeToString actualType))
+            else (parseType typeStr, typeStr)
+    newEnv <- applyAssignment env name declaredType actualType
+    return (ASetVar name finalTypeStr expr, newEnv)
+
+-- | Process function definition.
+--
+-- 1. Prepares environment (adds function name + arguments).
+-- 2. Checks function body.
+-- 3. Verifies return statements recursively.
+processFuncDef :: CheckEnv -> DT.Text -> [(DT.Text, DT.Text)] -> DT.Text ->
+    Ast -> Either String (Ast, CheckEnv)
+processFuncDef env name args ret body = do
+    let retTy = parseType ret
+    (envWithFunc, envForBody) <- prepareFuncEnv env name args retTy
+    let envWithRet = case insertVar envForBody (DT.pack "$RET") retTy of
+            Right e -> e
+            Left _ -> envForBody 
+    (newBody, _) <- checkStmt envWithRet body
+    _ <- checkMissingReturn name retTy newBody
+    return (ADefineFunc name args ret newBody, envWithFunc)
+
+-- | Helper to setup the environment for a function.
+-- Adds the function itself (for recursion) and its arguments.
+prepareFuncEnv :: CheckEnv -> DT.Text -> [(DT.Text, DT.Text)] -> Type ->
+    Either String (CheckEnv, CheckEnv)
+prepareFuncEnv env name args retTy = do
+    let argTypes = map (parseType . snd) args
+    let funcType = TyFunc argTypes retTy
+    envWithFunc <- insertVar env name funcType
+    envForBody <- foldM (\e (n, t) -> insertVar e n (parseType t))
+                        envWithFunc args
+    return (envWithFunc, envForBody)
+
+-- | Process If statement.
+--
+-- Abbreviations used:
+-- c = Condition AST
+-- t = Then branch AST
+-- e = Else branch AST
+processIfStmt :: CheckEnv -> Ast -> Ast -> Ast -> Either String (Ast, CheckEnv)
+processIfStmt env c t e = do
+    validateCondition env c "if"
+    (newT, _) <- checkStmt env t
+    (newE, _) <- checkStmt env e
+    return (AIf c newT newE, env)
+
+-- | Process While statement.
+--
+-- Abbreviations used:
+-- c = Condition AST
+processWhileStmt :: CheckEnv -> Ast -> Ast -> Either String (Ast, CheckEnv)
+processWhileStmt env c body = do
+    validateCondition env c "while"
+    (newBody, _) <- checkStmt env body
+    return (AWhile c newBody, env)
+
+-- | Process For loop.
+--
+-- Abbreviations used:
+-- i = Initialization AST (e.g. i = 0)
+-- c = Condition AST (e.g. i < 10)
+-- u = Update AST (e.g. i = i + 1)
+-- b = Body AST
+processForLoop :: CheckEnv -> Ast -> Ast -> Ast -> Ast ->
+    Either String (Ast, CheckEnv)
+processForLoop env i c u b = do
+    (newInit, envAfterInit) <- checkStmt env i
+    validateCondition envAfterInit c "for"
+    (newUpdate, _) <- checkStmt envAfterInit u
+    (newBody, _) <- checkStmt envAfterInit b
+    return (AFor newInit c newUpdate newBody, env)
+
+-- | Registers a new Structure definition in the environment.
+defineStruct :: CheckEnv -> DT.Text -> [(DT.Text, DT.Text)] ->
+    Either String CheckEnv
 defineStruct env name fields =
     case Map.lookup name (envStructs env) of
         Just _ -> Left $ "Struct '" ++ DT.unpack name ++ "' is already defined"
@@ -168,34 +266,10 @@ defineStruct env name fields =
                 newStructs = Map.insert name newDef (envStructs env)
             in Right $ env { envStructs = newStructs }
 
--- | Variable assignment
-checkSetVar :: CheckEnv -> DT.Text -> DT.Text -> Ast -> Either String CheckEnv
-checkSetVar env name typeStr expr = do
-    let declaredType = parseType typeStr
-    actualType <- checkExpr env expr
-    applyAssignment env name declaredType actualType
-
--- | Define a new function in the environment.
---
--- Parses argument types and return type.
--- Adds the function to the environment (enabling recursion).
--- Creates a new scope with arguments bound.
--- Validates the function body within this new scope.
-defineFunc :: CheckEnv -> DT.Text -> [(DT.Text, DT.Text)]
-           -> DT.Text -> Ast -> Either String CheckEnv
-defineFunc env name args retType body = do
-    let argTypes = map (parseType . snd) args
-    let retTy = parseType retType
-    let funcType = TyFunc argTypes retTy
-    
-    envWithFunc <- insertVar env name funcType
-    envForBody <- foldM (\e (n, t) -> insertVar e n (parseType t))
-                        envWithFunc args
-    _ <- checkStmt envForBody body
-    Right envWithFunc
-
--- | Applies the assignment logic based on types compatibility
-applyAssignment :: CheckEnv -> DT.Text -> Type -> Type -> Either String CheckEnv
+-- | Applies assignment logic.
+-- Verifies that the actual value type matches the declared variable type.
+applyAssignment :: CheckEnv -> DT.Text -> Type -> Type ->
+    Either String CheckEnv
 applyAssignment env name TyAuto actual = insertVar env name actual
 applyAssignment env name declared actual
     | areTypesCompatible declared actual = insertVar env name declared
@@ -203,8 +277,49 @@ applyAssignment env name declared actual
                          "' declared as " ++ typeToString declared ++ 
                          " but assigned " ++ typeToString actual
 
--- | Validates the instantiation of a structure (e.g. new Point {x: 1})
-checkStructInstantiation :: CheckEnv -> DT.Text -> [(DT.Text, Ast)] -> Either String Type
+-- | Handles 'if' used as an expression (e.g. x = if c then 1 else 2).
+checkIfExpr :: CheckEnv -> Ast -> Ast -> Ast -> Either String Type
+checkIfExpr env cond thenB elseB = do
+    tCond <- checkExpr env cond
+    case tCond of
+        TyBool -> checkBranches env thenB elseB
+        TyInt  -> checkBranches env thenB elseB
+        _ -> Left "Error: 'if' condition must be boolean"
+
+-- | Verifies that both branches of an 'if' expression return compatible types.
+checkBranches :: CheckEnv -> Ast -> Ast -> Either String Type
+checkBranches env thenB elseB = do
+    tThen <- checkExpr env thenB
+    tElse <- checkExpr env elseB
+    if areTypesCompatible tThen tElse
+        then Right tThen
+        else Left $ "Type mismatch in 'if' branches (" ++
+                    typeToString tThen ++ " vs " ++
+                    typeToString tElse ++ ")"
+
+-- | Checks existence of a field within a specific struct definition.
+validateStructField :: CheckEnv -> DT.Text -> DT.Text -> Either String Type
+validateStructField env sName field = do
+    def <- getStructDef env sName
+    case Map.lookup field (structFields def) of
+        Just t -> Right t
+        Nothing -> Left $ "Field '" ++ DT.unpack field ++ 
+                          "' not found in struct '" ++ 
+                          DT.unpack sName ++ "'"
+
+-- | Validates access to a struct field (e.g. object.field).
+checkStructAccess :: CheckEnv -> Ast -> DT.Text -> Either String Type
+checkStructAccess env obj field = do
+    typeObj <- checkExpr env obj
+    case typeObj of
+        TyStruct name -> validateStructField env name field
+        _ -> Left $ "Cannot access field '" ++ DT.unpack field ++ 
+                    "' on non-struct type " ++ typeToString typeObj
+
+-- | Validates a "new Struct {...}" instantiation.
+-- Checks for extra fields, missing fields, and field types.
+checkStructInstantiation :: CheckEnv -> DT.Text -> [(DT.Text, Ast)] ->
+    Either String Type
 checkStructInstantiation env name args = do
     def <- getStructDef env name
     let expected = structFields def
@@ -216,14 +331,14 @@ checkStructInstantiation env name args = do
     mapM_ (validateField env expected) args
     Right (TyStruct name)
 
--- | Retrieves the struct definition
+-- | Retrieves a Struct definition from the environment.
 getStructDef :: CheckEnv -> DT.Text -> Either String StructDef
 getStructDef env name = case Map.lookup name (envStructs env) of
     Just d -> Right d
     Nothing -> Left $ "Error: Undefined struct '" ++ 
                       DT.unpack name ++ "'"
 
--- | Checks for unknown fields provided in instantiation
+-- | Errors if fields are provided that don't exist in the struct definition.
 checkExtraFields :: DT.Text -> [DT.Text] -> [DT.Text] -> Either String ()
 checkExtraFields name expected provided =
     let unknown = filter (`notElem` expected) provided
@@ -231,7 +346,7 @@ checkExtraFields name expected provided =
         Left $ "Error: Unknown field '" ++ DT.unpack u ++ 
                   "' in struct '" ++ DT.unpack name ++ "'"
 
--- | Checks for missing mandatory fields
+-- | Errors if mandatory fields are missing from the instantiation.
 checkMissingFields :: DT.Text -> [DT.Text] -> [DT.Text] -> Either String ()
 checkMissingFields name expected provided =
     let missing = filter (`notElem` provided) expected
@@ -239,13 +354,47 @@ checkMissingFields name expected provided =
         Left $ "Error: Missing field '" ++ DT.unpack m ++ 
                   "' in construction of '" ++ DT.unpack name ++ "'"
 
--- | Validates the type of a single field expression
-validateField :: CheckEnv -> Map.Map DT.Text Type -> (DT.Text, Ast) -> Either String ()
+-- | Validates the type of a single field assignment in a constructor.
+validateField :: CheckEnv -> Map.Map DT.Text Type -> (DT.Text, Ast) ->
+    Either String ()
 validateField env expectedFields (fieldName, expr) = do
     actualType <- checkExpr env expr
     let expectedType = expectedFields Map.! fieldName
-    
+
     unless (areTypesCompatible expectedType actualType) $
         Left $ "Error: Field '" ++ DT.unpack fieldName ++ 
                "' expected " ++ typeToString expectedType ++ 
                " but got " ++ typeToString actualType
+
+-- | Checks that all elements in a list literal have the same type.
+checkListExpr :: CheckEnv -> [Ast] -> Either String Type
+checkListExpr _ [] = Right (TyList TyVoid)
+checkListExpr env (x:xs) = do
+    expectedType <- checkExpr env x
+    forM_ xs $ \elemAst -> do
+        elemType <- checkExpr env elemAst
+        unless (areTypesCompatible expectedType elemType) $
+            Left $ "List type mismatch: expected " ++
+                   typeToString expectedType ++
+                   " but got " ++ typeToString elemType
+    return (TyList expectedType)
+
+-- | Checks if the AST contains a Return statement.
+hasReturn :: Ast -> Bool
+hasReturn (AReturn _) = True
+hasReturn (ABlock stmts) = any hasReturn stmts
+hasReturn (AList stmts) = any hasReturn stmts
+hasReturn (AIf _ t e) = hasReturn t || hasReturn e
+hasReturn (AWhile _ body) = hasReturn body
+hasReturn (AFor _ _ _ body) = hasReturn body
+hasReturn (APos _ _ ast) = hasReturn ast
+hasReturn _ = False
+
+-- | Validates that a non-void function actually returns.
+checkMissingReturn :: DT.Text -> Type -> Ast -> Either String ()
+checkMissingReturn _ TyVoid _ = Right () -- Les fonctions void n'ont pas besoin de return
+checkMissingReturn name retTy body = 
+    if hasReturn body
+    then Right ()
+    else Left $ "Error: Function '" ++ DT.unpack name ++ "' declared as " ++ 
+                typeToString retTy ++ " but has no return statement"

@@ -112,6 +112,7 @@ data Instruction
 
     -- 3. Logic & Comparison
     | Eq                      -- ^ 0x20 EQ
+    | TEq                     -- ^ 0x26 TEQ
     | Lt                      -- ^ 0x21 LT
     | Le                      -- ^ 0x25 LE
     | Not                     -- ^ 0x22 NOT
@@ -126,8 +127,8 @@ data Instruction
     -- 5. Functions & Calls
     | Call Int                -- ^ 0x40 CALL [off]
     | TailCall Int            -- ^ 0x41 TAILCALL [off]
-    | CallIndirect            -- ^ 0x42 CALL_INDIRECT (address on stack)
-    | Ret                     -- ^ 0x43 RET
+    | CallIndirect            -- ^ 0x42 CALL_INDIRECT [address on stack]
+    | Ret Int                 -- ^ 0x43 RET [stack size]
 
     -- 6. Memory (Variables)
     | LoadLocal Int           -- ^ 0x50 LOAD_LOCAL [idx]
@@ -142,16 +143,21 @@ data Instruction
     | GetFuncAddr Int         -- ^ 0x61 GET_FUNC_ADDR [id]
     | BuildStruct Int         -- ^ 0x62 BUILD_STRUCT [n_fields]
     | GetStructField Int      -- ^ 0x63 GET_STRUCT_FIELD [idx]
+    | AttrUpdate              -- ^ 0x64 ATTR_UPDATE [struct] [idx] [value]
     | Cast Word8              -- ^ 0x80 CAST [TypeID]
 
     -- 9. List Operations
     | Cons                    -- ^ 0x90 CONS
-    | Head                    -- ^ 0x91 HEAD
-    | Tail                    -- ^ 0x92 TAIL
+    | Head                    -- ^ 0x91 HEAD [list]
+    | Tail                    -- ^ 0x92 TAIL [list]
+    | Nth                     -- ^ 0x93 NTH [list] [idx]
+    | NthUpdate               -- ^ 0x95 NTH_UPDATE [list] [idx] [value]
+    | BuildList Int           -- ^ 0x94 BUILD_LIST [n_elements]
 
     -- 8. System / Debug
     | Print                   -- ^ 0x70 PRINT
     | Halt                    -- ^ 0x71 HALT
+    | Exit                    -- ^ 0x72 EXIT
     | CheckStack Int          -- ^ 0xFE CHECK_STACK [N]
     | Nop                     -- ^ 0xFF NOP
     deriving (Show, Eq, Ord)
@@ -187,6 +193,7 @@ getInstCode Not                  = 0x22
 getInstCode And                  = 0x23
 getInstCode Or                   = 0x24
 getInstCode Le                   = 0x25
+getInstCode TEq                  = 0x26
 
 getInstCode (Jump _)             = 0x30
 getInstCode (JumpIfFalse _)      = 0x31
@@ -195,7 +202,7 @@ getInstCode (JumpIfTrue _)       = 0x32
 getInstCode (Call _)             = 0x40
 getInstCode (TailCall _)         = 0x41
 getInstCode CallIndirect         = 0x42
-getInstCode Ret                  = 0x43
+getInstCode (Ret _)              = 0x43
 
 getInstCode (LoadLocal _)        = 0x50
 getInstCode (StoreLocal _)       = 0x51
@@ -208,14 +215,19 @@ getInstCode (MakeClosure _ _)    = 0x60
 getInstCode (GetFuncAddr _)      = 0x61
 getInstCode (BuildStruct _)      = 0x62
 getInstCode (GetStructField _)   = 0x63
+getInstCode AttrUpdate           = 0x64
 getInstCode (Cast _)             = 0x80
 
 getInstCode Cons                 = 0x90
 getInstCode Head                 = 0x91
 getInstCode Tail                 = 0x92
+getInstCode Nth                  = 0x93
+getInstCode (BuildList _)        = 0x94
+getInstCode NthUpdate            = 0x95
 
 getInstCode Print                = 0x70
 getInstCode Halt                 = 0x71
+getInstCode Exit                 = 0x72
 getInstCode (CheckStack _)       = 0xFE
 getInstCode Nop                  = 0xFF
 
@@ -247,6 +259,7 @@ instructionSize Mod                 = 1
 
 -- Logic & Comparison
 instructionSize Eq                  = 1
+instructionSize TEq                 = 1
 instructionSize Lt                  = 1
 instructionSize Le                  = 1
 instructionSize Not                 = 1
@@ -262,7 +275,7 @@ instructionSize (JumpIfTrue _)      = 1 + 4
 instructionSize (Call _)            = 1 + 4
 instructionSize (TailCall _)        = 1 + 4
 instructionSize CallIndirect        = 1
-instructionSize Ret                 = 1
+instructionSize (Ret _)             = 1 + 4
 
 -- Memory (Variables)
 instructionSize (LoadLocal _)       = 1 + 4
@@ -277,15 +290,20 @@ instructionSize (MakeClosure _ _)   = 1 + 4 + 4
 instructionSize (GetFuncAddr _)     = 1 + 4
 instructionSize (BuildStruct _)     = 1 + 4
 instructionSize (GetStructField _)  = 1 + 4
+instructionSize AttrUpdate          = 1
 instructionSize (Cast _)            = 1 + 1
 
 -- List Operations
 instructionSize Cons                = 1
 instructionSize Head                = 1
 instructionSize Tail                = 1
+instructionSize Nth                 = 1
+instructionSize (BuildList _)       = 1 + 4
+instructionSize NthUpdate           = 1
 
 -- System / Debug
 instructionSize Print               = 1
 instructionSize Halt                = 1
+instructionSize Exit                = 1
 instructionSize (CheckStack _)      = 1 + 4
 instructionSize Nop                 = 1

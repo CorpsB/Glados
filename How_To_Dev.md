@@ -11,7 +11,6 @@ Welcome to the **Noopy** programming language documentation. This guide provides
 5. [Custom Structures](#5-custom-structures)
 6. [Modules & Imports](#6-modules--imports)
 7. [Built-ins](#7-built-ins)
-8. [Syntactic sugar](#8-syntactic-sugar)
 
 ---
 
@@ -218,20 +217,4 @@ Standard operators and functions available globally.
 | `&&`, `!`, `\|\|` | Logical operators |
 | `print(val)` | Prints a value to stdout |
 |`int8(integer)`, `uint8(integer)`, `int16(integer)`, `uint16(integer)`, `int32(integer)`, `uint32(integer)`, `int64(integer)`, `uint64(integer)`, `char(integer)`, `uchar(integer)` | Casts value to specific Integer type|
-|`exit(code)`, `head(list)`, `cons(list)`, `tail(lsit)`, `nth(list, index)`| Standard list manipulation functions|
-
-
-### 8.  Syntactic sugar
-
-All types of syntactic sugar available.
-
-| User Syntax|
-| :--- |
-| `i++` or `++i` |
-| `i--` or `--i` |
-| `x += y` |
-| `x -= y` |
-| `x *= y` |
-| `x /= y` |
-| `x >= y` or `x <= y` |
-| `x != y` |
+|`exit(code)`, `head(list)`, `cons(list)`, `tail(lsit)`, nth(list, index)| Standard list manipulation functions|

@@ -1,0 +1,14 @@
+struct Player {
+    hp: int;
+}
+
+func boost(p: Player) -> int {
+    p.hp = 99;
+    ret p.hp;
+}
+
+func main() {
+    p: Player = new Player { hp: 1 };
+    print(boost(p));
+}
+main();

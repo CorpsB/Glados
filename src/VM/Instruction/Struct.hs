@@ -15,6 +15,7 @@ Handles the creation of structures.
 module VM.Instruction.Struct
     ( instBuildStruct
     , instGetStructField
+    , instAttrUpdate
     , pushStruct
     ) where
 
@@ -25,6 +26,7 @@ import VM.VMState (VMState(..), VirtualMachine)
 import VM.VMValue (VMValue(..))
 import VM.VMStack (stackPush, stackPop)
 import VM.Bytecode.Reader (readInt32)
+import Common.Type.Integer (intValueToInt)
 
 -- | Helper for instBuildStruct to manipulate the stack.
 --
@@ -76,3 +78,26 @@ instGetStructField = do
             False -> error $ "VM Error: Struct Field Access Out of Bounds " ++
                 "(" ++ show idx ++ ")"
         _ -> error "VM Error: GET_STRUCT_FIELD expects a Struct"
+
+-- | Implements ATTR_UPDATE (Opcode 0x64).
+--
+-- @details
+--   Updates a field in a structure.
+--   Because structures are immutable, this creates a shallow copy.
+--
+--   Stack Order:
+--     Top    -> New Value
+--     Next   -> Field Index (Int)
+--     Bottom -> Struct
+--
+instAttrUpdate :: VirtualMachine ()
+instAttrUpdate = do
+    v <- stackPop
+    idx <- stackPop
+    struct <- stackPop
+    case (struct, idx) of
+        (VStruct vec, VInt vi) -> let i = intValueToInt vi in
+            case i >= 0 && i < V.length vec of
+                True -> stackPush (VStruct (vec V.// [(i, v)]))
+                False -> error $ "VM Error: attr_update OOB (" ++ show i ++ ")"
+        (other, _) -> error $ "VM Error: attr_update not struct " ++ show other

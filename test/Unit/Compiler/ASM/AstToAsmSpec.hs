@@ -66,9 +66,25 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
       Map.lookup "*" builtinMap `shouldBe` Just Mul
       Map.lookup "div" builtinMap `shouldBe` Just Div
       Map.lookup "mod" builtinMap `shouldBe` Just Mod
-      Map.lookup "==" builtinMap `shouldBe` Just Eq
+      Map.lookup "eq?" builtinMap `shouldBe` Just Eq
       Map.lookup "<" builtinMap `shouldBe` Just Lt
       Map.lookup "<=" builtinMap `shouldBe` Just Le
+      Map.lookup "print" builtinMap `shouldBe` Just Print
+      Map.lookup "exit" builtinMap `shouldBe` Just Exit
+      Map.lookup "cons" builtinMap `shouldBe` Just Cons
+      Map.lookup "head" builtinMap `shouldBe` Just Head
+      Map.lookup "tail" builtinMap `shouldBe` Just Tail
+      Map.lookup "nth" builtinMap `shouldBe` Just Nth
+      Map.lookup "int8" builtinMap `shouldBe` Just (Cast 0x01)
+      Map.lookup "uint8" builtinMap `shouldBe` Just (Cast 0x02)
+      Map.lookup "int16" builtinMap `shouldBe` Just (Cast 0x03)
+      Map.lookup "uint16" builtinMap `shouldBe` Just (Cast 0x04)
+      Map.lookup "int32" builtinMap `shouldBe` Just (Cast 0x05)
+      Map.lookup "uint32" builtinMap `shouldBe` Just (Cast 0x06)
+      Map.lookup "int64" builtinMap `shouldBe` Just (Cast 0x07)
+      Map.lookup "uint64" builtinMap `shouldBe` Just (Cast 0x08)
+      Map.lookup "char" builtinMap `shouldBe` Just (Cast 0x09)
+      Map.lookup "uchar" builtinMap `shouldBe` Just (Cast 0x10)
       Map.lookup "unknown" builtinMap `shouldBe` Nothing
 
   describe "astIntToAsm" $ do
@@ -83,17 +99,17 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
 
   describe "astSymbolToAsm" $ do
     it "ScopeGlobal -> LoadGlobal" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 5) }
+      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 5, "int") }
       let (_, st) = expectRight (runCM (astSymbolToAsm "x") st0)
       csCode st `shouldBe` Seq.singleton (Real (LoadGlobal 5))
 
     it "ScopeLocal -> LoadLocal" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeLocal, 1) }
+      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeLocal, 1, "int") }
       let (_, st) = expectRight (runCM (astSymbolToAsm "x") st0)
       csCode st `shouldBe` Seq.singleton (Real (LoadLocal 1))
 
     it "ScopeCapture -> LoadCapture" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeCapture, 2) }
+      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeCapture, 2, "int") }
       let (_, st) = expectRight (runCM (astSymbolToAsm "x") st0)
       csCode st `shouldBe` Seq.singleton (Real (LoadCapture 2))
 
@@ -109,11 +125,11 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
       Seq.length code `shouldBe` 3
       Seq.index code 0 `shouldBe` Real (Push (ImmBool True))
       Seq.index code 1 `shouldBe` Real (Push (ImmInt (Common.I32 1)))
-      Seq.index code 2 `shouldBe` CallLabel "list"
+      Seq.index code 2 `shouldBe` Real (BuildList 2)
 
     it "empty: only CallLabel \"list\"" $ do
       let (_, st) = expectRight (runCM (astListToAsm mockCompile []) createCompilerState)
-      csCode st `shouldBe` Seq.singleton (CallLabel "list")
+      csCode st `shouldBe` Seq.singleton (Real (BuildList 0))
 
     it "propagates compileFn errors from an element" $ do
       let bad _ = lift (Left "elem error")
@@ -140,11 +156,11 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
       let code = csCode st
       Seq.length code `shouldBe` 2
       Seq.index code 0 `shouldBe` Real (Push (ImmInt (Common.I32 7)))
-      Seq.index code 1 `shouldBe` CallLabel "myFunc"
+      Seq.index code 1 `shouldBe` CallLabel "fun_myFunc"
 
     it "callee not symbol: returns Left" $ do
       let err = expectLeft (runCM (astCallToAsm mockCompile (ABool True) []) createCompilerState)
-      unpack err `shouldContain` "Higher calls are not supported yet"
+      unpack err `shouldContain` "Error: Cannot call a Boolean"
 
     it "propagates compileFn errors from an argument" $ do
       let bad _ = lift (Left "arg error")
@@ -153,7 +169,7 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
 
   describe "mockCompile (extra coverage)" $ do
     it "covers ASymbol branch" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 9) }
+      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 9, "int") }
       let (_, st) = expectRight (runCM (mockCompile (ASymbol "x")) st0)
       csCode st `shouldBe` Seq.singleton (Real (LoadGlobal 9))
 
@@ -164,7 +180,7 @@ spec = describe "Compiler.ASM.AstToAsm (max coverage)" $ do
         Seq.fromList
           [ Real (Push (ImmInt (Common.I32 1)))
           , Real (Push (ImmInt (Common.I32 2)))
-          , CallLabel "list"
+          , Real (BuildList 2)
           ]
 
     it "mockCompile fallback returns Left" $ do

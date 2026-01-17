@@ -1,0 +1,4 @@
+func main() {
+    print(int64(-42));
+}
+main();

@@ -1,0 +1,4 @@
+func main() {
+    print(tail(42));
+}
+main();

@@ -1,0 +1,4 @@
+func main() {
+    print(uint16(65535));
+}
+main();

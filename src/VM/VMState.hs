@@ -60,6 +60,9 @@ data VMState = VMState
 
     , isRunning :: Bool
       -- ^ Execution flag. If False, the VM loop terminates.
+
+    , isDebug :: Bool
+      -- ^ Enable tracing
     }
 
 -- | The Monad Transformer stack used for the VM.
@@ -77,17 +80,17 @@ type VirtualMachine a = StateT VMState IO a
 -- @return
 --   A pristine 'VMState' ready for execution.
 --
-createVMState :: BS.ByteString -> VMState
-createVMState code = VMState
-    { bytecode        = code
-    , bytecodeIndex   = 0
-    , vStack          = V.empty
-    , baseVStackIndex = 0
-    , snapshotStack   = []
-    , env             = V.empty
-    , globalEnv       = V.replicate 1024 (undefined)
-    , isRunning       = True
-    }
+createVMState :: BS.ByteString -> Bool -> VMState
+createVMState code debug = VMState
+    { bytecode         = code
+    , bytecodeIndex    = 0
+    , vStack           = V.empty
+    , baseVStackIndex  = 0
+    , snapshotStack    = []
+    , env              = V.empty
+    , globalEnv        = V.replicate 1024 (undefined)
+    , isRunning        = True
+    , isDebug          = debug }
 
 -- | Creates a snapshot of the current VM context (IP, FP, Env).
 --
@@ -105,8 +108,7 @@ createSnapshot :: VMState -> CallSnapshot
 createSnapshot vm = CallSnapshot
     { callbackIndex = bytecodeIndex vm
     , vStackIndex   = baseVStackIndex vm
-    , vEnv          = env vm
-    }
+    , vEnv          = env vm }
 
 -- | Sets up a new stack frame for a function call (Shared Logic).
 --

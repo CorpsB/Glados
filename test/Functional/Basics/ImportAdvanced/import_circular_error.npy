@@ -1,0 +1,7 @@
+import "test/Functional/Basics/ImportAdvanced/cycle/a.npy";
+
+func main() {
+    print(a());
+}
+
+main();

@@ -46,13 +46,14 @@ pMemberSuffix = do
     fieldName <- pIdentifier
     return (\obj -> AAccessStruct obj fieldName)
 
--- | Parse a decimal integer.
+-- | Parse a signed decimal integer (e.g., 42, -42, +10).
 --
--- Uses 'fitInteger' to automatically determine the smallest fitting
--- integer type (I8, I16, I32, I64).
+-- Uses 'L.signed' to handle the optional sign (+ or -).
+-- We pass (return ()) as the space consumer to L.signed to forbid 
+-- spaces between the sign and the digits (e.g. "-42" is valid, "- 42" is not).
 pInteger :: Parser Ast
 pInteger = (lexeme $ do
-    val <- L.decimal
+    val <- L.signed (return ()) L.decimal
     return (AInteger (fitInteger val))) <?> "integer"
 
 -- | Parse an array index suffix.
@@ -261,7 +262,9 @@ additiveOps =
 -- | Table of comparison operators (==, <, >, etc).
 comparisonOps :: [Operator Parser Ast]
 comparisonOps =
-    [ InfixL (binary (DT.pack "eq?") <$ symbol (DT.pack "=="))
+    [ InfixL (binary (DT.pack "teq?")  <$ try (symbol (DT.pack "===")))
+    , InfixL (binary (DT.pack "tneq?") <$ try (symbol (DT.pack "!==")))
+    , InfixL (binary (DT.pack "eq?") <$ symbol (DT.pack "=="))
     , InfixL (binary (DT.pack "neq?") <$ symbol (DT.pack "!="))
     , InfixL (binary (DT.pack "<=")  <$ try (symbol (DT.pack "<=")))
     , InfixL (binary (DT.pack ">=")  <$ try (symbol (DT.pack ">=")))

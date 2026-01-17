@@ -146,7 +146,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
   describe "compileFor" $ do
     it "emits init, loop, update, jump back, end label" $ do
-      let action = compileFor compileAst (ABool True) (ABool False) (ABool True) (ABool False)
+      let action = compileFor compileAst (ABool True) (ABool False) (ABool False) (ABool True)
       let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe`
         Seq.fromList
@@ -184,29 +184,25 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
 
   describe "compileSetVar" $ do
     it "stores value and registers global symbol" $ do
-      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" (AInteger (Common.I32 3))) createCompilerState)
-      Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0)
+      let (_, st) = expectRight (runCM (compileSetVar compileAst "x" "int" (AInteger (Common.I32 3)) False) createCompilerState)
+      Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeGlobal, 0, "int")
       csNextIndex st `shouldBe` 1
       csCode st `shouldBe`
         Seq.fromList
           [ Real (Push (ImmInt (Common.I32 3)))
+          , Real Dup
           , Real (StoreGlobal 0)
           ]
 
-    it "fails on redefinition" $ do
-      let st0 = createCompilerState { csSymbols = Map.singleton "x" (ScopeGlobal, 7), csNextIndex = 8 }
-      let err = expectLeft (runCM (compileSetVar compileAst "x" (ABool True)) st0)
-      err `shouldBe` "Symbol already defined: x"
-
   describe "compileDefineStruct / compileSetStruct" $ do
     it "compileDefineStruct registers struct definition only" $ do
-      let action = compileDefineStruct "Point" [("x","Int"),("y","Int")]
+      let action = compileDefineStruct "Point" [("x", "int"), ("y", "int")]
       let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe` Seq.empty
-      Map.lookup "Point" (csStructs st) `shouldBe` Just ["x","y"]
+      Map.lookup "Point" (csStructs st) `shouldBe` Just [("x", "int"), ("y", "int")]
 
     it "compileSetStruct emits fields in struct order then BuildStruct" $ do
-      let st0 = createCompilerState { csStructs = Map.singleton "Point" ["x","y"] }
+      let st0 = createCompilerState { csStructs = Map.singleton "Point" [("x", "int"), ("y", "int")] }
       let action = compileSetStruct compileAst "Point"
             [ ("y", AInteger (Common.I32 2))
             , ("x", AInteger (Common.I32 1))
@@ -220,7 +216,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           ]
 
     it "compileSetStruct fails when a required field is missing" $ do
-      let st0 = createCompilerState { csStructs = Map.singleton "Point" ["x","y"] }
+      let st0 = createCompilerState { csStructs = Map.singleton "Point" [("x", "int"), ("y", "int")] }
       let err = expectLeft (runCM (compileSetStruct compileAst "Point" [("x", ABool True)]) st0)
       T.unpack err `shouldContain` "Missing field"
 
@@ -232,17 +228,18 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
     it "compiles isolated function; code goes to csFuncs, outer csCode preserved" $ do
       let action = do
             emitInstruction Nop
-            compileDefineFun compileAst "foo" ["x","y"] (ASymbol "x")
+            compileDefineFun compileAst "foo" [("x", "int"), ("y", "int")] (ASymbol "x")
             emitInstruction Halt
       let (_, st) = expectRight (runCM action createCompilerState)
       csCode st `shouldBe` Seq.fromList [Real Nop, Real Halt]
       csFuncs st `shouldBe`
         Seq.fromList
-          [ LabelDef "fun_foo_0"
-          , Real (LoadLocal 0)
-          , Real Ret
+          [ LabelDef "fun_foo"
+          , Real (LoadLocal (-2))
+          , Real (Push (ImmInt (Common.I64 0)))
+          , Real (Ret 2)
           ]
-      csLabelCnt st `shouldBe` 1
+      csLabelCnt st `shouldBe` 0
 
   describe "compileDefineLambda" $ do
     it "multi-capture: loads captures, builds closure, lambda loads captures then Ret" $ do
@@ -250,8 +247,8 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
             createCompilerState
               { csSymbols =
                   Map.fromList
-                    [ ("a", (ScopeGlobal, 2))
-                    , ("b", (ScopeGlobal, 7))
+                    [ ("a", (ScopeGlobal, 2, "int"))
+                    , ("b", (ScopeGlobal, 7, "int"))
                     ]
               }
       let body = AList [ASymbol "a", ASymbol "b"]
@@ -267,19 +264,19 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           [ LabelDef "lambda_0"
           , Real (LoadCapture 0)
           , Real (LoadCapture 1)
-          , Real Ret
+          , Real (Ret 0)
           ]
       csLabelCnt st `shouldBe` 1
 
     it "no-capture lambda: builds closure with 0 captures and uses LoadLocal for args" $ do
       let (_, st) = expectRight (runCM (compileDefineLambda compileAst ["x"] (ASymbol "x")) createCompilerState)
       csCode st `shouldBe` Seq.fromList [MakeClosureLabel "lambda_0" 0]
-      csFuncs st `shouldBe` Seq.fromList [LabelDef "lambda_0", Real (LoadLocal 0), Real Ret]
+      csFuncs st `shouldBe` Seq.fromList [LabelDef "lambda_0", Real (LoadLocal (-1)), Real (Ret 0)]
       csLabelCnt st `shouldBe` 1
 
     it "fails if a capture is undefined" $ do
       let err = expectLeft (runCM (compileDefineLambda compileAst ["x"] (ASymbol "y")) createCompilerState)
-      T.unpack err `shouldContain` "Undefined symbol: y"
+      T.unpack err `shouldContain` "Undefined symbol: \"y\""
 
   describe "compileTail" $ do
     it "builtin call in tail position emits builtin instruction then Ret" $ do
@@ -290,7 +287,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           [ Real (Push (ImmInt (Common.I32 1)))
           , Real (Push (ImmInt (Common.I32 2)))
           , Real Add
-          , Real Ret
+          , Real (Ret 0)
           ]
 
     it "non-builtin call in tail position emits TailCallLabel" $ do
@@ -310,7 +307,7 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           [ Real (Push (ImmBool True))
           , Real (Push (ImmBool False))
           , Real CallIndirect
-          , Real Ret
+          , Real (Ret 0)
           ]
 
     it "tail If uses compileTail recursively on branches" $ do
@@ -321,11 +318,11 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
           [ Real (Push (ImmBool True))
           , JumpIfFalseLabel "else_0"
           , Real (Push (ImmBool True))
-          , Real Ret
+          , Real (Ret 0)
           , JumpLabel "endif_1"
           , LabelDef "else_0"
           , Real (Push (ImmBool False))
-          , Real Ret
+          , Real (Ret 0)
           , LabelDef "endif_1"
           ]
       csLabelCnt st `shouldBe` 2
@@ -337,18 +334,18 @@ spec = describe "Compiler.ASM.Compiler (max coverage)" $ do
         Seq.fromList
           [ Real (Push (ImmBool True))
           , Real (Push (ImmBool False))
-          , Real Ret
+          , Real (Ret 0)
           ]
 
     it "tail empty List emits Ret" $ do
       let action = compileTail compileAst (AList [])
       let (_, st) = expectRight (runCM action createCompilerState)
-      csCode st `shouldBe` Seq.singleton (Real Ret)
+      csCode st `shouldBe` Seq.singleton (Real (Ret 0))
 
   describe "compileAst" $ do
     it "AReturn compiles expr then Ret" $ do
       let (_, st) = expectRight (runCM (compileAst (AReturn (ABool True))) createCompilerState)
-      csCode st `shouldBe` Seq.fromList [Real (Push (ImmBool True)), Real Ret]
+      csCode st `shouldBe` Seq.fromList [Real (Push (ImmBool True)), Real (Ret 0)]
 
     it "AVoid produces no code" $ do
       let (_, st) = expectRight (runCM (compileAst AVoid) createCompilerState)

@@ -45,31 +45,31 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses integers" $ do
             let code = "42;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AInteger (I8 42)] -> True
+                Right [AExprStmt (AInteger (I8 42))] -> True
                 _ -> False
 
         it "Parses booleans (True)" $ do
             let code = "True;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ABool True] -> True
+                Right [AExprStmt (ABool True)] -> True
                 _ -> False
 
         it "Parses characters ('c')" $ do
             let code = "'c';"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AInteger (IChar v)] -> v == c8 'c'
+                Right [AExprStmt (AInteger (IChar v))] -> v == c8 'c'
                 _ -> False
 
         it "Parses strings as list of chars" $ do
             let code = "\"Hi\";"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AList [AInteger (IChar h), AInteger (IChar i)]] -> h == c8 'H' && i == c8 'i'
+                Right [AExprStmt (AList [AInteger (IChar h), AInteger (IChar i)])] -> h == c8 'H' && i == c8 'i'
                 _ -> False
 
         it "Parses list literals" $ do
             let code = "[1, 2];"
             parseClean (p code) `shouldSatisfy` \case
-                Right [AList [AInteger (I8 1), AInteger (I8 2)]] -> True
+                Right [AExprStmt (AList [AInteger (I8 1), AInteger (I8 2)])] -> True
                 _ -> False
 
     describe "Edge Cases & Error Handling (Coverage Target)" $ do
@@ -83,7 +83,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Returns a list of statements for a block" $ do
             let code = "func last() { 1; 2; 3; }"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ADefineFunc _ _ _ (AList [AInteger (I8 1), AInteger (I8 2), AInteger (I8 3)])] -> True
+                Right [ADefineFunc _ _ _ (ABlock [AExprStmt (AInteger (I8 1)), AExprStmt (AInteger (I8 2)), AExprStmt (AInteger (I8 3))])] -> True
                 _ -> False
 
         it "Triggers parse error (covers parseALL error formatting)" $ do
@@ -97,28 +97,28 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses untyped assignment (defaults to auto)" $ do
             let code = "x = 10;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name typeVar (AInteger (I8 10))] -> 
+                Right [AExprStmt (ASetVar name typeVar (AInteger (I8 10)))] -> 
                     name == p "x" && typeVar == p "auto"
                 _ -> False
 
         it "Parses typed assignment (int)" $ do
             let code = "y: int = 20;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name typeVar (AInteger (I8 20))] -> 
+                Right [AExprStmt (ASetVar name typeVar (AInteger (I8 20)))] -> 
                     name == p "y" && typeVar == p "int"
                 _ -> False
 
         it "Parses specific types (int8, uint64)" $ do
             let code = "z: int8 = 100;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name typeVar _] -> 
+                Right [AExprStmt (ASetVar name typeVar _)] -> 
                     name == p "z" && typeVar == p "int8"
                 _ -> False
 
         it "Parses list types ([char])" $ do
             let code = "str: [char] = \"hello\";"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name typeVar _] -> 
+                Right [AExprStmt (ASetVar name typeVar _)] -> 
                     name == p "str" && typeVar == p "[char]"
                 _ -> False
 
@@ -127,20 +127,20 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses binary operations (+)" $ do
             let code = "1 + 2;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol op) [AInteger (I8 1), AInteger (I8 2)]] -> op == p "+"
+                Right [AExprStmt (ACall (ASymbol op) [AInteger (I8 1), AInteger (I8 2)])] -> op == p "+"
                 _ -> False
 
         it "Respects precedence (* before +)" $ do
             let code = "1 + 2 * 3;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol opPlus) [AInteger (I8 1), ACall (ASymbol opMul) [AInteger (I8 2), AInteger (I8 3)]]] -> 
+                Right [AExprStmt (ACall (ASymbol opPlus) [AInteger (I8 1), ACall (ASymbol opMul) [AInteger (I8 2), AInteger (I8 3)]])] -> 
                     opPlus == p "+" && opMul == p "*"
                 _ -> False
 
         it "Parses function calls in expressions" $ do
             let code = "add(x, 5);"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol func) [ASymbol arg1, AInteger (I8 5)]] -> 
+                Right [AExprStmt (ACall (ASymbol func) [ASymbol arg1, AInteger (I8 5)])] -> 
                     func == p "add" && arg1 == p "x"
                 _ -> False
 
@@ -149,28 +149,28 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses logical AND (&&)" $ do
             let code = "a && b;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol op) [ASymbol a, ASymbol b]] -> 
+                Right [AExprStmt (ACall (ASymbol op) [ASymbol a, ASymbol b])] -> 
                     op == p "&&" && a == p "a" && b == p "b"
                 _ -> False
 
         it "Parses logical OR (||)" $ do
             let code = "a || b;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol op) [ASymbol a, ASymbol b]] -> 
+                Right [AExprStmt (ACall (ASymbol op) [ASymbol a, ASymbol b])] -> 
                     op == p "||" && a == p "a" && b == p "b"
                 _ -> False
 
         it "Parses unary NOT (!)" $ do
             let code = "!x;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol op) [ASymbol x]] -> 
+                Right [AExprStmt (ACall (ASymbol op) [ASymbol x])] -> 
                     op == p "!" && x == p "x"
                 _ -> False
 
         it "Respects logic precedence (! before &&)" $ do
             let code = "!a && b;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol opAnd) [ACall (ASymbol opNot) [ASymbol a], ASymbol b]] -> 
+                Right [AExprStmt (ACall (ASymbol opAnd) [ACall (ASymbol opNot) [ASymbol a], ASymbol b])] -> 
                     opAnd == p "&&" && opNot == p "!" && a == p "a" && b == p "b"
                 _ -> False
 
@@ -215,21 +215,21 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses ++x as x = x + 1" $ do
             let code = "++x;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol op) _)] -> 
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol op) _))] -> 
                     name == p "x" && op == p "+"
                 _ -> False
 
         it "Parses --y as y = y - 1" $ do
             let code = "--y;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol op) _)] -> 
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol op) _))] -> 
                     name == p "y" && op == p "-"
                 _ -> False
 
         it "Parses ++ inside an expression (complex)" $ do
             let code = "z = ++x * 2;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall _ [incrX, _])] -> 
+                Right [AExprStmt (ASetVar _ _ (ACall _ [incrX, _]))] -> 
                     case incrX of
                         ASetVar x _ _ -> x == p "x"
                         _ -> False
@@ -237,12 +237,12 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses ++ on non-variable (literal) as a function call" $ do
             let code = "++5;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol op) [AInteger (I8 5)]] -> op == p "++"
+                Right [AExprStmt (ACall (ASymbol op) [AInteger (I8 5)])] -> op == p "++"
                 _ -> False
         it "Parses -- on expression as a function call" $ do
             let code = "--(x + 1);"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ACall (ASymbol op) [ACall (ASymbol plus) _]] -> 
+                Right [AExprStmt (ACall (ASymbol op) [ACall (ASymbol plus) _])] -> 
                     op == p "--" && plus == p "+"
                 _ -> False
 
@@ -250,7 +250,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses += as addition (x = x + 5)" $ do
             let code = "x += 5;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall op [arg1, _])] -> 
+                Right [AExprStmt (ASetVar name _ (ACall op [arg1, _]))] -> 
                     name == p "x" && 
                     (case op of ASymbol s -> s == p "+"; _ -> False) &&
                     (case arg1 of ASymbol s -> s == p "x"; _ -> False)
@@ -258,7 +258,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parser -= as subtraction (y -= 2)" $ do
             let code = "y -= 2;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall op [arg1, _])] -> 
+                Right [AExprStmt (ASetVar name _ (ACall op [arg1, _]))] -> 
                     name == p "y" && 
                     (case op of ASymbol s -> s == p "-"; _ -> False) &&
                     (case arg1 of ASymbol s -> s == p "y"; _ -> False)
@@ -266,7 +266,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses *= as multiplication (z *= 10)" $ do
             let code = "z *= 10;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall op [arg1, _])] -> 
+                Right [AExprStmt (ASetVar name _ (ACall op [arg1, _]))] -> 
                     name == p "z" && 
                     (case op of ASymbol s -> s == p "*"; _ -> False) &&
                     (case arg1 of ASymbol s -> s == p "z"; _ -> False)
@@ -274,7 +274,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses /= as division (w /= 2)" $ do
             let code = "w /= 2;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall op [arg1, _])] -> 
+                Right [AExprStmt (ASetVar name _ (ACall op [arg1, _]))] -> 
                     name == p "w" && 
                     (case op of ASymbol s -> s == p "div"; _ -> False) &&
                     (case arg1 of ASymbol s -> s == p "w"; _ -> False)
@@ -284,7 +284,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses simple indexing: arr[0]" $ do
             let code = "x = arr[0];"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall nthOp [arrArg, idxArg])] -> 
+                Right [AExprStmt (ASetVar _ _ (ACall nthOp [arrArg, idxArg]))] -> 
                     (case nthOp of ASymbol s -> s == p "nth"; _ -> False) &&
                     (case arrArg of ASymbol s -> s == p "arr"; _ -> False) &&
                     (case idxArg of AInteger (I8 0) -> True; _ -> False)
@@ -292,7 +292,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses nested indexing: matrix[x][y]" $ do
             let code = "val = matrix[x][y];"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall nthOuter [innerCall, idxY])] -> 
+                Right [AExprStmt (ASetVar _ _ (ACall nthOuter [innerCall, idxY]))] -> 
                     (case nthOuter of ASymbol s -> s == p "nth"; _ -> False) &&
                     (case idxY of ASymbol s -> s == p "y"; _ -> False) &&
                     (case innerCall of
@@ -305,7 +305,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses indexing on expression: [1, 2][0]" $ do
             let code = "first = [1, 2][0];"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall nthOp [listArg, idxArg])] -> 
+                Right [AExprStmt (ASetVar _ _ (ACall nthOp [listArg, idxArg]))] -> 
                     (case nthOp of ASymbol s -> s == p "nth"; _ -> False) &&
                     (case listArg of AList _ -> True; _ -> False) &&
                     (case idxArg of AInteger (I8 0) -> True; _ -> False)
@@ -315,9 +315,9 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses array assignment: arr[0] = 5" $ do
             let code = "arr[0] = 5;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall updateOp [arrArg, idxArg, valArg])] -> 
+                Right [AExprStmt (ASetVar name _ (ACall updateOp [arrArg, idxArg, valArg]))] -> 
                     name == p "arr" &&
-                    (case updateOp of ASymbol s -> s == p "update"; _ -> False) &&
+                    (case updateOp of ASymbol s -> s == p "nth_update"; _ -> False) &&
                     (case arrArg of ASymbol s -> s == p "arr"; _ -> False) &&
                     (case idxArg of AInteger (I8 0) -> True; _ -> False) &&
                     (case valArg of AInteger (I8 5) -> True; _ -> False)
@@ -325,14 +325,14 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses nested array assignment: mat[1][2] = 9" $ do
             let code = "mat[1][2] = 9;"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall outerUpdate [matArg, idx1, innerUpdate])] -> 
+                Right [AExprStmt (ASetVar name _ (ACall outerUpdate [matArg, idx1, innerUpdate]))] -> 
                     name == p "mat" &&
-                    (case outerUpdate of ASymbol s -> s == p "update"; _ -> False) &&
+                    (case outerUpdate of ASymbol s -> s == p "nth_update"; _ -> False) &&
                     (case matArg of ASymbol s -> s == p "mat"; _ -> False) &&
                     (case idx1 of AInteger (I8 1) -> True; _ -> False) &&
                     (case innerUpdate of
                         ACall innerOp [nthCall, idx2, valArg] ->
-                            (case innerOp of ASymbol s -> s == p "update"; _ -> False) &&
+                            (case innerOp of ASymbol s -> s == p "nth_update"; _ -> False) &&
                             (case nthCall of ACall (ASymbol nth) _ -> nth == p "nth"; _ -> False) &&
                             (case idx2 of AInteger (I8 2) -> True; _ -> False) &&
                             (case valArg of AInteger (I8 9) -> True; _ -> False)
@@ -364,25 +364,25 @@ spec = describe "Parser - Statement & Expression" $ do
         
         it "Parses simple member access: p.x" $ do
             let input = "val = p.x;"
-            parseStmt input `shouldBe` Right [
+            parseStmt input `shouldBe` Right [ AExprStmt(
                 ASetVar (p "val") (p "auto") (
                     AAccessStruct (ASymbol (p "p")) (p "x")
-                )]
+                ))]
 
         it "Parses nested access: user.profile.id" $ do
             let input = "id = user.profile.id;"
-            parseStmt input `shouldBe` Right [
+            parseStmt input `shouldBe` Right [ AExprStmt(
                 ASetVar (p "id") (p "auto") (
                     AAccessStruct 
                         (AAccessStruct (ASymbol (p "user")) (p "profile"))
                         (p "id")
-                )]
+                ))]
 
         it "Parses mixed array and member access: users[0].name" $ do
             let input = "name = users[0].name;"
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar n a (AAccessStruct (ACall (ASymbol nth) [ASymbol u, AInteger val]) f)] 
+                Right [AExprStmt (ASetVar n a (AAccessStruct (ACall (ASymbol nth) [ASymbol u, AInteger val]) f))] 
                     | n == p "name" && 
                       a == p "auto" && 
                       nth == p "nth" && 
@@ -395,13 +395,13 @@ spec = describe "Parser - Statement & Expression" $ do
         it "Parses simple instantiation" $ do
             let code = "p = new Point { x: 10, y: 20 };"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ASetStruct name fields)] -> 
+                Right [AExprStmt (ASetVar _ _ (ASetStruct name fields))] -> 
                     name == p "Point" && length fields == 2
                 _ -> False
         it "Parses instantiation with expressions" $ do
             let code = "c = new Circle { r: 5 + 5, origin: p };"
             parseClean (p code) `shouldSatisfy` \case
-                Right [ASetVar _ _ (ASetStruct name fields)] -> 
+                Right [AExprStmt (ASetVar _ _ (ASetStruct name fields))] -> 
                     name == p "Circle" &&
                     (case lookup (p "r") fields of
                         Just (ACall (ASymbol s) _) -> s == p "+"
@@ -425,7 +425,7 @@ spec = describe "Parser - Statement & Expression" $ do
         it "makeOpCall: constructs binary op call (tested via +=)" $ do
             let input = "x += 5;"
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol op) [ASymbol var, val])] 
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol op) [ASymbol var, val]))] 
                     | name == p "x" &&
                       op == p "+" &&
                       var == p "x" &&
@@ -433,13 +433,13 @@ spec = describe "Parser - Statement & Expression" $ do
                     -> True
                 _ -> False
 
-        it "fieldToAst: converts text to AList of IChars (tested via set_field)" $ do
+        it "fieldToAst: converts text to AList of IChars (tested via attr_update)" $ do
             let input = "p.y = 10;"
             let expectedChar = fromIntegral (ord 'y') :: Int8
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar _ _ (ACall (ASymbol func) [_, AList [AInteger (IChar c)], _])] 
-                    | func == p "set_field" && c == expectedChar -> True
+                Right [AExprStmt (ASetVar _ _ (ACall (ASymbol func) [_, AList [AInteger (IChar c)], _]))] 
+                    | func == p "attr_update" && c == expectedChar -> True
                 _ -> False
         
         it "recursiveUpdate Case 2: Simple struct assignment (x.f = val)" $ do
@@ -447,9 +447,9 @@ spec = describe "Parser - Statement & Expression" $ do
             let charF = fromIntegral (ord 'f') :: Int8
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol func) [ASymbol base, AList [AInteger (IChar c)], val])]
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol func) [ASymbol base, AList [AInteger (IChar c)], val]))]
                     | name == p "x" &&
-                      func == p "set_field" &&
+                      func == p "attr_update" &&
                       base == p "x" &&
                       c == charF &&
                       val == AInteger (fitInteger 10)
@@ -462,14 +462,14 @@ spec = describe "Parser - Statement & Expression" $ do
             let charZ = fromIntegral (ord 'z') :: Int8
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol funcOuter) [ASymbol baseX, AList [AInteger (IChar cY)], innerVal])]
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol funcOuter) [ASymbol baseX, AList [AInteger (IChar cY)], innerVal]))]
                     | name == p "x" &&
-                      funcOuter == p "set_field" &&
+                      funcOuter == p "attr_update" &&
                       baseX == p "x" &&
                       cY == charY ->
                         case innerVal of
                             ACall (ASymbol funcInner) [AAccessStruct baseInner fieldInner, AList [AInteger (IChar cZ)], val]
-                                | funcInner == p "set_field" &&
+                                | funcInner == p "attr_update" &&
                                   baseInner == ASymbol (p "x") &&
                                   fieldInner == p "y" &&
                                   cZ == charZ &&
@@ -484,14 +484,14 @@ spec = describe "Parser - Statement & Expression" $ do
             let charY = fromIntegral (ord 'y') :: Int8
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name _ (ACall (ASymbol funcUpdate) [ASymbol base, AInteger idx, innerVal])]
+                Right [AExprStmt (ASetVar name _ (ACall (ASymbol funcUpdate) [ASymbol base, AInteger idx, innerVal]))]
                     | name == p "x" &&
-                      funcUpdate == p "update" &&
+                      funcUpdate == p "nth_update" &&
                       base == p "x" &&
                       idx == fitInteger 0 ->
                         (case innerVal of {
                             ACall (ASymbol funcSet) [nthCall, AList [AInteger (IChar c)], val]
-                                | funcSet == p "set_field"
+                                | funcSet == p "attr_update"
                                 , c == charY
                                 , val == AInteger (fitInteger 5)
                                 -> case nthCall of {
@@ -510,7 +510,7 @@ spec = describe "Parser - Statement & Expression" $ do
             let input = "x[0] = 1;"
             
             parseStmt input `shouldSatisfy` \case
-                Right [ASetVar name typeStr _] 
+                Right [AExprStmt (ASetVar name typeStr _)] 
                     | name == p "x" && 
                       typeStr == p "auto"
                     -> True

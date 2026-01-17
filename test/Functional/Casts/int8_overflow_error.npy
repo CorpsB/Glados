@@ -1,0 +1,4 @@
+func main() {
+    print(int8(128));
+}
+main();

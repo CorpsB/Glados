@@ -39,7 +39,7 @@ beI32 n =
 
 mkVM :: [Word8] -> [VMValue] -> VMState
 mkVM bytes stk =
-  (createVMState (BS.pack bytes))
+  (createVMState (BS.pack bytes) False)
     { vStack = V.fromList stk
     , bytecodeIndex = 0
     }

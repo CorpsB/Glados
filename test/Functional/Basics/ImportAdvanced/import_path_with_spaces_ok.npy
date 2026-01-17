@@ -1,0 +1,6 @@
+import "test/Functional/Basics/ImportAdvanced/lib/space file.npy";
+
+func main() {
+    print(spaced());
+}
+main();

@@ -72,6 +72,11 @@ data Ast
       --   @param Ast The callee (function expression or symbol).
       --   @param [Ast] The list of arguments passed to the function.
 
+    | AAccessStruct Ast DT.Text
+      -- ^ Represents a field access (e.g., player.x).
+      --   @param Ast The object/structure being accessed.
+      --   @param Text The name of the field.
+
     | AImport DT.Text
       -- ^ Represents an import statement.
       --   @param Text The name of the module or file to import.
@@ -91,12 +96,16 @@ data Ast
       -- ^ Represents a For loop.
       --   @param Ast The initialization step.
       --   @param Ast The loop condition.
-      --   @param Ast The loop body.
       --   @param Ast The update/increment step.
+      --   @param Ast The loop body.
 
     | AReturn Ast
       -- ^ Represents an explicit return statement.
       --   @param Ast The expression to return.
+
+    | AExprStmt Ast
+
+    | ABlock [Ast]
 
     | APos Int Int Ast
       -- ^ Represents a source code position wrapper.
@@ -105,11 +114,6 @@ data Ast
       --   @param Int The line number.
       --   @param Int The column number.
       --   @param Ast The wrapped AST node.
-    
-    | AAccessStruct Ast DT.Text
-      -- ^ Represents a field access (e.g., player.x).
-      --   @param Ast The object/structure being accessed.
-      --   @param Text The name of the field.
 
     deriving (Show, Eq)
 
@@ -121,6 +125,7 @@ showAst (ASymbol s) = DT.unpack s
 showAst (AList xs) = "(" ++ Prelude.unwords (Prelude.map showAst xs) ++ ")"
 showAst (ADefineLambda _ _) = "#<lambda>"
 showAst (APos _ _ ast) = showAst ast
+showAst (ABlock xs) = "{ " ++ unwords (map showAst xs) ++ " }"
 showAst other = Prelude.show other
 -- TO DO: add new AST lines
 
@@ -138,6 +143,7 @@ printAst ast = putStrLn (Prelude.show ast)
 -- @return Ast The cleaned AST with purely structural nodes.
 cleanAst :: Ast -> Ast
 cleanAst (APos _ _ ast) = cleanAst ast
+cleanAst (ABlock xs) = ABlock (map cleanAst xs)
 cleanAst (AList xs) = AList (map cleanAst xs)
 cleanAst (ADefineFunc n a r b) = ADefineFunc n a r (cleanAst b)
 cleanAst (ADefineLambda args body) = ADefineLambda args (cleanAst body)
@@ -150,5 +156,6 @@ cleanAst (AWhile c b) = AWhile (cleanAst c) (cleanAst b)
 cleanAst (AFor i c u b) =
     AFor (cleanAst i) (cleanAst c) (cleanAst u) (cleanAst b)
 cleanAst (AReturn e) = AReturn (cleanAst e)
+cleanAst (AExprStmt e) = AExprStmt (cleanAst e)
 cleanAst (AAccessStruct obj field) = AAccessStruct (cleanAst obj) field
 cleanAst other = other

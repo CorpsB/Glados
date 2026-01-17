@@ -1,0 +1,18 @@
+struct Player {
+    hp: int;
+}
+
+func main() {
+    a: Player = new Player { hp: 1 };
+    b = a;
+    b.hp = 2;
+
+    // If b is a reference/alias to a, a.hp will be 2; otherwise a.hp stays 1.
+    // We print 2 when they differ, 1 when they are equal.
+    if (a.hp == b.hp) {
+        print(1);
+    } else {
+        print(2);
+    }
+}
+main();

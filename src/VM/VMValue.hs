@@ -10,11 +10,16 @@ module VM.VMValue
     , castValue
     , valueToString
     , valueToInt
+    , eqValue
     ) where
 
 import Data.Word (Word8)
 import Data.Vector (Vector)
 import qualified Data.Vector as V
+import qualified Data.Text as T
+import Data.Text (Text)
+import Data.Char (chr)
+
 import Common.Type.Integer (IntValue(..), intValueToInt)
 
 -- | Represents a runtime value within the Virtual Machine.
@@ -55,26 +60,59 @@ data VMValue
       --   Used for functions that do not return data.
     deriving (Eq, Show)
 
--- | Converts a runtime Value to its string representation for debugging or printing.
+-- | Helper: Extracts a Char from a VMValue if and only if it is an
+--           integer type representing a character.
 --
--- @args
---   - val: The 'Value' to convert.
+-- @param val The value to check.
+-- @return Just Char if the value is IChar or UIChar, Nothing otherwise.
 --
--- @return
---   A 'String' describing the value (e.g., "#t", "42", "<closure>").
+getCharFromValue :: VMValue -> Maybe Char
+getCharFromValue (VInt (IChar c))  = Just (chr (fromIntegral c))
+getCharFromValue (VInt (UIChar c)) = Just (chr (fromIntegral c))
+getCharFromValue _ = Nothing
+
+-- | Helper: Attempts to convert a list of VMValues into a Text string.
 --
-valueToString :: VMValue -> String
-valueToString (VInt i) = show (intValueToInt i)
-valueToString (VBool True) = "#t"
-valueToString (VBool False) = "#f"
-valueToString (VList v) = "'(" ++ unwords (
-    map valueToString (V.toList v)) ++ ")"
-valueToString (VStruct v) = "{struct:" ++ unwords (
-    map valueToString (V.toList v)) ++ "}"
-valueToString (VClosure addr caps) =
-    "#<procedure @" ++ show addr ++ " captures:" ++ show (V.length caps) ++ ">"
-valueToString (VFuncPtr addr) = "#<function @" ++ show addr ++ ">"
-valueToString VVoid = "void"
+-- @param vals The list of values to inspect.
+-- @return Just Text if all elements are characters, Nothing otherwise.
+--
+tryExtractString :: [VMValue] -> Maybe Text
+tryExtractString [] = Nothing
+tryExtractString vals = fmap T.pack maybeChars
+    where maybeChars = mapM getCharFromValue vals
+
+-- | Converts a VMValue into a human-readable Text representation.
+--
+-- @param val The value to convert.
+-- @return A Text representing the value.
+--
+-- @details
+--   This function handles type-specific formatting:
+--   - **Chars**: Converted to single-character strings.
+--   - **Lists**: If the list contains only Characters, it is rendered as a raw string
+--     (e.g., "Hello"). Otherwise, it uses list notation (e.g., "[1, 2, #t]").
+--   - **Structs**: Rendered with curly braces (e.g., "{10, 20}").
+--   - **Bools**: Rendered as #t or #f (Scheme style).
+--
+valueToString :: VMValue -> Text
+valueToString VVoid = T.pack "void"
+valueToString (VInt (IChar c)) = T.singleton (chr $ fromIntegral c)
+valueToString (VInt (UIChar c)) = T.singleton (chr $ fromIntegral c)
+valueToString (VInt i) = T.pack (show (intValueToInt i))
+valueToString (VBool True) = T.pack "True"
+valueToString (VBool False) = T.pack "False"
+valueToString (VClosure addr caps) = T.pack "#<procedure @" <>
+    T.pack (show addr) <> T.pack " captures:" <>
+    T.pack (show (V.length caps)) <> T.pack ">"
+valueToString (VFuncPtr addr) = T.pack "#<function @" <>
+    T.pack (show addr) <> T.pack ">"
+valueToString (VStruct v) = T.pack "{" <>
+    T.intercalate (T.pack ", ") (map valueToString (V.toList v)) <> T.pack "}"
+valueToString (VList v) = let elements = V.toList v in
+    case tryExtractString elements of
+        Just txt -> txt
+        Nothing -> T.pack "[" <> (T.intercalate (T.pack ", ")
+            (map valueToString elements)) <> T.pack "]"
 
 -- | Helper to extract a raw integer value for casting purposes.
 --
@@ -113,3 +151,23 @@ castValue 0x08 v = VInt (UI64 (fromIntegral (valueToInt v)))
 castValue 0x09 v = VInt (IChar (fromIntegral (valueToInt v)))
 castValue 0x10 v = VInt (UIChar (fromIntegral (valueToInt v)))
 castValue _ v = v
+
+-- | Helper to compare two vectors using the custom equality logic.
+checkVectorEq :: V.Vector VMValue -> V.Vector VMValue -> Bool
+checkVectorEq v1 v2 =
+    V.length v1 == V.length v2 && V.and (V.zipWith eqValue v1 v2)
+
+-- | Recursive equality check for VMValues.
+--
+-- @details
+--   Handles loose integer comparison inside Lists and Structs.
+--   e.g., [I8 5] == [I64 5] returns True.
+--
+eqValue :: VMValue -> VMValue -> Bool
+eqValue (VInt a) (VInt b) = intValueToInt a == intValueToInt b
+eqValue (VBool a) (VBool b) = a == b
+eqValue (VFuncPtr a) (VFuncPtr b) = a == b
+eqValue VVoid VVoid = True
+eqValue (VList a) (VList b) = checkVectorEq a b
+eqValue (VStruct a) (VStruct b) = checkVectorEq a b
+eqValue _ _ = False

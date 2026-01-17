@@ -27,7 +27,7 @@ data Type
     | TyFunc [Type] Type   -- Function type (Args -> Return)
     | TyStruct DT.Text      -- Custom structure type identified by name
     | TyAuto               -- Placeholder for type inference
-    deriving (Show)
+    deriving (Show, Eq)
 
 -- | Definition of a structure (Name + Field Map).
 data StructDef = StructDef
@@ -49,8 +49,9 @@ emptyEnv = CheckEnv Map.empty Map.empty
 parseType :: DT.Text -> Type
 parseType t
     | t == DT.pack "int"  = TyInt
+    | t == DT.pack "char" = TyInt 
     | t == DT.pack "bool" = TyBool
-    | t == DT.pack "void" = TyVoid
+    | t == DT.pack "void" || t == DT.pack "Void" = TyVoid
     | t == DT.pack "auto" = TyAuto
     | DT.isPrefixOf (DT.pack "[") t && DT.isSuffixOf (DT.pack "]") t =
         let inner = DT.init (DT.tail t)
@@ -71,10 +72,11 @@ typeToString (TyFunc args ret) =
 -- | Checks if two types are semantically compatible.
 -- Replaces usage of (==) with explicit pattern matching.
 areTypesCompatible :: Type -> Type -> Bool
+areTypesCompatible TyAuto _ = True
+areTypesCompatible _ TyAuto = True
 areTypesCompatible TyInt TyInt   = True
 areTypesCompatible TyBool TyBool = True
 areTypesCompatible TyVoid TyVoid = True
-areTypesCompatible TyAuto TyAuto = True
 areTypesCompatible (TyList a) (TyList b) = areTypesCompatible a b
 areTypesCompatible (TyStruct a) (TyStruct b) = a == b
 areTypesCompatible (TyFunc args1 ret1) (TyFunc args2 ret2) = 

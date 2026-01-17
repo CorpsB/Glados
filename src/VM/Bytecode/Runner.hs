@@ -19,8 +19,9 @@ module VM.Bytecode.Runner
     , executeInstruction
     ) where
 
-import Control.Monad.State.Strict (get)
+import Control.Monad.State.Strict (get, liftIO)
 import Data.Word (Word8)
+import qualified Data.Vector as V
 
 import VM.VMState (VMState(..), VirtualMachine)
 import VM.Bytecode.Reader (readByte)
@@ -61,6 +62,7 @@ executeInstruction 0x22 = instNot
 executeInstruction 0x23 = instAnd
 executeInstruction 0x24 = instOr
 executeInstruction 0x25 = instLe
+executeInstruction 0x26 = instTEq
 
 executeInstruction 0x30 = instJump
 executeInstruction 0x31 = instJumpIfFalse
@@ -82,18 +84,30 @@ executeInstruction 0x60 = instMakeClosure
 executeInstruction 0x61 = instGetFuncAddr
 executeInstruction 0x62 = instBuildStruct
 executeInstruction 0x63 = instGetStructField
+executeInstruction 0x64 = instAttrUpdate
 
 executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
+executeInstruction 0x72 = instExit
 executeInstruction 0x80 = instCast
 
 executeInstruction 0x90 = instCons
 executeInstruction 0x91 = instHead
 executeInstruction 0x92 = instTail
+executeInstruction 0x93 = instNth
+executeInstruction 0x94 = instBuildList
+executeInstruction 0x95 = instNthUpdate
 
 executeInstruction 0xFE = instCheckStack
 executeInstruction 0xFF = return () -- NOP
 executeInstruction op = error $ "VM Error: Unknown Opcode 0x" ++ show op
+
+-- Helper function to display the status properly.
+--
+debugTrace :: VMState -> IO ()
+debugTrace vm = let ip = bytecodeIndex vm
+                    stack = vStack vm in
+    putStrLn $ "IP: " ++ show ip ++ " | Stack: " ++ show (V.toList stack)
 
 -- | The main execution loop of the Virtual Machine.
 --
@@ -113,6 +127,7 @@ runBytecode = do
     case isRunning vm of
         False -> return ()
         True -> do
+            if isDebug vm then liftIO $ debugTrace vm else return ()
             opcode <- readByte
             executeInstruction opcode
             runBytecode

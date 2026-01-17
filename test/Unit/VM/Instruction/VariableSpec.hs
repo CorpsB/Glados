@@ -39,7 +39,7 @@ beI32 n =
      ]
 
 mkVM :: [Word8] -> VMState
-mkVM bytes = createVMState (BS.pack bytes)
+mkVM bytes = createVMState (BS.pack bytes) False
 
 expectVMErrorContains :: IO a -> String -> Expectation
 expectVMErrorContains action needle = do
@@ -76,28 +76,20 @@ spec = describe "VM.Instruction.Variable" $ do
       expectVMErrorContains (execStateT instLoadLocal vm0) "LOAD_LOCAL out of bounds (Index: 5, Size: 2)"
 
   describe "instStoreLocal" $ do
-    it "pops a value and stores it at FP + offset (positive offset)" $ do
-      let vm0 = (mkVM (beI32 1))
-                { baseVStackIndex = 0
-                , vStack = V.fromList [VInt (I64 10), VInt (I64 20), VBool False, VInt (I64 30)]
-                }
-      vm1 <- execStateT instStoreLocal vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (I64 10), VInt (I64 30), VBool False]
-
-    it "pops a value and stores it at FP + offset (negative offset)" $ do
-      let vm0 = (mkVM (beI32 (-2)))
-                { baseVStackIndex = 2
-                , vStack = V.fromList [VInt (I64 10), VInt (I64 20), VBool False, VInt (I64 99)]
-                }
-      vm1 <- execStateT instStoreLocal vm0
-      vStack vm1 `shouldBe` V.fromList [VInt (I64 99), VInt (I64 20), VBool False]
-
-    it "throws out of bounds and message includes Index and Size (covers line 79)" $ do
+    it "automatically defines variable if index == size (Definition)" $ do
       let vm0 = (mkVM (beI32 0))
-                { baseVStackIndex = 0
-                , vStack = V.fromList [VInt (I64 123)]
+                { vStack = V.fromList [VInt (I64 123)]
+                , baseVStackIndex = 0
                 }
-      expectVMErrorContains (execStateT instStoreLocal vm0) "STORE_LOCAL out of bounds (Index: 0, Size: 0)"
+      vm1 <- execStateT instStoreLocal vm0
+      vStack vm1 `shouldBe` V.fromList [VInt (I64 123)]
+
+    it "throws out of bounds if index > size (Skipped definition)" $ do
+      let vm0 = (mkVM (beI32 5))
+                { vStack = V.fromList [VInt (I64 123)]
+                , baseVStackIndex = 0
+                }
+      expectVMErrorContains (execStateT instStoreLocal vm0) "STORE_LOCAL out of bounds"
 
   describe "instLoadCapture" $ do
     it "pushes env[idx] onto the stack" $ do

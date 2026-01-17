@@ -15,7 +15,7 @@ module Common.Utils.Bytecode.Header
 
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Char8 as C8
-import System.Exit (exitFailure)
+import System.Exit (exitWith, ExitCode(..))
 
 -- | Checks if the file is large enough to contain a header (10 bytes).
 --
@@ -53,4 +53,4 @@ extractContentIfValidHeader content =
     case evaluateHeader content of
         True  -> return (BS.drop 10 content)
         False -> putStrLn "\ESC[31mInvalid File: Bad Header.\ESC[0m" >>
-            exitFailure
+            exitWith (ExitFailure 84)

@@ -19,8 +19,8 @@ This module handles:
 module Main (main) where
 
 import System.Environment (getArgs)
-import System.Exit (exitFailure, exitSuccess)
-import Control.Exception (try, SomeException)
+import System.Exit (exitSuccess, exitWith, ExitCode(..))
+import Control.Exception (try, SomeException, fromException)
 import Control.Monad.State.Strict (runStateT)
 
 import VM.VMState (VMState, createVMState)
@@ -54,14 +54,16 @@ tryRunVM state = try (runStateT runBytecode state)
 --   3. Runs VM via 'tryRunVM'.
 --   4. Handles Runtime errors.
 --
-executeFile :: String -> IO ()
-executeFile path = do
+executeFile :: String -> Bool -> IO ()
+executeFile path debugMode = do
     rawContent <- getFileContent path
     content <- extractContentIfValidHeader rawContent
-    result <- tryRunVM (createVMState content)
+    result <- tryRunVM (createVMState content debugMode)
     case result of
-        Left err -> putStrLn ("\ESC[31mRuntime Error:\ESC[0m " ++ show err) >>
-            exitFailure
+        Left err -> case fromException err of
+            Just ExitSuccess -> exitSuccess
+            Just (ExitFailure n) -> exitWith (ExitFailure n)
+            Nothing -> putStrLn (show err) >> exitWith (ExitFailure 84)
         Right _ -> exitSuccess
 
 -- | Prints the usage instructions to stdout.
@@ -83,8 +85,9 @@ main = do
     args <- getArgs
     case args of
         [] -> putStrLn "\ESC[31mError: No input file provided.\ESC[0m" >>
-            printUsage >> exitFailure
-        [filename] -> executeFile filename
+            printUsage >> exitWith (ExitFailure 84)
+        [filename] -> executeFile filename False
+        ["--debug", filename] -> executeFile filename True
         _  -> putStrLn "\ESC[31mError: Too many arguments.\ESC[0m" >>
             putStrLn "The VM accepts exactly one bytecode file execution." >>
-            printUsage >> exitFailure
+            printUsage >> exitWith (ExitFailure 84)

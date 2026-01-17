@@ -1,0 +1,7 @@
+func main() {
+    i = 2;
+    y = ++i + 1;
+    // y = 3 + 1 = 4
+    print(y);
+}
+main();

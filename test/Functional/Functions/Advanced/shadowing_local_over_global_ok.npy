@@ -1,0 +1,12 @@
+x = 1;
+
+func f() -> int {
+    x = 2;
+    ret x;
+}
+
+func main() {
+    // print local x from f(): 2
+    print(f());
+}
+main();

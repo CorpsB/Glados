@@ -1,0 +1,9 @@
+struct Item {
+    id: int;
+}
+
+func main() {
+    items: [Item] = [new Item { id: 1 }, 42];
+    print(42);
+}
+main();

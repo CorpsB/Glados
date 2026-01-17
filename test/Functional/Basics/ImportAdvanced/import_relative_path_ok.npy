@@ -1,0 +1,6 @@
+import "test/Functional/Basics/ImportAdvanced/lib/nested/util.npy";
+
+func main() {
+    print(util());
+}
+main();

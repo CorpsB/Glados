@@ -20,6 +20,8 @@ module VM.Instruction.Arithmetic
     , instMul
     , instDiv
     , instMod
+    , binaryInstInt
+    , binaryInstIntZero
     ) where
 
 import Common.Type.Integer (IntValue(..), intValueToInt)
@@ -51,6 +53,26 @@ binaryInstInt fn = do
             stackPush (VInt (I64 (fromIntegral result)))
         _ -> error "VM Error: Arithmetic instruction expects Integers"
 
+-- | Helper function for division and modulo with Zero Check.
+--
+-- @args
+--   - fn: The Haskell binary function (div or mod).
+--
+-- @throws
+--   Error "VM Error: Division by Zero" if the divisor (v2) is 0.
+--
+binaryInstIntZero :: (Int -> Int -> Int) -> VirtualMachine ()
+binaryInstIntZero fn = do
+    v2 <- stackPop -- Divisor (b)
+    v1 <- stackPop -- Dividend (a)
+    case (v1, v2) of
+        (VInt i1, VInt i2) -> let a = intValueToInt i1
+                                  b = intValueToInt i2 in
+            case b == 0 of
+                True -> error "VM Error: Division by Zero"
+                False -> stackPush (VInt (I64 (fromIntegral (fn a b))))
+        _ -> error "VM Error: Arithmetic instruction expects Integers"
+
 -- | Implements Addition (Opcode 0x10).
 --
 -- Stack: [a, b] -> [a + b]
@@ -77,11 +99,11 @@ instMul = binaryInstInt (*)
 -- Stack: [a, b] -> [a / b]
 --
 instDiv :: VirtualMachine ()
-instDiv = binaryInstInt div
+instDiv = binaryInstIntZero div
 
 -- | Implements Modulo (Opcode 0x14).
 --
 -- Stack: [a, b] -> [a % b]
 --
 instMod :: VirtualMachine ()
-instMod = binaryInstInt mod
+instMod = binaryInstIntZero mod

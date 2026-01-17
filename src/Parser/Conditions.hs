@@ -82,16 +82,27 @@ pForUpdate = try (do
     return (ASetVar name (DT.pack "auto") val))
     <|> pExpr
 
+-- | Parse the header of the for loop (init; cond; update).
+--
+-- Handles optional initialization and update statements.
+-- Returns a tuple (Init, Condition, Update).
+pForHeader :: Parser Ast -> Parser (Ast, Ast, Ast)
+pForHeader pVarDefParam = parens $ do
+    initS <- try pVarDefParam
+         <|> (pExpr <* semicolon)
+         <|> (AVoid <$ semicolon)
+    condS <- pExpr <* semicolon
+    updateS <- try pForUpdate
+           <|> return AVoid
+    return (initS, condS, updateS)
+
 -- | Parse a for loop.
+--
 -- Syntax: for (init; cond; update) { body }
+-- The condition is mandatory to prevent infinite loops by accident.
 pFor :: Parser Ast -> Parser Ast -> Parser Ast
 pFor pVarDefParam pBlockParam = do
     _ <- pKeyword (DT.pack "for")
-    (initStmt, cond, updateStmt) <- parens $ do
-        initS <- try pVarDefParam <|> (pExpr <* semicolon)
-        condS <- pExpr
-        _ <- semicolon
-        updateS <- pForUpdate
-        return (initS, condS, updateS)
+    (initStmt, cond, updateStmt) <- pForHeader pVarDefParam
     body <- pBlockParam
     return (AFor initStmt cond updateStmt body)

@@ -28,7 +28,7 @@ evalVM :: VirtualMachine a -> VMState -> IO a
 evalVM = evalStateT
 
 mkVM :: [Word8] -> VMState
-mkVM bytes = createVMState (BS.pack bytes)
+mkVM bytes = createVMState (BS.pack bytes) False
 
 spec :: Spec
 spec = describe "VM.VMStack" $ do

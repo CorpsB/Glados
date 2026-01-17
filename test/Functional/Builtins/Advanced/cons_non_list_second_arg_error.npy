@@ -1,0 +1,6 @@
+func main() {
+    // second arg must be a list
+    l2 = cons(1, 42);
+    print(head(l2));
+}
+main();

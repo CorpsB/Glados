@@ -1,0 +1,13 @@
+struct Player {
+    hp: int;
+}
+
+func mk(h: int) -> Player {
+    ret new Player { hp: h };
+}
+
+func main() {
+    p = mk(7);
+    print(p.hp);
+}
+main();

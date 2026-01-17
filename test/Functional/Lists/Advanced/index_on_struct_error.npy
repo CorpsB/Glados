@@ -1,0 +1,9 @@
+struct S {
+    x: int;
+}
+
+func main() {
+    s: S = new S { x: 1 };
+    print(s[0]);
+}
+main();

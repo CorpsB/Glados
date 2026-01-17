@@ -1,0 +1,23 @@
+func main() {
+    l: [int] = [1, 2, 3];
+
+    // Use builtins:
+    // head(l)=1, head(tail(l))=2, nth(l,2)=3
+    a = head(l);
+    b = head(tail(l));
+    c = nth(l, 2);
+
+    // Sum = 6
+    sum = 0;
+    sum = sum + a;
+    sum = sum + b;
+    sum = sum + c;
+
+    // Add a loop that iterates exactly 3 times (no-op but stresses VM)
+    for (i = 0; i < 3; i = i + 1) {
+        sum = sum + 0;
+    }
+
+    print(sum);
+}
+main();

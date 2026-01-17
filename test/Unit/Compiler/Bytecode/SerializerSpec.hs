@@ -98,7 +98,7 @@ spec = describe "serializeInstruction Coverage" $ do
         it "CallIndirect: opcode 0x42" $ do
             runBuilder (serializeInstruction CallIndirect) `shouldBe` [66]
         it "Ret: opcode 0x43" $ do
-            runBuilder (serializeInstruction Ret) `shouldBe` [67]
+            runBuilder (serializeInstruction (Ret 0)) `shouldBe` [67, 0, 0, 0, 0]
 
     describe "Memory Operations (Locals, Globals, Captures)" $ do
         it "LoadLocal 1: opcode 0x50 + index" $ do

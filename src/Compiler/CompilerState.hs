@@ -41,10 +41,12 @@ data ScopeType
 --
 -- @details
 --   SymTable stores the mapping required to resolve variable names to
---   concrete memory indices. It now includes the 'ScopeType' to distinguish
---   between globals, locals, and captures.
+--   concrete memory indices. 
+--     - ScopeType: Determines which LOAD instruction to use.
+--     - MemoryIndex: The integer offset in the stack/heap.
+--     - TypeName: The string representation of the variable's type.
 --
-type SymTable = Map Text (ScopeType, Int)
+type SymTable = Map Text (ScopeType, Int, Text)
 
 -- | Compiler state holding code buffers and symbol information.
 --
@@ -58,12 +60,14 @@ type SymTable = Map Text (ScopeType, Int)
 --   N/A (this documents the type)
 --
 data CompilerState = CompilerState
-    { csCode      :: (Seq PsInstruction) -- ^ Generated code (in natural order)
-    , csFuncs     :: Seq PsInstruction   -- ^ Compiled functions' buffer
-    , csSymbols   :: SymTable            -- ^ Local variable mapping
-    , csStructs   :: Map Text [Text]     -- ^ Struct definitions (Name -> Field Names in order)
-    , csNextIndex :: Int                 -- ^ Next available local index
-    , csLabelCnt  :: Int                 -- ^ Counter for unique label generation
+    { csCode      :: (Seq PsInstruction)      -- ^ Generated code (in natural order)
+    , csFuncs     :: Seq PsInstruction        -- ^ Compiled functions' buffer
+    , csSymbols   :: SymTable                 -- ^ Local variable mapping
+    , csStructs   :: Map Text [(Text, Text)]  -- ^ Struct definitions (Name -> Field Names in order)
+    , csNextIndex :: Int                      -- ^ Next available local index
+    , csLabelCnt  :: Int                      -- ^ Counter for unique label generation
+    , csScopeContext :: ScopeType             -- ^ Scope context (used to determine variables scopes)
+    , csCurrentArgCount :: Int                -- ^ Number of args on the stack (atomic return clean)
     } deriving (Show, Eq)
 
 -- | Initial, empty compiler state.
@@ -83,4 +87,6 @@ createCompilerState = CompilerState
     , csStructs = Map.empty
     , csNextIndex = 0
     , csLabelCnt = 0
+    , csScopeContext = ScopeGlobal
+    , csCurrentArgCount = 0
     }

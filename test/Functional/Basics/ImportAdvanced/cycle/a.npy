@@ -1,0 +1,5 @@
+import "test/Functional/Basics/ImportAdvanced/cycle/b.npy";
+
+func a() -> int {
+    ret 1;
+}

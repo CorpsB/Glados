@@ -1,0 +1,7 @@
+func main() {
+    x: int = True;
+    print(doesNotExist(1));
+    y = 1
+    print(y);
+}
+main();

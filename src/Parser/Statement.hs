@@ -62,15 +62,19 @@ pType = choice
     , pIdentifier
     ] <?> "type"
 
--- | Parse a function argument declaration (name and type).
+-- | Parse a function argument declaration (name and optional type).
 --
--- Example: x: int
+-- Example: 
+--   x: int  -> ("x", "int")
+--   x       -> ("x", "auto")
 pArgDeclaration :: Parser (DT.Text, DT.Text)
 pArgDeclaration = do
     name <- pIdentifier
-    _ <- colon
-    t <- pType
-    return (name, t)
+    maybeType <- optional (colon >> pType)
+    let finalType = case maybeType of
+            Just t  -> t
+            Nothing -> DT.pack "auto"
+    return (name, finalType)
 
 -- | Parse a return statement.
 --
@@ -84,13 +88,12 @@ pReturn = do
 
 -- | Parse a block of code enclosed in braces.
 --
--- Returns an AList containing all statements, or AVoid if the block is empty.
 pBlock :: Parser Ast
 pBlock = braces $ do
     stmts <- many pStatement
     case stmts of
         [] -> return AVoid
-        xs -> return (AList xs)
+        xs -> return (ABlock xs)
 
 -- | Parse a function definition.
 --
@@ -126,39 +129,40 @@ pAssignOp name = choice
     , makeOpCall (DT.pack "-") name <$ symbol (DT.pack "-=")
     , makeOpCall (DT.pack "*") name <$ symbol (DT.pack "*=")
     , makeOpCall (DT.pack "div") name <$ symbol (DT.pack "/=")
+    , makeOpCall (DT.pack "mod") name <$ symbol (DT.pack "%=")
     ]
 
 -- | Converts a field name (Text) into an AST list of integers.
--- This allows passing the field name as an argument to the 'set_field' runtime function.
+-- This allows passing the field name as an argument to the 'attr_update' runtime function.
 fieldToAst :: DT.Text -> Ast
 fieldToAst txt = AList $ map charToAst (DT.unpack txt)
     where
         charToAst c = AInteger (IChar (fromIntegral (ord c)))
 
--- | Recursively constructs the chain of 'update' and 'set_field' calls.
+-- | Recursively constructs the chain of 'update' and 'attr_update' calls.
 -- This function handles nested modifications for both arrays and structures.
 recursiveUpdate :: Ast -> [Accessor] -> Ast -> Ast
 recursiveUpdate base [AccIndex idx] val =
     -- Case 1: End of chain on an Array (e.g. x[i] = val)
-    ACall (ASymbol (DT.pack "update")) [base, idx, val]
+    ACall (ASymbol (DT.pack "nth_update")) [base, idx, val]
 
 -- Case 2: End of chain on a Structure (e.g. x.field = val)
 recursiveUpdate base [AccField field] val =
-    ACall (ASymbol (DT.pack "set_field")) [base, fieldToAst field, val]
+    ACall (ASymbol (DT.pack "attr_update")) [base, fieldToAst field, val]
 
 -- Case 3: Recursion on Array (e.g. x[i]... = val)
 -- We fetch the inner element using 'nth', update it recursively, and put it back using 'update'.
 recursiveUpdate base (AccIndex idx : rest) val =
     let inner = ACall (ASymbol (DT.pack "nth")) [base, idx]
         newVal = recursiveUpdate inner rest val
-    in ACall (ASymbol (DT.pack "update")) [base, idx, newVal]
+    in ACall (ASymbol (DT.pack "nth_update")) [base, idx, newVal]
 
 -- Case 4: Recursion on Structure (e.g. x.field... = val)
--- We access the field, update it recursively, and put it back using 'set_field'.
+-- We access the field, update it recursively, and put it back using 'attr_update'.
 recursiveUpdate base (AccField field : rest) val =
     let inner = AAccessStruct base field
         newVal = recursiveUpdate inner rest val
-    in ACall (ASymbol (DT.pack "set_field")) 
+    in ACall (ASymbol (DT.pack "attr_update")) 
        [base, fieldToAst field, newVal]
 
 recursiveUpdate _ [] _ = error "Should not happen in buildUpdateChain"
@@ -273,12 +277,32 @@ pDeclarations =
     , pFunc
     ]
 
+-- | Parses a variable definition or assignment and wraps it in an expression statement.
+--
+-- This ensures that variable-related instructions are stored as 'AExprStmt' nodes
+-- at the top level, maintaining a consistent instruction structure.
+pVarDefStmt :: Parser Ast
+pVarDefStmt = do
+    stmt <- pVarDef
+    return (AExprStmt stmt)
+
+-- | Parses an expression followed by a mandatory semicolon.
+--
+-- Example: 1 + 1;
+-- It wraps the expression in an 'AExprStmt' node to distinguish 
+-- standalone expressions from other types of statements.
+pExprStatement :: Parser Ast
+pExprStatement = do
+    expr <- pExpr
+    _ <- semicolon <?> "\";\" after expression"
+    return (AExprStmt expr)
+
 -- | Group of basic statement parsers (Return, Variable, Expression).
 pBasic :: [Parser Ast]
 pBasic =
     [ pReturn
-    , try pVarDef 
-    , pExpr <* (semicolon <?> "\";\" after expression") 
+    , try pVarDefStmt
+    , pExprStatement
     ]
 
 -- | Main statement parser.
