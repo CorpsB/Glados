@@ -153,6 +153,7 @@ serializeInstruction Nth = encodeWord8 0x93
 serializeInstruction (BuildList n) =
     encodeWord8 0x94 <>
     encodeInt32BE (fromIntegral n)
+serializeInstruction NthUpdate = encodeWord8 0x95
 
 serializeInstruction Print = encodeWord8 0x70
 serializeInstruction Halt = encodeWord8 0x71
