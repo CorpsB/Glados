@@ -49,6 +49,7 @@ emptyEnv = CheckEnv Map.empty Map.empty
 parseType :: DT.Text -> Type
 parseType t
     | t == DT.pack "int"  = TyInt
+    | t == DT.pack "char" = TyInt 
     | t == DT.pack "bool" = TyBool
     | t == DT.pack "void" = TyVoid
     | t == DT.pack "auto" = TyAuto
