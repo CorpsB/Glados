@@ -381,6 +381,7 @@ compileDefineStruct name fields = defineStruct name fields
 --   then look up the field's type.
 --
 inferType :: Ast -> CompilerMonad Text
+inferType (APos _ _ ast) = inferType ast
 inferType (ASymbol name) = getSymbolType name
 inferType (AAccessStruct obj field) = do
     parentType <- inferType obj
