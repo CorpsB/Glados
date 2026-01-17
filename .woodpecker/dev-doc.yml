@@ -1,6 +1,6 @@
 when:
   - event: push
-    branch: main
+    branch: feat/advanced-compiler-instructions
 
 steps:
   - name: publish_docs
