@@ -1,2 +1,2 @@
-nothing: void = void;
+nothing: void;
 print(42);
