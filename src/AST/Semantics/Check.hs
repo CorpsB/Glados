@@ -153,6 +153,9 @@ checkStmt env (AReturn expr) = do
         Nothing -> Right ()
     return (AReturn expr, env)
 checkStmt env (AImport _) = Right (AVoid, env)
+checkStmt env (AExprStmt stmt) = do
+    (newStmt, newEnv) <- checkStmt env stmt
+    return (AExprStmt newStmt, newEnv)
 checkStmt env ast = do
     _ <- checkExpr env ast
     return (ast, env)

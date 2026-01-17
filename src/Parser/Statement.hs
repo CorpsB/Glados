@@ -277,12 +277,32 @@ pDeclarations =
     , pFunc
     ]
 
+-- | Parses a variable definition or assignment and wraps it in an expression statement.
+--
+-- This ensures that variable-related instructions are stored as 'AExprStmt' nodes
+-- at the top level, maintaining a consistent instruction structure.
+pVarDefStmt :: Parser Ast
+pVarDefStmt = do
+    stmt <- pVarDef
+    return (AExprStmt stmt)
+
+-- | Parses an expression followed by a mandatory semicolon.
+--
+-- Example: 1 + 1;
+-- It wraps the expression in an 'AExprStmt' node to distinguish 
+-- standalone expressions from other types of statements.
+pExprStatement :: Parser Ast
+pExprStatement = do
+    expr <- pExpr
+    _ <- semicolon <?> "\";\" after expression"
+    return (AExprStmt expr)
+
 -- | Group of basic statement parsers (Return, Variable, Expression).
 pBasic :: [Parser Ast]
 pBasic =
     [ pReturn
-    , try pVarDef 
-    , pExpr <* (semicolon <?> "\";\" after expression") 
+    , try pVarDefStmt
+    , pExprStatement
     ]
 
 -- | Main statement parser.
