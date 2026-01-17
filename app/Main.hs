@@ -16,6 +16,7 @@ import Control.Monad.State (runStateT)
 import Data.Foldable (toList)
 import qualified Data.Sequence as Seq
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 
 import Parser.Statement (parseALL)
 import Parser.ImportSystem (resolveImports)
@@ -24,6 +25,7 @@ import Compiler.ASM.Assembler (assemble)
 import Compiler.CompilerState (createCompilerState, csCode, csFuncs, CompilerState)
 import Compiler.PsInstruction (PsInstruction(Real))
 import Compiler.Instruction (Instruction(Halt))
+import Common.Utils.Bytecode.File (getFileContent)
 import AST.Semantics.Check (checkAst)
 import AST.Ast (Ast)
 
@@ -82,7 +84,8 @@ writeBinary path bs = BS.writeFile path bs >>
 
 runCompiler :: String -> String -> IO ()
 runCompiler inputPath outputPath = do
-    src <- TIO.readFile inputPath
+    rawContent <- getFileContent inputPath
+    let src = TE.decodeUtf8 rawContent
     ast <- parseSource src >>= handleImports >>= checkSemantics
     state <- compileSource ast
     bytecode <- assembleCode (extractInstructions state)
