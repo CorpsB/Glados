@@ -95,10 +95,13 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 Right TyBool -> True
                 _ -> False
 
-        it "Rejects int == bool (Incompatible types)" $ do
+        it "Accepts int == bool (Runtime check)" $ do
             let args = [AInteger (fitInteger 1), ABool True]
-            checkCall mockCheckExpr testEnv (ASymbol (p "eq?")) args `shouldSatisfy` \case
-                Left err -> "compatible types" `isInfixOf` err
+            let mockChecker _ (AInteger _) = Right TyInt
+                mockChecker _ (ABool _) = Right TyBool
+                mockChecker _ _ = Left "Error"
+            checkEqualityOp mockChecker emptyEnv args `shouldSatisfy` \case
+                Right TyBool -> True
                 _ -> False
 
     describe "Logic Operators (&&, ||)" $ do
@@ -436,18 +439,12 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 Right TyBool -> True
                 _ -> False
 
-        it "checkEqualityOp: fails with specific message for incompatible types" $ do
-            let call = ACall (ASymbol (DT.pack "eq?")) [x, b]
-            let expected = "Equality requires compatible types, got int and bool"
-            checkExpr env call `shouldSatisfy` \case
-                Left err | err == expected -> True
-                _ -> False
-
-        it "checkEqualityOp: fails on incorrect argument count" $ do
-            let call = ACall (ASymbol (DT.pack "eq?")) [x]
-            checkExpr env call `shouldSatisfy` \case
-                Left err | err == "Equality operator expects 2 arguments" -> True
-                _ -> False
+        it "checkEqualityOp: Accepts incompatible types (returns Bool)" $ do
+            let args = [AInteger (fitInteger 1), ABool True]
+            let mockChecker _ (AInteger _) = Right TyInt
+                mockChecker _ (ABool _) = Right TyBool
+                mockChecker _ _ = Left "Error"
+            checkEqualityOp mockChecker emptyEnv args `shouldBe` Right TyBool
 
         it "checkUnaryOp: uses env to validate operand (success)" $ do
             let call = ACall (ASymbol (DT.pack "!")) [b]

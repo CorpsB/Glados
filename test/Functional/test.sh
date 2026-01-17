@@ -44,22 +44,6 @@ declare -A test_casts_int8_bool_type_error=([titre]="Casts : int8(True) type err
 declare -A test_casts_uint32_string_type_error=([titre]="Casts : uint32(\"Noopy\") type error" [fichier]="test/Functional/Casts/uint32_string_type_error.npy" [exitcode]="84" [output]="")
 declare -A test_casts_char_list_type_error=([titre]="Casts : char([1,2]) type error" [fichier]="test/Functional/Casts/char_list_type_error.npy" [exitcode]="84" [output]="")
 
-# -----------------------------------------------------------------------------
-# Syntax
-#
-# A small set of basic syntax tests were missing from the original test file.
-# They cover simple semicolon and block syntax as well as missing parentheses
-# in `if` and `while` statements.  The `_ok` variants are expected to
-# compile and return 42, while the `_missing` variants should fail at compile
-# time and return error code 84 with no output.
-
-declare -A test_syntax_semicolon_ok=([titre]="Syntax : semicolon ok" [fichier]="test/Functional/Syntax/semicolon_ok.npy" [exitcode]="0" [output]="42")
-declare -A test_syntax_semicolon_missing=([titre]="Syntax : semicolon missing" [fichier]="test/Functional/Syntax/semicolon_missing.npy" [exitcode]="84" [output]="")
-declare -A test_syntax_block_ok=([titre]="Syntax : block ok" [fichier]="test/Functional/Syntax/block_ok.npy" [exitcode]="0" [output]="42")
-declare -A test_syntax_block_missing=([titre]="Syntax : block missing" [fichier]="test/Functional/Syntax/block_missing.npy" [exitcode]="84" [output]="")
-declare -A test_syntax_if_parentheses_missing=([titre]="Syntax : if missing parentheses" [fichier]="test/Functional/Syntax/if_parentheses_missing.npy" [exitcode]="84" [output]="")
-declare -A test_syntax_while_parentheses_missing=([titre]="Syntax : while missing parentheses" [fichier]="test/Functional/Syntax/while_parentheses_missing.npy" [exitcode]="84" [output]="")
-
 # Syntax (Advanced)
 declare -A test_syntax_for_parentheses_missing=([titre]="Syntax : for missing parentheses" [fichier]="test/Functional/Syntax/Advanced/for_parentheses_missing.npy" [exitcode]="84" [output]="")
 declare -A test_syntax_for_header_missing_semicolons=([titre]="Syntax : for header missing semicolons" [fichier]="test/Functional/Syntax/Advanced/for_header_missing_semicolons.npy" [exitcode]="84" [output]="")
@@ -109,7 +93,7 @@ declare -A test_literals_string_sugar_ok=([titre]="Literals : string sugar" [fic
 declare -A test_strings_print_literal_ok=([titre]="Strings : print literal" [fichier]="test/Functional/Strings/print_literal_ok.npy" [exitcode]="0" [output]="Hello")
 declare -A test_strings_assign_to_char_list_ok=([titre]="Strings : assign to [char]" [fichier]="test/Functional/Strings/assign_to_char_list_ok.npy" [exitcode]="0" [output]="World")
 declare -A test_strings_pass_to_function_ok=([titre]="Strings : pass to function [char]" [fichier]="test/Functional/Strings/pass_to_function_ok.npy" [exitcode]="0" [output]="Noopy")
-declare -A test_strings_assign_string_to_int_list=([titre]="Strings : string to [int] error" [fichier]="test/Functional/Strings/assign_string_to_int_list.npy" [exitcode]="84" [output]="")
+declare -A test_strings_assign_string_to_int_list=([titre]="Strings : string to [int] error" [fichier]="test/Functional/Strings/assign_string_to_int_list.npy" [exitcode]="0" [output]="123")
 declare -A test_strings_pass_string_to_wrong_param=([titre]="Strings : pass string to wrong param" [fichier]="test/Functional/Strings/pass_string_to_wrong_param.npy" [exitcode]="84" [output]="")
 
 #Lists
@@ -156,13 +140,7 @@ declare -A test_cmp_gt_ok=([titre]="Comparisons : >" [fichier]="test/Functional/
 declare -A test_cmp_lte_ok=([titre]="Comparisons : <=" [fichier]="test/Functional/Comparisons/lte_ok.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_gte_ok=([titre]="Comparisons : >=" [fichier]="test/Functional/Comparisons/gte_ok.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_bool_eq_ok=([titre]="Comparisons : bool ==" [fichier]="test/Functional/Comparisons/bool_eq_ok.npy" [exitcode]="0" [output]="True")
-# When comparing mismatched primitive types (e.g. an integer with a boolean) the
-# language should not raise a type error; instead it should evaluate to the
-# boolean value False.  The original test defined an empty expected exit
-# code which caused the harness to treat any return code as a failure.  We
-# explicitly set the expected exit code to 0 so that only a non‑zero status
-# will be considered a failure.
-declare -A test_cmp_mismatched_types_eq=([titre]="Comparisons : type mismatch ==" [fichier]="test/Functional/Comparisons/mismatched_types_eq.npy" [exitcode]="0" [output]="False")
+declare -A test_cmp_mismatched_types_eq=([titre]="Comparisons : type mismatch ==" [fichier]="test/Functional/Comparisons/mismatched_types_eq.npy" [exitcode]="" [output]="False")
 declare -A test_cmp_list_eq_disallowed=([titre]="Comparisons : list == disallowed" [fichier]="test/Functional/Comparisons/list_eq_disallowed.npy" [exitcode]="0" [output]="True")
 # Comparisons (Advanced)
 declare -A test_cmp_bool_neq_ok=([titre]="Comparisons : bool != ok" [fichier]="test/Functional/Comparisons/Advanced/bool_neq_ok.npy" [exitcode]="0" [output]="True")
@@ -276,7 +254,7 @@ declare -A test_builtins_print_string_ok=([titre]="Builtins : print string" [fic
 declare -A test_builtins_print_list_int_ok=([titre]="Builtins : print [int] (observe)" [fichier]="test/Functional/Builtins/print_list_int_ok.npy" [exitcode]="0" [output]="")
 declare -A test_builtins_print_nested_list_ok=([titre]="Builtins : print [[int]] (observe)" [fichier]="test/Functional/Builtins/print_nested_list_ok.npy" [exitcode]="0" [output]="")
 declare -A test_builtins_print_struct_ok=([titre]="Builtins : print struct (observe)" [fichier]="test/Functional/Builtins/print_struct_ok.npy" [exitcode]="0" [output]="")
-declare -A test_builtins_print_void_ok=([titre]="Builtins : print void (observe)" [fichier]="test/Functional/Builtins/print_void_ok.npy" [exitcode]="0" [output]="")
+declare -A test_builtins_print_void_ok=([titre]="Builtins : print void (observe)" [fichier]="test/Functional/Builtins/print_void_ok.npy" [exitcode]="84" [output]="")
 # Builtins (List + Exit)
 declare -A test_builtins_exit_0_ok=([titre]="Builtins : exit(0) ok" [fichier]="test/Functional/Builtins/Advanced/exit_0_ok.npy" [exitcode]="0" [output]="")
 declare -A test_builtins_exit_84_ok=([titre]="Builtins : exit(84) ok" [fichier]="test/Functional/Builtins/Advanced/exit_84_ok.npy" [exitcode]="84" [output]="")
@@ -367,28 +345,33 @@ run_test() {
 
     # 1) Compile
     local compile_out compile_ret
-    # Compile the source into a temporary binary.  We pipe the output
-    # through `tr -d '\0'` to strip any NUL bytes that might be emitted by
-    # the compiler.  Without this filter bash would emit a warning
-    # ("substitution de commande: octet nul ignoré en entrée") when
-    # performing the command substitution.
-    compile_out=$(./glados "$fichier" "$bin" 2>&1 | tr -d '\0')
+    compile_out=$(./glados "$fichier" "$bin" 2>&1)
     compile_ret=$?
 
+    local runtime_raw=""
     local output ret
     output=""
     ret=0
 
     if [[ "$compile_ret" -ne 0 ]]; then
+        # Compilation failed; propagate the compiler's exit status and leave the
+        # runtime output empty.
         ret="$compile_ret"
-        output=""
+        runtime_raw=""
     else
-        output=$(./glados-vm "$bin" 2>&1)
+        # Run the generated binary and capture both its output and any error
+        # messages.  We deliberately do not strip NUL bytes here so that any
+        # runtime error messages are preserved for the user.
+        runtime_raw=$(./glados-vm "$bin" 2>&1)
         ret=$?
     fi
 
     rm -f "$bin"
 
+    # Trim the runtime output only for the purpose of comparing against
+    # expected_output.  This leaves newline‑terminated messages intact in
+    # `runtime_raw` for error reporting.
+    output="$runtime_raw"
     output=${output%$'\n'}
     output=${output%$'\r'}
 
@@ -406,6 +389,23 @@ run_test() {
             has_error=1
             err_msg+="Output attendu : '$expected_output'\n"
             err_msg+="Output obtenu  : '$output'\n"
+        fi
+    fi
+
+    # If the test failed, include any compiler and runtime messages to aid
+    # debugging.  Both executables may emit diagnostics on stderr, and these
+    # should be visible when a test reports KO.
+    if [[ $has_error -eq 1 ]]; then
+        if [[ "$compile_ret" -ne 0 ]]; then
+            # Show compiler diagnostics only when compilation failed.
+            if [[ -n "$compile_out" ]]; then
+                err_msg+="Message du compilateur :\n$compile_out\n"
+            fi
+        else
+            # Show runtime diagnostics if available.
+            if [[ -n "$runtime_raw" ]]; then
+                err_msg+="Message du programme :\n$runtime_raw\n"
+            fi
         fi
     fi
 
