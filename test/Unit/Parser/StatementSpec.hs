@@ -317,7 +317,7 @@ spec = describe "Parser - Statement & Expression" $ do
             parseClean (p code) `shouldSatisfy` \case
                 Right [ASetVar name _ (ACall updateOp [arrArg, idxArg, valArg])] -> 
                     name == p "arr" &&
-                    (case updateOp of ASymbol s -> s == p "update"; _ -> False) &&
+                    (case updateOp of ASymbol s -> s == p "nth_update"; _ -> False) &&
                     (case arrArg of ASymbol s -> s == p "arr"; _ -> False) &&
                     (case idxArg of AInteger (I8 0) -> True; _ -> False) &&
                     (case valArg of AInteger (I8 5) -> True; _ -> False)
@@ -327,12 +327,12 @@ spec = describe "Parser - Statement & Expression" $ do
             parseClean (p code) `shouldSatisfy` \case
                 Right [ASetVar name _ (ACall outerUpdate [matArg, idx1, innerUpdate])] -> 
                     name == p "mat" &&
-                    (case outerUpdate of ASymbol s -> s == p "update"; _ -> False) &&
+                    (case outerUpdate of ASymbol s -> s == p "nth_update"; _ -> False) &&
                     (case matArg of ASymbol s -> s == p "mat"; _ -> False) &&
                     (case idx1 of AInteger (I8 1) -> True; _ -> False) &&
                     (case innerUpdate of
                         ACall innerOp [nthCall, idx2, valArg] ->
-                            (case innerOp of ASymbol s -> s == p "update"; _ -> False) &&
+                            (case innerOp of ASymbol s -> s == p "nth_update"; _ -> False) &&
                             (case nthCall of ACall (ASymbol nth) _ -> nth == p "nth"; _ -> False) &&
                             (case idx2 of AInteger (I8 2) -> True; _ -> False) &&
                             (case valArg of AInteger (I8 9) -> True; _ -> False)
@@ -486,7 +486,7 @@ spec = describe "Parser - Statement & Expression" $ do
             parseStmt input `shouldSatisfy` \case
                 Right [ASetVar name _ (ACall (ASymbol funcUpdate) [ASymbol base, AInteger idx, innerVal])]
                     | name == p "x" &&
-                      funcUpdate == p "update" &&
+                      funcUpdate == p "nth_update" &&
                       base == p "x" &&
                       idx == fitInteger 0 ->
                         (case innerVal of {
