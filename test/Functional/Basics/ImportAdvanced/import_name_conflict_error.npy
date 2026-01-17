@@ -1,5 +1,5 @@
-import "conflict/m1.npy";
-import "conflict/m2.npy";
+import "test/Functional/Basics/ImportAdvanced/conflict/m1.npy";
+import "test/Functional/Basics/ImportAdvanced/conflict/m2.npy";
 
 func main() {
     print(foo());
