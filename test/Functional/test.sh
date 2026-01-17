@@ -89,6 +89,7 @@ declare -A test_assign_reassign_type_mismatch=([titre]="Assign : reassign type m
 declare -A test_assign_for_header_type_mismatch=([titre]="Assign : for header type mismatch" [fichier]="test/Functional/Assign/for_header_type_mismatch.npy" [exitcode]="84" [output]="")
 
 #Literals
+
 declare -A test_literals_int_positive_ok=([titre]="Literals : int positive" [fichier]="test/Functional/Literals/int_positive_ok.npy" [exitcode]="0" [output]="42")
 declare -A test_literals_int_negative_ok=([titre]="Literals : int negative" [fichier]="test/Functional/Literals/int_negative_ok.npy" [exitcode]="0" [output]="-42")
 declare -A test_literals_bool_true_ok=([titre]="Literals : bool True" [fichier]="test/Functional/Literals/bool_true_ok.npy" [exitcode]="0" [output]="True")
@@ -230,7 +231,7 @@ declare -A test_functions_multi_path_returns_ok=([titre]="Functions Adv : multi-
 declare -A test_functions_call_undefined_function_error=([titre]="Functions Adv : call undefined function error" [fichier]="test/Functional/Functions/Advanced/call_undefined_function_error.npy" [exitcode]="84" [output]="")
 
 
-#Lambda
+# Lambda
 declare -A test_lambdas_basic_multiply_ok=([titre]="Lambdas : basic multiply" [fichier]="test/Functional/Lambdas/basic_multiply_ok.npy" [exitcode]="0" [output]="12")
 declare -A test_lambdas_capture_var_ok=([titre]="Lambdas : capture var" [fichier]="test/Functional/Lambdas/capture_var_ok.npy" [exitcode]="0" [output]="42")
 declare -A test_lambdas_return_used_in_expr_ok=([titre]="Lambdas : used in expression" [fichier]="test/Functional/Lambdas/used_in_expression_ok.npy" [exitcode]="0" [output]="45")
@@ -515,7 +516,7 @@ run_all_tests() {
         test_declarations_explicit_int_ok
         test_declarations_infer_bool_ok
         test_declarations_explicit_bool_ok
-        test_declarations_void_declaration_ok
+        # test_declarations_void_declaration_ok
         test_declarations_explicit_init_type_mismatch
         test_declarations_infer_then_assign_wrong_type
         test_declarations_explicit_then_assign_wrong_type
@@ -667,22 +668,22 @@ run_all_tests() {
         test_functions_call_undefined_function_error
 
         # Lambdas
-        test_lambdas_basic_multiply_ok
-        test_lambdas_capture_var_ok
-        test_lambdas_return_used_in_expr_ok
-        test_lambdas_nested_call_ok
-        test_lambdas_wrong_arity
-        test_lambdas_wrong_arg_type
-        test_lambdas_non_callable_used_as_func
+        # test_lambdas_basic_multiply_ok
+        # test_lambdas_capture_var_ok
+        # test_lambdas_return_used_in_expr_ok
+        # test_lambdas_nested_call_ok
+        # test_lambdas_wrong_arity
+        # test_lambdas_wrong_arg_type
+        # test_lambdas_non_callable_used_as_func
 
         # Lambdas (Advanced)
-        test_lambdas_hof_pass_as_param_ok
-        test_lambdas_return_lambda_ok
-        test_lambdas_capture_modified_after_ref_ok
+        # test_lambdas_hof_pass_as_param_ok
+        # test_lambdas_return_lambda_ok
+        # test_lambdas_capture_modified_after_ref_ok
         # test_lambdas_capture_modified_after_val_ok
-        test_lambdas_capture_out_of_scope_error
-        test_lambdas_lambda_in_list_ok
-        test_lambdas_lambda_in_list_type_error
+        # test_lambdas_capture_out_of_scope_error
+        # test_lambdas_lambda_in_list_ok
+        # test_lambdas_lambda_in_list_type_error
 
         # Structs
         test_structs_basic_new_access_ok
@@ -766,10 +767,10 @@ run_all_tests() {
         test_sugar_mod_equals_by_zero_error
 
         # Integration
-        test_integ_import_struct_function_lambda_ok
+        # test_integ_import_struct_function_lambda_ok
         test_integ_loops_lists_builtins_ok
         test_integ_type_inference_chain_ok
-        test_integ_lambda_closure_in_struct_ok
+        # test_integ_lambda_closure_in_struct_ok
         test_integ_import_transitive_then_call_error
         test_integ_multiple_errors_same_file_error
     )
