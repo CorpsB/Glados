@@ -1,1 +1,1 @@
-print(7 div 2);
+print(7 / 2);

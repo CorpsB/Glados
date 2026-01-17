@@ -84,7 +84,7 @@ declare -A test_literals_int_positive_ok=([titre]="Literals : int positive" [fic
 declare -A test_literals_int_negative_ok=([titre]="Literals : int negative" [fichier]="test/Functional/Literals/int_negative_ok.npy" [exitcode]="0" [output]="-42")
 declare -A test_literals_bool_true_ok=([titre]="Literals : bool True" [fichier]="test/Functional/Literals/bool_true_ok.npy" [exitcode]="0" [output]="True")
 declare -A test_literals_bool_false_ok=([titre]="Literals : bool False" [fichier]="test/Functional/Literals/bool_false_ok.npy" [exitcode]="0" [output]="False")
-declare -A test_literals_void_value_ok=([titre]="Literals : void literal value" [fichier]="test/Functional/Literals/void_value_ok.npy" [exitcode]="84" [output]="0")
+declare -A test_literals_void_value_ok=([titre]="Literals : void literal value" [fichier]="test/Functional/Literals/void_value_ok.npy" [exitcode]="84" [output]="42")
 declare -A test_literals_list_int_ok=([titre]="Literals : list of int" [fichier]="test/Functional/Literals/list_int_ok.npy" [exitcode]="0" [output]="2")
 declare -A test_literals_list_nested_ok=([titre]="Literals : nested list" [fichier]="test/Functional/Literals/list_nested_ok.npy" [exitcode]="0" [output]="1")
 declare -A test_literals_string_sugar_ok=([titre]="Literals : string sugar" [fichier]="test/Functional/Literals/string_sugar_ok.npy" [exitcode]="0" [output]="Noopy")
