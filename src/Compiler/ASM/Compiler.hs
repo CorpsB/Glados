@@ -97,8 +97,8 @@ getLambdaFreeVariables _ = Set.empty
 --   context recursively. Otherwise, compiles normally and emits 'Ret'.
 --
 compileTail :: (Ast -> CompilerMonad ()) -> Ast -> CompilerMonad ()
-compileTail compileFn (ACall func args) = case func of
-    ASymbol name -> case Map.lookup name builtinMap of
+compileTail compileFn (ACall (ASymbol name) args) =
+    case Map.lookup name builtinMap of
         Just instr -> do
             mapM_ compileFn args
             emitInstruction instr
@@ -106,12 +106,12 @@ compileTail compileFn (ACall func args) = case func of
             emitInstruction (Ret (csCurrentArgCount s))
         Nothing -> mapM_ compileFn args >>
             appendPseudoInstruction (TailCallLabel name)
-    _ -> do
-        compileFn func
-        mapM_ compileFn args
-        emitInstruction CallIndirect
-        s <- get
-        emitInstruction (Ret (csCurrentArgCount s))
+compileTail compileFn (ACall func args) = do
+    compileFn func
+    mapM_ compileFn args
+    emitInstruction CallIndirect
+    s <- get
+    emitInstruction (Ret (csCurrentArgCount s))
 compileTail compileFn (AIf cond t e) = do
     lElse <- generateUniqueLabel (pack "else")
     lEnd  <- generateUniqueLabel (pack "endif")

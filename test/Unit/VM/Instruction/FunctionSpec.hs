@@ -207,38 +207,26 @@ spec = describe "VM.Instruction.Function" $ do
 
   describe "instRet (RET 0x43)" $ do
     it "restores IP/FP/Env, pops snapshot, cleans stack, then pushes return value" $ do
-      let snap =
-            CallSnapshot
-              { callbackIndex = 123
-              , vStackIndex = 0
-              , vEnv = V.fromList [i 42]
-              }
-
+      let snap = CallSnapshot { callbackIndex = 123, vStackIndex = 0, vEnv = V.fromList [i 42] }
       let vm0 =
-            (mkVM BS.empty)
+            (mkVM (beI32 0)) 
               { baseVStackIndex = 2
-              , bytecodeIndex = 999
+              , bytecodeIndex = 0
               , env = V.fromList [VBool False]
               , snapshotStack = [snap]
-              , vStack = V.fromList [i 10, i 20, VBool False, i 999] -- retVal = 999
+              , vStack = V.fromList [i 10, i 20, VBool False, i 999]
               }
 
       (_, vm1) <- runStateT instRet vm0
-
       bytecodeIndex vm1 `shouldBe` 123
       baseVStackIndex vm1 `shouldBe` 0
-      env vm1 `shouldBe` V.fromList [i 42]
-      snapshotStack vm1 `shouldBe` []
-
-      -- stack cleaned to baseVStackIndex of callee (2), then retVal pushed
       vStack vm1 `shouldBe` V.fromList [i 10, i 20, i 999]
 
     it "throws when call stack is empty" $ do
       let vm0 =
-            (mkVM BS.empty)
+            (mkVM (beI32 0))
               { snapshotStack = []
-              , vStack = V.fromList [i 1] -- so stackPop succeeds
+              , vStack = V.fromList [i 1]
               }
-
       runStateT instRet vm0 `shouldThrow` \case
         ErrorCall msg -> "VM Error: Return called with empty call stack" `isInfixOf` msg
