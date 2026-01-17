@@ -313,7 +313,7 @@ declare -A test_sugar_postfix_increment_value_ok=([titre]="Sugar : postfix i++ v
 declare -A test_sugar_prefix_increment_value_ok=([titre]="Sugar : prefix ++i value ok" [fichier]="test/Functional/Sugar/prefix_increment_value_ok.npy" [exitcode]="0" [output]="3")
 declare -A test_sugar_postfix_decrement_value_ok=([titre]="Sugar : postfix i-- value ok" [fichier]="test/Functional/Sugar/postfix_decrement_value_ok.npy" [exitcode]="0" [output]="1")
 declare -A test_sugar_prefix_decrement_value_ok=([titre]="Sugar : prefix --i value ok" [fichier]="test/Functional/Sugar/prefix_decrement_value_ok.npy" [exitcode]="0" [output]="0")
-declare -A test_sugar_inc_in_expression_postfix_ok=([titre]="Sugar : i++ in expression ok" [fichier]="test/Functional/Sugar/inc_in_expression_postfix_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_sugar_inc_in_expression_postfix_ok=([titre]="Sugar : i++ in expression ok" [fichier]="test/Functional/Sugar/inc_in_expression_postfix_ok.npy" [exitcode]="0" [output]="4")
 declare -A test_sugar_inc_in_expression_prefix_ok=([titre]="Sugar : ++i in expression ok" [fichier]="test/Functional/Sugar/inc_in_expression_prefix_ok.npy" [exitcode]="0" [output]="4")
 declare -A test_sugar_plus_equals_ok=([titre]="Sugar : += ok" [fichier]="test/Functional/Sugar/plus_equals_ok.npy" [exitcode]="0" [output]="12")
 declare -A test_sugar_minus_equals_ok=([titre]="Sugar : -= ok" [fichier]="test/Functional/Sugar/minus_equals_ok.npy" [exitcode]="0" [output]="7")

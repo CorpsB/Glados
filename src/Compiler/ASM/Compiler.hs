@@ -28,7 +28,7 @@ module Compiler.ASM.Compiler
     ) where
 
 import Data.Char (chr)
-import Data.Text (Text, pack)
+import Data.Text (Text, pack, unpack)
 import Data.Set (Set)
 import qualified Data.Set as Set
 import qualified Data.Map.Strict as Map
@@ -47,6 +47,7 @@ import Compiler.ASM.AstToAsm
 import Compiler.Instruction (Instruction(..), Immediate(..))
 import Compiler.PsInstruction (PsInstruction(..))
 import Compiler.CompilerState (CompilerState(..), ScopeType(..))
+import Compiler.ASM.Builtins (getBuiltinReturnType)
 import Common.Type.Integer (IntValue(..))
 import Common.Utils.List (zipWith3M_)
 import AST.Ast (Ast(..))
@@ -400,6 +401,13 @@ compileDefineStruct name fields = defineStruct name fields
 inferType :: Ast -> CompilerMonad Text
 inferType (APos _ _ ast) = inferType ast
 inferType (ASymbol name) = getSymbolType name
+inferType (AInteger _) = return (pack "int")
+inferType (ABool _) = return (pack "bool")
+inferType (ACall (ASymbol name) args) = do
+    argTypes <- mapM inferType args
+    case getBuiltinReturnType (unpack name) argTypes of
+        Right builtinType -> return builtinType
+        Left _ -> getSymbolType name
 inferType (AAccessStruct obj field) = do
     parentType <- inferType obj
     (_, fieldType) <- getStructField parentType field

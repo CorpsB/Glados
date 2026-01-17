@@ -7,10 +7,14 @@
 
 module Compiler.ASM.Builtins
     ( builtinMap
+    , getInnerListType
+    , getBuiltinReturnType
     ) where
 
 import Data.Text (Text, pack)
+import qualified Data.Text as T
 import qualified Data.Map.Strict as Map
+
 import Compiler.Instruction (Instruction(..))
 
 builtinCastList :: [(Text, Instruction)]
@@ -53,3 +57,42 @@ builtinList = (builtinCastList
 --
 builtinMap :: Map.Map Text Instruction
 builtinMap = Map.fromList builtinList
+
+-- | Helper to transform "[int]" to "int" or "[Point]" to "Point"
+--
+getInnerListType :: Text -> Either Text Text
+getInnerListType t
+    | T.length t > 2 && T.head t == '[' && T.last t == ']' =
+        Right (T.tail (T.init t))
+    | otherwise = Left (pack $ "Expected a list type [...], got: " ++ show t)
+
+-- | Returns the return type of a builtin based on its name and argument types.
+--
+getBuiltinReturnType :: String -> [Text] -> Either Text Text
+getBuiltinReturnType "nth" [listType, _] = getInnerListType listType
+getBuiltinReturnType "head" [listType] = getInnerListType listType
+getBuiltinReturnType "tail" [listType] = Right listType
+getBuiltinReturnType "cons" [_, listType] = Right listType
+
+getBuiltinReturnType "+" _ = Right (pack "int")
+getBuiltinReturnType "-" _ = Right (pack "int")
+getBuiltinReturnType "*" _ = Right (pack "int")
+getBuiltinReturnType "/" _ = Right (pack "int")
+getBuiltinReturnType "%" _ = Right (pack "int")
+getBuiltinReturnType "div" _ = Right (pack "int")
+getBuiltinReturnType "mod" _ = Right (pack "int")
+
+getBuiltinReturnType "eq?" _   = Right (pack "bool")
+getBuiltinReturnType "neq?" _  = Right (pack "bool")
+getBuiltinReturnType "teq?" _  = Right (pack "bool")
+getBuiltinReturnType "tneq?" _ = Right (pack "bool")
+getBuiltinReturnType "<" _     = Right (pack "bool")
+getBuiltinReturnType ">" _     = Right (pack "bool")
+getBuiltinReturnType "<=" _    = Right (pack "bool")
+getBuiltinReturnType ">=" _    = Right (pack "bool")
+getBuiltinReturnType "!" _     = Right (pack "bool")
+getBuiltinReturnType "&&" _    = Right (pack "bool")
+getBuiltinReturnType "||" _    = Right (pack "bool")
+
+getBuiltinReturnType name _ = Left (
+    pack $ "Unknown builtin or invalid arguments for: " ++ show name)
