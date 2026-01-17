@@ -36,7 +36,12 @@ checkCall checker env (ASymbol name) args =
     case checkBuiltinOp checker env name args of
         Just result -> result
         Nothing     -> checkUserFunc checker env name args
-checkCall _ _ _ _ = Left "Error: Invalid function call (must be a symbol)"
+checkCall checker env expr args = do
+    funcType <- checker env expr
+    case funcType of
+        TyFunc expectedArgs retType ->
+            verifyFuncCall checker env (DT.pack "<anonymous_call>") args expectedArgs retType
+        _ -> Left $ "Error: expression is not a function (" ++ typeToString funcType ++ ")"
 
 -- | Main dispatcher for built-in operators and special functions.
 --
@@ -117,6 +122,7 @@ checkKeywordFuncs :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
                   -> Maybe (Either String Type)
 checkKeywordFuncs c e n a
     | n == DT.pack "eq?" = Just $ checkEqualityOp c e a
+    | n == DT.pack "neq?" = Just $ checkEqualityOp c e a
     | n == DT.pack "!" = Just $ checkUnaryOp c e n a TyBool TyBool
     | n == DT.pack "set_field" = Just $ checkSetField c e a
     | n == DT.pack "print" = Just $ checkPrint c e a

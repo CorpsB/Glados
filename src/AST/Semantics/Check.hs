@@ -66,6 +66,7 @@ checkExpr env (ASetVar name typeStr expr) = do
         then Right actualType
         else Left $ "Type mismatch in expression assignment for variable '"
             ++ DT.unpack name ++ "'"
+checkExpr env (ADefineLambda args body) = checkLambda env args body
 checkExpr env (APos line _ ast) =
     case checkExpr env ast of
         Left err -> 
@@ -89,6 +90,17 @@ checkSymbol :: CheckEnv -> DT.Text -> Either String Type
 checkSymbol env name = case Map.lookup name (envVars env) of
     Just t  -> Right t
     Nothing -> Left $ "Undefined variable '" ++ DT.unpack name ++ "'"
+
+-- | Checks a Lambda expression.
+-- Infers the return type based on the body.
+-- Assumes arguments are Integers (default behavior for untyped lambdas in this grammar).
+checkLambda :: CheckEnv -> [DT.Text] -> Ast -> Either String Type
+checkLambda env args body = do
+    let argTypes = map (\_ -> TyInt) args
+
+    envWithArgs <- foldM (\e (n, t) -> insertVar e n t) env (zip args argTypes)
+    retType <- checkExpr envWithArgs body
+    Right (TyFunc argTypes retType)
 
 -- | Check Statement: Verifies AND transforms a statement.
 --
@@ -156,10 +168,12 @@ processSetVar :: CheckEnv -> DT.Text -> DT.Text -> Ast ->
     Either String (Ast, CheckEnv)
 processSetVar env name typeStr expr = do
     actualType <- checkExpr env expr
-    let resolvedTypeStr = resolveAuto typeStr actualType
-    let declaredType = parseType resolvedTypeStr
+    let (declaredType, finalTypeStr) = 
+            if typeStr == DT.pack "auto"
+            then (actualType, DT.pack (typeToString actualType))
+            else (parseType typeStr, typeStr)
     newEnv <- applyAssignment env name declaredType actualType
-    return (ASetVar name resolvedTypeStr expr, newEnv)
+    return (ASetVar name finalTypeStr expr, newEnv)
 
 -- | Resolves the 'auto' keyword to a concrete type string.
 resolveAuto :: DT.Text -> Type -> DT.Text
