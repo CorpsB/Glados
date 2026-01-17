@@ -144,7 +144,7 @@ fieldToAst txt = AList $ map charToAst (DT.unpack txt)
 recursiveUpdate :: Ast -> [Accessor] -> Ast -> Ast
 recursiveUpdate base [AccIndex idx] val =
     -- Case 1: End of chain on an Array (e.g. x[i] = val)
-    ACall (ASymbol (DT.pack "update")) [base, idx, val]
+    ACall (ASymbol (DT.pack "nth_update")) [base, idx, val]
 
 -- Case 2: End of chain on a Structure (e.g. x.field = val)
 recursiveUpdate base [AccField field] val =
@@ -155,7 +155,7 @@ recursiveUpdate base [AccField field] val =
 recursiveUpdate base (AccIndex idx : rest) val =
     let inner = ACall (ASymbol (DT.pack "nth")) [base, idx]
         newVal = recursiveUpdate inner rest val
-    in ACall (ASymbol (DT.pack "update")) [base, idx, newVal]
+    in ACall (ASymbol (DT.pack "nth_update")) [base, idx, newVal]
 
 -- Case 4: Recursion on Structure (e.g. x.field... = val)
 -- We access the field, update it recursively, and put it back using 'set_field'.

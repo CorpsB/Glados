@@ -151,7 +151,6 @@ checkStmt env (AReturn expr) = do
                        typeToString expectedType ++ " but got " ++
                        typeToString actualType
         Nothing -> Right ()
-
     return (AReturn expr, env)
 checkStmt env (AImport _) = Right (AVoid, env)
 checkStmt env ast = do

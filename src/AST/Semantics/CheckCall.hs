@@ -40,8 +40,10 @@ checkCall checker env expr args = do
     funcType <- checker env expr
     case funcType of
         TyFunc expectedArgs retType ->
-            verifyFuncCall checker env (DT.pack "<anonymous_call>") args expectedArgs retType
-        _ -> Left $ "Error: expression is not a function (" ++ typeToString funcType ++ ")"
+            verifyFuncCall checker env
+                (DT.pack "<anonymous_call>") args expectedArgs retType
+        _ -> Left $ "Error: expression is not a function ("
+            ++ typeToString funcType ++ ")"
 
 -- | Main dispatcher for built-in operators and special functions.
 --
@@ -140,7 +142,7 @@ checkDataFuncs c e n a
         castOps = map DT.pack [ "int8", "uint8", "int16", "uint16"
                               , "int32", "uint32", "int64", "uint64"
                               , "char", "uchar" ]
-        listOps = map DT.pack ["cons", "head", "tail", "nth"]
+        listOps = map DT.pack ["cons", "head", "tail", "nth", "nth_update"]
 
 -- | Dispatcher for List specific operations.
 checkListOps :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
@@ -150,7 +152,29 @@ checkListOps c e n a
     | n == DT.pack "head" = checkHead c e a
     | n == DT.pack "tail" = checkTail c e a
     | n == DT.pack "nth"  = checkNth c e a
+    | n == DT.pack "nth_update" = checkUpdate c e a
     | otherwise = Left "Unknown list operator"
+
+-- | Validates 'update(list, index, value)'.
+-- Separates type retrieval from validation to fit coding style.
+checkUpdate :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkUpdate checker env [lst, idx, val] = do
+    tLst <- checker env lst
+    tIdx <- checker env idx
+    tVal <- checker env val
+    validateListUpdate tLst tIdx tVal
+checkUpdate _ _ _ = Left "update expects 3 arguments (list, index, value)"
+
+-- | Helper to validate types for list update.
+validateListUpdate :: Type -> Type -> Type -> Either String Type
+validateListUpdate (TyList inner) tIdx tVal
+    | not (areTypesCompatible TyInt tIdx) =
+        Left "update index must be an integer"
+    | areTypesCompatible inner tVal = Right (TyList inner)
+    | otherwise = Left $ "Type mismatch in list update: expected " ++
+                         typeToString inner ++ " but got " ++
+                         typeToString tVal
+validateListUpdate _ _ _ = Left "update expects a list as first argument"
 
 -- | Validates 'exit'. Expects 1 Int. Returns Void.
 checkExit :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
