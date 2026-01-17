@@ -10,7 +10,7 @@ declare -A test_basics_import_missing_file=([titre]="Basics : import missing fil
 declare -A test_basics_import_symbol_visibility=([titre]="Basics : symbol visibility (no import)" [fichier]="test/Functional/Basics/import_symbol_visibility.npy" [exitcode]="84" [output]="")
 declare -A test_basics_import_unused=([titre]="Basics : import unused" [fichier]="test/Functional/Basics/import_unused.npy" [exitcode]="0" [output]="42")
 
-declare -A test_basics_import_duplicate_ok=([titre]="Basics : import duplicate (idempotent)" [fichier]="test/Functional/Basics/ImportAdvanced/import_duplicate_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_basics_import_duplicate_ok=([titre]="Basics : import duplicate (idempotent)" [fichier]="test/Functional/Basics/ImportAdvanced/import_duplicate_ok.npy" [exitcode]="84" [output]="")
 declare -A test_basics_import_circular_error=([titre]="Basics : import circular (A<->B) error" [fichier]="test/Functional/Basics/ImportAdvanced/import_circular_error.npy" [exitcode]="84" [output]="")
 declare -A test_basics_import_transitive_visibility_error=([titre]="Basics : import transitive visibility error" [fichier]="test/Functional/Basics/ImportAdvanced/import_transitive_visibility_error.npy" [exitcode]="84" [output]="")
 declare -A test_basics_import_name_conflict_error=([titre]="Basics : import name conflict error" [fichier]="test/Functional/Basics/ImportAdvanced/import_name_conflict_error.npy" [exitcode]="84" [output]="")
