@@ -13,6 +13,7 @@ import AST.Ast (Ast(..))
 import AST.Semantics.Type
 import Common.Type.Integer (IntValue(..))
 import Data.Char (chr)
+import Control.Monad (unless)
 
 -- | Type signature for the checkExpr function passed as argument.
 -- Used to break the circular dependency between Check and CheckCall.
@@ -119,7 +120,82 @@ checkKeywordFuncs c e n a
     | n == DT.pack "!" = Just $ checkUnaryOp c e n a TyBool TyBool
     | n == DT.pack "set_field" = Just $ checkSetField c e a
     | n == DT.pack "print" = Just $ checkPrint c e a
+    | n == DT.pack "exit" = Just $ checkExit c e a
+    | otherwise = checkDataFuncs c e n a
+
+-- | Dispatcher for Data functions: Casts and List operations.
+checkDataFuncs :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
+               -> Maybe (Either String Type)
+checkDataFuncs c e n a
+    | n `elem` castOps = Just $ checkUnaryOp c e n a TyInt TyInt
+    | n `elem` listOps = Just $ checkListOps c e n a
     | otherwise = Nothing
+    where
+        castOps = map DT.pack [ "int8", "uint8", "int16", "uint16"
+                              , "int32", "uint32", "int64", "uint64"
+                              , "char", "uchar" ]
+        listOps = map DT.pack ["cons", "head", "tail", "nth"]
+
+-- | Dispatcher for List specific operations.
+checkListOps :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
+             -> Either String Type
+checkListOps c e n a
+    | n == DT.pack "cons" = checkCons c e a
+    | n == DT.pack "head" = checkHead c e a
+    | n == DT.pack "tail" = checkTail c e a
+    | n == DT.pack "nth"  = checkNth c e a
+    | otherwise = Left "Unknown list operator"
+
+-- | Validates 'exit'. Expects 1 Int. Returns Void.
+checkExit :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkExit checker env [arg] = do
+    t <- checker env arg
+    unless (areTypesCompatible TyInt t) $ Left "exit expects an integer code"
+    Right TyVoid
+checkExit _ _ _ = Left "exit expects 1 argument"
+
+-- | Validates 'cons(elem, list)'. Returns 'list' type.
+checkCons :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkCons checker env [el, lst] = do
+    tEl <- checker env el
+    tLst <- checker env lst
+    case tLst of
+        TyList inner -> if areTypesCompatible inner tEl
+                        then Right tLst
+                        else Left $ "cons type mismatch: " ++
+                             typeToString tEl ++ " vs " ++ typeToString inner
+        _ -> Left "cons expects a list as second argument"
+checkCons _ _ _ = Left "cons expects 2 arguments"
+
+-- | Validates 'head(list)'. Returns inner type.
+checkHead :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkHead checker env [lst] = do
+    tLst <- checker env lst
+    case tLst of
+        TyList inner -> Right inner
+        _ -> Left "head expects a list"
+checkHead _ _ _ = Left "head expects 1 argument"
+
+-- | Validates 'tail(list)'. Returns 'list' type.
+checkTail :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkTail checker env [lst] = do
+    tLst <- checker env lst
+    case tLst of
+        TyList _ -> Right tLst
+        _ -> Left "tail expects a list"
+checkTail _ _ _ = Left "tail expects 1 argument"
+
+-- | Validates 'nth(list, index)'. Returns inner type.
+checkNth :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkNth checker env [lst, idx] = do
+    tLst <- checker env lst
+    tIdx <- checker env idx
+    unless (areTypesCompatible TyInt tIdx) $ Left
+        "nth index must be an integer"
+    case tLst of
+        TyList inner -> Right inner
+        _ -> Left "nth expects a list as first argument"
+checkNth _ _ _ = Left "nth expects 2 arguments"
 
 -- | Validates the special internal function 'set_field'.
 --
