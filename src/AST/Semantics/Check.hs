@@ -143,7 +143,15 @@ checkStmt env (ADefineStruct name fields) = do
     newEnv <- defineStruct env name fields
     return (ADefineStruct name fields, newEnv)
 checkStmt env (AReturn expr) = do
-    _ <- checkExpr env expr
+    actualType <- checkExpr env expr
+    case Map.lookup (DT.pack "$RET") (envVars env) of
+        Just expectedType -> 
+            unless (areTypesCompatible expectedType actualType) $
+                Left $ "Return type mismatch: expected " ++
+                       typeToString expectedType ++ " but got " ++
+                       typeToString actualType
+        Nothing -> Right ()
+
     return (AReturn expr, env)
 checkStmt env (AImport _) = Right (AVoid, env)
 checkStmt env ast = do
@@ -175,13 +183,6 @@ processSetVar env name typeStr expr = do
     newEnv <- applyAssignment env name declaredType actualType
     return (ASetVar name finalTypeStr expr, newEnv)
 
--- | Resolves the 'auto' keyword to a concrete type string.
-resolveAuto :: DT.Text -> Type -> DT.Text
-resolveAuto typeStr actualType =
-    if typeStr == DT.pack "auto"
-    then DT.pack (typeToString actualType)
-    else typeStr
-
 -- | Process function definition.
 --
 -- 1. Prepares environment (adds function name + arguments).
@@ -192,8 +193,10 @@ processFuncDef :: CheckEnv -> DT.Text -> [(DT.Text, DT.Text)] -> DT.Text ->
 processFuncDef env name args ret body = do
     let retTy = parseType ret
     (envWithFunc, envForBody) <- prepareFuncEnv env name args retTy
-    (newBody, _) <- checkStmt envForBody body
-    _ <- checkReturns envForBody retTy newBody
+    let envWithRet = case insertVar envForBody (DT.pack "$RET") retTy of
+            Right e -> e
+            Left _ -> envForBody 
+    (newBody, _) <- checkStmt envWithRet body
     return (ADefineFunc name args ret newBody, envWithFunc)
 
 -- | Helper to setup the environment for a function.
@@ -359,24 +362,6 @@ validateField env expectedFields (fieldName, expr) = do
         Left $ "Error: Field '" ++ DT.unpack fieldName ++ 
                "' expected " ++ typeToString expectedType ++ 
                " but got " ++ typeToString actualType
-
--- | Recursively verifies that all 'return' statements match expected type.
-checkReturns :: CheckEnv -> Type -> Ast -> Either String ()
-checkReturns env expected (AReturn expr) = do
-    actual <- checkExpr env expr
-    unless (areTypesCompatible expected actual) $
-        Left $ "Return type mismatch: expected " ++
-            typeToString expected ++ " but got " ++ typeToString actual
-checkReturns env expected (AList list) =
-    mapM_ (checkReturns env expected) list
-checkReturns env expected (ABlock list) =
-    mapM_ (checkReturns env expected) list
-checkReturns env expected (AIf _ t e) =
-    checkReturns env expected t >> checkReturns env expected e
-checkReturns env expected (AWhile _ body) = checkReturns env expected body
-checkReturns env expected (AFor _ _ _ body) = checkReturns env expected body
-checkReturns env expected (APos _ _ ast) = checkReturns env expected ast
-checkReturns _ _ _ = Right ()
 
 -- | Checks that all elements in a list literal have the same type.
 checkListExpr :: CheckEnv -> [Ast] -> Either String Type
