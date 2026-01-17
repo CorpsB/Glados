@@ -112,6 +112,7 @@ data Instruction
 
     -- 3. Logic & Comparison
     | Eq                      -- ^ 0x20 EQ
+    | TEq                     -- ^ 0x26 TEQ
     | Lt                      -- ^ 0x21 LT
     | Le                      -- ^ 0x25 LE
     | Not                     -- ^ 0x22 NOT
@@ -190,6 +191,7 @@ getInstCode Not                  = 0x22
 getInstCode And                  = 0x23
 getInstCode Or                   = 0x24
 getInstCode Le                   = 0x25
+getInstCode TEq                  = 0x26
 
 getInstCode (Jump _)             = 0x30
 getInstCode (JumpIfFalse _)      = 0x31
@@ -253,6 +255,7 @@ instructionSize Mod                 = 1
 
 -- Logic & Comparison
 instructionSize Eq                  = 1
+instructionSize TEq                 = 1
 instructionSize Lt                  = 1
 instructionSize Le                  = 1
 instructionSize Not                 = 1

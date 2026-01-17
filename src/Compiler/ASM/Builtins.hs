@@ -19,7 +19,6 @@ builtinCastList =
     , (pack "int16", Cast 0x03), (pack "uint16", Cast 0x04)
     , (pack "int32", Cast 0x05), (pack "uint32", Cast 0x06)
     , (pack "int64", Cast 0x07), (pack "uint64", Cast 0x08)
-    , (pack "char", Cast 0x09), (pack "uchar", Cast 0x10) 
     , (pack "char", Cast 0x09), (pack "uchar", Cast 0x10) ]
 
 builtinArithList :: [(Text, Instruction)]
@@ -34,7 +33,8 @@ builtinStackList =
 
 builtinLogicList :: [(Text, Instruction)]
 builtinLogicList =
-    [ (pack "eq?", Eq), (pack "<", Lt), (pack "<=", Le)
+    [ (pack "eq?", Eq), (pack "?teq", TEq)
+    , (pack "<", Lt), (pack "<=", Le)
     , (pack "&&", And), (pack "||", Or), (pack "!", Not) ]
 
 builtinSystemList :: [(Text, Instruction)]

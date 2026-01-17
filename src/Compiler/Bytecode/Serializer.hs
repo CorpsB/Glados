@@ -87,6 +87,7 @@ serializeInstruction Not = encodeWord8 0x22
 serializeInstruction And = encodeWord8 0x23
 serializeInstruction Or = encodeWord8 0x24
 serializeInstruction Le = encodeWord8 0x25
+serializeInstruction TEq = encodeWord8 0x26
 
 serializeInstruction (Jump addr) =
     encodeWord8 0x30 <>

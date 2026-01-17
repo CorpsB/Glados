@@ -128,6 +128,9 @@ astCallToAsm compileFn (ASymbol name) [a, b] | name == pack ">=" =
 astCallToAsm compileFn (ASymbol name) [a, b] | name == pack "neq?" =
     compileFn a >> compileFn b >>
     emitInstruction Eq >> emitInstruction Not
+astCallToAsm compileFn (ASymbol name) [a, b] | name == pack "?tneq" =
+    compileFn a >> compileFn b >>
+    emitInstruction TEq >> emitInstruction Not
 astCallToAsm compileFn (ASymbol name) args = case Map.lookup name builtinMap of
     Just instr -> mapM_ compileFn args >> emitInstruction instr
     Nothing -> mapM_ compileFn args >> emitCallToLabel (pack "fun_" <> name)

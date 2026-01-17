@@ -12,6 +12,7 @@ Stability   : stable
 -}
 module VM.Instruction.Logic
     ( instEq
+    , instTEq
     , instLt
     , instLe
     , instNot
@@ -79,6 +80,19 @@ instEq = do
     v2 <- stackPop
     v1 <- stackPop
     stackPush (VBool (eqValue v1 v2))
+
+-- | Implements Typed Equality (Strict ===).
+--
+-- @details
+--   Checks if two values are identical in Type AND Value.
+--   No implicit casting (I8 5 !== I64 5).
+--   Standard Haskell '==' on VMValue does exactly this.
+--
+instTEq :: VirtualMachine ()
+instTEq = do
+    v2 <- stackPop
+    v1 <- stackPop
+    stackPush (VBool (v1 == v2))
 
 -- | Implements Less Than Comparison (Opcode 0x21).
 --
