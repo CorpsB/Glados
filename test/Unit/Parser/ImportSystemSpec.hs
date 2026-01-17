@@ -86,7 +86,7 @@ spec = describe "Import System Resolution" $ do
                 
                 result `shouldSatisfy` \case
                     Right asts -> case map cleanAst asts of
-                        [ASetVar "x" "auto" (AInteger (I8 42))] -> True
+                        [AExprStmt (ASetVar "x" "auto" (AInteger (I8 42)))] -> True
                         _ -> False
                     _ -> False
 
@@ -140,7 +140,7 @@ spec = describe "Import System Resolution" $ do
                     
                     result `shouldSatisfy` \case
                         Right asts -> case map cleanAst asts of
-                            [ASetVar "val" "auto" (AInteger (I8 100))] -> True
+                            [AExprStmt (ASetVar "val" "auto" (AInteger (I8 100)))] -> True
                             _ -> False
                         _ -> False
 
@@ -156,7 +156,7 @@ spec = describe "Import System Resolution" $ do
                 
                 result `shouldSatisfy` \case
                     Right asts -> case map cleanAst asts of
-                        [ADefineFunc "f" [] "void" (AList [ASetVar "y" "auto" (AInteger (I8 1))])] -> True
+                        [ADefineFunc "f" [] "void" (AList [AExprStmt (ASetVar "y" "auto" (AInteger (I8 1)))])] -> True
                         _ -> False
                     _ -> False
 
@@ -177,7 +177,7 @@ spec = describe "Import System Resolution" $ do
                 
                 result `shouldSatisfy` \case
                     Right asts -> case map cleanAst asts of
-                        [ADefineLambda ["args"] (ASetVar "val" "auto" (AInteger (I8 0)))] -> True
+                        [ADefineLambda ["args"] (AExprStmt (ASetVar "val" "auto" (AInteger (I8 0))))] -> True
                         _ -> False
                     _ -> False
 
@@ -367,7 +367,7 @@ spec = describe "Import System Resolution" $ do
                 
                 result `shouldSatisfy` \case
                     Right asts -> case map cleanAst asts of
-                        [AIf (ASetVar "first" "auto" (AInteger (I8 1))) AVoid AVoid] -> True
+                        [AIf (AExprStmt (ASetVar "first" "auto" (AInteger (I8 1)))) AVoid AVoid] -> True
                         _ -> False
                     _ -> False
     
