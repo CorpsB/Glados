@@ -29,5 +29,5 @@ steps:
       - cp -a public/. .
       - touch .nojekyll
       - git add -A
-      - 'git commit -m "📝 Documentation: publish Haddock for ${CI_COMMIT_SHA}" || true'
+      - 'git commit -m "📝 Documentation: publish Haddock for ${CI_COMMIT_SHA} " || true'
       - git push -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${CI_REPO_OWNER}/${CI_REPO_NAME}.git" gh-pages
