@@ -1,7 +1,7 @@
 autoscaling: false
 when:
   - event: push
-    branch: feat/advanced-compiler-instructions
+    branch: preprod
 
 steps:
   - name: publish_docs
