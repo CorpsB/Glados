@@ -306,7 +306,7 @@ declare -A test_print_expr_ok=([titre]="Print : expression format ok" [fichier]=
 declare -A test_print_list_int_format_ok=([titre]="Print : [int] format ok" [fichier]="test/Functional/Print/list_int_format_ok.npy" [exitcode]="0" [output]="[1, 2, 3]")
 declare -A test_print_nested_list_format_ok=([titre]="Print : [[int]] format ok" [fichier]="test/Functional/Print/nested_list_format_ok.npy" [exitcode]="0" [output]="[[1, 2], [3]]")
 declare -A test_print_struct_format_ok=([titre]="Print : struct format ok" [fichier]="test/Functional/Print/struct_format_ok.npy" [exitcode]="0" [output]="{1, 2}")
-declare -A test_print_void_no_output_ok=([titre]="Print : void prints nothing (no newline) ok" [fichier]="test/Functional/Print/void_no_output_ok.npy" [exitcode]="0" [output]="42")
+declare -A test_print_void_no_output_ok=([titre]="Print : void prints nothing (no newline) ok" [fichier]="test/Functional/Print/void_no_output_ok.npy" [exitcode]="0" [output]=$'0\n42')
 
 # Syntactic sugar
 declare -A test_sugar_postfix_increment_value_ok=([titre]="Sugar : postfix i++ value ok" [fichier]="test/Functional/Sugar/postfix_increment_value_ok.npy" [exitcode]="0" [output]="2")
