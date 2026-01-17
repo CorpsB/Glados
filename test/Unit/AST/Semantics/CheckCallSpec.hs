@@ -181,10 +181,10 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 Right TyInt -> True
                 _ -> False
 
-        it "Rejects invalid call node (not a symbol)" $ do
+        it "Rejects invalid call node (not a function type)" $ do
             let funcNode = AInteger (fitInteger 1)
             checkCall mockCheckExpr testEnv funcNode [] `shouldSatisfy` \case
-                Left err -> "Invalid function call" `isInfixOf` err
+                Left err -> "expression is not a function" `isInfixOf` err
                 _ -> False
 
     describe "CheckCall and Environment Propagation" $ do
