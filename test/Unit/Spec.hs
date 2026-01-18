@@ -8,6 +8,7 @@ import qualified Compiler.CompilerStateSpec
 import qualified Compiler.ASM.CompilerMonadSpec
 import qualified Compiler.ASM.AstToAsmSpec
 import qualified Compiler.ASM.CompilerSpec
+import qualified Compiler.ASM.BuiltinsSpec
 
 import qualified AST.AstSpec
 import qualified AST.Semantics.TypeSpec
@@ -44,6 +45,9 @@ import qualified VM.Instruction.LogicSpec
 import qualified VM.Instruction.StackSpec
 import qualified VM.Instruction.SystemSpec
 import qualified VM.Instruction.VariableSpec
+import qualified VM.Instruction.IoSpec
+import qualified VM.Instruction.ListSpec
+import qualified VM.Instruction.StructSpec
 import qualified VM.CallSnapshotSpec
 import qualified VM.VMStateSpec
 import qualified VM.VMStackSpec
@@ -82,6 +86,7 @@ spec = do
     Compiler.ASM.CompilerMonadSpec.spec
     Compiler.ASM.AstToAsmSpec.spec
     Compiler.ASM.CompilerSpec.spec
+    Compiler.ASM.BuiltinsSpec.spec
     Common.Type.IntegerSpec.spec
     Common.ErrorSpec.spec
     VM.Bytecode.ReaderSpec.spec
@@ -93,6 +98,9 @@ spec = do
     VM.Instruction.StackSpec.spec
     VM.Instruction.SystemSpec.spec
     VM.Instruction.VariableSpec.spec
+    VM.Instruction.IoSpec.spec
+    VM.Instruction.ListSpec.spec
+    VM.Instruction.StructSpec.spec
     VM.CallSnapshotSpec.spec
     VM.VMStateSpec.spec
     VM.VMStackSpec.spec
