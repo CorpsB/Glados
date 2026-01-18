@@ -5,7 +5,13 @@
 -- Semantic Checker for Function Calls & Operators
 -}
 
-module AST.Semantics.CheckCall (checkCall, checkEqualityOp,) where
+module AST.Semantics.CheckCall (checkCall, checkEqualityOp,checkTypeof,
+    checkFFRead,
+    checkFFWrite,
+    checkOpen,
+    checkClose,
+    checkRead,
+    checkInput) where
 
 import qualified Data.Text as DT
 import qualified Data.Map.Strict as Map
