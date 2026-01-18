@@ -31,6 +31,49 @@ func concat(str1: [char], str2: [char]) -> [char] {
     ret concat(pushStr(str1, head(str2)), tail(str2));
 }
 
+// Convert
+
+func toBool(str: [char]) -> bool {
+    if (str == "True\0") {
+        ret True;
+    }
+    ret False;
+}
+
+func pow10(n: int) -> int {
+    if (n == 0) {
+        ret 1;
+    }
+    ret 10 * pow10(n - 1);
+}
+
+func toInt(str: [char]) -> int {
+    result: int = 0;
+    coef: int = 0;
+    neg: bool = False;
+    start: int = 0;
+
+    if (str == ['\0']) {
+        ret 0;
+    }
+    if (head(str) == '-') {
+        neg = True;
+        start = 1;
+    }
+    coef = length(str) - 1 - start;
+    for (i: int = start; str[i] != '\0'; i++) {
+        if (str[i] < '0' || str[i] > '9') {
+            ret 0;
+        }
+        result += (str[i] - '0') * pow10(coef);
+        coef--;
+    }
+    if (neg) {
+        ret result - (result * 2);
+    }
+    ret result;
+}
+
 // Slice
 
 func left(str: [char], n: int) -> [char] {

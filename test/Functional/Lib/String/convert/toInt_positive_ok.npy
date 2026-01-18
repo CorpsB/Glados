@@ -1,6 +1,6 @@
 import "src/@lib/string/string_utils.npy";
 
 
-func main() { print(toInt("123")); }
+func main() { print(toInt("123\0")); }
 main();
 
