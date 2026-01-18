@@ -102,5 +102,13 @@ getBuiltinReturnType "!" _     = Right (pack "bool")
 getBuiltinReturnType "&&" _    = Right (pack "bool")
 getBuiltinReturnType "||" _    = Right (pack "bool")
 
+getBuiltinReturnType "open" _ = Right (pack "int")
+getBuiltinReturnType "close" _ = Right (pack "int")
+getBuiltinReturnType "read" _ = Right (pack "[char]")
+getBuiltinReturnType "write" _ = Right (pack "int")
+getBuiltinReturnType "ffread" _ = Right (pack "[[char]]")
+getBuiltinReturnType "ffwrite" _ = Right (pack "bool")
+getBuiltinReturnType "typeof" _ = Right (pack "[char]")
+
 getBuiltinReturnType name _ = Left (
     pack $ "Unknown builtin or invalid arguments for: " ++ show name)
