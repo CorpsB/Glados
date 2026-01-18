@@ -2,7 +2,7 @@ import "src/@lib/string/string_utils.npy";
 
 
 func main() {
-    list: [[char]] = [];
+    list: [[char]] = [['\0']];
     print(join(list, ','));
 }
 main();

@@ -16,6 +16,13 @@ func pushStr(str: [char], c: char) -> [char] {
     ret cons(head(str), pushStr(tail(str), c));
 }
 
+func pushMatrix(list: [[char]], str: [char]) -> [[char]] {
+    if (list == [['\0']]) {
+        ret cons(str, list);
+    }
+    ret cons(head(list), pushMatrix(tail(list), str));
+}
+
 func concat(str1: [char], str2: [char]) -> [char] {
     if (str2 == []) {
         ret str1;
@@ -28,15 +35,33 @@ func concat(str1: [char], str2: [char]) -> [char] {
 
 func join(list: [[char]], sep: char) -> [char] {
 
-    if (list == []) {
+    if (head(list) == ['\0']) {
         ret ['\0'];
     }
 
-    if (tail(list) == []) {
+    if (head(tail(list)) == ['\0']) {
         ret head(list);
     }
 
     ret concat(concat(head(list), [sep]), join(tail(list), sep));
+}
+
+func split(str: [char], sep: char) -> [[char]] {
+    result: [[char]] = [['\0']];
+    cache: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] == sep) {
+            result = pushMatrix(result, cache);
+            cache = ['\0'];
+        } else {
+            cache = pushStr(cache, str[i]);
+        }
+    }
+    if (cache != ['\0']) {
+        result = pushMatrix(result, cache);
+    }
+    ret result;
 }
 
 // Transform
