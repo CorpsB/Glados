@@ -1,3 +1,3 @@
-if (1) {
+if (void) {
     print(1);
 }

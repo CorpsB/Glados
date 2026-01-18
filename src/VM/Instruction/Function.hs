@@ -105,12 +105,13 @@ pushClosure vm addr count =
 --
 instMakeClosure :: VirtualMachine ()
 instMakeClosure = do
-    addr <- readInt32
+    offset <- readInt32
     count <- readInt32
     vm <- get
+    let absAddr = bytecodeIndex vm + offset
     case V.length (vStack vm) >= count of
         False -> error "VM Error: MAKE_CLOSURE Stack Underflow"
-        True -> pushClosure vm addr count
+        True -> pushClosure vm absAddr count
 
 -- | Helper to perform the state restoration for RET.
 --

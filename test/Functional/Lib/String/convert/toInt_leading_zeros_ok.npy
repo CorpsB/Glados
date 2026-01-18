@@ -1,0 +1,6 @@
+import "src/@lib/string/module.npy";
+
+
+func main() { print(toInt("0007\0")); }
+main();
+

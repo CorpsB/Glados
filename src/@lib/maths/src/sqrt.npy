@@ -1,5 +1,6 @@
-func isSqrt(n: int) -> int {
+func intSqrt(n: int) -> int {
     if (n <= 0) { ret 0; }
+    if (n == 1) { ret 1; }
 
     lo: int = 1;
     hi: int = n;
@@ -7,13 +8,9 @@ func isSqrt(n: int) -> int {
 
     while (lo <= hi) {
         mid: int = (lo + hi) / 2;
-        sq: int = mid * mid;
 
-        if (sq == n) { ret mid; }
-
-        if (sq > 0 && sq < n) {
+        if (mid <= (n / mid)) {
             ans = mid;
-            lo = lo + 1;
             lo = mid + 1;
         } else {
             hi = mid - 1;
@@ -22,8 +19,8 @@ func isSqrt(n: int) -> int {
     ret ans;
 }
 
-func isSquare(n: int) -> bool {
+func isPerfectSquare(n: int) -> bool {
     if (n < 0) { ret False; }
-    r: int = isSqrt(n);
+    r: int = intSqrt(n);
     ret (r * r) == n;
 }

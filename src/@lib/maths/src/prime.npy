@@ -1,25 +1,23 @@
 func isPrime(n: int) -> bool {
     if (n <= 1) { ret False; }
-    if (n <= 3) { ret True; }
+    if (n == 2) { ret True; }
     if ((n % 2) == 0) { ret False; }
 
-    lim: int = isSqrt(n);
-    d: int = 3;
-    while (d <= lim) {
-        if ((n % d) == 0) { ret False; }
-        d = d + 2;
+    i: int = 3;
+    while (i <= (n / i)) {
+        if ((n % i) == 0) { ret False; }
+        i = i + 2;
     }
     ret True;
 }
 
 func nextPrime(n: int) -> int {
     if (n <= 2) { ret 2; }
-    x: int = n;
-    if ((x % 2) == 0) { x = x + 1; }
+    p: int = n;
+    if ((p % 2) == 0) { p = p + 1; }
 
-    while (True) {
-        if (isPrime(x)) { ret x; }
-        x = x + 2;
+    while (!isPrime(p)) {
+        p = p + 2;
     }
-    ret 0;
+    ret p;
 }

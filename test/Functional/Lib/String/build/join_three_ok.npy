@@ -1,0 +1,9 @@
+import "src/@lib/string/module.npy";
+
+
+func main() {
+    list: [[char]] = ["a\0", "b\0", "c\0", ['\0']];
+    print(join(list, ','));
+}
+main();
+

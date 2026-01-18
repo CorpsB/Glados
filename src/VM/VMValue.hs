@@ -7,10 +7,13 @@
 
 module VM.VMValue
     ( VMValue(..)
+    , getValueName
     , castValue
     , valueToString
     , valueToInt
     , eqValue
+    , stringToValue
+    , charToValue
     ) where
 
 import Data.Word (Word8)
@@ -18,7 +21,7 @@ import Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Text as T
 import Data.Text (Text)
-import Data.Char (chr)
+import Data.Char (chr, ord)
 
 import Common.Type.Integer (IntValue(..), intValueToInt)
 
@@ -114,6 +117,29 @@ valueToString (VList v) = let elements = V.toList v in
         Nothing -> T.pack "[" <> (T.intercalate (T.pack ", ")
             (map valueToString elements)) <> T.pack "]"
 
+-- | Converts a single Character to a VMValue.
+--
+-- @arg c: The character to convert.
+--
+-- @details
+--   Wraps the character's ordinal value into an IChar (Int8).
+--   Used as a helper for string conversion.
+--
+charToValue :: Char -> VMValue
+charToValue c = VInt (IChar (fromIntegral (ord c)))
+
+-- | Converts a Text string into a VMValue.
+--
+-- @arg txt: The text string to convert.
+--
+-- @details
+--   Transforms the Text into a VList of VInt (IChar).
+--   This reverses the logic of 'valueToString' for strings, creating
+--   the standard list-based string representation used by the VM.
+--
+stringToValue :: Text -> VMValue
+stringToValue txt = VList (V.fromList (map charToValue (T.unpack txt)))
+
 -- | Helper to extract a raw integer value for casting purposes.
 --
 -- @details
@@ -127,6 +153,33 @@ valueToInt (VBool True) = 1
 valueToInt (VBool False) = 0
 valueToInt (VFuncPtr addr) = addr
 valueToInt _ = 0
+
+-- | Recursively determines the precise type name of a value.
+--
+-- @arg val: The VMValue to inspect.
+-- @return The formatted type string (e.g., "[int]", "Player", "[[char]]").
+--
+-- @details
+--   - Primitives: Returns "int", "bool", "void".
+--   - Chars: Distinguished from Ints via IChar/UIChar -> "char".
+--   - Structs: Returns the stored name (e.g., "Player").
+--   - Lists: Recursively inspects the *first* element to build the type syntax.
+--     [] -> "[void]"
+--     [1, 2] -> "[int]"
+--     ["hi"] -> "[[char]]"
+--
+getValueName :: VMValue -> Text
+getValueName VVoid = T.pack "void"
+getValueName (VBool _) = T.pack "bool"
+getValueName (VClosure _ _) = T.pack "function"
+getValueName (VFuncPtr _) = T.pack "function"
+getValueName (VInt (IChar _)) = T.pack "char"
+getValueName (VInt (UIChar _)) = T.pack "char"
+getValueName (VInt _) = T.pack "int"
+getValueName (VStruct _) = T.pack "[struct]"
+getValueName (VList v)
+    | V.null v = T.pack "[void]"
+    | otherwise = T.pack "[" <> getValueName (V.head v) <> T.pack "]"
 
 -- | Converts a VMValue to a specific target TypeID.
 --

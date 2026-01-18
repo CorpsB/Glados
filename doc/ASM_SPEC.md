@@ -48,6 +48,7 @@ Bytes:
 | `0x22 NOT` | Boolean negation. | `NOT` | `( ..., bool ) -> ( ..., !bool )` |
 | `0x23 AND` | Logical AND (`a && b`). | `AND` | `( ..., a, b ) -> ( ..., bool )` |
 | `0x24 OR` | Logical OR (`a || b`). | `OR` | `( ..., a, b ) -> ( ..., bool )` |
+| `0x26 TEQ` | Checks for strict equality of value and type | `TEQ` | ( ..., a, b ) -> ( ..., bool ) |
 
 ## 4. Flow Control
 | Name (Opcode) | Description | Usage (ASM) | Stack Effect |
@@ -87,7 +88,34 @@ Bytes:
 | `0x70 PRINT` | Prints the value (stdout). | `PRINT` | `( ..., val ) -> ( ... )` |
 | `0x71 HALT` | Stops the VM (Success). | `HALT` | `( ... ) -> ( Stop )` |
 | `0xFE CHECK_STACK` | Checks stack depth >= N. | `CHECK_STACK [N]` | `( ... ) -> ( ... )` |
-| `0xFF NOP` | No operation. | `NOP` | `( ... ) -> ( ... )` |
+| `0xFF NOP` | No operation. | `NOP` | `( ... ) -> ( ... )` |*
+| `0x72 EXIT` |	Terminates the program with the return code popped from stack. |	`EXIT` |	`( ..., code ) -> ( )` |
+
+## 9. Structs
+| Name (Opcode) | Description | Usage (ASM) | Stack Effect |
+|---------------|-------------|-------------|--------------|
+| `0x62 BUILD_STRUCT` | Builds a structure from n unstacked fields.| `BUILD_STRUCT [n]` | `( ..., f1..fn ) -> ( ..., struct )` |
+| `0x63 GET_STRUCT_FIELD` | Retrieves the value of the field at index idx. | `GET_STRUCT_FIELD [idx]` | `( ..., struct ) -> ( ..., val )` |
+| `0x64 ATTR_UPDATE` | Dynamically updates a field in a structure. | `ATTR_UPDATE` | `( ..., struct, idx, val ) -> ( ..., struct )`|
+
+## 10. Lists
+| Name (Opcode) | Description | Usage (ASM) | Stack Effect |
+|---------------|-------------|-------------|--------------|
+| `0x90 CONS` |	Adds an element to the front of a list. |	`CONS` |	`( ..., val, list ) -> ( ..., list )` |
+| `0x91 HEAD` |	Returns the first element of the list. |	`HEAD` |	`( ..., list ) -> ( ..., val )` |
+| `0x92 TAIL` |	Returns the list without its first element. |	`TAIL` |	`( ..., list ) -> ( ..., list )` |
+| `0x93 NTH` |	Accesses the N-th element of a list. |	`NTH` |	`( ..., list, idx ) -> ( ..., val )` |
+| `0x94 BUILD_LIST`	| Builds a list from n elements popped from the stack. |	`BUILD_LIST[n]` |	`( ..., e1..en ) -> ( ..., list )` |
+| `0x95 NTH_UPDATE`	| Modifies the N-th element of a list. |	`NTH_UPDATE` |	`( ..., list, idx, val ) -> ( ..., list )` |
+
+## 11. I/O Operations
+| Name (Opcode) | Description | Usage (ASM) | Stack Effect |
+|---------------|-------------|-------------|--------------|
+| `0xA0 OPEN` |	Opens a file given a path and mode. |	`OPEN` | `( ..., path, mode ) -> ( ..., fd )`|
+| `0xA1 READ` |	Reads size bytes from file descriptor fd. |	`READ` |	`( ..., fd, size ) -> ( ..., content )`|
+| `0xA2 WRITE` |	Writes content to file descriptor fd. |	`WRITE` | `( ..., fd, content ) -> ( ... )`|
+| `0xA3 CLOSE` |	Closes the file descriptor fd. |	`CLOSE` |	`( ..., fd ) -> ( ... )`|
+| `0xA4 INPUT` |	Reads a line from standard input. |	`INPUT` | `( ... ) -> ( ..., str )`|
 
 <br>
 

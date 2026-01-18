@@ -58,6 +58,7 @@ library
       VM.CallSnapshot
       VM.Bytecode.Reader
       VM.Bytecode.Runner
+      VM.Instruction.Io
       VM.Instruction.Stack
       VM.Instruction.Arithmetic
       VM.Instruction.Logic

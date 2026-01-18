@@ -41,6 +41,21 @@ mockCheckExpr env (ASymbol name) = case Map.lookup name (envVars env) of
     Nothing -> Left $ "Undefined variable '" ++ DT.unpack name ++ "'"
 mockCheckExpr _ _ = Left "Mock error: expression not supported in unit test"
 
+simType :: CheckEnv -> Ast -> Either String Type
+simType _ (AInteger _) = Right TyInt
+simType _ (AList _)    = Right (TyList TyInt)
+simType _ (ASymbol s)
+    | s == p "str"     = Right (TyList TyInt)
+    | s == p "listStr" = Right (TyList (TyList TyInt))
+    | s == p "bad"     = Right TyBool
+simType _ _ = Right TyVoid
+
+tyString :: Type
+tyString = TyList TyInt
+
+tyListString :: Type
+tyListString = TyList (TyList TyInt)
+
 spec :: Spec
 spec = describe "AST.Semantics.CheckCall" $ do
 
@@ -540,7 +555,6 @@ spec = describe "AST.Semantics.CheckCall" $ do
             ]
         }
         let lInt = ASymbol (DT.pack "lInt")
-        let lBool = ASymbol (DT.pack "lBool")
         let val = ASymbol (DT.pack "val")
         let idx = ASymbol (DT.pack "idx")
         let b = ASymbol (DT.pack "b")
@@ -549,7 +563,6 @@ spec = describe "AST.Semantics.CheckCall" $ do
         describe "cons(elem, list)" $ do
             it "Validates adding an int to [int]" $ do
                 let args = [val, lInt]
-                -- CORRECTION : On passe le Symbole et les args séparément
                 checkCall mockCheckExpr listEnv (ASymbol (DT.pack "cons")) args `shouldSatisfy` \case
                     Right (TyList TyInt) -> True
                     _ -> False
@@ -722,7 +735,7 @@ spec = describe "AST.Semantics.CheckCall" $ do
 
             describe "List Operators Argument Count Checks" $ do
                 
-                let lInt = ASymbol (DT.pack "lInt")
+                let listInt = ASymbol (DT.pack "lInt")
 
                 it "head: Rejects incorrect argument count (0 args)" $ do
                     let args = []
@@ -731,7 +744,7 @@ spec = describe "AST.Semantics.CheckCall" $ do
                         _ -> False
 
                 it "head: Rejects incorrect argument count (2 args)" $ do
-                    let args = [lInt, lInt]
+                    let args = [listInt, listInt]
                     checkCall mockCheckExpr listEnv (ASymbol (DT.pack "head")) args `shouldSatisfy` \case
                         Left err | "head expects 1 argument" `isInfixOf` err -> True
                         _ -> False
@@ -743,13 +756,189 @@ spec = describe "AST.Semantics.CheckCall" $ do
                         _ -> False
 
                 it "nth: Rejects incorrect argument count (1 arg)" $ do
-                    let args = [lInt]
+                    let args = [listInt]
                     checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth")) args `shouldSatisfy` \case
                         Left err | "nth expects 2 arguments" `isInfixOf` err -> True
                         _ -> False
 
                 it "nth: Rejects incorrect argument count (3 args)" $ do
-                    let args = [lInt, AInteger (fitInteger 0), AInteger (fitInteger 0)]
+                    let args = [listInt, AInteger (fitInteger 0), AInteger (fitInteger 0)]
                     checkCall mockCheckExpr listEnv (ASymbol (DT.pack "nth")) args `shouldSatisfy` \case
                         Left err | "nth expects 2 arguments" `isInfixOf` err -> True
                         _ -> False
+
+            describe "checkTypeof" $ do
+                it "Returns string type for any valid argument" $ do
+                    let args = [AInteger (I8 42)]
+                    checkTypeof simType testEnv args `shouldBe` Right tyString
+
+                it "Fails if argument count is wrong" $ do
+                    checkTypeof simType testEnv [] `shouldBe` Left "typeof expects 1 argument"
+
+            describe "checkFFRead" $ do
+                it "Accepts a String path and returns [String]" $ do
+                    let args = [ASymbol (p "str")]
+                    checkFFRead simType testEnv args `shouldBe` Right tyListString
+
+                it "Rejects non-string path" $ do
+                    let args = [AInteger (I8 1)]
+                    checkFFRead simType testEnv args `shouldBe` Left "ffread expects a string (path) as argument"
+
+            describe "checkFFWrite" $ do
+                it "Accepts (String, [String]) and returns Bool" $ do
+                    let args = [ASymbol (p "str"), ASymbol (p "listStr")]
+                    checkFFWrite simType testEnv args `shouldBe` Right TyBool
+
+                it "Rejects if second arg is not [String]" $ do
+                    let args = [ASymbol (p "str"), AInteger (I8 1)]
+                    checkFFWrite simType testEnv args `shouldBe` Left "ffwrite expects (path: string, content: [string])"
+
+            describe "checkOpen" $ do
+                it "Accepts (String, Int) and returns Int (FD)" $ do
+                    let args = [ASymbol (p "str"), AInteger (I8 0)]
+                    checkOpen simType testEnv args `shouldBe` Right TyInt
+
+                it "Rejects if path is not String" $ do
+                    let args = [AInteger (I8 0), AInteger (I8 0)]
+                    checkOpen simType testEnv args `shouldBe` Left "open expects (path: string, mode: int)"
+
+            describe "checkClose" $ do
+                it "Accepts Int (FD) and returns Int" $ do
+                    let args = [AInteger (I8 3)]
+                    checkClose simType testEnv args `shouldBe` Right TyInt
+
+                it "Rejects non-integer FD" $ do
+                    let args = [ASymbol (p "str")]
+                    checkClose simType testEnv args `shouldBe` Left "close expects an integer file descriptor"
+
+            describe "checkRead" $ do
+                it "Accepts (Int, Int) and returns String" $ do
+                    let args = [AInteger (I8 3), AInteger (I8 100)]
+                    checkRead simType testEnv args `shouldBe` Right tyString
+
+                it "Rejects if size is not Int" $ do
+                    let args = [AInteger (I8 3), ASymbol (p "str")]
+                    checkRead simType testEnv args `shouldBe` Left "read expects (fd: int, size: int)"
+
+            describe "checkInput" $ do
+                it "Accepts Int (FD) and returns String" $ do
+                    let args = [AInteger (I8 0)]
+                    checkInput simType testEnv args `shouldBe` Right tyString
+
+                it "Rejects if FD is not Int" $ do
+                    let args = [ASymbol (p "str")]
+                    checkInput simType testEnv args `shouldBe` Left "input expects an integer file descriptor"
+
+            describe "checkSystemOps" $ do
+        
+                it "checkPrint accepts any argument and returns Void" $ do
+                    let call = ASymbol (p "print")
+                    let args = [AInteger (I8 42)]
+                    checkCall simType testEnv call args `shouldBe` Right TyVoid
+
+                it "checkExit accepts Int and returns Void" $ do
+                    let call = ASymbol (p "exit")
+                    let args = [AInteger (I8 0)]
+                    checkCall simType testEnv call args `shouldBe` Right TyVoid
+
+                it "checkExit rejects non-Int argument" $ do
+                    let call = ASymbol (p "exit")
+                    let args = [ASymbol (p "str")]
+                    checkCall simType testEnv call args `shouldBe` Left "exit expects an integer code"
+
+            describe "checkDataFuncs" $ do
+
+                it "checkCast (int8) accepts Int and returns Int" $ do
+                    let call = ASymbol (p "int8")
+                    let args = [AInteger (I8 100)]
+                    checkCall simType testEnv call args `shouldBe` Right TyInt
+
+                it "checkCons accepts (Int, [Int])" $ do
+                    let call = ASymbol (p "cons")
+                    let args = [AInteger (I8 1), ASymbol (p "str")] 
+                    checkCall simType testEnv call args `shouldBe` Right tyString
+
+                it "checkHead accepts [Int] and returns Int" $ do
+                    let call = ASymbol (p "head")
+                    let args = [ASymbol (p "str")]
+                    checkCall simType testEnv call args `shouldBe` Right TyInt
+
+                it "checkTail accepts [Int] and returns [Int]" $ do
+                    let call = ASymbol (p "tail")
+                    let args = [ASymbol (p "str")]
+                    checkCall simType testEnv call args `shouldBe` Right tyString
+
+                it "checkNth accepts ([Int], Int) and returns Int" $ do
+                    let call = ASymbol (p "nth")
+                    let args = [ASymbol (p "str"), AInteger (I8 0)]
+                    checkCall simType testEnv call args `shouldBe` Right TyInt
+
+                it "checkNth rejects non-Int index" $ do
+                    let call = ASymbol (p "nth")
+                    let args = [ASymbol (p "str"), ASymbol (p "str")]
+                    checkCall simType testEnv call args `shouldBe` Left "nth index must be an integer"
+
+                it "checkUpdate accepts ([Int], Int, Int) and returns [Int]" $ do
+                    let call = ASymbol (p "nth_update")
+                    let args = [ASymbol (p "str"), AInteger (I8 0), AInteger (I8 99)]
+                    checkCall simType testEnv call args `shouldBe` Right tyString
+            
+            describe "checkIOFuncs Dispatch (via checkCall)" $ do
+        
+                it "Dispatches 'ffread' correctly" $ do
+                    let call = ASymbol (p "ffread")
+                    let args = [ASymbol (p "str")]
+                    checkCall simType testEnv call args `shouldBe` Right tyListString
+
+                it "Dispatches 'ffwrite' correctly" $ do
+                    let call = ASymbol (p "ffwrite")
+                    let args = [ASymbol (p "str"), ASymbol (p "listStr")]
+                    checkCall simType testEnv call args `shouldBe` Right TyBool
+
+                it "Dispatches 'open' correctly" $ do
+                    let call = ASymbol (p "open")
+                    let args = [ASymbol (p "str"), AInteger (I8 0)]
+                    checkCall simType testEnv call args `shouldBe` Right TyInt
+
+                it "Dispatches 'close' correctly" $ do
+                    let call = ASymbol (p "close")
+                    let args = [AInteger (I8 3)]
+                    checkCall simType testEnv call args `shouldBe` Right TyInt
+
+                it "Dispatches 'read' correctly" $ do
+                    let call = ASymbol (p "read")
+                    let args = [AInteger (I8 3), AInteger (I8 100)]
+                    checkCall simType testEnv call args `shouldBe` Right tyString
+
+                it "Dispatches 'input' correctly" $ do
+                    let call = ASymbol (p "input")
+                    let args = [AInteger (I8 0)]
+                    checkCall simType testEnv call args `shouldBe` Right tyString
+
+            it "validates write(fd: int, content: string) successfully" $ do
+                let args = [AInteger (I8 1), AList []]
+                checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
+                    `shouldBe` Right TyInt
+
+            it "rejects write when FD is not an integer" $ do
+                let args = [ABool True, AList []]
+                checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
+                    `shouldBe` Left "write expects an integer file descriptor (int) as first argument"
+
+            it "rejects write when content is not a list/string" $ do
+                let args = [AInteger (I8 1), AInteger (I8 42)]
+                checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
+                    `shouldBe` Left "write expects a string or list ([char]) as second argument"
+
+            it "rejects write with missing arguments" $ do
+                let args = [AInteger (I8 1)]
+                checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
+                    `shouldBe` Left "write expects 2 arguments (fd: int, content: [char])"
+
+        describe "checkSizeof" $ do
+                it "Accepts any argument and returns Int" $ do
+                    let args = [ASymbol (p "str")]
+                    checkSizeof simType testEnv args `shouldBe` Right TyInt
+
+                it "Rejects missing argument" $ do
+                    checkSizeof simType testEnv [] `shouldBe` Left "sizeof expects 1 argument"

@@ -42,15 +42,23 @@ builtinLogicList =
     , (pack "<", Lt), (pack "<=", Le)
     , (pack "&&", And), (pack "||", Or), (pack "!", Not) ]
 
+builtinIoList :: [(Text, Instruction)]
+builtinIoList =
+    [ (pack "open", Open), (pack "read", Read)
+    , (pack "write", Write), (pack "close", Close)
+    , (pack "input", Input) ]
+
 builtinSystemList :: [(Text, Instruction)]
 builtinSystemList =
-    [ (pack "print", Print), (pack "exit", Exit) ]
+    [ (pack "typeof", TypeOf), (pack "sizeof", SizeOf)
+    , (pack "print", Print), (pack "exit", Exit) ]
 
 builtinList :: [(Text, Instruction)]
 builtinList = (builtinCastList
     ++ builtinArithList
     ++ builtinStackList
     ++ builtinLogicList
+    ++ builtinIoList
     ++ builtinSystemList)
 
 -- | Mapping of builtin operator names to their VM instructions.
@@ -93,6 +101,15 @@ getBuiltinReturnType ">=" _    = Right (pack "bool")
 getBuiltinReturnType "!" _     = Right (pack "bool")
 getBuiltinReturnType "&&" _    = Right (pack "bool")
 getBuiltinReturnType "||" _    = Right (pack "bool")
+
+getBuiltinReturnType "open" _ = Right (pack "int")
+getBuiltinReturnType "close" _ = Right (pack "int")
+getBuiltinReturnType "read" _ = Right (pack "[char]")
+getBuiltinReturnType "write" _ = Right (pack "int")
+getBuiltinReturnType "ffread" _ = Right (pack "[[char]]")
+getBuiltinReturnType "ffwrite" _ = Right (pack "bool")
+getBuiltinReturnType "typeof" _ = Right (pack "[char]")
+getBuiltinReturnType "sizeof" _ = Right (pack "int")
 
 getBuiltinReturnType name _ = Left (
     pack $ "Unknown builtin or invalid arguments for: " ++ show name)

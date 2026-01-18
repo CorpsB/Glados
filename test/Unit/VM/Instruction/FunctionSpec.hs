@@ -191,7 +191,7 @@ spec = describe "VM.Instruction.Function" $ do
       vStack vm1 `shouldBe`
         V.fromList
           [ i 1
-          , VClosure 77 (V.fromList [i 2, i 3])
+          , VClosure 85 (V.fromList [i 2, i 3])
           ]
 
     it "throws MAKE_CLOSURE Stack Underflow when not enough values" $ do

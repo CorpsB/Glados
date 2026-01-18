@@ -5,7 +5,14 @@
 -- Semantic Checker for Function Calls & Operators
 -}
 
-module AST.Semantics.CheckCall (checkCall, checkEqualityOp,) where
+module AST.Semantics.CheckCall (checkCall, checkEqualityOp,checkTypeof,
+    checkFFRead,
+    checkFFWrite,
+    checkOpen,
+    checkClose,
+    checkRead,
+    checkInput,
+    checkSizeof) where
 
 import qualified Data.Text as DT
 import qualified Data.Map.Strict as Map
@@ -14,6 +21,7 @@ import AST.Semantics.Type
 import Common.Type.Integer (IntValue(..))
 import Data.Char (chr)
 import Control.Monad (unless)
+import Control.Applicative ((<|>))
 
 -- | Type signature for the checkExpr function passed as argument.
 -- Used to break the circular dependency between Check and CheckCall.
@@ -111,25 +119,79 @@ checkLogicSpecial c e n a
         logicOps = map DT.pack ["&&", "||"]
         strictOps = map DT.pack ["teq?", "tneq?"]
 
--- | Helper dispatcher for named keyword functions.
+-- | Main dispatcher for named keyword functions.
 --
--- This function isolates the matching logic for built-in functions that are
--- not symbolic operators, such as 'print', 'eq?', or internal helpers like 'attr_update'.
+-- This function acts as a router that delegates the verification to specific
+-- sub-dispatchers based on the function category. It uses the (<|>) operator
+-- to try each handler in sequence:
+-- 1. Base Operators (equality, not, structs)
+-- 2. System Functions (print, exit, typeof)
+-- 3. IO Functions (files, input)
+-- 4. Data Functions (casts, list ops)
 --
--- @param c (checker): The callback function to verify sub-expressions.
--- @param e (env): The current semantic environment.
--- @param n (name): The keyword name (e.g. "print", "eq?").
--- @param a (args): The list of arguments passed to the function.
+-- Arguments:
+--   c (checker) : The callback function to verify sub-expressions.
+--   e (env)     : The current semantic environment.
+--   n (name)    : The function/keyword name (e.g. "print", "open").
+--   a (args)    : The list of AST arguments passed to the function.
+--
+-- Returns 'Just (Right Type)' if a match is found and valid,
+-- 'Just (Left Error)' if a match is found but invalid,
+-- or 'Nothing' if the symbol is not a keyword.
 checkKeywordFuncs :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
                   -> Maybe (Either String Type)
-checkKeywordFuncs c e n a
-    | n == DT.pack "eq?" = Just $ checkEqualityOp c e a
-    | n == DT.pack "neq?" = Just $ checkEqualityOp c e a
-    | n == DT.pack "!" = Just $ checkUnaryOp c e n a TyBool TyBool
+checkKeywordFuncs c e n a =
+    checkBaseOps c e n a <|>
+    checkSystemOps c e n a <|>
+    checkIOFuncs c e n a <|>
+    checkDataFuncs c e n a
+
+-- | Dispatcher for fundamental language operators.
+--
+-- Handles:
+-- * Equality checks: 'eq?' (==), 'neq?' (!=)
+-- * Boolean negation: '!'
+-- * Internal structure updates: attr_update
+checkBaseOps :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
+             -> Maybe (Either String Type)
+checkBaseOps c e n a
+    | n == DT.pack "eq?" || n == DT.pack "neq?" = Just $ checkEqualityOp c e a
+    | n == DT.pack "!"           = Just $ checkUnaryOp c e n a TyBool TyBool
     | n == DT.pack "attr_update" = Just $ checkSetField c e a
-    | n == DT.pack "print" = Just $ checkPrint c e a
-    | n == DT.pack "exit" = Just $ checkExit c e a
-    | otherwise = checkDataFuncs c e n a
+    | otherwise = Nothing
+
+-- | Dispatcher for system utilities and introspection functions.
+--
+-- Handles:
+-- * 'print': Standard output.
+-- * 'exit': Terminate the program with a code.
+-- * 'typeof': Runtime type inspection.
+checkSystemOps :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
+               -> Maybe (Either String Type)
+checkSystemOps c e n a
+    | n == DT.pack "print"  = Just $ checkPrint c e a
+    | n == DT.pack "exit"   = Just $ checkExit c e a
+    | n == DT.pack "typeof" = Just $ checkTypeof c e a
+    | n == DT.pack "sizeof" = Just $ checkSizeof c e a
+    | otherwise = Nothing
+
+-- | Dispatcher for Input/Output operations (File System & Console).
+--
+-- Handles:
+-- * High-level File I/O: 'ffread' (read whole file), 'ffwrite' (write content).
+-- * Low-level I/O: 'open' (get fd), 'close' (close fd), 'read' (read bytes),
+--   'input' (read from stdin/fd).
+checkIOFuncs :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
+             -> Maybe (Either String Type)
+checkIOFuncs c e n a
+    | n == DT.pack "ffread"  = Just $ checkFFRead c e a
+    | n == DT.pack "ffwrite" = Just $ checkFFWrite c e a
+    | n == DT.pack "open"    = Just $ checkOpen c e a
+    | n == DT.pack "close"   = Just $ checkClose c e a
+    | n == DT.pack "read"    = Just $ checkRead c e a
+    | n == DT.pack "input"   = Just $ checkInput c e a
+    | n == DT.pack "write"   = Just $ checkWrite c e a
+    | otherwise = Nothing
 
 -- | Dispatcher for Data functions: Casts and List operations.
 checkDataFuncs :: CheckExprFn -> CheckEnv -> DT.Text -> [Ast]
@@ -390,3 +452,139 @@ verifyArgTypes checker env name args expected ret = do
         then Right ret
         else Left $ "Argument type mismatch in call to '" ++
             DT.unpack name ++ "'"
+
+-- | Validates 'typeof(arg)'.
+--
+-- Introspection function that returns the type of the argument as a string.
+-- It accepts any valid expression type.
+--
+-- @param arg: Any expression.
+-- @return: String (TyList TyInt) representing the type name (e.g., "int", "bool").
+checkTypeof :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkTypeof checker env [arg] = do
+    _ <- checker env arg
+    Right (TyList TyInt)
+checkTypeof _ _ _ = Left "typeof expects 1 argument"
+
+-- | Validates 'ffread(path)'.
+--
+-- High-level File Read: Reads the entire content of a file.
+--
+-- @param path: String (TyList TyInt) representing the file path.
+-- @return: [String] (TyList (TyList TyInt)), where each element is a line.
+checkFFRead :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkFFRead checker env [path] = do
+    tPath <- checker env path
+    case tPath of
+        TyList TyInt -> Right (TyList (TyList TyInt))
+        _ -> Left "ffread expects a string (path) as argument"
+checkFFRead _ _ _ = Left "ffread expects 1 argument"
+
+-- | Validates 'ffwrite(path, content)'.
+--
+-- High-level File Write: Writes a list of strings to a file.
+--
+-- @param path: String (TyList TyInt) representing the file path.
+-- @param content: [String] (TyList (TyList TyInt)) the lines to write.
+-- @return: Bool (TyBool) indicating success or failure.
+checkFFWrite :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkFFWrite checker env [path, content] = do
+    tPath <- checker env path
+    tContent <- checker env content
+    
+    case (tPath, tContent) of
+        (TyList TyInt, TyList (TyList TyInt)) -> Right TyBool
+        _ -> Left "ffwrite expects (path: string, content: [string])"
+checkFFWrite _ _ _ = Left "ffwrite expects 2 arguments"
+
+-- | Validates 'open(path, mode)'.
+--
+-- Low-level Open: Opens a file and returns a file descriptor.
+--
+-- @param path: String (TyList TyInt) representing the file path.
+-- @param mode: Int (TyInt) representing the access mode (e.g., 0 for read, 1 for write).
+-- @return: Int (TyInt) the file descriptor (FD).
+checkOpen :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkOpen checker env [path, mode] = do
+    tPath <- checker env path
+    tMode <- checker env mode
+    if areTypesCompatible (TyList TyInt)
+            tPath && areTypesCompatible TyInt tMode
+        then Right TyInt
+        else Left "open expects (path: string, mode: int)"
+checkOpen _ _ _ = Left "open expects 2 arguments"
+
+-- | Validates 'close(fd)'.
+--
+-- Low-level Close: Closes an open file descriptor.
+--
+-- @param fd: Int (TyInt) the file descriptor to close.
+-- @return: Int (TyInt) usually 0 for success.
+checkClose :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkClose checker env [fd] = do
+    tFd <- checker env fd
+    if areTypesCompatible TyInt tFd
+        then Right TyInt
+        else Left "close expects an integer file descriptor"
+checkClose _ _ _ = Left "close expects 1 argument"
+
+-- | Validates 'read(fd, size)'.
+--
+-- Low-level Read: Reads a specific number of bytes/characters from a file descriptor.
+--
+-- @param fd: Int (TyInt) the file descriptor to read from.
+-- @param size: Int (TyInt) the number of characters to read.
+-- @return: String (TyList TyInt) containing the read data.
+checkRead :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkRead checker env [fd, size] = do
+    tFd <- checker env fd
+    tSize <- checker env size
+    if areTypesCompatible TyInt tFd && areTypesCompatible TyInt tSize
+        then Right (TyList TyInt)
+        else Left "read expects (fd: int, size: int)"
+checkRead _ _ _ = Left "read expects 2 arguments"
+
+-- | Validates 'input(fd)'.
+--
+-- Stream Input: Reads a line from a file descriptor (often used with 0 for stdin).
+--
+-- @param fd: Int (TyInt) the file descriptor to read from.
+-- @return: String (TyList TyInt) containing the input line.
+checkInput :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkInput checker env [fd] = do
+    tFd <- checker env fd
+    if areTypesCompatible TyInt tFd
+        then Right (TyList TyInt)
+        else Left "input expects an integer file descriptor"
+checkInput _ _ _ = Left "input expects 1 argument"
+
+-- | Validates 'write(fd, content)'.
+--
+-- Low-level Write: Writes content to a file descriptor.
+--
+-- @param fd: Int (TyInt) the file descriptor.
+-- @param content: String/List ([char] or [int]) the data to write.
+-- @return: Int (TyInt) usually the number of bytes written.
+checkWrite :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkWrite checker env [fd, content] = do
+    tFd <- checker env fd
+    tContent <- checker env content
+    unless (areTypesCompatible TyInt tFd) $ 
+        Left "write expects an integer file descriptor (int) as first argument"
+    case tContent of
+        TyList _ -> Right TyInt
+        _ -> Left "write expects a string or list ([char]) as second argument"
+checkWrite _ _ _ = Left "write expects 2 arguments (fd: int, content: [char])"
+
+-- | Validates 'sizeof(arg)'.
+--
+-- Returns the size (or length) of the argument.
+-- Accepts any type. Returns an Integer.
+--
+-- @param arg: Any expression.
+-- @return: Int (TyInt).
+checkSizeof :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkSizeof checker env [arg] = do
+    _ <- checker env arg
+    Right TyInt
+checkSizeof _ _ _ = Left "sizeof expects 1 argument"

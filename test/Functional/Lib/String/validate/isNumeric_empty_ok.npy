@@ -1,0 +1,6 @@
+import "src/@lib/string/module.npy";
+
+
+func main() { print(isNumeric(['\0'])); }
+main();
+

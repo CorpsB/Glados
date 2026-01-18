@@ -25,6 +25,19 @@ import VM.VMState (VirtualMachine, VMState(..))
 import VM.VMValue (VMValue(..))
 import VM.Bytecode.Reader (readInt32)
 import VM.VMStack (stackPop)
+import Common.Type.Integer (intValueToInt)
+
+-- | Helper to check if a value is "Truthy".
+--
+-- @details
+--   - Bool: True is True, False is False.
+--   - Int: 0 is False, anything else is True.
+--   - Others: Considered False (safe default) or error depending on preference.
+--
+isTruth :: VMValue -> Bool
+isTruth (VBool b) = b
+isTruth (VInt i) = intValueToInt i /= 0
+isTruth _ = False
 
 -- | Implements Unconditional Jump (Opcode 0x30).
 --
@@ -56,11 +69,10 @@ instJumpIfFalse :: VirtualMachine ()
 instJumpIfFalse = do
     offset <- readInt32
     v <- stackPop
-    case v of
-        VBool False ->
+    case isTruth v of
+        False ->
             modify $ \vm -> vm { bytecodeIndex = bytecodeIndex vm + offset }
-        VBool True  -> return ()
-        _           -> error "VM Error: JUMP_IF_FALSE expects Boolean"
+        True -> return ()
 
 -- | Implements Jump If True (Opcode 0x32).
 --
@@ -77,8 +89,7 @@ instJumpIfTrue :: VirtualMachine ()
 instJumpIfTrue = do
     offset <- readInt32
     v <- stackPop
-    case v of
-        VBool True ->
+    case isTruth v of
+        True ->
             modify $ \vm -> vm { bytecodeIndex = bytecodeIndex vm + offset }
-        VBool False -> return ()
-        _           -> error "VM Error: JUMP_IF_TRUE expects Boolean"
+        False -> return ()

@@ -24,9 +24,6 @@ import VM.Instruction.Index (instJump, instJumpIfFalse, instJumpIfTrue)
 runVM :: VirtualMachine a -> VMState -> IO (a, VMState)
 runVM = runStateT
 
-evalVM :: VirtualMachine a -> VMState -> IO a
-evalVM = evalStateT
-
 beI32 :: Int -> [Word8]
 beI32 n =
   let w :: Word32
@@ -71,11 +68,6 @@ spec = describe "VM.Instruction.Index" $ do
       bytecodeIndex vm1 `shouldBe` 4
       vStack vm1 `shouldBe` V.empty
 
-    it "throws when popped value is not a boolean" $ do
-      let vm0 = mkVM (beI32 1) [VVoid]
-      evalVM instJumpIfFalse vm0
-        `shouldThrow` errorCall "VM Error: JUMP_IF_FALSE expects Boolean"
-
   describe "instJumpIfTrue" $ do
     it "jumps when condition is VBool True" $ do
       let vm0 = mkVM (beI32 10) [VBool True]
@@ -88,8 +80,3 @@ spec = describe "VM.Instruction.Index" $ do
       (_, vm1) <- runVM instJumpIfTrue vm0
       bytecodeIndex vm1 `shouldBe` 4
       vStack vm1 `shouldBe` V.empty
-
-    it "throws when popped value is not a boolean" $ do
-      let vm0 = mkVM (beI32 1) [VVoid]
-      evalVM instJumpIfTrue vm0
-        `shouldThrow` errorCall "VM Error: JUMP_IF_TRUE expects Boolean"

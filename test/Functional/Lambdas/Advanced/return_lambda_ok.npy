@@ -1,5 +1,5 @@
 func makeAdder(n: int) {
-    ret lambda(x) x + n;
+    ret (lambda(x) x + n);
 }
 
 func main() {
