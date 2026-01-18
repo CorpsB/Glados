@@ -154,19 +154,32 @@ valueToInt (VBool False) = 0
 valueToInt (VFuncPtr addr) = addr
 valueToInt _ = 0
 
--- | Helpers to get string representation of type.
+-- | Recursively determines the precise type name of a value.
 --
 -- @arg val: The VMValue to inspect.
--- @return The string name of the type.
+-- @return The formatted type string (e.g., "[int]", "Player", "[[char]]").
 --
-getValueName :: VMValue -> T.Text
-getValueName (VInt _) = T.pack "int"
+-- @details
+--   - Primitives: Returns "int", "bool", "void".
+--   - Chars: Distinguished from Ints via IChar/UIChar -> "char".
+--   - Structs: Returns the stored name (e.g., "Player").
+--   - Lists: Recursively inspects the *first* element to build the type syntax.
+--     [] -> "[void]"
+--     [1, 2] -> "[int]"
+--     ["hi"] -> "[[char]]"
+--
+getValueName :: VMValue -> Text
+getValueName VVoid = T.pack "void"
 getValueName (VBool _) = T.pack "bool"
-getValueName (VList _) = T.pack "list"
-getValueName (VStruct _) = T.pack "struct"
 getValueName (VClosure _ _) = T.pack "function"
 getValueName (VFuncPtr _) = T.pack "function"
-getValueName VVoid = T.pack "void"
+getValueName (VInt (IChar _)) = T.pack "char"
+getValueName (VInt (UIChar _)) = T.pack "char"
+getValueName (VInt _) = T.pack "int"
+getValueName (VStruct _) = T.pack "[struct]"
+getValueName (VList v)
+    | V.null v = T.pack "[void]"
+    | otherwise = T.pack "[" <> getValueName (V.head v) <> T.pack "]"
 
 -- | Converts a VMValue to a specific target TypeID.
 --

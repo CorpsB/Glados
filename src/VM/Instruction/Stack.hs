@@ -133,8 +133,8 @@ instPop = do
 --
 instDup :: VirtualMachine ()
 instDup = do
-    val <- stackTop
-    stackPush val
+    v <- stackTop
+    stackPush v
 
 -- | Implements the SWAP instruction (Opcode 0x04).
 --
@@ -157,8 +157,8 @@ instSwap = do
 instCast :: VirtualMachine ()
 instCast = do
     typeId <- readByte
-    val <- stackPop
-    stackPush (castValue typeId val)
+    v <- stackPop
+    stackPush (castValue typeId v)
 
 -- | Implements TYPEOF (Opcode 0x81).
 --
@@ -171,5 +171,5 @@ instCast = do
 instTypeOf :: VirtualMachine ()
 instTypeOf = do
     v <- stackPop
-    let typeStr = getValueName v
-    stackPush (stringToValue typeStr)
+    let typeVal = getValueName v
+    stackPush (stringToValue typeVal)
