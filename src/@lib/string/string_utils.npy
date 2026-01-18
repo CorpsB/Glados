@@ -31,6 +31,55 @@ func concat(str1: [char], str2: [char]) -> [char] {
     ret concat(pushStr(str1, head(str2)), tail(str2));
 }
 
+// Slice
+
+func left(str: [char], n: int) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; i < n && str[i] != '\0'; i++) {
+        result = pushStr(result, str[i]);
+    }
+    ret result;
+}
+
+func right(str: [char], n: int) -> [char] {
+    result: [char] = ['\0'];
+    i_to_start: int = length(str) - n;
+
+    if (i_to_start < 0) {
+        i_to_start = 0;
+    }
+    for (i: int = i_to_start; str[i] != '\0'; i++) {
+        result = pushStr(result, str[i]);
+    }
+    ret result;
+}
+
+func slice(str: [char], start: int, end: int) -> [char] {
+    result: [char] = ['\0'];
+
+    if (start >= length(str) || start > end || start < 0) {
+        ret result;
+    }
+    for (i: int = start; i <= end && str[i] != '\0'; i++) {
+        result = pushStr(result, str[i]);
+    }
+    ret result;
+}
+
+func substring(str: [char], start: int, len: int) -> [char] {
+    result: [char] = ['\0'];
+    iter: int = 0;
+
+    if (start >= length(str) || start < 0) {
+        ret result;
+    }
+    for (i: int = start; i < start + len && str[i] != '\0'; i++) {
+        result = pushStr(result, str[i]);
+    }
+    ret result;
+}
+
 // Split Join
 
 func join(list: [[char]], sep: char) -> [char] {

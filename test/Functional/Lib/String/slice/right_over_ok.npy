@@ -1,6 +1,6 @@
 import "src/@lib/string/string_utils.npy";
 
 
-func main() { print(right("abc", 99)); }
+func main() { print(right("abc\0", 99)); }
 main();
 
