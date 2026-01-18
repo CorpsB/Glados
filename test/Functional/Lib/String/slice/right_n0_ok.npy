@@ -1,0 +1,6 @@
+import "src/@lib/string/string_utils.npy";
+
+
+func main() { print(right("abcdef\0", 0)); }
+main();
+

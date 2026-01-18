@@ -1,0 +1,412 @@
+// Utils
+
+func length(str: [char]) -> int {
+    count: int = 0;
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        count++;
+    }
+    ret count;
+}
+
+func pushStr(str: [char], c: char) -> [char] {
+    if (str == ['\0']) {
+        ret cons(c, str);
+    }
+    ret cons(head(str), pushStr(tail(str), c));
+}
+
+func pushMatrix(list: [[char]], str: [char]) -> [[char]] {
+    if (list == [['\0']]) {
+        ret cons(str, list);
+    }
+    ret cons(head(list), pushMatrix(tail(list), str));
+}
+
+func concat(str1: [char], str2: [char]) -> [char] {
+    if (str2 == []) {
+        ret str1;
+    }
+
+    ret concat(pushStr(str1, head(str2)), tail(str2));
+}
+
+// Convert
+
+func toBool(str: [char]) -> bool {
+    if (str == "True\0") {
+        ret True;
+    }
+    ret False;
+}
+
+func pow10(n: int) -> int {
+    if (n == 0) {
+        ret 1;
+    }
+    ret 10 * pow10(n - 1);
+}
+
+func toInt(str: [char]) -> int {
+    result: int = 0;
+    coef: int = 0;
+    neg: bool = False;
+    start: int = 0;
+
+    if (str == ['\0']) {
+        ret 0;
+    }
+    if (head(str) == '-') {
+        neg = True;
+        start = 1;
+    }
+    coef = length(str) - 1 - start;
+    for (i: int = start; str[i] != '\0'; i++) {
+        if (str[i] < '0' || str[i] > '9') {
+            ret 0;
+        }
+        result += (str[i] - '0') * pow10(coef);
+        coef--;
+    }
+    if (neg) {
+        ret result - (result * 2);
+    }
+    ret result;
+}
+
+// Slice
+
+func left(str: [char], n: int) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; i < n && str[i] != '\0'; i++) {
+        result = pushStr(result, str[i]);
+    }
+    ret result;
+}
+
+func right(str: [char], n: int) -> [char] {
+    result: [char] = ['\0'];
+    i_to_start: int = length(str) - n;
+
+    if (i_to_start < 0) {
+        i_to_start = 0;
+    }
+    for (i: int = i_to_start; str[i] != '\0'; i++) {
+        result = pushStr(result, str[i]);
+    }
+    ret result;
+}
+
+func slice(str: [char], start: int, end: int) -> [char] {
+    result: [char] = ['\0'];
+
+    if (start >= length(str) || start > end || start < 0) {
+        ret result;
+    }
+    for (i: int = start; i <= end && str[i] != '\0'; i++) {
+        result = pushStr(result, str[i]);
+    }
+    ret result;
+}
+
+func substring(str: [char], start: int, len: int) -> [char] {
+    result: [char] = ['\0'];
+    iter: int = 0;
+
+    if (start >= length(str) || start < 0) {
+        ret result;
+    }
+    for (i: int = start; i < start + len && str[i] != '\0'; i++) {
+        result = pushStr(result, str[i]);
+    }
+    ret result;
+}
+
+// Split Join
+
+func join(list: [[char]], sep: char) -> [char] {
+
+    if (head(list) == ['\0']) {
+        ret ['\0'];
+    }
+
+    if (head(tail(list)) == ['\0']) {
+        ret head(list);
+    }
+
+    ret concat(concat(head(list), [sep]), join(tail(list), sep));
+}
+
+func split(str: [char], sep: char) -> [[char]] {
+    result: [[char]] = [['\0']];
+    cache: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] == sep) {
+            result = pushMatrix(result, cache);
+            cache = ['\0'];
+        } else {
+            cache = pushStr(cache, str[i]);
+        }
+    }
+    if (cache != ['\0']) {
+        result = pushMatrix(result, cache);
+    }
+    ret result;
+}
+
+func lines(str: [char]) -> [[char]] {
+    result: [[char]] = [['\0']];
+    cache: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] == '\n') {
+            result = pushMatrix(result, cache);
+            cache = ['\0'];
+        } else {
+            cache = pushStr(cache, str[i]);
+        }
+    }
+    if (cache != ['\0']) {
+        result = pushMatrix(result, cache);
+    }
+    ret result;
+}
+
+// Transform
+
+func capitalize(str: [char]) -> [char] {
+    result: [char] = str;
+
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    if (result[0] >= 'a' && result[0] <= 'z') {
+        result[0] = upper[result[0] - 97];
+    }
+    ret result;
+}
+
+func repeat(str: [char], n: int) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; i < n; i++) {
+        result = concat(result, str);
+    }
+    ret result;
+}
+
+func reverse(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        result = cons(str[i], result);
+    }
+    ret result;
+}
+
+func swapCase(str: [char]) -> [char] {
+    result: [char] = str;
+
+    lower: [char] = "abcdefghijklmnopqrstuvwxyz";
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+            result[i] = upper[str[i] - 97];
+        }
+        if (str[i] >= 'A' && str[i] <= 'Z') {
+            result[i] = lower[str[i] - 65];
+        }
+    }
+    ret result;
+}
+
+func toLower(str: [char]) -> [char] {
+    result: [char] = str;
+
+    lower: [char] = "abcdefghijklmnopqrstuvwxyz";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'A' && str[i] <= 'Z') {
+            result[i] = lower[str[i] - 65];
+        }
+    }
+    ret result;
+}
+
+func toUpper(str: [char]) -> [char] {
+    result: [char] = str;
+
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+            result[i] = upper[str[i] - 97];
+        }
+    }
+    ret result;
+}
+
+// Validate
+
+func hasOnly(str: [char], charset: char) -> bool {
+    if (str == [] || str == ['\0']) {
+        ret True;
+    }
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != charset) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isAlnum(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z') || (str[i] >= '0' && str[i] <= '9')) == False) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isAlpha(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z')) == False) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isEmpty(str: [char]) -> bool {
+    if (str == [] || str == "\0") {
+        ret True;
+    }
+    ret False;
+}
+
+func isBlank(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != ' ' && str[i] != '\t' && str[i] != '\n' && str[i] != '\r') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isLower(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < 'a' || str[i] > 'z') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isNumeric(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < '0' || str[i] > '9') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isUpper(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < 'A' || str[i] > 'Z') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+// Clean
+
+func ltrim(str: [char]) -> [char] {
+    i_to_start: int = 0;
+
+    for (i: int = 0; str[i] != '\0' && (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' || str[i] == '\r'); i++) {
+        i_to_start++;
+    }
+    ret substring(str, i_to_start, length(str) - i_to_start);
+}
+
+func rtrim(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+    end: int = -1;
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (end != -1 && (str[i] != ' ' && str[i] != '\t' && str[i] != '\n' && str[i] != '\r')) {
+            end = -1;
+        }
+        if (end == -1 && (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' || str[i] == '\r')) {
+            end = i;
+        }
+    }
+    if (end != -1) {
+        result = slice(str, 0, end - 1);
+    } else {
+        result = str;
+    }
+    ret result;
+}
+
+func trim(str: [char]) -> [char] {
+    ret ltrim(rtrim(str));
+}
+
+func removeNewLines(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != '\n' && str[i] != '\r') {
+            result = pushStr(result, str[i]);
+        }
+    }
+    ret result;
+}
+
+func removeSpaces(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != ' ') {
+            result = pushStr(result, str[i]);
+        }
+    }
+    ret result;
+}
+
+func removeTabs(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != '\t') {
+            result = pushStr(result, str[i]);
+        }
+    }
+    ret result;
+}
+
+func slugify(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+    space_pending: bool = False;
+    tmp: [char] = trim(str);
+    tmp = removeNewLines(tmp);
+    tmp = removeTabs(tmp);
+    tmp = toLower(tmp);
+
+    for (i: int = 0; tmp[i] != '\0'; i++) {
+        c: char = tmp[i];
+
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+            if (space_pending) {
+                result = pushStr(result, '-');
+                space_pending = False;
+            }
+            result = pushStr(result, c);
+        } else {
+            space_pending = True;
+        }
+    }
+    ret result;
+}

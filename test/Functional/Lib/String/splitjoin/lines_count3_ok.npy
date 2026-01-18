@@ -1,0 +1,18 @@
+import "src/@lib/string/string_utils.npy";
+
+
+func main() {
+    parts = lines("a\nb\nc\0");
+
+    i: int = 0;
+    while (True) {
+        if (nth(parts, i) == ['\0']) {
+            break;
+        }
+        i++;
+    }
+    print(i);
+
+}
+main();
+
