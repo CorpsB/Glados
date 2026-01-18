@@ -1,0 +1,89 @@
+func ltrim(str: [char]) -> [char] {
+    i_to_start: int = 0;
+
+    for (i: int = 0; str[i] != '\0' && (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' || str[i] == '\r'); i++) {
+        i_to_start++;
+    }
+    ret substring(str, i_to_start, length(str) - i_to_start);
+}
+
+func rtrim(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+    end: int = -1;
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (end != -1 && (str[i] != ' ' && str[i] != '\t' && str[i] != '\n' && str[i] != '\r')) {
+            end = -1;
+        }
+        if (end == -1 && (str[i] == ' ' || str[i] == '\t' || str[i] == '\n' || str[i] == '\r')) {
+            end = i;
+        }
+    }
+    if (end != -1) {
+        result = slice(str, 0, end - 1);
+    } else {
+        result = str;
+    }
+    ret result;
+}
+
+func trim(str: [char]) -> [char] {
+    ret ltrim(rtrim(str));
+}
+
+func removeNewLines(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != '\n' && str[i] != '\r') {
+            result = pushStr(result, str[i]);
+        }
+    }
+    ret result;
+}
+
+func removeSpaces(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != ' ') {
+            result = pushStr(result, str[i]);
+        }
+    }
+    ret result;
+}
+
+func removeTabs(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != '\t') {
+            result = pushStr(result, str[i]);
+        }
+    }
+    ret result;
+}
+
+func slugify(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+    space_pending: bool = False;
+    tmp: [char] = trim(str);
+    tmp = removeNewLines(tmp);
+    tmp = removeTabs(tmp);
+    tmp = toLower(tmp);
+
+    for (i: int = 0; tmp[i] != '\0'; i++) {
+        c: char = tmp[i];
+
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+            if (space_pending) {
+                result = pushStr(result, '-');
+                space_pending = False;
+            }
+            result = pushStr(result, c);
+        } else {
+            space_pending = True;
+        }
+    }
+    ret result;
+}

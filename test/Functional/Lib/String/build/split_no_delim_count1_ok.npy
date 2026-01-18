@@ -1,8 +1,8 @@
-import "src/@lib/string/string_utils.npy";
+import "src/@lib/string/module.npy";
 
 
 func main() {
-    parts = split("a b c\0", ' ');
+    parts = split("abc\0", ',');
 
     i: int = 0;
     while (True) {

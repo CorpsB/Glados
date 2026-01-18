@@ -1,0 +1,67 @@
+func capitalize(str: [char]) -> [char] {
+    result: [char] = str;
+
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    if (result[0] >= 'a' && result[0] <= 'z') {
+        result[0] = upper[result[0] - 97];
+    }
+    ret result;
+}
+
+func repeat(str: [char], n: int) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; i < n; i++) {
+        result = concat(result, str);
+    }
+    ret result;
+}
+
+func reverse(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        result = cons(str[i], result);
+    }
+    ret result;
+}
+
+func swapCase(str: [char]) -> [char] {
+    result: [char] = str;
+
+    lower: [char] = "abcdefghijklmnopqrstuvwxyz";
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+            result[i] = upper[str[i] - 97];
+        }
+        if (str[i] >= 'A' && str[i] <= 'Z') {
+            result[i] = lower[str[i] - 65];
+        }
+    }
+    ret result;
+}
+
+func toLower(str: [char]) -> [char] {
+    result: [char] = str;
+
+    lower: [char] = "abcdefghijklmnopqrstuvwxyz";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'A' && str[i] <= 'Z') {
+            result[i] = lower[str[i] - 65];
+        }
+    }
+    ret result;
+}
+
+func toUpper(str: [char]) -> [char] {
+    result: [char] = str;
+
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+            result[i] = upper[str[i] - 97];
+        }
+    }
+    ret result;
+}
