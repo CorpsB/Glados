@@ -934,3 +934,11 @@ spec = describe "AST.Semantics.CheckCall" $ do
                 let args = [AInteger (I8 1)]
                 checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
                     `shouldBe` Left "write expects 2 arguments (fd: int, content: [char])"
+
+        describe "checkSizeof" $ do
+                it "Accepts any argument and returns Int" $ do
+                    let args = [ASymbol (p "str")]
+                    checkSizeof simType testEnv args `shouldBe` Right TyInt
+
+                it "Rejects missing argument" $ do
+                    checkSizeof simType testEnv [] `shouldBe` Left "sizeof expects 1 argument"

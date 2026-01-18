@@ -11,7 +11,8 @@ module AST.Semantics.CheckCall (checkCall, checkEqualityOp,checkTypeof,
     checkOpen,
     checkClose,
     checkRead,
-    checkInput) where
+    checkInput,
+    checkSizeof) where
 
 import qualified Data.Text as DT
 import qualified Data.Map.Strict as Map
@@ -171,6 +172,7 @@ checkSystemOps c e n a
     | n == DT.pack "print"  = Just $ checkPrint c e a
     | n == DT.pack "exit"   = Just $ checkExit c e a
     | n == DT.pack "typeof" = Just $ checkTypeof c e a
+    | n == DT.pack "sizeof" = Just $ checkSizeof c e a
     | otherwise = Nothing
 
 -- | Dispatcher for Input/Output operations (File System & Console).
@@ -573,3 +575,16 @@ checkWrite checker env [fd, content] = do
         TyList _ -> Right TyInt
         _ -> Left "write expects a string or list ([char]) as second argument"
 checkWrite _ _ _ = Left "write expects 2 arguments (fd: int, content: [char])"
+
+-- | Validates 'sizeof(arg)'.
+--
+-- Returns the size (or length) of the argument.
+-- Accepts any type. Returns an Integer.
+--
+-- @param arg: Any expression.
+-- @return: Int (TyInt).
+checkSizeof :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkSizeof checker env [arg] = do
+    _ <- checker env arg
+    Right TyInt
+checkSizeof _ _ _ = Left "sizeof expects 1 argument"
