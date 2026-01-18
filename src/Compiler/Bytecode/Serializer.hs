@@ -147,6 +147,7 @@ serializeInstruction (Cast typeId) =
     encodeWord8 0x80 <>
     encodeWord8 typeId
 serializeInstruction TypeOf = encodeWord8 0x81
+serializeInstruction SizeOf = encodeWord8 0x82
 
 serializeInstruction Cons = encodeWord8 0x90
 serializeInstruction Head = encodeWord8 0x91

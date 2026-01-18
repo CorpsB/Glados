@@ -50,8 +50,8 @@ builtinIoList =
 
 builtinSystemList :: [(Text, Instruction)]
 builtinSystemList =
-    [ (pack "typeof", TypeOf), (pack "print", Print)
-    , (pack "exit", Exit) ]
+    [ (pack "typeof", TypeOf), (pack "sizeof", SizeOf)
+    , (pack "print", Print), (pack "exit", Exit) ]
 
 builtinList :: [(Text, Instruction)]
 builtinList = (builtinCastList
@@ -109,6 +109,7 @@ getBuiltinReturnType "write" _ = Right (pack "int")
 getBuiltinReturnType "ffread" _ = Right (pack "[[char]]")
 getBuiltinReturnType "ffwrite" _ = Right (pack "bool")
 getBuiltinReturnType "typeof" _ = Right (pack "[char]")
+getBuiltinReturnType "sizeof" _ = Right (pack "int")
 
 getBuiltinReturnType name _ = Left (
     pack $ "Unknown builtin or invalid arguments for: " ++ show name)

@@ -16,9 +16,14 @@ func ffread(path: [char]) -> [[char]] {
         ret [['\0']];
     }
 
-    content = pushStr(content, '\0');
+    str: [char] = ['\0'];
+    str_size: int = sizeof(content);
+    for (i = 0; i < str_size; ++i) {
+        str = cons(content[i], str);
+    }
+    str = reverse(str);
     close(fd);
-    ret split(content, '\n');
+    ret split(str, '\n');
 }
 
 func ffwrite(path: [char], content: [[char]]) -> bool {
@@ -27,7 +32,7 @@ func ffwrite(path: [char], content: [[char]]) -> bool {
         ret False;
     }
 
-    //write(fd, content);
+    res: int = write(fd, content);
     close(fd);
-    ret True;
+    ret (res > 0);
 }
