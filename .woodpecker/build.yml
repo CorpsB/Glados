@@ -21,6 +21,8 @@ steps:
     when:
       event: pull_request
     image: haskell:9.10.3
+    volumes:
+      - /var/lib/woodpecker/stack:/root/.stack
     commands:
       - make
       - make clean
