@@ -1,0 +1,110 @@
+/woodpecker/src/github.com/CorpsB/Glados/CHANGELOG.md:
+  hash: 1ff8e566dc3c822417c6e42f220d63d290ccf906bc9982333fcd031cc973cc7a
+/woodpecker/src/github.com/CorpsB/Glados/README.md:
+  hash: 13e0a23a4e446a00fb7cca43a10b5a35f410b22209feec3cbd2933254d2ce6df
+/woodpecker/src/github.com/CorpsB/Glados/glados.cabal:
+  hash: bba36bfc5f5902a8d0de7a589e9e82b1607506e2102f9fdc7998fc1c43c33cf7
+/woodpecker/src/github.com/CorpsB/Glados/src/AST/Ast.hs:
+  hash: fb7d34f616f09309c7f3a934b1ff109bb121142eb3c6bc66b513ac96a12ae237
+/woodpecker/src/github.com/CorpsB/Glados/src/AST/Semantics/Check.hs:
+  hash: 6bccf9916c45dc490e20cfb7427986bff306937bad650ca58ff8d10a2681ee48
+/woodpecker/src/github.com/CorpsB/Glados/src/AST/Semantics/CheckCall.hs:
+  hash: 6a94e4e55e7eb3e3b9d9b6d62299788dc5adee3f2c65fd4f9321d58c40436e96
+/woodpecker/src/github.com/CorpsB/Glados/src/AST/Semantics/Type.hs:
+  hash: ddce3bcfc7b0dcc2ac8da1c6a12f6fef4d582f5f38d39b6450b2be45281f1ce4
+/woodpecker/src/github.com/CorpsB/Glados/src/Common/Error.hs:
+  hash: 5d94da91b72d3a75172f6d42f3ebef8c3a741d18058709275354a966a3be7dd6
+/woodpecker/src/github.com/CorpsB/Glados/src/Common/Type/Integer.hs:
+  hash: 83b6eca70ed8fa61cbd4e38c8829f99a23c0e7523878ba77965b827a9e404862
+/woodpecker/src/github.com/CorpsB/Glados/src/Common/Utils/Bytecode/File.hs:
+  hash: f790f6d214c468cfb69efb62e7411ff7fe6aa56af7599b8742aba6848aebdeee
+/woodpecker/src/github.com/CorpsB/Glados/src/Common/Utils/Bytecode/Header.hs:
+  hash: 1e43ac13e3e4d6cd6dcc09885daffc94a7a53ac922d59563f8f643c686800fef
+/woodpecker/src/github.com/CorpsB/Glados/src/Common/Utils/List.hs:
+  hash: 898d92489e3e793559c58493234061bed49a03bf5a42fad06e8f1c5141a73cac
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ASM/Assembler.hs:
+  hash: 75be31a10790e04d54a49ee5dcebafc67148a69dc166ac4052f1eeeecaaf5e90
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ASM/AstToAsm.hs:
+  hash: 91a3538219ac75d6985387d6f06bcf328e6d210fc4f46ff8cefc1aa2e255a1a1
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ASM/Builtins.hs:
+  hash: a3e4c6ed0b17d20776bfa859373a43798baaf40ec7932ace4ec65ffe7a2472b4
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ASM/Compiler.hs:
+  hash: aa8dc7c72d890c71819ef25d9051d539663d0312883b496dd4acd4bb22e0d9d2
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ASM/CompilerMonad.hs:
+  hash: f0d3a8c6718e91a0b1544d402388a21ebc47fc10450c6a4eed0c66aa93c89317
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/Bytecode/DisasmFinal.hs:
+  hash: 4699f8ec6de6ff2a5bf70eb8225c8d7fcf39bf46c78576e7bf56abaf59071fe9
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/Bytecode/Encoder.hs:
+  hash: 72ed9d20a96dd4c5cec86192dcdb0e4b41f182d95f0acac319771902f6cdfd8f
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/Bytecode/Serializer.hs:
+  hash: 43d69ed10f8351069c1ce3d51227fb1607b15f6984e3b5516efb88f2f66d41c6
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/CompilerState.hs:
+  hash: 9ba240ab8d97e689d77dd87e49c695fe066d3a0c2d5d6c172691580fd7780471
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/Instruction.hs:
+  hash: 67ddd89f673bc58b00b9c96551222c5850ed37340a25589e01d7c14534287c46
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/PsInstruction.hs:
+  hash: 34660a2ec71c5c72e304f996f705ed90d880c04dfe361a48e0fd1720d0ad786a
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/ResolveLabels.hs:
+  hash: a11aadefc2dc1ba7155650b30d1e177038d263e9d6b634ffb5264552ea7e331d
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/ResolveLabelsHelpers.hs:
+  hash: f2e227056e7b03558f01ee41ea2f04745de02a216ce84e41923f13e987186f90
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2CallLabel.hs:
+  hash: 39b314532959db761bc52f33e14deab3588c9dfed1c5843d4a11c485bf0c1b71
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2GetFuncAddrLabel.hs:
+  hash: 76f404b4349f4941253b42dd102edf58b70e6076e8ca8e98ccae3387adb35510
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2JumpIfFalseLabel.hs:
+  hash: 9f4a82801296a044d15d75fb63f33283b0d8ab5c983926b1b29c1cc121be68c2
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2JumpIfTrueLabel.hs:
+  hash: 414416b0d475b510807d2c3bf27a6b44515719c72a48935e8be48aa51db061c1
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2JumpLabel.hs:
+  hash: 5bd76b1c9b23d2fd7f9463b40c79a16cb98d2c64e33af9d2955d01d63bb6d54b
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2LabelDef.hs:
+  hash: 1373517ba6dd7665d86eba415370d1c35b9a28e33e047c8f6ccfa184b69425d4
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2MakeClosureLabel.hs:
+  hash: 61d6964821d96490f990b5ad99949e89ab243d51794630509a90616e8698cfec
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2Real.hs:
+  hash: 3684eada52fcd80669d27a4f8dc314c64afcb1c943392fda78bd9d431e4fa1e0
+/woodpecker/src/github.com/CorpsB/Glados/src/Compiler/ResolveLabels/Step2TailCallLabel.hs:
+  hash: c523667ec5550941548f81609b602177c3485eaad50c9caf05b6fdf7221a87ee
+/woodpecker/src/github.com/CorpsB/Glados/src/Parser/Conditions.hs:
+  hash: 562bbc95265b82a70d49899e716797874895762c3097447a95c576fe218a665c
+/woodpecker/src/github.com/CorpsB/Glados/src/Parser/Expression.hs:
+  hash: 273bcf43d35f58235949be203efd03a4b563d4c84ad92843784669a461832eff
+/woodpecker/src/github.com/CorpsB/Glados/src/Parser/ImportSystem.hs:
+  hash: 521a578b36b39a3e777a5e7bfa667dd2e3d26cbf172acb89548ae8cf805845be
+/woodpecker/src/github.com/CorpsB/Glados/src/Parser/Lexer.hs:
+  hash: 5dd1206038fbaf5af7eaa6f701d249ce1c77406ab10ecb29a78c1b2489980edd
+/woodpecker/src/github.com/CorpsB/Glados/src/Parser/Statement.hs:
+  hash: 92a4a6dda13354935c94998dc4e609b1022102bfc8397df4b7ec427a6b0602b2
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Bytecode/Reader.hs:
+  hash: 3174423ebe3439d084ad41c0c0213f78be122bf0d5f3e704797b252a3e767d5e
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Bytecode/Runner.hs:
+  hash: fcf49c6a5d8ccbb0df729c0bde8f06f99a0f9817abcaa8b949cc941405676ba4
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/CallSnapshot.hs:
+  hash: 34e6684ec4832be3de8cfeeb3c970993f28af45ab7a82843805f388b13ce03a3
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/Arithmetic.hs:
+  hash: e6fbcabb9cbd701a492a1cf24645a5dd535c35b12251ffcaa44308dc42d2e941
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/Function.hs:
+  hash: f6cea5a2c5f078c9635dbbfeb73ef81743077701f53a76556095cb5baf63518c
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/Index.hs:
+  hash: 378a2a53224d0618b9e13bd22a09a182a90c27df894136c6719670d0c1539540
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/Io.hs:
+  hash: 315a5522fcf12afefb325e75268962cc212ed5f5a572d5d5e0a756fc9e0a8140
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/List.hs:
+  hash: c432d68f9e6b5f0c10b17f50d59846380ba93517b3fc376f2e22505facef8f45
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/Logic.hs:
+  hash: 50f03062b9800dfc24f898a6bfd868af168850e5488bc34fd48391c77aabc6ca
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/Stack.hs:
+  hash: 7e7328c9d6b2f1e286abf519096305e035ac44b8f627010067114a3f915d9267
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/Struct.hs:
+  hash: 1f9428e1d9b7269d6ca610d8236945c38f70e4e3498de246ce3fa6c634735329
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/System.hs:
+  hash: 80048a1e068417fd5a2777a8d2d05baf772375c54072085d51eb3c1c64718fb0
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/Instruction/Variable.hs:
+  hash: bbb210963ed65041b0cb259081ca260d82bf721efb12c1b4df2061394afcf456
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/VMStack.hs:
+  hash: c363b2afe7c584483a1bf57dbc64a8f1865b39bad1d73bbc2346d86c8746c642
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/VMState.hs:
+  hash: b99749c82b3d9764b0d1835d5f62bb6e03123860b45582c097875d7e60355664
+/woodpecker/src/github.com/CorpsB/Glados/src/VM/VMValue.hs:
+  hash: 83d4f80130d6034cada1c920477394d2fabf0f765a35aefb295ff9d329109a77

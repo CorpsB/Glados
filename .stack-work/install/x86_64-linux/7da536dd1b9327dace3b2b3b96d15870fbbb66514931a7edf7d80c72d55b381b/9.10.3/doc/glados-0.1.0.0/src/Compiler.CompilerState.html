@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- CompilerState
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module : Compiler.CompilerState
+Description : Core types and state for the Compiler logic.
+Stability : stable
+-}</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html"><span class="hs-identifier">Compiler.CompilerState</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#CompilerState"><span class="hs-identifier">CompilerState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#SymTable"><span class="hs-identifier">SymTable</span></a></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#ScopeType"><span class="hs-identifier">ScopeType</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#createCompilerState"><span class="hs-identifier">createCompilerState</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Map</span></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Sequence</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Seq</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Sequence</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Seq</span></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.PsInstruction.html"><span class="hs-identifier">Compiler.PsInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.PsInstruction.html#PsInstruction"><span class="hs-identifier">PsInstruction</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- | Defines the memory scope of a variable.</span><span>
+</span><span id="line-29"></span><span class="hs-comment">--</span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--   This enumeration is used in the symbol table to determine which</span><span>
+</span><span id="line-32"></span><span class="hs-comment">--   VM instruction (LOAD_GLOBAL, LOAD_LOCAL, or LOAD_CAPTURE) should be</span><span>
+</span><span id="line-33"></span><span class="hs-comment">--   emitted when a symbol is referenced.</span><span>
+</span><span id="line-34"></span><span class="hs-comment">--</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">data</span><span> </span><span id="ScopeType"><span class="annot"><a href="Compiler.CompilerState.html#ScopeType"><span class="hs-identifier hs-var">ScopeType</span></a></span></span><span> </span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="ScopeGlobal"><span class="annot"><a href="Compiler.CompilerState.html#ScopeGlobal"><span class="hs-identifier hs-var">ScopeGlobal</span></a></span></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ Global variable (LOAD_GLOBAL)</span></span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ScopeLocal"><span class="annot"><a href="Compiler.CompilerState.html#ScopeLocal"><span class="hs-identifier hs-var">ScopeLocal</span></a></span></span><span>    </span><span class="annot"><span class="hs-comment">-- ^ Local argument or variable (LOAD_LOCAL)</span></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ScopeCapture"><span class="annot"><a href="Compiler.CompilerState.html#ScopeCapture"><span class="hs-identifier hs-var">ScopeCapture</span></a></span></span><span>  </span><span class="annot"><span class="hs-comment">-- ^ Variable captured by a closure (LOAD_CAPTURE)</span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679113562"><span id="local-6989586621679113564"><span id="local-6989586621679113568"><span class="annot"><span class="annottext">Int -&gt; ScopeType -&gt; ShowS
+[ScopeType] -&gt; ShowS
+ScopeType -&gt; String
+(Int -&gt; ScopeType -&gt; ShowS)
+-&gt; (ScopeType -&gt; String)
+-&gt; ([ScopeType] -&gt; ShowS)
+-&gt; Show ScopeType
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; ScopeType -&gt; ShowS
+showsPrec :: Int -&gt; ScopeType -&gt; ShowS
+$cshow :: ScopeType -&gt; String
+show :: ScopeType -&gt; String
+$cshowList :: [ScopeType] -&gt; ShowS
+showList :: [ScopeType] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679113573"><span id="local-6989586621679113578"><span class="annot"><span class="annottext">ScopeType -&gt; ScopeType -&gt; Bool
+(ScopeType -&gt; ScopeType -&gt; Bool)
+-&gt; (ScopeType -&gt; ScopeType -&gt; Bool) -&gt; Eq ScopeType
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: ScopeType -&gt; ScopeType -&gt; Bool
+== :: ScopeType -&gt; ScopeType -&gt; Bool
+$c/= :: ScopeType -&gt; ScopeType -&gt; Bool
+/= :: ScopeType -&gt; ScopeType -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- | Symbol table mapping textual names to their scope and index.</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--   SymTable stores the mapping required to resolve variable names to</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   concrete memory indices. </span><span>
+</span><span id="line-46"></span><span class="hs-comment">--     - ScopeType: Determines which LOAD instruction to use.</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--     - MemoryIndex: The integer offset in the stack/heap.</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--     - TypeName: The string representation of the variable's type.</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--</span><span>
+</span><span id="line-50"></span><span class="hs-keyword">type</span><span> </span><span id="SymTable"><span class="annot"><a href="Compiler.CompilerState.html#SymTable"><span class="hs-identifier hs-var">SymTable</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.CompilerState.html#ScopeType"><span class="hs-identifier hs-type">ScopeType</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- | Compiler state holding code buffers and symbol information.</span><span>
+</span><span id="line-53"></span><span class="hs-comment">--</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--   The CompilerState maintains two code buffers: 'csCode' for the current</span><span>
+</span><span id="line-56"></span><span class="hs-comment">--   block being compiled (e.g., main or current function body) and 'csFuncs'</span><span>
+</span><span id="line-57"></span><span class="hs-comment">--   for accumulating the code of defined functions and lambdas that will be</span><span>
+</span><span id="line-58"></span><span class="hs-comment">--   appended at the end of the binary.</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--   N/A (this documents the type)</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--</span><span>
+</span><span id="line-63"></span><span class="hs-keyword">data</span><span> </span><span id="CompilerState"><span class="annot"><a href="Compiler.CompilerState.html#CompilerState"><span class="hs-identifier hs-var">CompilerState</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="CompilerState"><span class="annot"><a href="Compiler.CompilerState.html#CompilerState"><span class="hs-identifier hs-var">CompilerState</span></a></span></span><span>
+</span><span id="line-64"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="csCode"><span class="annot"><span class="annottext">CompilerState -&gt; Seq PsInstruction
+</span><a href="Compiler.CompilerState.html#csCode"><span class="hs-identifier hs-var hs-var">csCode</span></a></span></span><span>      </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="Compiler.PsInstruction.html#PsInstruction"><span class="hs-identifier hs-type">PsInstruction</span></a></span><span class="hs-special">)</span><span>      </span><span class="annot"><span class="hs-comment">-- ^ Generated code (in natural order)</span></span><span>
+</span><span id="line-65"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="csFuncs"><span class="annot"><span class="annottext">CompilerState -&gt; Seq PsInstruction
+</span><a href="Compiler.CompilerState.html#csFuncs"><span class="hs-identifier hs-var hs-var">csFuncs</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Seq</span></span><span> </span><span class="annot"><a href="Compiler.PsInstruction.html#PsInstruction"><span class="hs-identifier hs-type">PsInstruction</span></a></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ Compiled functions' buffer</span></span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="csSymbols"><span class="annot"><span class="annottext">CompilerState -&gt; SymTable
+</span><a href="Compiler.CompilerState.html#csSymbols"><span class="hs-identifier hs-var hs-var">csSymbols</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#SymTable"><span class="hs-identifier hs-type">SymTable</span></a></span><span>                 </span><span class="annot"><span class="hs-comment">-- ^ Local variable mapping</span></span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="csStructs"><span class="annot"><span class="annottext">CompilerState -&gt; Map Text [(Text, Text)]
+</span><a href="Compiler.CompilerState.html#csStructs"><span class="hs-identifier hs-var hs-var">csStructs</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>  </span><span class="annot"><span class="hs-comment">-- ^ Struct definitions (Name -&gt; Field Names in order)</span></span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="csNextIndex"><span class="annot"><span class="annottext">CompilerState -&gt; Int
+</span><a href="Compiler.CompilerState.html#csNextIndex"><span class="hs-identifier hs-var hs-var">csNextIndex</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ Next available local index</span></span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="csLabelCnt"><span class="annot"><span class="annottext">CompilerState -&gt; Int
+</span><a href="Compiler.CompilerState.html#csLabelCnt"><span class="hs-identifier hs-var hs-var">csLabelCnt</span></a></span></span><span>  </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>                      </span><span class="annot"><span class="hs-comment">-- ^ Counter for unique label generation</span></span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="csScopeContext"><span class="annot"><span class="annottext">CompilerState -&gt; ScopeType
+</span><a href="Compiler.CompilerState.html#csScopeContext"><span class="hs-identifier hs-var hs-var">csScopeContext</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#ScopeType"><span class="hs-identifier hs-type">ScopeType</span></a></span><span>             </span><span class="annot"><span class="hs-comment">-- ^ Scope context (used to determine variables scopes)</span></span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="csCurrentArgCount"><span class="annot"><span class="annottext">CompilerState -&gt; Int
+</span><a href="Compiler.CompilerState.html#csCurrentArgCount"><span class="hs-identifier hs-var hs-var">csCurrentArgCount</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>                </span><span class="annot"><span class="hs-comment">-- ^ Number of args on the stack (atomic return clean)</span></span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="csLoopExits"><span class="annot"><span class="annottext">CompilerState -&gt; [Text]
+</span><a href="Compiler.CompilerState.html#csLoopExits"><span class="hs-identifier hs-var hs-var">csLoopExits</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span class="hs-special">]</span><span>                   </span><span class="annot"><span class="hs-comment">-- ^ Stack of loop exit labels (for break)</span></span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679113593"><span id="local-6989586621679113615"><span id="local-6989586621679113619"><span class="annot"><span class="annottext">Int -&gt; CompilerState -&gt; ShowS
+[CompilerState] -&gt; ShowS
+CompilerState -&gt; String
+(Int -&gt; CompilerState -&gt; ShowS)
+-&gt; (CompilerState -&gt; String)
+-&gt; ([CompilerState] -&gt; ShowS)
+-&gt; Show CompilerState
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; CompilerState -&gt; ShowS
+showsPrec :: Int -&gt; CompilerState -&gt; ShowS
+$cshow :: CompilerState -&gt; String
+show :: CompilerState -&gt; String
+$cshowList :: [CompilerState] -&gt; ShowS
+showList :: [CompilerState] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679113628"><span id="local-6989586621679113648"><span class="annot"><span class="annottext">CompilerState -&gt; CompilerState -&gt; Bool
+(CompilerState -&gt; CompilerState -&gt; Bool)
+-&gt; (CompilerState -&gt; CompilerState -&gt; Bool) -&gt; Eq CompilerState
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: CompilerState -&gt; CompilerState -&gt; Bool
+== :: CompilerState -&gt; CompilerState -&gt; Bool
+$c/= :: CompilerState -&gt; CompilerState -&gt; Bool
+/= :: CompilerState -&gt; CompilerState -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- | Initial, empty compiler state.</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--</span><span>
+</span><span id="line-77"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-78"></span><span class="hs-comment">--   Provides a fresh CompilerState with no code, an empty symbol table, the</span><span>
+</span><span id="line-79"></span><span class="hs-comment">--   next local index set to 0 and the label counter set to 0.</span><span>
+</span><span id="line-80"></span><span class="hs-comment">--</span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-82"></span><span class="hs-comment">--   A 'CompilerState' initialized for a new compilation unit.</span><span>
+</span><span id="line-83"></span><span class="hs-comment">--</span><span>
+</span><span id="line-84"></span><span class="annot"><a href="Compiler.CompilerState.html#createCompilerState"><span class="hs-identifier hs-type">createCompilerState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#CompilerState"><span class="hs-identifier hs-type">CompilerState</span></a></span><span>
+</span><span id="line-85"></span><span id="createCompilerState"><span class="annot"><span class="annottext">createCompilerState :: CompilerState
+</span><a href="Compiler.CompilerState.html#createCompilerState"><span class="hs-identifier hs-var hs-var">createCompilerState</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#CompilerState"><span class="hs-identifier hs-type">CompilerState</span></a></span><span>
+</span><span id="line-86"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">csCode :: Seq PsInstruction
+</span><a href="Compiler.CompilerState.html#csCode"><span class="hs-identifier hs-var">csCode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq PsInstruction
+forall a. Seq a
+</span><span class="hs-identifier hs-var">Seq.empty</span></span><span>
+</span><span id="line-87"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">csFuncs :: Seq PsInstruction
+</span><a href="Compiler.CompilerState.html#csFuncs"><span class="hs-identifier hs-var">csFuncs</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Seq PsInstruction
+forall a. Seq a
+</span><span class="hs-identifier hs-var">Seq.empty</span></span><span>
+</span><span id="line-88"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">csSymbols :: SymTable
+</span><a href="Compiler.CompilerState.html#csSymbols"><span class="hs-identifier hs-var">csSymbols</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">SymTable
+forall k a. Map k a
+</span><span class="hs-identifier hs-var">Map.empty</span></span><span>
+</span><span id="line-89"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">csStructs :: Map Text [(Text, Text)]
+</span><a href="Compiler.CompilerState.html#csStructs"><span class="hs-identifier hs-var">csStructs</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map Text [(Text, Text)]
+forall k a. Map k a
+</span><span class="hs-identifier hs-var">Map.empty</span></span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">csNextIndex :: Int
+</span><a href="Compiler.CompilerState.html#csNextIndex"><span class="hs-identifier hs-var">csNextIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">csLabelCnt :: Int
+</span><a href="Compiler.CompilerState.html#csLabelCnt"><span class="hs-identifier hs-var">csLabelCnt</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-92"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">csScopeContext :: ScopeType
+</span><a href="Compiler.CompilerState.html#csScopeContext"><span class="hs-identifier hs-var">csScopeContext</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ScopeType
+</span><a href="Compiler.CompilerState.html#ScopeGlobal"><span class="hs-identifier hs-var">ScopeGlobal</span></a></span><span>
+</span><span id="line-93"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">csCurrentArgCount :: Int
+</span><a href="Compiler.CompilerState.html#csCurrentArgCount"><span class="hs-identifier hs-var">csCurrentArgCount</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-94"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">csLoopExits :: [Text]
+</span><a href="Compiler.CompilerState.html#csLoopExits"><span class="hs-identifier hs-var">csLoopExits</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-95"></span></pre></body></html>

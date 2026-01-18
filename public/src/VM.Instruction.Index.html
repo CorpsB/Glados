@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Index Instructions
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module      : VM.Instruction.Index
+Description : Implementation of branching and jump operations.
+Stability   : stable
+
+Handles relative jumps and conditional branching instructions.
+These instructions modify the 'bytecodeIndex' (Instruction Pointer) of the VMState.
+-}</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="VM.Instruction.Index.html"><span class="hs-identifier">VM.Instruction.Index</span></a></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="VM.Instruction.Index.html#instJump"><span class="hs-identifier">instJump</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Index.html#instJumpIfFalse"><span class="hs-identifier">instJumpIfFalse</span></a></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Index.html#instJumpIfTrue"><span class="hs-identifier">instJumpIfTrue</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Strict</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">modify</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMState.html"><span class="hs-identifier">VM.VMState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier">VirtualMachine</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier">VMState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMValue.html"><span class="hs-identifier">VM.VMValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier">VMValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.Bytecode.Reader.html"><span class="hs-identifier">VM.Bytecode.Reader</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.Bytecode.Reader.html#readInt32"><span class="hs-identifier">readInt32</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMStack.html"><span class="hs-identifier">VM.VMStack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier">stackPop</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Common.Type.Integer.html"><span class="hs-identifier">Common.Type.Integer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier">intValueToInt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- | Helper to check if a value is &quot;Truthy&quot;.</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-33"></span><span class="hs-comment">--   - Bool: True is True, False is False.</span><span>
+</span><span id="line-34"></span><span class="hs-comment">--   - Int: 0 is False, anything else is True.</span><span>
+</span><span id="line-35"></span><span class="hs-comment">--   - Others: Considered False (safe default) or error depending on preference.</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="annot"><a href="VM.Instruction.Index.html#isTruth"><span class="hs-identifier hs-type">isTruth</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-38"></span><span id="isTruth"><span class="annot"><span class="annottext">isTruth :: VMValue -&gt; Bool
+</span><a href="VM.Instruction.Index.html#isTruth"><span class="hs-identifier hs-var hs-var">isTruth</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-type">VBool</span></a></span><span> </span><span id="local-6989586621679118590"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679118590"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679118590"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-39"></span><span class="annot"><a href="VM.Instruction.Index.html#isTruth"><span class="hs-identifier hs-var">isTruth</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679118592"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679118592"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679118592"><span class="hs-identifier hs-var">i</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-40"></span><span class="annot"><a href="VM.Instruction.Index.html#isTruth"><span class="hs-identifier hs-var">isTruth</span></a></span><span> </span><span class="annot"><span class="annottext">VMValue
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- | Implements Unconditional Jump (Opcode 0x30).</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   1. Reads a signed 32-bit integer (offset) from the bytecode.</span><span>
+</span><span id="line-46"></span><span class="hs-comment">--   2. Adds this offset to the current 'bytecodeIndex'.</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--   Note: Since 'readInt32' advances the index by 4 bytes, the offset</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--   is effectively relative to the instruction immediately following the JUMP.</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--</span><span>
+</span><span id="line-51"></span><span class="annot"><a href="VM.Instruction.Index.html#instJump"><span class="hs-identifier hs-type">instJump</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span id="instJump"><span class="annot"><span class="annottext">instJump :: VirtualMachine ()
+</span><a href="VM.Instruction.Index.html#instJump"><span class="hs-identifier hs-var hs-var">instJump</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-53"></span><span>    </span><span id="local-6989586621679118594"><span class="annot"><a href="#local-6989586621679118594"><span class="hs-identifier hs-var">offset</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine Int
+</span><a href="VM.Bytecode.Reader.html#readInt32"><span class="hs-identifier hs-var">readInt32</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">modify</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679118595"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118595"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118595"><span class="hs-identifier hs-var">vm</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118595"><span class="hs-identifier hs-type">vm</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">+</span></span><span> </span><span class="annot"><a href="#local-6989586621679118594"><span class="hs-identifier hs-type">offset</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- | Implements Jump If False (Opcode 0x31).</span><span>
+</span><span id="line-57"></span><span class="hs-comment">--</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--   Conditional jump used for 'if' statements and loops.</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--   1. Reads the jump offset.</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--   2. Pops a value from the stack.</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--   3. If the value is 'VBool False', applies the jump.</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--   4. If 'VBool True', continues execution normally (fall-through).</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--</span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- @throws</span><span>
+</span><span id="line-66"></span><span class="hs-comment">--   Error &quot;VM Error: JUMP_IF_FALSE expects Boolean&quot; if the popped value is not a boolean.</span><span>
+</span><span id="line-67"></span><span class="hs-comment">--</span><span>
+</span><span id="line-68"></span><span class="annot"><a href="VM.Instruction.Index.html#instJumpIfFalse"><span class="hs-identifier hs-type">instJumpIfFalse</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span id="instJumpIfFalse"><span class="annot"><span class="annottext">instJumpIfFalse :: VirtualMachine ()
+</span><a href="VM.Instruction.Index.html#instJumpIfFalse"><span class="hs-identifier hs-var hs-var">instJumpIfFalse</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-70"></span><span>    </span><span id="local-6989586621679118597"><span class="annot"><a href="#local-6989586621679118597"><span class="hs-identifier hs-var">offset</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine Int
+</span><a href="VM.Bytecode.Reader.html#readInt32"><span class="hs-identifier hs-var">readInt32</span></a></span><span>
+</span><span id="line-71"></span><span>    </span><span id="local-6989586621679118598"><span class="annot"><a href="#local-6989586621679118598"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="VM.Instruction.Index.html#isTruth"><span class="hs-identifier hs-type">isTruth</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118598"><span class="hs-identifier hs-type">v</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-73"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-74"></span><span>            </span><span class="annot"><span class="annottext">(VMState -&gt; VMState) -&gt; VirtualMachine ()
+forall s (m :: * -&gt; *). MonadState s m =&gt; (s -&gt; s) -&gt; m ()
+</span><span class="hs-identifier hs-var">modify</span></span><span> </span><span class="annot"><span class="annottext">((VMState -&gt; VMState) -&gt; VirtualMachine ())
+-&gt; (VMState -&gt; VMState) -&gt; VirtualMachine ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679118599"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118599"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118599"><span class="hs-identifier hs-var">vm</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118599"><span class="hs-identifier hs-type">vm</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">+</span></span><span> </span><span class="annot"><a href="#local-6989586621679118597"><span class="hs-identifier hs-type">offset</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-75"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; VirtualMachine ()
+forall a. a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span class="hs-comment">-- | Implements Jump If True (Opcode 0x32).</span><span>
+</span><span id="line-78"></span><span class="hs-comment">--</span><span>
+</span><span id="line-79"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-80"></span><span class="hs-comment">--   Conditional jump (reverse logic of JumpIfFalse).</span><span>
+</span><span id="line-81"></span><span class="hs-comment">--   1. Reads the jump offset.</span><span>
+</span><span id="line-82"></span><span class="hs-comment">--   2. Pops a value from the stack.</span><span>
+</span><span id="line-83"></span><span class="hs-comment">--   3. If the value is 'VBool True', applies the jump.</span><span>
+</span><span id="line-84"></span><span class="hs-comment">--</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- @throws</span><span>
+</span><span id="line-86"></span><span class="hs-comment">--   Error &quot;VM Error: JUMP_IF_TRUE expects Boolean&quot; if the popped value is not a boolean.</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span class="annot"><a href="VM.Instruction.Index.html#instJumpIfTrue"><span class="hs-identifier hs-type">instJumpIfTrue</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span id="instJumpIfTrue"><span class="annot"><span class="annottext">instJumpIfTrue :: VirtualMachine ()
+</span><a href="VM.Instruction.Index.html#instJumpIfTrue"><span class="hs-identifier hs-var hs-var">instJumpIfTrue</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-90"></span><span>    </span><span id="local-6989586621679118600"><span class="annot"><a href="#local-6989586621679118600"><span class="hs-identifier hs-var">offset</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine Int
+</span><a href="VM.Bytecode.Reader.html#readInt32"><span class="hs-identifier hs-var">readInt32</span></a></span><span>
+</span><span id="line-91"></span><span>    </span><span id="local-6989586621679118601"><span class="annot"><a href="#local-6989586621679118601"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-92"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="VM.Instruction.Index.html#isTruth"><span class="hs-identifier hs-type">isTruth</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118601"><span class="hs-identifier hs-type">v</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-93"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-94"></span><span>            </span><span class="annot"><span class="annottext">(VMState -&gt; VMState) -&gt; VirtualMachine ()
+forall s (m :: * -&gt; *). MonadState s m =&gt; (s -&gt; s) -&gt; m ()
+</span><span class="hs-identifier hs-var">modify</span></span><span> </span><span class="annot"><span class="annottext">((VMState -&gt; VMState) -&gt; VirtualMachine ())
+-&gt; (VMState -&gt; VMState) -&gt; VirtualMachine ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679118602"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118602"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118602"><span class="hs-identifier hs-var">vm</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118602"><span class="hs-identifier hs-type">vm</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">+</span></span><span> </span><span class="annot"><a href="#local-6989586621679118600"><span class="hs-identifier hs-type">offset</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-95"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; VirtualMachine ()
+forall a. a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span></pre></body></html>

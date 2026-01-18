@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Semantic Types definition
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="AST.Semantics.Type.html"><span class="hs-identifier">AST.Semantics.Type</span></a></span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-9"></span><span>    </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier">Type</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>    </span><span class="annot"><a href="AST.Semantics.Type.html#StructDef"><span class="hs-identifier">StructDef</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>    </span><span class="annot"><a href="AST.Semantics.Type.html#CheckEnv"><span class="hs-identifier">CheckEnv</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>    </span><span class="annot"><a href="AST.Semantics.Type.html#emptyEnv"><span class="hs-identifier">emptyEnv</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>    </span><span class="annot"><a href="AST.Semantics.Type.html#parseType"><span class="hs-identifier">parseType</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier">typeToString</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>    </span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier">areTypesCompatible</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-17"></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">DT</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="annot"><span class="hs-comment">-- | Enumeration of all possible types in the language.</span></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">data</span><span> </span><span id="Type"><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-var">Type</span></a></span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="TyInt"><span class="annot"><a href="AST.Semantics.Type.html#TyInt"><span class="hs-identifier hs-var">TyInt</span></a></span></span><span>                </span><span class="hs-comment">-- Primitive integer type (int)</span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="TyBool"><span class="annot"><a href="AST.Semantics.Type.html#TyBool"><span class="hs-identifier hs-var">TyBool</span></a></span></span><span>               </span><span class="hs-comment">-- Primitive boolean type (bool)</span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="TyVoid"><span class="annot"><a href="AST.Semantics.Type.html#TyVoid"><span class="hs-identifier hs-var">TyVoid</span></a></span></span><span>               </span><span class="hs-comment">-- Void type (void)</span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="TyList"><span class="annot"><a href="AST.Semantics.Type.html#TyList"><span class="hs-identifier hs-var">TyList</span></a></span></span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span>          </span><span class="hs-comment">-- List type (e.g., [int], [[char]])</span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="TyFunc"><span class="annot"><a href="AST.Semantics.Type.html#TyFunc"><span class="hs-identifier hs-var">TyFunc</span></a></span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span>   </span><span class="hs-comment">-- Function type (Args -&gt; Return)</span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="TyStruct"><span class="annot"><a href="AST.Semantics.Type.html#TyStruct"><span class="hs-identifier hs-var">TyStruct</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>      </span><span class="hs-comment">-- Custom structure type identified by name</span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="TyAuto"><span class="annot"><a href="AST.Semantics.Type.html#TyAuto"><span class="hs-identifier hs-var">TyAuto</span></a></span></span><span>               </span><span class="hs-comment">-- Placeholder for type inference</span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110289"><span id="local-6989586621679110302"><span id="local-6989586621679110305"><span class="annot"><span class="annottext">Int -&gt; Type -&gt; ShowS
+[Type] -&gt; ShowS
+Type -&gt; String
+(Int -&gt; Type -&gt; ShowS)
+-&gt; (Type -&gt; String) -&gt; ([Type] -&gt; ShowS) -&gt; Show Type
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Type -&gt; ShowS
+showsPrec :: Int -&gt; Type -&gt; ShowS
+$cshow :: Type -&gt; String
+show :: Type -&gt; String
+$cshowList :: [Type] -&gt; ShowS
+showList :: [Type] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110310"><span id="local-6989586621679110321"><span class="annot"><span class="annottext">Type -&gt; Type -&gt; Bool
+(Type -&gt; Type -&gt; Bool) -&gt; (Type -&gt; Type -&gt; Bool) -&gt; Eq Type
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Type -&gt; Type -&gt; Bool
+== :: Type -&gt; Type -&gt; Bool
+$c/= :: Type -&gt; Type -&gt; Bool
+/= :: Type -&gt; Type -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><span class="hs-comment">-- | Definition of a structure (Name + Field Map).</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">data</span><span> </span><span id="StructDef"><span class="annot"><a href="AST.Semantics.Type.html#StructDef"><span class="hs-identifier hs-var">StructDef</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="StructDef"><span class="annot"><a href="AST.Semantics.Type.html#StructDef"><span class="hs-identifier hs-var">StructDef</span></a></span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="structName"><span class="annot"><span class="annottext">StructDef -&gt; Text
+</span><a href="AST.Semantics.Type.html#structName"><span class="hs-identifier hs-var hs-var">structName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="structFields"><span class="annot"><span class="annottext">StructDef -&gt; Map Text Type
+</span><a href="AST.Semantics.Type.html#structFields"><span class="hs-identifier hs-var hs-var">structFields</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110328"><span id="local-6989586621679110335"><span id="local-6989586621679110339"><span class="annot"><span class="annottext">Int -&gt; StructDef -&gt; ShowS
+[StructDef] -&gt; ShowS
+StructDef -&gt; String
+(Int -&gt; StructDef -&gt; ShowS)
+-&gt; (StructDef -&gt; String)
+-&gt; ([StructDef] -&gt; ShowS)
+-&gt; Show StructDef
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; StructDef -&gt; ShowS
+showsPrec :: Int -&gt; StructDef -&gt; ShowS
+$cshow :: StructDef -&gt; String
+show :: StructDef -&gt; String
+$cshowList :: [StructDef] -&gt; ShowS
+showList :: [StructDef] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="annot"><span class="hs-comment">-- | Verification Environment.</span></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">data</span><span> </span><span id="CheckEnv"><span class="annot"><a href="AST.Semantics.Type.html#CheckEnv"><span class="hs-identifier hs-var">CheckEnv</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="CheckEnv"><span class="annot"><a href="AST.Semantics.Type.html#CheckEnv"><span class="hs-identifier hs-var">CheckEnv</span></a></span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="envVars"><span class="annot"><span class="annottext">CheckEnv -&gt; Map Text Type
+</span><a href="AST.Semantics.Type.html#envVars"><span class="hs-identifier hs-var hs-var">envVars</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span>        </span><span class="hs-comment">-- Symbol table for variables</span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="envStructs"><span class="annot"><span class="annottext">CheckEnv -&gt; Map Text StructDef
+</span><a href="AST.Semantics.Type.html#envStructs"><span class="hs-identifier hs-var hs-var">envStructs</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#StructDef"><span class="hs-identifier hs-type">StructDef</span></a></span><span> </span><span class="hs-comment">-- Symbol table for structs</span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110345"><span id="local-6989586621679110353"><span id="local-6989586621679110357"><span class="annot"><span class="annottext">Int -&gt; CheckEnv -&gt; ShowS
+[CheckEnv] -&gt; ShowS
+CheckEnv -&gt; String
+(Int -&gt; CheckEnv -&gt; ShowS)
+-&gt; (CheckEnv -&gt; String) -&gt; ([CheckEnv] -&gt; ShowS) -&gt; Show CheckEnv
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; CheckEnv -&gt; ShowS
+showsPrec :: Int -&gt; CheckEnv -&gt; ShowS
+$cshow :: CheckEnv -&gt; String
+show :: CheckEnv -&gt; String
+$cshowList :: [CheckEnv] -&gt; ShowS
+showList :: [CheckEnv] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="annot"><span class="hs-comment">-- | Initial empty environment.</span></span><span>
+</span><span id="line-45"></span><span class="annot"><a href="AST.Semantics.Type.html#emptyEnv"><span class="hs-identifier hs-type">emptyEnv</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#CheckEnv"><span class="hs-identifier hs-type">CheckEnv</span></a></span><span>
+</span><span id="line-46"></span><span id="emptyEnv"><span class="annot"><span class="annottext">emptyEnv :: CheckEnv
+</span><a href="AST.Semantics.Type.html#emptyEnv"><span class="hs-identifier hs-var hs-var">emptyEnv</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Map Text Type -&gt; Map Text StructDef -&gt; CheckEnv
+</span><a href="AST.Semantics.Type.html#CheckEnv"><span class="hs-identifier hs-var">CheckEnv</span></a></span><span> </span><span class="annot"><span class="annottext">Map Text Type
+forall k a. Map k a
+</span><span class="hs-identifier hs-var">Map.empty</span></span><span> </span><span class="annot"><span class="annottext">Map Text StructDef
+forall k a. Map k a
+</span><span class="hs-identifier hs-var">Map.empty</span></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="annot"><span class="hs-comment">-- | Parses a raw type string (from Parser) into a Semantic Type.</span></span><span>
+</span><span id="line-49"></span><span class="annot"><a href="AST.Semantics.Type.html#parseType"><span class="hs-identifier hs-type">parseType</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span>
+</span><span id="line-50"></span><span id="parseType"><span class="annot"><span class="annottext">parseType :: Text -&gt; Type
+</span><a href="AST.Semantics.Type.html#parseType"><span class="hs-identifier hs-var hs-var">parseType</span></a></span></span><span> </span><span id="local-6989586621679110360"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span></span><span>
+</span><span id="line-51"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;int&quot;</span></span><span>  </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyInt"><span class="hs-identifier hs-var">TyInt</span></a></span><span>
+</span><span id="line-52"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;char&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyInt"><span class="hs-identifier hs-var">TyInt</span></a></span><span> </span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;bool&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyBool"><span class="hs-identifier hs-var">TyBool</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;void&quot;</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">||</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Void&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyVoid"><span class="hs-identifier hs-var">TyVoid</span></a></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;auto&quot;</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyAuto"><span class="hs-identifier hs-var">TyAuto</span></a></span><span>
+</span><span id="line-56"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+</span><span class="hs-identifier hs-var">DT.isPrefixOf</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;[&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+</span><span class="hs-identifier hs-var">DT.isSuffixOf</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;]&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-57"></span><span>        </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679110370"><span class="annot"><span class="annottext">inner :: Text
+</span><a href="#local-6989586621679110370"><span class="hs-identifier hs-var hs-var">inner</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; Text -&gt; Text
+Text -&gt; Text
+</span><span class="hs-identifier hs-var">DT.init</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">HasCallStack =&gt; Text -&gt; Text
+Text -&gt; Text
+</span><span class="hs-identifier hs-var">DT.tail</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span>        </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">Type -&gt; Type
+</span><a href="AST.Semantics.Type.html#TyList"><span class="hs-identifier hs-var">TyList</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Type
+</span><a href="AST.Semantics.Type.html#parseType"><span class="hs-identifier hs-var">parseType</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110370"><span class="hs-identifier hs-var">inner</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Type
+</span><a href="AST.Semantics.Type.html#TyStruct"><span class="hs-identifier hs-var">TyStruct</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110360"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span class="annot"><span class="hs-comment">-- | Helper to convert a Semantic Type back to a readable String.</span></span><span>
+</span><span id="line-62"></span><span class="annot"><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-type">typeToString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-63"></span><span id="typeToString"><span class="annot"><span class="annottext">typeToString :: Type -&gt; String
+</span><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var hs-var">typeToString</span></a></span></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyInt"><span class="hs-identifier hs-var">TyInt</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;int&quot;</span></span><span>
+</span><span id="line-64"></span><span class="annot"><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyBool"><span class="hs-identifier hs-var">TyBool</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;bool&quot;</span></span><span>
+</span><span id="line-65"></span><span class="annot"><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyVoid"><span class="hs-identifier hs-var">TyVoid</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;void&quot;</span></span><span>
+</span><span id="line-66"></span><span class="annot"><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyAuto"><span class="hs-identifier hs-var">TyAuto</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;auto&quot;</span></span><span>
+</span><span id="line-67"></span><span class="annot"><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyList"><span class="hs-identifier hs-type">TyList</span></a></span><span> </span><span id="local-6989586621679110373"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110373"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;[&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Type -&gt; String
+</span><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110373"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;]&quot;</span></span><span>
+</span><span id="line-68"></span><span class="annot"><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyStruct"><span class="hs-identifier hs-type">TyStruct</span></a></span><span> </span><span id="local-6989586621679110374"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110374"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">DT.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110374"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-69"></span><span class="annot"><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyFunc"><span class="hs-identifier hs-type">TyFunc</span></a></span><span> </span><span id="local-6989586621679110376"><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679110376"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span id="local-6989586621679110377"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110377"><span class="hs-identifier hs-var">ret</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+</span><span class="hs-identifier hs-var">unwords</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Type -&gt; String) -&gt; [Type] -&gt; [String]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Type -&gt; String
+</span><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679110376"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; -&gt; &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Type -&gt; String
+</span><a href="AST.Semantics.Type.html#typeToString"><span class="hs-identifier hs-var">typeToString</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110377"><span class="hs-identifier hs-var">ret</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- | Checks if two types are semantically compatible.</span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- Replaces usage of (==) with explicit pattern matching.</span><span>
+</span><span id="line-74"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-type">areTypesCompatible</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AST.Semantics.Type.html#Type"><span class="hs-identifier hs-type">Type</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-75"></span><span id="areTypesCompatible"><span class="annot"><span class="annottext">areTypesCompatible :: Type -&gt; Type -&gt; Bool
+</span><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var hs-var">areTypesCompatible</span></a></span></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyAuto"><span class="hs-identifier hs-var">TyAuto</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-76"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyAuto"><span class="hs-identifier hs-var">TyAuto</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-77"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyInt"><span class="hs-identifier hs-var">TyInt</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyInt"><span class="hs-identifier hs-var">TyInt</span></a></span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyBool"><span class="hs-identifier hs-var">TyBool</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyBool"><span class="hs-identifier hs-var">TyBool</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-79"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyVoid"><span class="hs-identifier hs-var">TyVoid</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="AST.Semantics.Type.html#TyVoid"><span class="hs-identifier hs-var">TyVoid</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>
+</span><span id="line-80"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyList"><span class="hs-identifier hs-type">TyList</span></a></span><span> </span><span id="local-6989586621679110379"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110379"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyList"><span class="hs-identifier hs-type">TyList</span></a></span><span> </span><span id="local-6989586621679110380"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110380"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Type -&gt; Type -&gt; Bool
+</span><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110379"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110380"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyStruct"><span class="hs-identifier hs-type">TyStruct</span></a></span><span> </span><span id="local-6989586621679110381"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110381"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyStruct"><span class="hs-identifier hs-type">TyStruct</span></a></span><span> </span><span id="local-6989586621679110382"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110382"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110381"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679110382"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-82"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyFunc"><span class="hs-identifier hs-type">TyFunc</span></a></span><span> </span><span id="local-6989586621679110383"><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679110383"><span class="hs-identifier hs-var">args1</span></a></span></span><span> </span><span id="local-6989586621679110384"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110384"><span class="hs-identifier hs-var">ret1</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Semantics.Type.html#TyFunc"><span class="hs-identifier hs-type">TyFunc</span></a></span><span> </span><span id="local-6989586621679110385"><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679110385"><span class="hs-identifier hs-var">args2</span></a></span></span><span> </span><span id="local-6989586621679110386"><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110386"><span class="hs-identifier hs-var">ret2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-83"></span><span>    </span><span class="annot"><span class="annottext">[Type] -&gt; Int
+forall a. [a] -&gt; Int
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679110383"><span class="hs-identifier hs-var">args1</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">[Type] -&gt; Int
+forall a. [a] -&gt; Int
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679110385"><span class="hs-identifier hs-var">args2</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span>
+</span><span id="line-84"></span><span>    </span><span class="annot"><span class="annottext">[Bool] -&gt; Bool
+forall (t :: * -&gt; *). Foldable t =&gt; t Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">and</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Type -&gt; Type -&gt; Bool) -&gt; [Type] -&gt; [Type] -&gt; [Bool]
+forall a b c. (a -&gt; b -&gt; c) -&gt; [a] -&gt; [b] -&gt; [c]
+</span><span class="hs-identifier hs-var">zipWith</span></span><span> </span><span class="annot"><span class="annottext">Type -&gt; Type -&gt; Bool
+</span><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679110383"><span class="hs-identifier hs-var">args1</span></a></span><span> </span><span class="annot"><span class="annottext">[Type]
+</span><a href="#local-6989586621679110385"><span class="hs-identifier hs-var">args2</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span>
+</span><span id="line-85"></span><span>    </span><span class="annot"><span class="annottext">Type -&gt; Type -&gt; Bool
+</span><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110384"><span class="hs-identifier hs-var">ret1</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><a href="#local-6989586621679110386"><span class="hs-identifier hs-var">ret2</span></a></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="AST.Semantics.Type.html#areTypesCompatible"><span class="hs-identifier hs-var">areTypesCompatible</span></a></span><span> </span><span class="annot"><span class="annottext">Type
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Type
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-87"></span></pre></body></html>

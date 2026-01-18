@@ -1,0 +1,490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Integer
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Common.Type.Integer.html"><span class="hs-identifier">Common.Type.Integer</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier">IntValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier">intValueToInt</span></a></span><span>
+</span><span id="line-11"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#fitInteger"><span class="hs-identifier">fitInteger</span></a></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier">toInt64</span></a></span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#fromInt64"><span class="hs-identifier">fromInt64</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Int</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Int8</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Int16</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Int32</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Int64</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Word</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Word8</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Word16</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Word32</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Word64</span></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">data</span><span> </span><span id="IntValue"><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier hs-var">IntValue</span></a></span></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="I8"><span class="annot"><a href="Common.Type.Integer.html#I8"><span class="hs-identifier hs-var">I8</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int8</span></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="UI8"><span class="annot"><a href="Common.Type.Integer.html#UI8"><span class="hs-identifier hs-var">UI8</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word8</span></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="I16"><span class="annot"><a href="Common.Type.Integer.html#I16"><span class="hs-identifier hs-var">I16</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int16</span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="UI16"><span class="annot"><a href="Common.Type.Integer.html#UI16"><span class="hs-identifier hs-var">UI16</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="I32"><span class="annot"><a href="Common.Type.Integer.html#I32"><span class="hs-identifier hs-var">I32</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="UI32"><span class="annot"><a href="Common.Type.Integer.html#UI32"><span class="hs-identifier hs-var">UI32</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="I64"><span class="annot"><a href="Common.Type.Integer.html#I64"><span class="hs-identifier hs-var">I64</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="UI64"><span class="annot"><a href="Common.Type.Integer.html#UI64"><span class="hs-identifier hs-var">UI64</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word64</span></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="IChar"><span class="annot"><a href="Common.Type.Integer.html#IChar"><span class="hs-identifier hs-var">IChar</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int8</span></span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="UIChar"><span class="annot"><a href="Common.Type.Integer.html#UIChar"><span class="hs-identifier hs-var">UIChar</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word8</span></span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110698"><span id="local-6989586621679110729"><span id="local-6989586621679110733"><span class="annot"><span class="annottext">Int -&gt; IntValue -&gt; ShowS
+[IntValue] -&gt; ShowS
+IntValue -&gt; String
+(Int -&gt; IntValue -&gt; ShowS)
+-&gt; (IntValue -&gt; String) -&gt; ([IntValue] -&gt; ShowS) -&gt; Show IntValue
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; IntValue -&gt; ShowS
+showsPrec :: Int -&gt; IntValue -&gt; ShowS
+$cshow :: IntValue -&gt; String
+show :: IntValue -&gt; String
+$cshowList :: [IntValue] -&gt; ShowS
+showList :: [IntValue] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110738"><span id="local-6989586621679110761"><span class="annot"><span class="annottext">IntValue -&gt; IntValue -&gt; Bool
+(IntValue -&gt; IntValue -&gt; Bool)
+-&gt; (IntValue -&gt; IntValue -&gt; Bool) -&gt; Eq IntValue
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: IntValue -&gt; IntValue -&gt; Bool
+== :: IntValue -&gt; IntValue -&gt; Bool
+$c/= :: IntValue -&gt; IntValue -&gt; Bool
+/= :: IntValue -&gt; IntValue -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110768"><span id="local-6989586621679110793"><span id="local-6989586621679110797"><span id="local-6989586621679110800"><span id="local-6989586621679110803"><span id="local-6989586621679110806"><span id="local-6989586621679110809"><span class="annot"><span class="annottext">Eq IntValue
+Eq IntValue =&gt;
+(IntValue -&gt; IntValue -&gt; Ordering)
+-&gt; (IntValue -&gt; IntValue -&gt; Bool)
+-&gt; (IntValue -&gt; IntValue -&gt; Bool)
+-&gt; (IntValue -&gt; IntValue -&gt; Bool)
+-&gt; (IntValue -&gt; IntValue -&gt; Bool)
+-&gt; (IntValue -&gt; IntValue -&gt; IntValue)
+-&gt; (IntValue -&gt; IntValue -&gt; IntValue)
+-&gt; Ord IntValue
+IntValue -&gt; IntValue -&gt; Bool
+IntValue -&gt; IntValue -&gt; Ordering
+IntValue -&gt; IntValue -&gt; IntValue
+forall a.
+Eq a =&gt;
+(a -&gt; a -&gt; Ordering)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; Bool)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; (a -&gt; a -&gt; a)
+-&gt; Ord a
+$ccompare :: IntValue -&gt; IntValue -&gt; Ordering
+compare :: IntValue -&gt; IntValue -&gt; Ordering
+$c&lt; :: IntValue -&gt; IntValue -&gt; Bool
+&lt; :: IntValue -&gt; IntValue -&gt; Bool
+$c&lt;= :: IntValue -&gt; IntValue -&gt; Bool
+&lt;= :: IntValue -&gt; IntValue -&gt; Bool
+$c&gt; :: IntValue -&gt; IntValue -&gt; Bool
+&gt; :: IntValue -&gt; IntValue -&gt; Bool
+$c&gt;= :: IntValue -&gt; IntValue -&gt; Bool
+&gt;= :: IntValue -&gt; IntValue -&gt; Bool
+$cmax :: IntValue -&gt; IntValue -&gt; IntValue
+max :: IntValue -&gt; IntValue -&gt; IntValue
+$cmin :: IntValue -&gt; IntValue -&gt; IntValue
+min :: IntValue -&gt; IntValue -&gt; IntValue
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Ord</span></span></span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- | Converts an IntValue to a standard Haskell Int.</span><span>
+</span><span id="line-33"></span><span class="hs-comment">--</span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-35"></span><span class="hs-comment">--   - v: The IntValue to convert.</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-38"></span><span class="hs-comment">--   This function handles all IntValue constructors, converting them</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--   to the system's native 'Int' type. Note that converting large</span><span>
+</span><span id="line-40"></span><span class="hs-comment">--   64-bit values on a 32-bit system might cause overflow, though</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--   this is rare in modern environments.</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--   The integer value as an 'Int'.</span><span>
+</span><span id="line-45"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-type">intValueToInt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier hs-type">IntValue</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-46"></span><span id="intValueToInt"><span class="annot"><span class="annottext">intValueToInt :: IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var hs-var">intValueToInt</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I8"><span class="hs-identifier hs-type">I8</span></a></span><span> </span><span id="local-6989586621679110813"><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679110813"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679110813"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-47"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI8"><span class="hs-identifier hs-type">UI8</span></a></span><span> </span><span id="local-6989586621679110814"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679110814"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679110814"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-48"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I16"><span class="hs-identifier hs-type">I16</span></a></span><span> </span><span id="local-6989586621679110815"><span class="annot"><span class="annottext">Int16
+</span><a href="#local-6989586621679110815"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int16 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int16
+</span><a href="#local-6989586621679110815"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-49"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI16"><span class="hs-identifier hs-type">UI16</span></a></span><span> </span><span id="local-6989586621679110816"><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679110816"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679110816"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-50"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I32"><span class="hs-identifier hs-type">I32</span></a></span><span> </span><span id="local-6989586621679110817"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679110817"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679110817"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-51"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI32"><span class="hs-identifier hs-type">UI32</span></a></span><span> </span><span id="local-6989586621679110818"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679110818"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679110818"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-52"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I64"><span class="hs-identifier hs-type">I64</span></a></span><span> </span><span id="local-6989586621679110819"><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110819"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110819"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI64"><span class="hs-identifier hs-type">UI64</span></a></span><span> </span><span id="local-6989586621679110820"><span class="annot"><span class="annottext">Word64
+</span><a href="#local-6989586621679110820"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word64 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word64
+</span><a href="#local-6989586621679110820"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-54"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#IChar"><span class="hs-identifier hs-type">IChar</span></a></span><span> </span><span id="local-6989586621679110821"><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679110821"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679110821"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-55"></span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UIChar"><span class="hs-identifier hs-type">UIChar</span></a></span><span> </span><span id="local-6989586621679110822"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679110822"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679110822"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- | Converts an IntValue to a standard Haskell Int64.</span><span>
+</span><span id="line-58"></span><span class="hs-comment">--</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--   - v: The IntValue to convert.</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--   Provides a safe conversion to 'Int64' for all underlying types.</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--   Unsigned 64-bit values are treated as signed (wrapping) if they</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--   exceed 'maxBound :: Int64'.</span><span>
+</span><span id="line-66"></span><span class="hs-comment">--</span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-68"></span><span class="hs-comment">--   The integer value as an 'Int64'.</span><span>
+</span><span id="line-69"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-type">toInt64</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier hs-type">IntValue</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span>
+</span><span id="line-70"></span><span id="toInt64"><span class="annot"><span class="annottext">toInt64 :: IntValue -&gt; Int64
+</span><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var hs-var">toInt64</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I8"><span class="hs-identifier hs-type">I8</span></a></span><span> </span><span id="local-6989586621679110823"><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679110823"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679110823"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-71"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI8"><span class="hs-identifier hs-type">UI8</span></a></span><span> </span><span id="local-6989586621679110824"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679110824"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679110824"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-72"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I16"><span class="hs-identifier hs-type">I16</span></a></span><span> </span><span id="local-6989586621679110825"><span class="annot"><span class="annottext">Int16
+</span><a href="#local-6989586621679110825"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int16 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int16
+</span><a href="#local-6989586621679110825"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-73"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI16"><span class="hs-identifier hs-type">UI16</span></a></span><span> </span><span id="local-6989586621679110826"><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679110826"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679110826"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-74"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I32"><span class="hs-identifier hs-type">I32</span></a></span><span> </span><span id="local-6989586621679110827"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679110827"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679110827"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-75"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI32"><span class="hs-identifier hs-type">UI32</span></a></span><span> </span><span id="local-6989586621679110828"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679110828"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679110828"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-76"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I64"><span class="hs-identifier hs-type">I64</span></a></span><span> </span><span id="local-6989586621679110829"><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110829"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110829"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-77"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI64"><span class="hs-identifier hs-type">UI64</span></a></span><span> </span><span id="local-6989586621679110830"><span class="annot"><span class="annottext">Word64
+</span><a href="#local-6989586621679110830"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word64 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word64
+</span><a href="#local-6989586621679110830"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#IChar"><span class="hs-identifier hs-type">IChar</span></a></span><span> </span><span id="local-6989586621679110831"><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679110831"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679110831"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Common.Type.Integer.html#toInt64"><span class="hs-identifier hs-var">toInt64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UIChar"><span class="hs-identifier hs-type">UIChar</span></a></span><span> </span><span id="local-6989586621679110832"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679110832"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679110832"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- | Converts an Int64 to the smallest suitable IntValue representation.</span><span>
+</span><span id="line-82"></span><span class="hs-comment">--</span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-84"></span><span class="hs-comment">--   - n: The Int64 value to compress.</span><span>
+</span><span id="line-85"></span><span class="hs-comment">--</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--   This function checks the bounds of the integer to determine the</span><span>
+</span><span id="line-88"></span><span class="hs-comment">--   most compact storage format (I8, UI8, I16, etc.). It prioritizes</span><span>
+</span><span id="line-89"></span><span class="hs-comment">--   signed representation for small positive numbers but will use</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--   unsigned types if it saves space (e.g., 200 fits in UI8 but requires I16).</span><span>
+</span><span id="line-91"></span><span class="hs-comment">--</span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-93"></span><span class="hs-comment">--   An 'IntValue' wrapping the value in the smallest possible container.</span><span>
+</span><span id="line-94"></span><span class="annot"><a href="Common.Type.Integer.html#fromInt64"><span class="hs-identifier hs-type">fromInt64</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier hs-type">IntValue</span></a></span><span>
+</span><span id="line-95"></span><span id="fromInt64"><span class="annot"><span class="annottext">fromInt64 :: Int64 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#fromInt64"><span class="hs-identifier hs-var hs-var">fromInt64</span></a></span></span><span> </span><span id="local-6989586621679110833"><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int8
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">minBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int8</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span>
+</span><span id="line-96"></span><span>        </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int8
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int8</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I8"><span class="hs-identifier hs-var">I8</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; Int8
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-97"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word8
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word8</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#UI8"><span class="hs-identifier hs-var">UI8</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; Word8
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int16 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int16
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">minBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int16</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span>
+</span><span id="line-99"></span><span>        </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int16 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int16
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int16</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int16 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I16"><span class="hs-identifier hs-var">I16</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; Int16
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-100"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word16
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#UI16"><span class="hs-identifier hs-var">UI16</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; Word16
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int32
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">minBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span>
+</span><span id="line-102"></span><span>        </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int32
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I32"><span class="hs-identifier hs-var">I32</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Int64 -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word32
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#UI32"><span class="hs-identifier hs-var">UI32</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; Word32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I64"><span class="hs-identifier hs-var">I64</span></a></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679110833"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-105"></span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- | Converts an arbitrary Integer to the smallest suitable IntValue.</span><span>
+</span><span id="line-107"></span><span class="hs-comment">--</span><span>
+</span><span id="line-108"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-109"></span><span class="hs-comment">--   - n: The Integer to compress.</span><span>
+</span><span id="line-110"></span><span class="hs-comment">--</span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-112"></span><span class="hs-comment">--   Similar to 'fromInt64' but works on arbitrary precision 'Integer's.</span><span>
+</span><span id="line-113"></span><span class="hs-comment">--   It attempts to fit the value into I8/UI8, then I16/UI16, etc.</span><span>
+</span><span id="line-114"></span><span class="hs-comment">--   If the value exceeds the signed 64-bit range but fits in unsigned 64-bit,</span><span>
+</span><span id="line-115"></span><span class="hs-comment">--   it uses UI64.</span><span>
+</span><span id="line-116"></span><span class="hs-comment">--</span><span>
+</span><span id="line-117"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-118"></span><span class="hs-comment">--   The optimized 'IntValue'.</span><span>
+</span><span id="line-119"></span><span class="annot"><a href="Common.Type.Integer.html#fitInteger"><span class="hs-identifier hs-type">fitInteger</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Integer</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier hs-type">IntValue</span></a></span><span>
+</span><span id="line-120"></span><span id="fitInteger"><span class="annot"><span class="annottext">fitInteger :: Integer -&gt; IntValue
+</span><a href="Common.Type.Integer.html#fitInteger"><span class="hs-identifier hs-var hs-var">fitInteger</span></a></span></span><span> </span><span id="local-6989586621679110838"><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int8
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">minBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int8</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span>
+</span><span id="line-121"></span><span>        </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int8
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int8</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int8 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I8"><span class="hs-identifier hs-var">I8</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Int8
+forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-122"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word8
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word8</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#UI8"><span class="hs-identifier hs-var">UI8</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Word8
+forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int16 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int16
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">minBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int16</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span>
+</span><span id="line-124"></span><span>        </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int16 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int16
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int16</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int16 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I16"><span class="hs-identifier hs-var">I16</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Int16
+forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-125"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word16
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word16</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word16 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#UI16"><span class="hs-identifier hs-var">UI16</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Word16
+forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-126"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int32
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">minBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span>
+</span><span id="line-127"></span><span>        </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int32
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I32"><span class="hs-identifier hs-var">I32</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Int32
+forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Integer -&gt; Integer -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; Integer
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Word32
+forall a. Bounded a =&gt; a
+</span><span class="hs-identifier hs-var">maxBound</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Word32</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word32 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#UI32"><span class="hs-identifier hs-var">UI32</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Word32
+forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-129"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I64"><span class="hs-identifier hs-var">I64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Integer -&gt; Int64
+forall a. Num a =&gt; Integer -&gt; a
+</span><span class="hs-identifier hs-var">fromInteger</span></span><span> </span><span class="annot"><span class="annottext">Integer
+</span><a href="#local-6989586621679110838"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-130"></span></pre></body></html>

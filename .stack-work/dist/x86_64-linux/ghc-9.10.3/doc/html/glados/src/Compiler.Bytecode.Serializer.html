@@ -1,0 +1,575 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2026
+-- Glados
+-- File description:
+-- SerializeInstruction
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Compiler.Bytecode.Serializer.html"><span class="hs-identifier">Compiler.Bytecode.Serializer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier">serializeInstruction</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Instruction.html"><span class="hs-identifier">Compiler.Instruction</span></a></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Builder</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">B</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Bytecode.Encoder.html"><span class="hs-identifier">Compiler.Bytecode.Encoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier">encodeInt32BE</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier">encodeWord8</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.Bytecode.Encoder.html#encodeBool"><span class="hs-identifier">encodeBool</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Common.Type.Integer.html"><span class="hs-identifier">Common.Type.Integer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier">IntValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Word</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- | Serializes an 'Instruction' to a 'Builder' for binary encoding.</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--</span><span>
+</span><span id="line-18"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--   - instr: the 'Instruction' to serialize</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--</span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-22"></span><span class="hs-comment">--   Converts the instruction into its binary representation using the</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--   appropriate opcode and payload encoding defined in ASM_SPEC.md.</span><span>
+</span><span id="line-24"></span><span class="hs-comment">--</span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-26"></span><span class="hs-comment">--   The encoded instruction as a 'Builder'.</span><span>
+</span><span id="line-27"></span><span class="hs-comment">--</span><span>
+</span><span id="line-28"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-type">serializeInstruction</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">B.Builder</span></span><span>
+</span><span id="line-29"></span><span id="serializeInstruction"><span class="annot"><span class="annottext">serializeInstruction :: Instruction -&gt; Builder
+</span><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var hs-var">serializeInstruction</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmBool"><span class="hs-identifier hs-type">ImmBool</span></a></span><span> </span><span id="local-6989586621679112799"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679112799"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x00</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-32"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeBool"><span class="hs-identifier hs-var">encodeBool</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679112799"><span class="hs-identifier hs-var">b</span></a></span><span>
+</span><span id="line-33"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I8"><span class="hs-identifier hs-type">I8</span></a></span><span> </span><span id="local-6989586621679112802"><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679112802"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-34"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-35"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int8 -&gt; Word8
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679112802"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI8"><span class="hs-identifier hs-type">UI8</span></a></span><span> </span><span id="local-6989586621679112804"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679112804"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x02</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679112804"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-41"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I16"><span class="hs-identifier hs-type">I16</span></a></span><span> </span><span id="local-6989586621679112806"><span class="annot"><span class="annottext">Int16
+</span><a href="#local-6989586621679112806"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-43"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x03</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><span class="annottext">Int16 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.int16BE</span></span><span> </span><span class="annot"><span class="annottext">Int16
+</span><a href="#local-6989586621679112806"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-45"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI16"><span class="hs-identifier hs-type">UI16</span></a></span><span> </span><span id="local-6989586621679112809"><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679112809"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-46"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-47"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x04</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-48"></span><span>    </span><span class="annot"><span class="annottext">Word16 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word16BE</span></span><span> </span><span class="annot"><span class="annottext">Word16
+</span><a href="#local-6989586621679112809"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-49"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I32"><span class="hs-identifier hs-type">I32</span></a></span><span> </span><span id="local-6989586621679112812"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679112812"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x05</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.int32BE</span></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679112812"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI32"><span class="hs-identifier hs-type">UI32</span></a></span><span> </span><span id="local-6989586621679112815"><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679112815"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x06</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><span class="annottext">Word32 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word32BE</span></span><span> </span><span class="annot"><span class="annottext">Word32
+</span><a href="#local-6989586621679112815"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-57"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I64"><span class="hs-identifier hs-type">I64</span></a></span><span> </span><span id="local-6989586621679112818"><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679112818"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x07</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-60"></span><span>    </span><span class="annot"><span class="annottext">Int64 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.int64BE</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679112818"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-61"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UI64"><span class="hs-identifier hs-type">UI64</span></a></span><span> </span><span id="local-6989586621679112821"><span class="annot"><span class="annottext">Word64
+</span><a href="#local-6989586621679112821"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-63"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x08</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-64"></span><span>    </span><span class="annot"><span class="annottext">Word64 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word64BE</span></span><span> </span><span class="annot"><span class="annottext">Word64
+</span><a href="#local-6989586621679112821"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-65"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#IChar"><span class="hs-identifier hs-type">IChar</span></a></span><span> </span><span id="local-6989586621679112824"><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679112824"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-66"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-67"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x09</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-68"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int8 -&gt; Word8
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int8
+</span><a href="#local-6989586621679112824"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-type">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-type">ImmInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#UIChar"><span class="hs-identifier hs-type">UIChar</span></a></span><span> </span><span id="local-6989586621679112826"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679112826"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-70"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x01</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-71"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x10</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-72"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679112826"><span class="hs-identifier hs-var">n</span></a></span><span>
+</span><span id="line-73"></span><span>
+</span><span id="line-74"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Pop"><span class="hs-identifier hs-var">Pop</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x02</span></span><span>
+</span><span id="line-75"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Dup"><span class="hs-identifier hs-var">Dup</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x03</span></span><span>
+</span><span id="line-76"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Swap"><span class="hs-identifier hs-var">Swap</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x04</span></span><span>
+</span><span id="line-77"></span><span>
+</span><span id="line-78"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Add"><span class="hs-identifier hs-var">Add</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x10</span></span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Sub"><span class="hs-identifier hs-var">Sub</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x11</span></span><span>
+</span><span id="line-80"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Mul"><span class="hs-identifier hs-var">Mul</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x12</span></span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Div"><span class="hs-identifier hs-var">Div</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x13</span></span><span>
+</span><span id="line-82"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Mod"><span class="hs-identifier hs-var">Mod</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x14</span></span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Eq"><span class="hs-identifier hs-var">Eq</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x20</span></span><span>
+</span><span id="line-85"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Lt"><span class="hs-identifier hs-var">Lt</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x21</span></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Not"><span class="hs-identifier hs-var">Not</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x22</span></span><span>
+</span><span id="line-87"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#And"><span class="hs-identifier hs-var">And</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x23</span></span><span>
+</span><span id="line-88"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Or"><span class="hs-identifier hs-var">Or</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x24</span></span><span>
+</span><span id="line-89"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Le"><span class="hs-identifier hs-var">Le</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x25</span></span><span>
+</span><span id="line-90"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#TEq"><span class="hs-identifier hs-var">TEq</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x26</span></span><span>
+</span><span id="line-91"></span><span>
+</span><span id="line-92"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Jump"><span class="hs-identifier hs-type">Jump</span></a></span><span> </span><span id="local-6989586621679112843"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112843"><span class="hs-identifier hs-var">addr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-93"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x30</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-94"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112843"><span class="hs-identifier hs-var">addr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#JumpIfFalse"><span class="hs-identifier hs-type">JumpIfFalse</span></a></span><span> </span><span id="local-6989586621679112845"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112845"><span class="hs-identifier hs-var">addr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-96"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x31</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-97"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112845"><span class="hs-identifier hs-var">addr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-98"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#JumpIfTrue"><span class="hs-identifier hs-type">JumpIfTrue</span></a></span><span> </span><span id="local-6989586621679112847"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112847"><span class="hs-identifier hs-var">addr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-99"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x32</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-100"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112847"><span class="hs-identifier hs-var">addr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Call"><span class="hs-identifier hs-type">Call</span></a></span><span> </span><span id="local-6989586621679112849"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112849"><span class="hs-identifier hs-var">addr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-103"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x40</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-104"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112849"><span class="hs-identifier hs-var">addr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#TailCall"><span class="hs-identifier hs-type">TailCall</span></a></span><span> </span><span id="local-6989586621679112851"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112851"><span class="hs-identifier hs-var">addr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-106"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x41</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-107"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112851"><span class="hs-identifier hs-var">addr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-108"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#CallIndirect"><span class="hs-identifier hs-var">CallIndirect</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x42</span></span><span>
+</span><span id="line-109"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Ret"><span class="hs-identifier hs-type">Ret</span></a></span><span> </span><span id="local-6989586621679112854"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112854"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-110"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x43</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-111"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112854"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#LoadLocal"><span class="hs-identifier hs-type">LoadLocal</span></a></span><span> </span><span id="local-6989586621679112856"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112856"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-114"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x50</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-115"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112856"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-116"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#StoreLocal"><span class="hs-identifier hs-type">StoreLocal</span></a></span><span> </span><span id="local-6989586621679112858"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112858"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-117"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x51</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-118"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112858"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#LoadGlobal"><span class="hs-identifier hs-type">LoadGlobal</span></a></span><span> </span><span id="local-6989586621679112860"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112860"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-120"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x52</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-121"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112860"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-122"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#StoreGlobal"><span class="hs-identifier hs-type">StoreGlobal</span></a></span><span> </span><span id="local-6989586621679112862"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112862"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-123"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x53</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-124"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112862"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-125"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#LoadCapture"><span class="hs-identifier hs-type">LoadCapture</span></a></span><span> </span><span id="local-6989586621679112864"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112864"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-126"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x54</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-127"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112864"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#StoreCapture"><span class="hs-identifier hs-type">StoreCapture</span></a></span><span> </span><span id="local-6989586621679112866"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112866"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-129"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x55</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-130"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112866"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#MakeClosure"><span class="hs-identifier hs-type">MakeClosure</span></a></span><span> </span><span id="local-6989586621679112868"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112868"><span class="hs-identifier hs-var">addr</span></a></span></span><span> </span><span id="local-6989586621679112869"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112869"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-133"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x60</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-134"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112868"><span class="hs-identifier hs-var">addr</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-135"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112869"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-136"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#GetFuncAddr"><span class="hs-identifier hs-type">GetFuncAddr</span></a></span><span> </span><span id="local-6989586621679112871"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112871"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-137"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x61</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-138"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112871"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-139"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#BuildStruct"><span class="hs-identifier hs-type">BuildStruct</span></a></span><span> </span><span id="local-6989586621679112873"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112873"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-140"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x62</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-141"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112873"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-142"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#GetStructField"><span class="hs-identifier hs-type">GetStructField</span></a></span><span> </span><span id="local-6989586621679112875"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112875"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-143"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x63</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-144"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112875"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-145"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#AttrUpdate"><span class="hs-identifier hs-var">AttrUpdate</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x64</span></span><span>
+</span><span id="line-146"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Cast"><span class="hs-identifier hs-type">Cast</span></a></span><span> </span><span id="local-6989586621679112878"><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679112878"><span class="hs-identifier hs-var">typeId</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-147"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x80</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-148"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><a href="#local-6989586621679112878"><span class="hs-identifier hs-var">typeId</span></a></span><span>
+</span><span id="line-149"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#TypeOf"><span class="hs-identifier hs-var">TypeOf</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x81</span></span><span>
+</span><span id="line-150"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#SizeOf"><span class="hs-identifier hs-var">SizeOf</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x82</span></span><span>
+</span><span id="line-151"></span><span>
+</span><span id="line-152"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Cons"><span class="hs-identifier hs-var">Cons</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x90</span></span><span>
+</span><span id="line-153"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Head"><span class="hs-identifier hs-var">Head</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x91</span></span><span>
+</span><span id="line-154"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Tail"><span class="hs-identifier hs-var">Tail</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x92</span></span><span>
+</span><span id="line-155"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Nth"><span class="hs-identifier hs-var">Nth</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x93</span></span><span>
+</span><span id="line-156"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#BuildList"><span class="hs-identifier hs-type">BuildList</span></a></span><span> </span><span id="local-6989586621679112886"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112886"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-157"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x94</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-158"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112886"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-159"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#NthUpdate"><span class="hs-identifier hs-var">NthUpdate</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x95</span></span><span>
+</span><span id="line-160"></span><span>
+</span><span id="line-161"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Open"><span class="hs-identifier hs-var">Open</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0xA0</span></span><span>
+</span><span id="line-162"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Read"><span class="hs-identifier hs-var">Read</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0xA1</span></span><span>
+</span><span id="line-163"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Write"><span class="hs-identifier hs-var">Write</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0xA2</span></span><span>
+</span><span id="line-164"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Close"><span class="hs-identifier hs-var">Close</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0xA3</span></span><span>
+</span><span id="line-165"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Input"><span class="hs-identifier hs-var">Input</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0xA4</span></span><span>
+</span><span id="line-166"></span><span>
+</span><span id="line-167"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Print"><span class="hs-identifier hs-var">Print</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x70</span></span><span>
+</span><span id="line-168"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Halt"><span class="hs-identifier hs-var">Halt</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x71</span></span><span>
+</span><span id="line-169"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Exit"><span class="hs-identifier hs-var">Exit</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x72</span></span><span>
+</span><span id="line-170"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#CheckStack"><span class="hs-identifier hs-type">CheckStack</span></a></span><span> </span><span id="local-6989586621679112897"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112897"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-171"></span><span>    </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0xFE</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-172"></span><span>    </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679112897"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-173"></span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Nop"><span class="hs-identifier hs-var">Nop</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeWord8"><span class="hs-identifier hs-var">encodeWord8</span></a></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0xFF</span></span><span>
+</span><span id="line-174"></span></pre></body></html>

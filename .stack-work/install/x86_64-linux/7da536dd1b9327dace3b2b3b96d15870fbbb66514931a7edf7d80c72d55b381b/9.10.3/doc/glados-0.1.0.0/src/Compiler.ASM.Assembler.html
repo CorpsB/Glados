@@ -1,0 +1,350 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2026
+-- Glados
+-- File description:
+-- Assembler.hs
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Compiler.ASM.Assembler.html"><span class="hs-identifier">Compiler.ASM.Assembler</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Compiler.ASM.Assembler.html#assemble"><span class="hs-identifier">assemble</span></a></span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Builder</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">B</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Lazy</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">BL</span></span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">BS</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">pack</span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Int</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Int32</span></span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Set</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Set</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Foldable</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">traverse_</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.PsInstruction.html"><span class="hs-identifier">Compiler.PsInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.PsInstruction.html#PsInstruction"><span class="hs-identifier">PsInstruction</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Instruction.html"><span class="hs-identifier">Compiler.Instruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier">Instruction</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.Instruction.html#instructionSize"><span class="hs-identifier">instructionSize</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Bytecode.Serializer.html"><span class="hs-identifier">Compiler.Bytecode.Serializer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier">serializeInstruction</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.ResolveLabels.ResolveLabels.html"><span class="hs-identifier">Compiler.ResolveLabels.ResolveLabels</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.ResolveLabels.ResolveLabels.html#resolveLabels"><span class="hs-identifier">resolveLabels</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Bytecode.Encoder.html"><span class="hs-identifier">Compiler.Bytecode.Encoder</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier">encodeInt32BE</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#magicBytes"><span class="hs-identifier hs-type">magicBytes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">B.Builder</span></span><span>
+</span><span id="line-27"></span><span id="magicBytes"><span class="annot"><span class="annottext">magicBytes :: Builder
+</span><a href="Compiler.ASM.Assembler.html#magicBytes"><span class="hs-identifier hs-var hs-var">magicBytes</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word8</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x47</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word8</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x4C</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word8</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x41</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word8</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x44</span></span><span> </span><span class="hs-comment">-- GLAD</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#versionBytes"><span class="hs-identifier hs-type">versionBytes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">B.Builder</span></span><span>
+</span><span id="line-30"></span><span id="versionBytes"><span class="annot"><span class="annottext">versionBytes :: Builder
+</span><a href="Compiler.ASM.Assembler.html#versionBytes"><span class="hs-identifier hs-var hs-var">versionBytes</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word8</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x02</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#flagBytes"><span class="hs-identifier hs-type">flagBytes</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">B.Builder</span></span><span>
+</span><span id="line-33"></span><span id="flagBytes"><span class="annot"><span class="annottext">flagBytes :: Builder
+</span><a href="Compiler.ASM.Assembler.html#flagBytes"><span class="hs-identifier hs-var hs-var">flagBytes</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Builder
+</span><span class="hs-identifier hs-var">B.word8</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x00</span></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- | Main assembly function.</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-38"></span><span class="hs-comment">--   1. Resolves labels (PsInstruction -&gt; Instruction) using ResolveLabels module.</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--   2. Validates jump offsets (bounds checking).</span><span>
+</span><span id="line-40"></span><span class="hs-comment">--   3. Serializes instructions to ByteString with Header.</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--</span><span>
+</span><span id="line-42"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#assemble"><span class="hs-identifier hs-type">assemble</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Compiler.PsInstruction.html#PsInstruction"><span class="hs-identifier hs-type">PsInstruction</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span>
+</span><span id="line-43"></span><span id="assemble"><span class="annot"><span class="annottext">assemble :: [PsInstruction] -&gt; Either Text ByteString
+</span><a href="Compiler.ASM.Assembler.html#assemble"><span class="hs-identifier hs-var hs-var">assemble</span></a></span></span><span> </span><span id="local-6989586621679115330"><span class="annot"><span class="annottext">[PsInstruction]
+</span><a href="#local-6989586621679115330"><span class="hs-identifier hs-var">ps</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-44"></span><span>    </span><span id="local-6989586621679115331"><span class="annot"><a href="#local-6989586621679115331"><span class="hs-identifier hs-var">insts</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[PsInstruction] -&gt; Either Text [Instruction]
+</span><a href="Compiler.ResolveLabels.ResolveLabels.html#resolveLabels"><span class="hs-identifier hs-var">resolveLabels</span></a></span><span> </span><span class="annot"><span class="annottext">[PsInstruction]
+</span><a href="#local-6989586621679115330"><span class="hs-identifier hs-var">ps</span></a></span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679115334"><span class="annot"><a href="#local-6989586621679115334"><span class="hs-identifier hs-var hs-var">totalSize</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; Int
+forall a. Num a =&gt; [a] -&gt; a
+forall (t :: * -&gt; *) a. (Foldable t, Num a) =&gt; t a -&gt; a
+</span><span class="hs-identifier hs-var">sum</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Instruction -&gt; Int) -&gt; [Instruction] -&gt; [Int]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; Int
+</span><a href="Compiler.Instruction.html#instructionSize"><span class="hs-identifier hs-var">instructionSize</span></a></span><span> </span><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679115331"><span class="hs-identifier hs-var">insts</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>    </span><span class="annot"><a href="Compiler.ASM.Assembler.html#validateJumps"><span class="hs-identifier hs-type">validateJumps</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115331"><span class="hs-identifier hs-type">insts</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115334"><span class="hs-identifier hs-type">totalSize</span></a></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><a href="Compiler.ASM.Assembler.html#finalizeBytecode"><span class="hs-identifier hs-type">finalizeBytecode</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115331"><span class="hs-identifier hs-type">insts</span></a></span><span>
+</span><span id="line-50"></span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- | Serialize the resolved instructions and prepend the header.</span><span>
+</span><span id="line-52"></span><span class="hs-comment">--</span><span>
+</span><span id="line-53"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#finalizeBytecode"><span class="hs-identifier hs-type">finalizeBytecode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span>
+</span><span id="line-54"></span><span id="finalizeBytecode"><span class="annot"><span class="annottext">finalizeBytecode :: [Instruction] -&gt; ByteString
+</span><a href="Compiler.ASM.Assembler.html#finalizeBytecode"><span class="hs-identifier hs-var hs-var">finalizeBytecode</span></a></span></span><span> </span><span id="local-6989586621679115338"><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679115338"><span class="hs-identifier hs-var">insts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679115342"><span class="annot"><span class="annottext">body :: LazyByteString
+</span><a href="#local-6989586621679115342"><span class="hs-identifier hs-var hs-var">body</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Builder -&gt; LazyByteString
+</span><span class="hs-identifier hs-var">B.toLazyByteString</span></span><span> </span><span class="annot"><span class="annottext">(Builder -&gt; LazyByteString) -&gt; Builder -&gt; LazyByteString
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Instruction -&gt; Builder) -&gt; [Instruction] -&gt; Builder
+forall m a. Monoid m =&gt; (a -&gt; m) -&gt; [a] -&gt; m
+forall (t :: * -&gt; *) m a.
+(Foldable t, Monoid m) =&gt;
+(a -&gt; m) -&gt; t a -&gt; m
+</span><span class="hs-identifier hs-var">foldMap</span></span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; Builder
+</span><a href="Compiler.Bytecode.Serializer.html#serializeInstruction"><span class="hs-identifier hs-var">serializeInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679115338"><span class="hs-identifier hs-var">insts</span></a></span><span>
+</span><span id="line-56"></span><span>        </span><span id="local-6989586621679115349"><span class="annot"><span class="annottext">header :: Builder
+</span><a href="#local-6989586621679115349"><span class="hs-identifier hs-var hs-var">header</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.ASM.Assembler.html#buildHeader"><span class="hs-identifier hs-var">buildHeader</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; Int32
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">(Int64 -&gt; Int32) -&gt; Int64 -&gt; Int32
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">LazyByteString -&gt; Int64
+</span><span class="hs-identifier hs-var">BL.length</span></span><span> </span><span class="annot"><span class="annottext">LazyByteString
+</span><a href="#local-6989586621679115342"><span class="hs-identifier hs-var">body</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">in</span><span>
+</span><span id="line-57"></span><span>    </span><span class="annot"><span class="annottext">LazyByteString -&gt; ByteString
+</span><span class="hs-identifier hs-var">BL.toStrict</span></span><span> </span><span class="annot"><span class="annottext">(LazyByteString -&gt; ByteString)
+-&gt; (Builder -&gt; LazyByteString) -&gt; Builder -&gt; ByteString
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; LazyByteString
+</span><span class="hs-identifier hs-var">B.toLazyByteString</span></span><span> </span><span class="annot"><span class="annottext">(Builder -&gt; ByteString) -&gt; Builder -&gt; ByteString
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="#local-6989586621679115349"><span class="hs-identifier hs-var">header</span></a></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">LazyByteString -&gt; Builder
+</span><span class="hs-identifier hs-var">B.lazyByteString</span></span><span> </span><span class="annot"><span class="annottext">LazyByteString
+</span><a href="#local-6989586621679115342"><span class="hs-identifier hs-var">body</span></a></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#buildHeader"><span class="hs-identifier hs-type">buildHeader</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int32</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">B.Builder</span></span><span>
+</span><span id="line-60"></span><span id="buildHeader"><span class="annot"><span class="annottext">buildHeader :: Int32 -&gt; Builder
+</span><a href="Compiler.ASM.Assembler.html#buildHeader"><span class="hs-identifier hs-var hs-var">buildHeader</span></a></span></span><span> </span><span id="local-6989586621679115355"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679115355"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-61"></span><span>    </span><span class="annot"><span class="annottext">Builder
+</span><a href="Compiler.ASM.Assembler.html#magicBytes"><span class="hs-identifier hs-var">magicBytes</span></a></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="Compiler.ASM.Assembler.html#versionBytes"><span class="hs-identifier hs-var">versionBytes</span></a></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Builder
+</span><a href="Compiler.ASM.Assembler.html#flagBytes"><span class="hs-identifier hs-var">flagBytes</span></a></span><span> </span><span class="annot"><span class="annottext">Builder -&gt; Builder -&gt; Builder
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int32 -&gt; Builder
+</span><a href="Compiler.Bytecode.Encoder.html#encodeInt32BE"><span class="hs-identifier hs-var">encodeInt32BE</span></a></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679115355"><span class="hs-identifier hs-var">size</span></a></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- | Ensures all jumps point to valid instruction boundaries within the code.</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--</span><span>
+</span><span id="line-65"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#validateJumps"><span class="hs-identifier hs-type">validateJumps</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span id="validateJumps"><span class="annot"><span class="annottext">validateJumps :: [Instruction] -&gt; Int -&gt; Either Text ()
+</span><a href="Compiler.ASM.Assembler.html#validateJumps"><span class="hs-identifier hs-var hs-var">validateJumps</span></a></span></span><span> </span><span id="local-6989586621679115356"><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679115356"><span class="hs-identifier hs-var">insts</span></a></span></span><span> </span><span id="local-6989586621679115357"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115357"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679115360"><span class="annot"><span class="annottext">offs :: [Int]
+</span><a href="#local-6989586621679115360"><span class="hs-identifier hs-var hs-var">offs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Instruction -&gt; Int) -&gt; Int -&gt; [Instruction] -&gt; [Int]
+forall b a. (b -&gt; a -&gt; b) -&gt; b -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">scanl</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679115362"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115362"><span class="hs-identifier hs-var">off</span></a></span></span><span> </span><span id="local-6989586621679115363"><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679115363"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115362"><span class="hs-identifier hs-var">off</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; Int
+</span><a href="Compiler.Instruction.html#instructionSize"><span class="hs-identifier hs-var">instructionSize</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679115363"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679115356"><span class="hs-identifier hs-var">insts</span></a></span><span>
+</span><span id="line-68"></span><span>        </span><span id="local-6989586621679115366"><span class="annot"><span class="annottext">validOffsets :: Set Int
+</span><a href="#local-6989586621679115366"><span class="hs-identifier hs-var hs-var">validOffsets</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Int] -&gt; Set Int
+forall a. Ord a =&gt; [a] -&gt; Set a
+</span><span class="hs-identifier hs-var">Set.fromList</span></span><span> </span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679115360"><span class="hs-identifier hs-var">offs</span></a></span><span> </span><span class="hs-keyword">in</span><span>
+</span><span id="line-69"></span><span>    </span><span class="annot"><span class="annottext">((Int, Instruction) -&gt; Either Text ())
+-&gt; [(Int, Instruction)] -&gt; Either Text ()
+forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
+(Foldable t, Applicative f) =&gt;
+(a -&gt; f b) -&gt; t a -&gt; f ()
+</span><span class="hs-identifier hs-var">traverse_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; (Int, Instruction) -&gt; Either Text ()
+</span><a href="Compiler.ASM.Assembler.html#checkJump"><span class="hs-identifier hs-var">checkJump</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115357"><span class="hs-identifier hs-var">size</span></a></span><span> </span><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679115366"><span class="hs-identifier hs-var">validOffsets</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Int] -&gt; [Instruction] -&gt; [(Int, Instruction)]
+forall a b. [a] -&gt; [b] -&gt; [(a, b)]
+</span><span class="hs-identifier hs-var">zip</span></span><span> </span><span class="annot"><span class="annottext">[Int]
+</span><a href="#local-6989586621679115360"><span class="hs-identifier hs-var">offs</span></a></span><span> </span><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679115356"><span class="hs-identifier hs-var">insts</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="hs-comment">-- | Checks a single instruction if it's a Jump.</span><span>
+</span><span id="line-72"></span><span class="hs-comment">--</span><span>
+</span><span id="line-73"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#checkJump"><span class="hs-identifier hs-type">checkJump</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set.Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span id="checkJump"><span class="annot"><span class="annottext">checkJump :: Int -&gt; Set Int -&gt; (Int, Instruction) -&gt; Either Text ()
+</span><a href="Compiler.ASM.Assembler.html#checkJump"><span class="hs-identifier hs-var hs-var">checkJump</span></a></span></span><span> </span><span id="local-6989586621679115369"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115369"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span id="local-6989586621679115370"><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679115370"><span class="hs-identifier hs-var">validSet</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679115371"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115371"><span class="hs-identifier hs-var">currentOffset</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679115372"><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679115372"><span class="hs-identifier hs-var">inst</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Instruction -&gt; Maybe Int
+</span><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-var">getJumpTarget</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115371"><span class="hs-identifier hs-var">currentOffset</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Instruction -&gt; Int
+</span><a href="Compiler.Instruction.html#instructionSize"><span class="hs-identifier hs-var">instructionSize</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679115372"><span class="hs-identifier hs-var">inst</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679115372"><span class="hs-identifier hs-var">inst</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-76"></span><span>        </span><span class="annot"><span class="annottext">Maybe Int
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; Either Text ()
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-77"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679115374"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115374"><span class="hs-identifier hs-var">target</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Int -&gt; Either Text ()
+</span><a href="Compiler.ASM.Assembler.html#verifyTarget"><span class="hs-identifier hs-var">verifyTarget</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115369"><span class="hs-identifier hs-var">size</span></a></span><span> </span><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679115370"><span class="hs-identifier hs-var">validSet</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115374"><span class="hs-identifier hs-var">target</span></a></span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#verifyTarget"><span class="hs-identifier hs-type">verifyTarget</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set.Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span id="verifyTarget"><span class="annot"><span class="annottext">verifyTarget :: Int -&gt; Set Int -&gt; Int -&gt; Either Text ()
+</span><a href="Compiler.ASM.Assembler.html#verifyTarget"><span class="hs-identifier hs-var hs-var">verifyTarget</span></a></span></span><span> </span><span id="local-6989586621679115376"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115376"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span id="local-6989586621679115377"><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679115377"><span class="hs-identifier hs-var">validSet</span></a></span></span><span> </span><span id="local-6989586621679115378"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115378"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115378"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115378"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115376"><span class="hs-identifier hs-var">size</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-81"></span><span>    </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Bool
+</span><span class="hs-identifier hs-var">Set.member</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115378"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679115377"><span class="hs-identifier hs-var">validSet</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-82"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; Either Text ()
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Either Text ()) -&gt; Text -&gt; Either Text ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Jump target not aligned (mid-instruction): &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span>
+</span><span id="line-84"></span><span>            </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115378"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span>    </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(Text -&gt; Either Text ()) -&gt; Text -&gt; Either Text ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Jump out of bounds: &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115378"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="hs-comment">-- | Helper to calculate absolute target of relative jumps.</span><span>
+</span><span id="line-88"></span><span class="hs-comment">--</span><span>
+</span><span id="line-89"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-type">getJumpTarget</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-90"></span><span id="getJumpTarget"><span class="annot"><span class="annottext">getJumpTarget :: Int -&gt; Int -&gt; Instruction -&gt; Maybe Int
+</span><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-var hs-var">getJumpTarget</span></a></span></span><span> </span><span id="local-6989586621679115383"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115383"><span class="hs-identifier hs-var">off</span></a></span></span><span> </span><span id="local-6989586621679115384"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115384"><span class="hs-identifier hs-var">sz</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Jump"><span class="hs-identifier hs-type">Jump</span></a></span><span> </span><span id="local-6989586621679115386"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115386"><span class="hs-identifier hs-var">rel</span></a></span></span><span class="hs-special">)</span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe Int
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115383"><span class="hs-identifier hs-var">off</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115384"><span class="hs-identifier hs-var">sz</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115386"><span class="hs-identifier hs-var">rel</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-var">getJumpTarget</span></a></span><span> </span><span id="local-6989586621679115387"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115387"><span class="hs-identifier hs-var">off</span></a></span></span><span> </span><span id="local-6989586621679115388"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115388"><span class="hs-identifier hs-var">sz</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#JumpIfFalse"><span class="hs-identifier hs-type">JumpIfFalse</span></a></span><span> </span><span id="local-6989586621679115390"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115390"><span class="hs-identifier hs-var">rel</span></a></span></span><span class="hs-special">)</span><span>   </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe Int
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115387"><span class="hs-identifier hs-var">off</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115388"><span class="hs-identifier hs-var">sz</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115390"><span class="hs-identifier hs-var">rel</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-var">getJumpTarget</span></a></span><span> </span><span id="local-6989586621679115391"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115391"><span class="hs-identifier hs-var">off</span></a></span></span><span> </span><span id="local-6989586621679115392"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115392"><span class="hs-identifier hs-var">sz</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#JumpIfTrue"><span class="hs-identifier hs-type">JumpIfTrue</span></a></span><span> </span><span id="local-6989586621679115394"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115394"><span class="hs-identifier hs-var">rel</span></a></span></span><span class="hs-special">)</span><span>    </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe Int
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115391"><span class="hs-identifier hs-var">off</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115392"><span class="hs-identifier hs-var">sz</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115394"><span class="hs-identifier hs-var">rel</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-var">getJumpTarget</span></a></span><span> </span><span id="local-6989586621679115395"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115395"><span class="hs-identifier hs-var">off</span></a></span></span><span> </span><span id="local-6989586621679115396"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115396"><span class="hs-identifier hs-var">sz</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Call"><span class="hs-identifier hs-type">Call</span></a></span><span> </span><span id="local-6989586621679115398"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115398"><span class="hs-identifier hs-var">rel</span></a></span></span><span class="hs-special">)</span><span>          </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe Int
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115395"><span class="hs-identifier hs-var">off</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115396"><span class="hs-identifier hs-var">sz</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115398"><span class="hs-identifier hs-var">rel</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-var">getJumpTarget</span></a></span><span> </span><span id="local-6989586621679115399"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115399"><span class="hs-identifier hs-var">off</span></a></span></span><span> </span><span id="local-6989586621679115400"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115400"><span class="hs-identifier hs-var">sz</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#TailCall"><span class="hs-identifier hs-type">TailCall</span></a></span><span> </span><span id="local-6989586621679115402"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115402"><span class="hs-identifier hs-var">rel</span></a></span></span><span class="hs-special">)</span><span>      </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe Int
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115399"><span class="hs-identifier hs-var">off</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115400"><span class="hs-identifier hs-var">sz</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115402"><span class="hs-identifier hs-var">rel</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-var">getJumpTarget</span></a></span><span> </span><span id="local-6989586621679115403"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115403"><span class="hs-identifier hs-var">off</span></a></span></span><span> </span><span id="local-6989586621679115404"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115404"><span class="hs-identifier hs-var">sz</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#MakeClosure"><span class="hs-identifier hs-type">MakeClosure</span></a></span><span> </span><span id="local-6989586621679115406"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115406"><span class="hs-identifier hs-var">rel</span></a></span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe Int
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115403"><span class="hs-identifier hs-var">off</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115404"><span class="hs-identifier hs-var">sz</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115406"><span class="hs-identifier hs-var">rel</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span class="annot"><a href="Compiler.ASM.Assembler.html#getJumpTarget"><span class="hs-identifier hs-var">getJumpTarget</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Maybe Int
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-97"></span></pre></body></html>

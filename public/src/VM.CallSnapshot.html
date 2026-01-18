@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- VM Call Frame
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="VM.CallSnapshot.html"><span class="hs-identifier">VM.CallSnapshot</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="VM.CallSnapshot.html#CallSnapshot"><span class="hs-identifier">CallSnapshot</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Vector</span></span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMValue.html"><span class="hs-identifier">VM.VMValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier">VMValue</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | Represents a single frame in the call stack.</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-18"></span><span class="hs-comment">--   A CallSnapshot is pushed onto the call stack whenever a function is called.</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--   It acts as a checkpoint, storing the context of the caller so the VM</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--   can restore it when the called function returns.</span><span>
+</span><span id="line-21"></span><span class="hs-comment">--</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">data</span><span> </span><span id="CallSnapshot"><span class="annot"><a href="VM.CallSnapshot.html#CallSnapshot"><span class="hs-identifier hs-var">CallSnapshot</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="CallSnapshot"><span class="annot"><a href="VM.CallSnapshot.html#CallSnapshot"><span class="hs-identifier hs-var">CallSnapshot</span></a></span></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="callbackIndex"><span class="annot"><span class="annottext">CallSnapshot -&gt; Int
+</span><a href="VM.CallSnapshot.html#callbackIndex"><span class="hs-identifier hs-var hs-var">callbackIndex</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-24"></span><span>      </span><span class="hs-comment">-- ^ The address (ByteString index) where execution should resume</span><span>
+</span><span id="line-25"></span><span>      </span><span class="hs-comment">--   after the current function returns.</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="vStackIndex"><span class="annot"><span class="annottext">CallSnapshot -&gt; Int
+</span><a href="VM.CallSnapshot.html#vStackIndex"><span class="hs-identifier hs-var hs-var">vStackIndex</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-28"></span><span>      </span><span class="hs-comment">-- ^ The value of the Frame Pointer before the call.</span><span>
+</span><span id="line-29"></span><span>      </span><span class="hs-comment">--   This is essential to restore the caller's view of its local variables.</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="vEnv"><span class="annot"><span class="annottext">CallSnapshot -&gt; Vector VMValue
+</span><a href="VM.CallSnapshot.html#vEnv"><span class="hs-identifier hs-var hs-var">vEnv</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Vector</span></span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span>
+</span><span id="line-32"></span><span>      </span><span class="hs-comment">-- ^ The environment captured by the closure being executed.</span><span>
+</span><span id="line-33"></span><span>      </span><span class="hs-comment">--   Allows the function to access variables defined outside its body</span><span>
+</span><span id="line-34"></span><span>      </span><span class="hs-comment">--   but available at definition time.</span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679117119"><span id="local-6989586621679117129"><span id="local-6989586621679117133"><span class="annot"><span class="annottext">Int -&gt; CallSnapshot -&gt; ShowS
+[CallSnapshot] -&gt; ShowS
+CallSnapshot -&gt; String
+(Int -&gt; CallSnapshot -&gt; ShowS)
+-&gt; (CallSnapshot -&gt; String)
+-&gt; ([CallSnapshot] -&gt; ShowS)
+-&gt; Show CallSnapshot
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; CallSnapshot -&gt; ShowS
+showsPrec :: Int -&gt; CallSnapshot -&gt; ShowS
+$cshow :: CallSnapshot -&gt; String
+show :: CallSnapshot -&gt; String
+$cshowList :: [CallSnapshot] -&gt; ShowS
+showList :: [CallSnapshot] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679117139"><span id="local-6989586621679117147"><span class="annot"><span class="annottext">CallSnapshot -&gt; CallSnapshot -&gt; Bool
+(CallSnapshot -&gt; CallSnapshot -&gt; Bool)
+-&gt; (CallSnapshot -&gt; CallSnapshot -&gt; Bool) -&gt; Eq CallSnapshot
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: CallSnapshot -&gt; CallSnapshot -&gt; Bool
+== :: CallSnapshot -&gt; CallSnapshot -&gt; Bool
+$c/= :: CallSnapshot -&gt; CallSnapshot -&gt; Bool
+/= :: CallSnapshot -&gt; CallSnapshot -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span></pre></body></html>

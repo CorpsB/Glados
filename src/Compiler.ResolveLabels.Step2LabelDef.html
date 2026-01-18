@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2026
+-- Glados
+-- File description:
+-- Step2LabelDef
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Compiler.ResolveLabels.Step2LabelDef.html"><span class="hs-identifier">Compiler.ResolveLabels.Step2LabelDef</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.ResolveLabels.Step2LabelDef.html#step2LabelDef"><span class="hs-identifier">step2LabelDef</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Instruction.html"><span class="hs-identifier">Compiler.Instruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier">Instruction</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="annot"><a href="Compiler.ResolveLabels.Step2LabelDef.html#step2LabelDef"><span class="hs-identifier hs-type">step2LabelDef</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span id="step2LabelDef"><span class="annot"><span class="annottext">step2LabelDef :: [Instruction] -&gt; Int -&gt; Either Text ([Instruction], Int)
+</span><a href="Compiler.ResolveLabels.Step2LabelDef.html#step2LabelDef"><span class="hs-identifier hs-var hs-var">step2LabelDef</span></a></span></span><span> </span><span id="local-6989586621679114940"><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679114940"><span class="hs-identifier hs-var">out</span></a></span></span><span> </span><span id="local-6989586621679114941"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114941"><span class="hs-identifier hs-var">idx</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([Instruction], Int) -&gt; Either Text ([Instruction], Int)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679114940"><span class="hs-identifier hs-var">out</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114941"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span></pre></body></html>

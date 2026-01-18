@@ -1,0 +1,357 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Error Formatter
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module      : Common.Error
+Description : Error formatting utilities for the Glados compiler.
+Stability   : stable
+
+This module provides tools to transform technical Megaparsec errors into
+human-readable, colored error messages. It helps standardize error reporting
+across the entire application (Parsing, Semantics, Imports).
+-}</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Common.Error.html"><span class="hs-identifier">Common.Error</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Error.html#formatParseError"><span class="hs-identifier">formatParseError</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Error.html#formatError"><span class="hs-identifier">formatError</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Error.html#formatFancyError"><span class="hs-identifier">formatFancyError</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Error.html#getExpected"><span class="hs-identifier">getExpected</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Error.html#getUnexpected"><span class="hs-identifier">getUnexpected</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Void</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Void</span></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- Imports specific to Position handling</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Megaparsec</span></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">PosState</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">reachOffset</span></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">unPos</span></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">sourceLine</span></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">sourceColumn</span></span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- Imports for Error types (ParseError, Bundle, etc.)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Megaparsec.Error</span></span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.List.NonEmpty</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">NE</span></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List.NonEmpty</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">NonEmpty</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Set</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Set</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">intercalate</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">sort</span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- | Formats a generic error message with a colored tag.</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--   - tag: The error category (e.g., &quot;Semantic Error&quot;, &quot;Import Error&quot;).</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--   - msg: The error description.</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   A formatted string with the tag in red ANSI color.</span><span>
+</span><span id="line-46"></span><span class="annot"><a href="Common.Error.html#formatError"><span class="hs-identifier hs-type">formatError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-47"></span><span id="formatError"><span class="annot"><span class="annottext">formatError :: [Char] -&gt; [Char] -&gt; [Char]
+</span><a href="Common.Error.html#formatError"><span class="hs-identifier hs-var hs-var">formatError</span></a></span></span><span> </span><span id="local-6989586621679110448"><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679110448"><span class="hs-identifier hs-var">tag</span></a></span></span><span> </span><span id="local-6989586621679110449"><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679110449"><span class="hs-identifier hs-var">msg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;\x1b[31m[&quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679110448"><span class="hs-identifier hs-var">tag</span></a></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;]\x1b[0m &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679110449"><span class="hs-identifier hs-var">msg</span></a></span><span>
+</span><span id="line-48"></span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- | Extracts the &quot;expected&quot; tokens from a ParseError.</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--</span><span>
+</span><span id="line-51"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-52"></span><span class="hs-comment">--   - err: The Megaparsec error object.</span><span>
+</span><span id="line-53"></span><span class="hs-comment">--</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--   A clean string listing expected tokens or &quot;custom error&quot;.</span><span>
+</span><span id="line-56"></span><span class="annot"><a href="Common.Error.html#getExpected"><span class="hs-identifier hs-type">getExpected</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ParseError</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-57"></span><span id="getExpected"><span class="annot"><span class="annottext">getExpected :: ParseError Text Void -&gt; [Char]
+</span><a href="Common.Error.html#getExpected"><span class="hs-identifier hs-var hs-var">getExpected</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">TrivialError</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Maybe (ErrorItem (Token Text))
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679110451"><span class="annot"><span class="annottext">Set (ErrorItem (Token Text))
+</span><a href="#local-6989586621679110451"><span class="hs-identifier hs-var">expectedSet</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-58"></span><span>    </span><span class="annot"><span class="annottext">[ErrorItem Char] -&gt; [Char]
+</span><a href="Common.Error.html#cleanExpected"><span class="hs-identifier hs-var">cleanExpected</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[ErrorItem Char] -&gt; [ErrorItem Char]
+forall a. Ord a =&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">sort</span></span><span> </span><span class="annot"><span class="annottext">([ErrorItem Char] -&gt; [ErrorItem Char])
+-&gt; [ErrorItem Char] -&gt; [ErrorItem Char]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Set (ErrorItem Char) -&gt; [ErrorItem Char]
+forall a. Set a -&gt; [a]
+</span><span class="hs-identifier hs-var">Set.toList</span></span><span> </span><span class="annot"><span class="annottext">Set (ErrorItem Char)
+Set (ErrorItem (Token Text))
+</span><a href="#local-6989586621679110451"><span class="hs-identifier hs-var">expectedSet</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span class="annot"><a href="Common.Error.html#getExpected"><span class="hs-identifier hs-var">getExpected</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">FancyError</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Set (ErrorFancy Void)
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;custom error&quot;</span></span><span>
+</span><span id="line-60"></span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- | Extracts the &quot;unexpected&quot; token from a ParseError.</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--   - err: The Megaparsec error object.</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-67"></span><span class="hs-comment">--   A string describing what was found instead (e.g., &quot;end of input&quot;, &quot;\&quot;foo\&quot;&quot;).</span><span>
+</span><span id="line-68"></span><span class="annot"><a href="Common.Error.html#getUnexpected"><span class="hs-identifier hs-type">getUnexpected</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ParseError</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-69"></span><span id="getUnexpected"><span class="annot"><span class="annottext">getUnexpected :: ParseError Text Void -&gt; [Char]
+</span><a href="Common.Error.html#getUnexpected"><span class="hs-identifier hs-var hs-var">getUnexpected</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">TrivialError</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679110455"><span class="annot"><span class="annottext">ErrorItem (Token Text)
+</span><a href="#local-6989586621679110455"><span class="hs-identifier hs-var">unex</span></a></span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Set (ErrorItem (Token Text))
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ErrorItem Char -&gt; [Char]
+</span><a href="Common.Error.html#parseErrorItem"><span class="hs-identifier hs-var">parseErrorItem</span></a></span><span> </span><span class="annot"><span class="annottext">ErrorItem Char
+ErrorItem (Token Text)
+</span><a href="#local-6989586621679110455"><span class="hs-identifier hs-var">unex</span></a></span><span>
+</span><span id="line-70"></span><span class="annot"><a href="Common.Error.html#getUnexpected"><span class="hs-identifier hs-var">getUnexpected</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">TrivialError</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Maybe (ErrorItem (Token Text))
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Set (ErrorItem (Token Text))
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;end of input&quot;</span></span><span>
+</span><span id="line-71"></span><span class="annot"><a href="Common.Error.html#getUnexpected"><span class="hs-identifier hs-var">getUnexpected</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">FancyError</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Set (ErrorFancy Void)
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;custom error&quot;</span></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- | Format 'FancyError' messages (generated by 'fail').</span><span>
+</span><span id="line-74"></span><span class="hs-comment">--</span><span>
+</span><span id="line-75"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--   Iterates over the set of fancy errors and extracts the text message</span><span>
+</span><span id="line-77"></span><span class="hs-comment">--   if it exists (ErrorFail).</span><span>
+</span><span id="line-78"></span><span class="annot"><a href="Common.Error.html#formatFancyError"><span class="hs-identifier hs-type">formatFancyError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set.Set</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ErrorFancy</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-79"></span><span id="formatFancyError"><span class="annot"><span class="annottext">formatFancyError :: Set (ErrorFancy Void) -&gt; [Char]
+</span><a href="Common.Error.html#formatFancyError"><span class="hs-identifier hs-var hs-var">formatFancyError</span></a></span></span><span> </span><span id="local-6989586621679110457"><span class="annot"><span class="annottext">Set (ErrorFancy Void)
+</span><a href="#local-6989586621679110457"><span class="hs-identifier hs-var">errs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [[Char]] -&gt; [Char]
+forall a. [a] -&gt; [[a]] -&gt; [a]
+</span><span class="hs-identifier hs-var">intercalate</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;; &quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(ErrorFancy Void -&gt; [Char]) -&gt; [ErrorFancy Void] -&gt; [[Char]]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">ErrorFancy Void -&gt; [Char]
+forall {e}. ErrorFancy e -&gt; [Char]
+</span><a href="#local-6989586621679110458"><span class="hs-identifier hs-var">showFancy</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Set (ErrorFancy Void) -&gt; [ErrorFancy Void]
+forall a. Set a -&gt; [a]
+</span><span class="hs-identifier hs-var">Set.toList</span></span><span> </span><span class="annot"><span class="annottext">Set (ErrorFancy Void)
+</span><a href="#local-6989586621679110457"><span class="hs-identifier hs-var">errs</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-81"></span><span>    </span><span id="local-6989586621679110458"><span class="annot"><span class="annottext">showFancy :: ErrorFancy e -&gt; [Char]
+</span><a href="#local-6989586621679110458"><span class="hs-identifier hs-var hs-var">showFancy</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ErrorFail</span></span><span> </span><span id="local-6989586621679110463"><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679110463"><span class="hs-identifier hs-var">msg</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679110463"><span class="hs-identifier hs-var">msg</span></a></span><span>
+</span><span id="line-82"></span><span>    </span><span class="annot"><a href="#local-6989586621679110458"><span class="hs-identifier hs-var">showFancy</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ErrorIndentation</span></span><span> </span><span class="annot"><span class="annottext">Ordering
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679110465"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110465"><span class="hs-identifier hs-var">ref</span></a></span></span><span> </span><span id="local-6989586621679110466"><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110466"><span class="hs-identifier hs-var">actual</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-83"></span><span>        </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;incorrect indentation (got &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; [Char]
+forall a. Show a =&gt; a -&gt; [Char]
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Pos -&gt; Int
+</span><span class="hs-identifier hs-var">unPos</span></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110466"><span class="hs-identifier hs-var">actual</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span>
+</span><span id="line-84"></span><span>        </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;, should be &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; [Char]
+forall a. Show a =&gt; a -&gt; [Char]
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Pos -&gt; Int
+</span><span class="hs-identifier hs-var">unPos</span></span><span> </span><span class="annot"><span class="annottext">Pos
+</span><a href="#local-6989586621679110465"><span class="hs-identifier hs-var">ref</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-85"></span><span>    </span><span class="annot"><a href="#local-6989586621679110458"><span class="hs-identifier hs-var">showFancy</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">ErrorCustom</span></span><span> </span><span class="annot"><span class="annottext">e
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;custom error&quot;</span></span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="annot"><span class="hs-comment">-- | Format the specific error description (Trivial vs Fancy).</span></span><span>
+</span><span id="line-88"></span><span class="annot"><a href="Common.Error.html#getErrorDesc"><span class="hs-identifier hs-type">getErrorDesc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ParseError</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-89"></span><span id="getErrorDesc"><span class="annot"><span class="annottext">getErrorDesc :: ParseError Text Void -&gt; [Char]
+</span><a href="Common.Error.html#getErrorDesc"><span class="hs-identifier hs-var hs-var">getErrorDesc</span></a></span></span><span> </span><span id="local-6989586621679110470"><span class="annot"><span class="annottext">err :: ParseError Text Void
+</span><a href="#local-6989586621679110470"><span class="hs-identifier hs-var">err</span></a></span></span><span class="hs-glyph">@</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">TrivialError</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Maybe (ErrorItem (Token Text))
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Set (ErrorItem (Token Text))
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-90"></span><span>    </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;, expected &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">ParseError Text Void -&gt; [Char]
+</span><a href="Common.Error.html#getExpected"><span class="hs-identifier hs-var">getExpected</span></a></span><span> </span><span class="annot"><span class="annottext">ParseError Text Void
+</span><a href="#local-6989586621679110470"><span class="hs-identifier hs-var">err</span></a></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span>
+</span><span id="line-91"></span><span>    </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot; but got &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">ParseError Text Void -&gt; [Char]
+</span><a href="Common.Error.html#getUnexpected"><span class="hs-identifier hs-var">getUnexpected</span></a></span><span> </span><span class="annot"><span class="annottext">ParseError Text Void
+</span><a href="#local-6989586621679110470"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-92"></span><span class="annot"><a href="Common.Error.html#getErrorDesc"><span class="hs-identifier hs-var">getErrorDesc</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">FancyError</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679110471"><span class="annot"><span class="annottext">Set (ErrorFancy Void)
+</span><a href="#local-6989586621679110471"><span class="hs-identifier hs-var">fancyErrs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-93"></span><span>    </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;: &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Set (ErrorFancy Void) -&gt; [Char]
+</span><a href="Common.Error.html#formatFancyError"><span class="hs-identifier hs-var">formatFancyError</span></a></span><span> </span><span class="annot"><span class="annottext">Set (ErrorFancy Void)
+</span><a href="#local-6989586621679110471"><span class="hs-identifier hs-var">fancyErrs</span></a></span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span class="hs-comment">-- | Main entry point to format a Megaparsec error bundle.</span><span>
+</span><span id="line-96"></span><span class="hs-comment">--</span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-98"></span><span class="hs-comment">--   - bundle: The full error bundle returned by 'parse'.</span><span>
+</span><span id="line-99"></span><span class="hs-comment">--</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-101"></span><span class="hs-comment">--   Extracts the first error, calculates position, and formats the message.</span><span>
+</span><span id="line-102"></span><span class="hs-comment">--   Refactored to meet coding style (short function, short lines).</span><span>
+</span><span id="line-103"></span><span class="hs-comment">--</span><span>
+</span><span id="line-104"></span><span class="annot"><a href="Common.Error.html#formatParseError"><span class="hs-identifier hs-type">formatParseError</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ParseErrorBundle</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-105"></span><span id="formatParseError"><span class="annot"><span class="annottext">formatParseError :: ParseErrorBundle Text Void -&gt; [Char]
+</span><a href="Common.Error.html#formatParseError"><span class="hs-identifier hs-var hs-var">formatParseError</span></a></span></span><span> </span><span id="local-6989586621679110472"><span class="annot"><span class="annottext">ParseErrorBundle Text Void
+</span><a href="#local-6989586621679110472"><span class="hs-identifier hs-var">bundle</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-106"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110473"><span class="annot"><span class="annottext">ParseError Text Void
+</span><a href="#local-6989586621679110473"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:|</span></span><span> </span><span class="annot"><span class="annottext">[ParseError Text Void]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ParseErrorBundle Text Void -&gt; NonEmpty (ParseError Text Void)
+forall s e. ParseErrorBundle s e -&gt; NonEmpty (ParseError s e)
+</span><span class="hs-identifier hs-var">bundleErrors</span></span><span> </span><span class="annot"><span class="annottext">ParseErrorBundle Text Void
+</span><a href="#local-6989586621679110472"><span class="hs-identifier hs-var">bundle</span></a></span><span>
+</span><span id="line-107"></span><span>        </span><span class="hs-special">(</span><span id="local-6989586621679110476"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110476"><span class="hs-identifier hs-var">line</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110477"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110477"><span class="hs-identifier hs-var">col</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PosState Text -&gt; Int -&gt; (Int, Int)
+</span><a href="Common.Error.html#getLineCol"><span class="hs-identifier hs-var">getLineCol</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ParseErrorBundle Text Void -&gt; PosState Text
+forall s e. ParseErrorBundle s e -&gt; PosState s
+</span><span class="hs-identifier hs-var">bundlePosState</span></span><span> </span><span class="annot"><span class="annottext">ParseErrorBundle Text Void
+</span><a href="#local-6989586621679110472"><span class="hs-identifier hs-var">bundle</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ParseError Text Void -&gt; Int
+forall s e. ParseError s e -&gt; Int
+</span><span class="hs-identifier hs-var">errorOffset</span></span><span> </span><span class="annot"><span class="annottext">ParseError Text Void
+</span><a href="#local-6989586621679110473"><span class="hs-identifier hs-var">err</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-108"></span><span>        </span><span id="local-6989586621679110483"><span class="annot"><span class="annottext">details :: [Char]
+</span><a href="#local-6989586621679110483"><span class="hs-identifier hs-var hs-var">details</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;line &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; [Char]
+forall a. Show a =&gt; a -&gt; [Char]
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110476"><span class="hs-identifier hs-var">line</span></a></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;, column &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; [Char]
+forall a. Show a =&gt; a -&gt; [Char]
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110477"><span class="hs-identifier hs-var">col</span></a></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span>
+</span><span id="line-109"></span><span>                  </span><span class="annot"><span class="annottext">ParseError Text Void -&gt; [Char]
+</span><a href="Common.Error.html#getErrorDesc"><span class="hs-identifier hs-var">getErrorDesc</span></a></span><span> </span><span class="annot"><span class="annottext">ParseError Text Void
+</span><a href="#local-6989586621679110473"><span class="hs-identifier hs-var">err</span></a></span><span>
+</span><span id="line-110"></span><span>    </span><span class="hs-keyword">in</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+</span><a href="Common.Error.html#formatError"><span class="hs-identifier hs-var">formatError</span></a></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;Parse Error&quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><a href="#local-6989586621679110483"><span class="hs-identifier hs-var">details</span></a></span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- | Calculates line and column numbers from a generic Position State.</span><span>
+</span><span id="line-113"></span><span class="hs-comment">--</span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-115"></span><span class="hs-comment">--   - state: The initial position state.</span><span>
+</span><span id="line-116"></span><span class="hs-comment">--   - offset: The absolute character offset of the error.</span><span>
+</span><span id="line-117"></span><span class="hs-comment">--</span><span>
+</span><span id="line-118"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-119"></span><span class="hs-comment">--   A tuple (Line, Column).</span><span>
+</span><span id="line-120"></span><span class="annot"><a href="Common.Error.html#getLineCol"><span class="hs-identifier hs-type">getLineCol</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">PosState</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-121"></span><span id="getLineCol"><span class="annot"><span class="annottext">getLineCol :: PosState Text -&gt; Int -&gt; (Int, Int)
+</span><a href="Common.Error.html#getLineCol"><span class="hs-identifier hs-var hs-var">getLineCol</span></a></span></span><span> </span><span id="local-6989586621679110484"><span class="annot"><span class="annottext">PosState Text
+</span><a href="#local-6989586621679110484"><span class="hs-identifier hs-var">state</span></a></span></span><span> </span><span id="local-6989586621679110485"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110485"><span class="hs-identifier hs-var">offset</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-122"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe [Char]
+</span><span class="hs-identifier">_</span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110488"><span class="annot"><span class="annottext">PosState Text
+</span><a href="#local-6989586621679110488"><span class="hs-identifier hs-var">newState</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; PosState Text -&gt; (Maybe [Char], PosState Text)
+forall s.
+TraversableStream s =&gt;
+Int -&gt; PosState s -&gt; (Maybe [Char], PosState s)
+</span><span class="hs-identifier hs-var">reachOffset</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679110485"><span class="hs-identifier hs-var">offset</span></a></span><span> </span><span class="annot"><span class="annottext">PosState Text
+</span><a href="#local-6989586621679110484"><span class="hs-identifier hs-var">state</span></a></span><span>
+</span><span id="line-123"></span><span>        </span><span id="local-6989586621679110489"><span class="annot"><span class="annottext">pos :: SourcePos
+</span><a href="#local-6989586621679110489"><span class="hs-identifier hs-var hs-var">pos</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">PosState Text -&gt; SourcePos
+forall s. PosState s -&gt; SourcePos
+</span><span class="hs-identifier hs-var">pstateSourcePos</span></span><span> </span><span class="annot"><span class="annottext">PosState Text
+</span><a href="#local-6989586621679110488"><span class="hs-identifier hs-var">newState</span></a></span><span>
+</span><span id="line-124"></span><span>    </span><span class="hs-keyword">in</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Pos -&gt; Int
+</span><span class="hs-identifier hs-var">unPos</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourcePos -&gt; Pos
+</span><span class="hs-identifier hs-var">sourceLine</span></span><span> </span><span class="annot"><span class="annottext">SourcePos
+</span><a href="#local-6989586621679110489"><span class="hs-identifier hs-var">pos</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Pos -&gt; Int
+</span><span class="hs-identifier hs-var">unPos</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">SourcePos -&gt; Pos
+</span><span class="hs-identifier hs-var">sourceColumn</span></span><span> </span><span class="annot"><span class="annottext">SourcePos
+</span><a href="#local-6989586621679110489"><span class="hs-identifier hs-var">pos</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-125"></span><span>
+</span><span id="line-126"></span><span class="hs-comment">-- | Formats a list of expected ErrorItems into a readable string.</span><span>
+</span><span id="line-127"></span><span class="hs-comment">--</span><span>
+</span><span id="line-128"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-129"></span><span class="hs-comment">--   Prioritizes Labels (human-readable names like &quot;semicolon&quot;) over raw Tokens.</span><span>
+</span><span id="line-130"></span><span class="hs-comment">--   If many tokens are expected, lists the first 3 or joins labels with &quot;or&quot;.</span><span>
+</span><span id="line-131"></span><span class="hs-comment">--</span><span>
+</span><span id="line-132"></span><span class="annot"><a href="Common.Error.html#cleanExpected"><span class="hs-identifier hs-type">cleanExpected</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">ErrorItem</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-133"></span><span id="cleanExpected"><span class="annot"><span class="annottext">cleanExpected :: [ErrorItem Char] -&gt; [Char]
+</span><a href="Common.Error.html#cleanExpected"><span class="hs-identifier hs-var hs-var">cleanExpected</span></a></span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;unknown&quot;</span></span><span>
+</span><span id="line-134"></span><span class="annot"><a href="Common.Error.html#cleanExpected"><span class="hs-identifier hs-var">cleanExpected</span></a></span><span> </span><span id="local-6989586621679110491"><span class="annot"><span class="annottext">[ErrorItem Char]
+</span><a href="#local-6989586621679110491"><span class="hs-identifier hs-var">items</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span>
+</span><span id="line-135"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679110492"><span class="annot"><span class="annottext">labels :: [[Char]]
+</span><a href="#local-6989586621679110492"><span class="hs-identifier hs-var hs-var">labels</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">NonEmpty Char -&gt; [Char]
+forall a. NonEmpty a -&gt; [a]
+</span><span class="hs-identifier hs-var">NE.toList</span></span><span> </span><span class="annot"><span class="annottext">NonEmpty Char
+</span><a href="#local-6989586621679110494"><span class="hs-identifier hs-var">l</span></a></span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Label</span></span><span> </span><span id="local-6989586621679110494"><span class="annot"><span class="annottext">NonEmpty Char
+</span><a href="#local-6989586621679110494"><span class="hs-identifier hs-var">l</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[ErrorItem Char]
+</span><a href="#local-6989586621679110491"><span class="hs-identifier hs-var">items</span></a></span><span class="hs-special">]</span><span> </span><span>
+</span><span id="line-136"></span><span>        </span><span id="local-6989586621679110498"><span class="annot"><span class="annottext">tokens :: [[Char]]
+</span><a href="#local-6989586621679110498"><span class="hs-identifier hs-var hs-var">tokens</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">[Char] -&gt; [Char]
+forall a. Show a =&gt; a -&gt; [Char]
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NonEmpty Char -&gt; [Char]
+forall a. NonEmpty a -&gt; [a]
+</span><span class="hs-identifier hs-var">NE.toList</span></span><span> </span><span class="annot"><span class="annottext">NonEmpty Char
+</span><a href="#local-6989586621679110499"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Tokens</span></span><span> </span><span id="local-6989586621679110499"><span class="annot"><span class="annottext">NonEmpty Char
+</span><a href="#local-6989586621679110499"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">[ErrorItem Char]
+</span><a href="#local-6989586621679110491"><span class="hs-identifier hs-var">items</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-137"></span><span>    </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">[[Char]] -&gt; Bool
+forall a. [a] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">null</span></span><span> </span><span class="annot"><span class="annottext">[[Char]]
+</span><a href="#local-6989586621679110492"><span class="hs-identifier hs-var">labels</span></a></span><span> </span><span>
+</span><span id="line-138"></span><span>       </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [[Char]] -&gt; [Char]
+forall a. [a] -&gt; [[a]] -&gt; [a]
+</span><span class="hs-identifier hs-var">intercalate</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;, &quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; [[Char]] -&gt; [[Char]]
+forall a. Int -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">take</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span> </span><span class="annot"><span class="annottext">[[Char]]
+</span><a href="#local-6989586621679110498"><span class="hs-identifier hs-var">tokens</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-139"></span><span>       </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [[Char]] -&gt; [Char]
+forall a. [a] -&gt; [[a]] -&gt; [a]
+</span><span class="hs-identifier hs-var">intercalate</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot; or &quot;</span></span><span> </span><span class="annot"><span class="annottext">[[Char]]
+</span><a href="#local-6989586621679110492"><span class="hs-identifier hs-var">labels</span></a></span><span>
+</span><span id="line-140"></span><span>
+</span><span id="line-141"></span><span class="annot"><span class="hs-comment">-- | Converts a single ErrorItem to its string representation.</span></span><span>
+</span><span id="line-142"></span><span class="annot"><a href="Common.Error.html#parseErrorItem"><span class="hs-identifier hs-type">parseErrorItem</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">ErrorItem</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Char</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-143"></span><span id="parseErrorItem"><span class="annot"><span class="annottext">parseErrorItem :: ErrorItem Char -&gt; [Char]
+</span><a href="Common.Error.html#parseErrorItem"><span class="hs-identifier hs-var hs-var">parseErrorItem</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Tokens</span></span><span> </span><span id="local-6989586621679110503"><span class="annot"><span class="annottext">NonEmpty Char
+</span><a href="#local-6989586621679110503"><span class="hs-identifier hs-var">t</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char]
+forall a. Show a =&gt; a -&gt; [Char]
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">NonEmpty Char -&gt; [Char]
+forall a. NonEmpty a -&gt; [a]
+</span><span class="hs-identifier hs-var">NE.toList</span></span><span> </span><span class="annot"><span class="annottext">NonEmpty Char
+</span><a href="#local-6989586621679110503"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-144"></span><span class="annot"><a href="Common.Error.html#parseErrorItem"><span class="hs-identifier hs-var">parseErrorItem</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Label</span></span><span> </span><span id="local-6989586621679110504"><span class="annot"><span class="annottext">NonEmpty Char
+</span><a href="#local-6989586621679110504"><span class="hs-identifier hs-var">l</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">NonEmpty Char -&gt; [Char]
+forall a. NonEmpty a -&gt; [a]
+</span><span class="hs-identifier hs-var">NE.toList</span></span><span> </span><span class="annot"><span class="annottext">NonEmpty Char
+</span><a href="#local-6989586621679110504"><span class="hs-identifier hs-var">l</span></a></span><span>
+</span><span id="line-145"></span><span class="annot"><a href="Common.Error.html#parseErrorItem"><span class="hs-identifier hs-var">parseErrorItem</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ErrorItem Char
+</span><span class="hs-identifier hs-var">EndOfInput</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;end of input&quot;</span></span><span>
+</span><span id="line-146"></span></pre></body></html>

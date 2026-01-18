@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2026
+-- Glados
+-- File description:
+-- Step2JumpLabel
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Compiler.ResolveLabels.Step2JumpIfFalseLabel.html"><span class="hs-identifier">Compiler.ResolveLabels.Step2JumpIfFalseLabel</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.ResolveLabels.Step2JumpIfFalseLabel.html#step2JumpIfFalseLabel"><span class="hs-identifier">step2JumpIfFalseLabel</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Instruction.html"><span class="hs-identifier">Compiler.Instruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier">Instruction</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Set</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Set</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.ResolveLabels.ResolveLabelsHelpers.html"><span class="hs-identifier">Compiler.ResolveLabels.ResolveLabelsHelpers</span></a></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Compiler.ResolveLabels.ResolveLabelsHelpers.html#computeOffset"><span class="hs-identifier">computeOffset</span></a></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ResolveLabels.ResolveLabelsHelpers.html#checkInt32Range"><span class="hs-identifier">checkInt32Range</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ResolveLabels.ResolveLabelsHelpers.html#sizeOfJumpIfFalseInst"><span class="hs-identifier">sizeOfJumpIfFalseInst</span></a></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="annot"><a href="Compiler.ResolveLabels.Step2JumpIfFalseLabel.html#step2JumpIfFalseLabel"><span class="hs-identifier hs-type">step2JumpIfFalseLabel</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Set.Set</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span id="step2JumpIfFalseLabel"><span class="annot"><span class="annottext">step2JumpIfFalseLabel :: Map Text Int
+-&gt; Set Int
+-&gt; [Instruction]
+-&gt; Int
+-&gt; Text
+-&gt; Either Text ([Instruction], Int)
+</span><a href="Compiler.ResolveLabels.Step2JumpIfFalseLabel.html#step2JumpIfFalseLabel"><span class="hs-identifier hs-var hs-var">step2JumpIfFalseLabel</span></a></span></span><span> </span><span id="local-6989586621679114811"><span class="annot"><span class="annottext">Map Text Int
+</span><a href="#local-6989586621679114811"><span class="hs-identifier hs-var">labelMap</span></a></span></span><span> </span><span id="local-6989586621679114812"><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679114812"><span class="hs-identifier hs-var">starts</span></a></span></span><span> </span><span id="local-6989586621679114813"><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679114813"><span class="hs-identifier hs-var">out</span></a></span></span><span> </span><span id="local-6989586621679114814"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114814"><span class="hs-identifier hs-var">idx</span></a></span></span><span> </span><span id="local-6989586621679114815"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114815"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Map Text Int -&gt; Maybe Int
+forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Map.lookup</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114815"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Map Text Int
+</span><a href="#local-6989586621679114811"><span class="hs-identifier hs-var">labelMap</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-25"></span><span>        </span><span class="annot"><span class="annottext">Maybe Int
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ([Instruction], Int)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Unknown label: &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114815"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679114818"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114818"><span class="hs-identifier hs-var">target</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span>
+</span><span id="line-27"></span><span>            </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Set Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; Set a -&gt; Bool
+</span><span class="hs-identifier hs-var">Set.member</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114818"><span class="hs-identifier hs-var">target</span></a></span><span> </span><span class="annot"><span class="annottext">Set Int
+</span><a href="#local-6989586621679114812"><span class="hs-identifier hs-var">starts</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-28"></span><span>                </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Int
+-&gt; [Instruction] -&gt; Int -&gt; Text -&gt; Either Text ([Instruction], Int)
+</span><a href="Compiler.ResolveLabels.Step2JumpIfFalseLabel.html#jumpIfFalseResult"><span class="hs-identifier hs-var">jumpIfFalseResult</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114818"><span class="hs-identifier hs-var">target</span></a></span><span> </span><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679114813"><span class="hs-identifier hs-var">out</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114814"><span class="hs-identifier hs-var">idx</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114815"><span class="hs-identifier hs-var">name</span></a></span><span>
+</span><span id="line-29"></span><span>                </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ([Instruction], Int)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span>
+</span><span id="line-30"></span><span>                    </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;JumpIfFalse target not at instruction boundary&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="annot"><a href="Compiler.ResolveLabels.Step2JumpIfFalseLabel.html#jumpIfFalseResult"><span class="hs-identifier hs-type">jumpIfFalseResult</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span id="jumpIfFalseResult"><span class="annot"><span class="annottext">jumpIfFalseResult :: Int
+-&gt; [Instruction] -&gt; Int -&gt; Text -&gt; Either Text ([Instruction], Int)
+</span><a href="Compiler.ResolveLabels.Step2JumpIfFalseLabel.html#jumpIfFalseResult"><span class="hs-identifier hs-var hs-var">jumpIfFalseResult</span></a></span></span><span> </span><span id="local-6989586621679114821"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114821"><span class="hs-identifier hs-var">target</span></a></span></span><span> </span><span id="local-6989586621679114822"><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679114822"><span class="hs-identifier hs-var">out</span></a></span></span><span> </span><span id="local-6989586621679114823"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114823"><span class="hs-identifier hs-var">idx</span></a></span></span><span> </span><span id="local-6989586621679114824"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114824"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679114826"><span class="annot"><span class="annottext">off64 :: Int64
+</span><a href="#local-6989586621679114826"><span class="hs-identifier hs-var hs-var">off64</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int64
+</span><a href="Compiler.ResolveLabels.ResolveLabelsHelpers.html#computeOffset"><span class="hs-identifier hs-var">computeOffset</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114821"><span class="hs-identifier hs-var">target</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114823"><span class="hs-identifier hs-var">idx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Compiler.ResolveLabels.ResolveLabelsHelpers.html#sizeOfJumpIfFalseInst"><span class="hs-identifier hs-var">sizeOfJumpIfFalseInst</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-keyword">in</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Either Text Int32
+</span><a href="Compiler.ResolveLabels.ResolveLabelsHelpers.html#checkInt32Range"><span class="hs-identifier hs-var">checkInt32Range</span></a></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679114826"><span class="hs-identifier hs-var">off64</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-37"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679114828"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114828"><span class="hs-identifier hs-var">err</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ([Instruction], Int)
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;JumpIfFalse offset for label '&quot;</span></span><span>
+</span><span id="line-38"></span><span>            </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114824"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;' &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114828"><span class="hs-identifier hs-var">err</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679114829"><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679114829"><span class="hs-identifier hs-var">off</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">([Instruction], Int) -&gt; Either Text ([Instruction], Int)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679114822"><span class="hs-identifier hs-var">out</span></a></span><span> </span><span class="annot"><span class="annottext">[Instruction] -&gt; [Instruction] -&gt; [Instruction]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Int -&gt; Instruction
+</span><a href="Compiler.Instruction.html#JumpIfFalse"><span class="hs-identifier hs-var">JumpIfFalse</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int32 -&gt; Int
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int32
+</span><a href="#local-6989586621679114829"><span class="hs-identifier hs-var">off</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>            </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114823"><span class="hs-identifier hs-var">idx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="Compiler.ResolveLabels.ResolveLabelsHelpers.html#sizeOfJumpIfFalseInst"><span class="hs-identifier hs-var">sizeOfJumpIfFalseInst</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span></pre></body></html>

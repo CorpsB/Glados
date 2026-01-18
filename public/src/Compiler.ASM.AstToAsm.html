@@ -1,0 +1,487 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- AstToAsm
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module : Compiler.ASM.AstToAsm
+Description : Atomic converters from AST nodes to Assembly instructions.
+Stability : experimental
+-}</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Compiler.ASM.AstToAsm.html"><span class="hs-identifier">Compiler.ASM.AstToAsm</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astIntToAsm"><span class="hs-identifier">astIntToAsm</span></a></span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astBoolToAsm"><span class="hs-identifier">astBoolToAsm</span></a></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astSymbolToAsm"><span class="hs-identifier">astSymbolToAsm</span></a></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astListToAsm"><span class="hs-identifier">astListToAsm</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier">astCallToAsm</span></a></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ASM.Builtins.html#builtinMap"><span class="hs-identifier">builtinMap</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">get</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">lift</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">pack</span></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.ASM.Builtins.html"><span class="hs-identifier">Compiler.ASM.Builtins</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.ASM.Builtins.html#builtinMap"><span class="hs-identifier">builtinMap</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html"><span class="hs-identifier">Compiler.ASM.CompilerMonad</span></a></span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#CompilerMonad"><span class="hs-identifier">CompilerMonad</span></a></span><span>
+</span><span id="line-29"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier">emitInstruction</span></a></span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#emitCallToLabel"><span class="hs-identifier">emitCallToLabel</span></a></span><span>
+</span><span id="line-31"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#lookupSymbol"><span class="hs-identifier">lookupSymbol</span></a></span><span>
+</span><span id="line-32"></span><span>    </span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html"><span class="hs-identifier">Compiler.CompilerState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.CompilerState.html#CompilerState"><span class="hs-identifier">CompilerState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.CompilerState.html#ScopeType"><span class="hs-identifier">ScopeType</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Instruction.html"><span class="hs-identifier">Compiler.Instruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier">Instruction</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.Instruction.html#Immediate"><span class="hs-identifier">Immediate</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Common.Type.Integer.html"><span class="hs-identifier">Common.Type.Integer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier">IntValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AST.Ast.html"><span class="hs-identifier">AST.Ast</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier">Ast</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- | Pushes an Integer AST value directly to the stack.</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--</span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--   - val: The IntValue from the AST.</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--   Since the AST construction (Parser) already uses 'fitInteger' to determine</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   the optimal storage size (I8, I16, etc.), we simply wrap the value in</span><span>
+</span><span id="line-46"></span><span class="hs-comment">--   an 'ImmInt' and emit the PUSH instruction.</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--</span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--   Unit value wrapped in 'CompilerMonad'.</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--</span><span>
+</span><span id="line-51"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astIntToAsm"><span class="hs-identifier hs-type">astIntToAsm</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier hs-type">IntValue</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#CompilerMonad"><span class="hs-identifier hs-type">CompilerMonad</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span id="astIntToAsm"><span class="annot"><span class="annottext">astIntToAsm :: IntValue -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.AstToAsm.html#astIntToAsm"><span class="hs-identifier hs-var hs-var">astIntToAsm</span></a></span></span><span> </span><span id="local-6989586621679114000"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679114000"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Immediate -&gt; Instruction
+</span><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-var">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IntValue -&gt; Immediate
+</span><a href="Compiler.Instruction.html#ImmInt"><span class="hs-identifier hs-var">ImmInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679114000"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | Converts a native Haskell Bool to a PUSH instruction.</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--</span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-57"></span><span class="hs-comment">--   - b: The boolean to convert.</span><span>
+</span><span id="line-58"></span><span class="hs-comment">--</span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--   Emits a Push instruction with an immediate boolean value.</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--   Unit value wrapped in 'CompilerMonad'.</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--</span><span>
+</span><span id="line-65"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astBoolToAsm"><span class="hs-identifier hs-type">astBoolToAsm</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#CompilerMonad"><span class="hs-identifier hs-type">CompilerMonad</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span id="astBoolToAsm"><span class="annot"><span class="annottext">astBoolToAsm :: Bool -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.AstToAsm.html#astBoolToAsm"><span class="hs-identifier hs-var hs-var">astBoolToAsm</span></a></span></span><span> </span><span id="local-6989586621679114002"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679114002"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Immediate -&gt; Instruction
+</span><a href="Compiler.Instruction.html#Push"><span class="hs-identifier hs-var">Push</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; Immediate
+</span><a href="Compiler.Instruction.html#ImmBool"><span class="hs-identifier hs-var">ImmBool</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679114002"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- | Converts a symbol (variable) to a LOAD instruction.</span><span>
+</span><span id="line-69"></span><span class="hs-comment">--</span><span>
+</span><span id="line-70"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--   - name: The name of the symbol.</span><span>
+</span><span id="line-72"></span><span class="hs-comment">--</span><span>
+</span><span id="line-73"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-74"></span><span class="hs-comment">--   Looks up the symbol in the 'csSymbols' table. Based on the associated</span><span>
+</span><span id="line-75"></span><span class="hs-comment">--   'ScopeType', it emits either 'LoadGlobal', 'LoadLocal', or 'LoadCapture'</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--   with the correct index. Returns an error if the symbol is undefined.</span><span>
+</span><span id="line-77"></span><span class="hs-comment">--</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-79"></span><span class="hs-comment">--   Unit value wrapped in 'CompilerMonad'.</span><span>
+</span><span id="line-80"></span><span class="hs-comment">--</span><span>
+</span><span id="line-81"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astSymbolToAsm"><span class="hs-identifier hs-type">astSymbolToAsm</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#CompilerMonad"><span class="hs-identifier hs-type">CompilerMonad</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-82"></span><span id="astSymbolToAsm"><span class="annot"><span class="annottext">astSymbolToAsm :: Text -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.AstToAsm.html#astSymbolToAsm"><span class="hs-identifier hs-var hs-var">astSymbolToAsm</span></a></span></span><span> </span><span id="local-6989586621679114008"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114008"><span class="hs-identifier hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-83"></span><span>    </span><span id="local-6989586621679114009"><span class="annot"><a href="#local-6989586621679114009"><span class="hs-identifier hs-var">currentState</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT CompilerState (Either Text) CompilerState
+forall s (m :: * -&gt; *). MonadState s m =&gt; m s
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-84"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.lookup</span></span><span> </span><span class="annot"><a href="#local-6989586621679114008"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.CompilerState.html#csSymbols"><span class="hs-identifier hs-var">csSymbols</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679114009"><span class="hs-identifier hs-type">currentState</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-85"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ScopeType
+</span><a href="Compiler.CompilerState.html#ScopeGlobal"><span class="hs-identifier hs-var">ScopeGlobal</span></a></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679114012"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114012"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Instruction
+</span><a href="Compiler.Instruction.html#LoadGlobal"><span class="hs-identifier hs-var">LoadGlobal</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114012"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ScopeType
+</span><a href="Compiler.CompilerState.html#ScopeLocal"><span class="hs-identifier hs-var">ScopeLocal</span></a></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679114014"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114014"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Instruction
+</span><a href="Compiler.Instruction.html#LoadLocal"><span class="hs-identifier hs-var">LoadLocal</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114014"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-87"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ScopeType
+</span><a href="Compiler.CompilerState.html#ScopeCapture"><span class="hs-identifier hs-var">ScopeCapture</span></a></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679114016"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114016"><span class="hs-identifier hs-var">idx</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Text
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Instruction
+</span><a href="Compiler.Instruction.html#LoadCapture"><span class="hs-identifier hs-var">LoadCapture</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679114016"><span class="hs-identifier hs-var">idx</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span>        </span><span class="annot"><span class="annottext">Maybe (ScopeType, Int, Text)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either Text () -&gt; CompilerMonad ()
+forall (m :: * -&gt; *) a. Monad m =&gt; m a -&gt; StateT CompilerState m a
+forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(Either Text () -&gt; CompilerMonad ())
+-&gt; Either Text () -&gt; CompilerMonad ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Undefined symbol: &quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114008"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- | Converts a literal AST list to assembly instructions.</span><span>
+</span><span id="line-91"></span><span class="hs-comment">--</span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-93"></span><span class="hs-comment">--   - compileFn: The recursive compilation function.</span><span>
+</span><span id="line-94"></span><span class="hs-comment">--   - elements: The list of AST nodes to compile.</span><span>
+</span><span id="line-95"></span><span class="hs-comment">--</span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-97"></span><span class="hs-comment">--   Compiles each element pushing them onto the stack, then calls the</span><span>
+</span><span id="line-98"></span><span class="hs-comment">--   builtin &quot;list&quot; function to construct the list object.</span><span>
+</span><span id="line-99"></span><span class="hs-comment">--</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-101"></span><span class="hs-comment">--   Unit value wrapped in 'CompilerMonad'.</span><span>
+</span><span id="line-102"></span><span class="hs-comment">--</span><span>
+</span><span id="line-103"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astListToAsm"><span class="hs-identifier hs-type">astListToAsm</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#CompilerMonad"><span class="hs-identifier hs-type">CompilerMonad</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#CompilerMonad"><span class="hs-identifier hs-type">CompilerMonad</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span id="astListToAsm"><span class="annot"><span class="annottext">astListToAsm :: (Ast -&gt; CompilerMonad ()) -&gt; [Ast] -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.AstToAsm.html#astListToAsm"><span class="hs-identifier hs-var hs-var">astListToAsm</span></a></span></span><span> </span><span id="local-6989586621679114017"><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114017"><span class="hs-identifier hs-var">compileFn</span></a></span></span><span> </span><span id="local-6989586621679114018"><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114018"><span class="hs-identifier hs-var">elements</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Ast -&gt; CompilerMonad ()) -&gt; [Ast] -&gt; CompilerMonad ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m ()
+</span><span class="hs-identifier hs-var">mapM_</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114017"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114018"><span class="hs-identifier hs-var">elements</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-105"></span><span>    </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Instruction
+</span><a href="Compiler.Instruction.html#BuildList"><span class="hs-identifier hs-var">BuildList</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Ast] -&gt; Int
+forall a. [a] -&gt; Int
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114018"><span class="hs-identifier hs-var">elements</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>
+</span><span id="line-107"></span><span class="hs-comment">-- | Compiles a function call (Builtin or User-defined).</span><span>
+</span><span id="line-108"></span><span class="hs-comment">--</span><span>
+</span><span id="line-109"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-110"></span><span class="hs-comment">--   - compileFn: The recursive compilation function.</span><span>
+</span><span id="line-111"></span><span class="hs-comment">--   - callee: The AST representing the function being called.</span><span>
+</span><span id="line-112"></span><span class="hs-comment">--   - args: The list of argument ASTs.</span><span>
+</span><span id="line-113"></span><span class="hs-comment">--</span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-115"></span><span class="hs-comment">--   If the callee is a known builtin, emits the specific instruction.</span><span>
+</span><span id="line-116"></span><span class="hs-comment">--   Otherwise, emits a 'CallLabel' to the named function.</span><span>
+</span><span id="line-117"></span><span class="hs-comment">--   (Higher-order calls are explicitly not supported in this version).</span><span>
+</span><span id="line-118"></span><span class="hs-comment">--</span><span>
+</span><span id="line-119"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-120"></span><span class="hs-comment">--   Unit value wrapped in 'CompilerMonad'.</span><span>
+</span><span id="line-121"></span><span class="hs-comment">--</span><span>
+</span><span id="line-122"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-type">astCallToAsm</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#CompilerMonad"><span class="hs-identifier hs-type">CompilerMonad</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.ASM.CompilerMonad.html#CompilerMonad"><span class="hs-identifier hs-type">CompilerMonad</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-123"></span><span id="astCallToAsm"><span class="annot"><span class="annottext">astCallToAsm :: (Ast -&gt; CompilerMonad ()) -&gt; Ast -&gt; [Ast] -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var hs-var">astCallToAsm</span></a></span></span><span> </span><span id="local-6989586621679114022"><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114022"><span class="hs-identifier hs-var">compileFn</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ASymbol"><span class="hs-identifier hs-type">ASymbol</span></a></span><span> </span><span id="local-6989586621679114024"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114024"><span class="hs-identifier hs-var">name</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span id="local-6989586621679114025"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114025"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679114026"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114026"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114024"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt;&quot;</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-124"></span><span>    </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114022"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114026"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114022"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114025"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-125"></span><span>    </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Lt"><span class="hs-identifier hs-var">Lt</span></a></span><span>
+</span><span id="line-126"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var">astCallToAsm</span></a></span><span> </span><span id="local-6989586621679114028"><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114028"><span class="hs-identifier hs-var">compileFn</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ASymbol"><span class="hs-identifier hs-type">ASymbol</span></a></span><span> </span><span id="local-6989586621679114029"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114029"><span class="hs-identifier hs-var">name</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span id="local-6989586621679114030"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114030"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679114031"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114031"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114029"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;&gt;=&quot;</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-127"></span><span>    </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114028"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114031"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114028"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114030"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-128"></span><span>    </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Le"><span class="hs-identifier hs-var">Le</span></a></span><span>
+</span><span id="line-129"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var">astCallToAsm</span></a></span><span> </span><span id="local-6989586621679114033"><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114033"><span class="hs-identifier hs-var">compileFn</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ASymbol"><span class="hs-identifier hs-type">ASymbol</span></a></span><span> </span><span id="local-6989586621679114034"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114034"><span class="hs-identifier hs-var">name</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span id="local-6989586621679114035"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114035"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679114036"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114036"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114034"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;neq?&quot;</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-130"></span><span>    </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114033"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114035"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114033"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114036"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-131"></span><span>    </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Eq"><span class="hs-identifier hs-var">Eq</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Not"><span class="hs-identifier hs-var">Not</span></a></span><span>
+</span><span id="line-132"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var">astCallToAsm</span></a></span><span> </span><span id="local-6989586621679114039"><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114039"><span class="hs-identifier hs-var">compileFn</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ASymbol"><span class="hs-identifier hs-type">ASymbol</span></a></span><span> </span><span id="local-6989586621679114040"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114040"><span class="hs-identifier hs-var">name</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-special">[</span><span id="local-6989586621679114041"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114041"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679114042"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114042"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114040"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;tneq?&quot;</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-133"></span><span>    </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114039"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114041"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114039"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114042"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-134"></span><span>    </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#TEq"><span class="hs-identifier hs-var">TEq</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#Not"><span class="hs-identifier hs-var">Not</span></a></span><span>
+</span><span id="line-135"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var">astCallToAsm</span></a></span><span> </span><span id="local-6989586621679114044"><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114044"><span class="hs-identifier hs-var">compileFn</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ASymbol"><span class="hs-identifier hs-type">ASymbol</span></a></span><span> </span><span id="local-6989586621679114045"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114045"><span class="hs-identifier hs-var">name</span></a></span></span><span class="hs-special">)</span><span> </span><span id="local-6989586621679114046"><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114046"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Map Text Instruction -&gt; Maybe Instruction
+forall k a. Ord k =&gt; k -&gt; Map k a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Map.lookup</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114045"><span class="hs-identifier hs-var">name</span></a></span><span> </span><span class="annot"><span class="annottext">Map Text Instruction
+</span><a href="Compiler.ASM.Builtins.html#builtinMap"><span class="hs-identifier hs-var">builtinMap</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-136"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679114047"><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679114047"><span class="hs-identifier hs-var">instr</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Ast -&gt; CompilerMonad ()) -&gt; [Ast] -&gt; CompilerMonad ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m ()
+</span><span class="hs-identifier hs-var">mapM_</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114044"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114046"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679114047"><span class="hs-identifier hs-var">instr</span></a></span><span>
+</span><span id="line-137"></span><span>    </span><span class="annot"><span class="annottext">Maybe Instruction
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-138"></span><span>        </span><span id="local-6989586621679114048"><span class="annot"><a href="#local-6989586621679114048"><span class="hs-identifier hs-var">sym</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Text -&gt; CompilerMonad (Maybe (ScopeType, Int, Text))
+</span><a href="Compiler.ASM.CompilerMonad.html#lookupSymbol"><span class="hs-identifier hs-var">lookupSymbol</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114045"><span class="hs-identifier hs-var">name</span></a></span><span>
+</span><span id="line-139"></span><span>        </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679114048"><span class="hs-identifier hs-type">sym</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-140"></span><span>            </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="annot"><span class="annottext">(ScopeType, Int, Text)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Ast -&gt; CompilerMonad ()) -&gt; [Ast] -&gt; CompilerMonad ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m ()
+</span><span class="hs-identifier hs-var">mapM_</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114044"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114046"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114044"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Ast
+</span><a href="AST.Ast.html#ASymbol"><span class="hs-identifier hs-var">ASymbol</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114045"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-141"></span><span>                </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#CallIndirect"><span class="hs-identifier hs-var">CallIndirect</span></a></span><span>
+</span><span id="line-142"></span><span>            </span><span class="annot"><span class="annottext">Maybe (ScopeType, Int, Text)
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Ast -&gt; CompilerMonad ()) -&gt; [Ast] -&gt; CompilerMonad ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m ()
+</span><span class="hs-identifier hs-var">mapM_</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114044"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114046"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-143"></span><span>                </span><span class="annot"><span class="annottext">Text -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitCallToLabel"><span class="hs-identifier hs-var">emitCallToLabel</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;fun_&quot;</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Text
+forall a. Semigroup a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">&lt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679114045"><span class="hs-identifier hs-var">name</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-144"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var">astCallToAsm</span></a></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AInteger"><span class="hs-identifier hs-type">AInteger</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-145"></span><span>    </span><span class="annot"><span class="annottext">Either Text () -&gt; CompilerMonad ()
+forall (m :: * -&gt; *) a. Monad m =&gt; m a -&gt; StateT CompilerState m a
+forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(Either Text () -&gt; CompilerMonad ())
+-&gt; Either Text () -&gt; CompilerMonad ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error: Cannot call an Integer&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-146"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var">astCallToAsm</span></a></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ABool"><span class="hs-identifier hs-type">ABool</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-147"></span><span>    </span><span class="annot"><span class="annottext">Either Text () -&gt; CompilerMonad ()
+forall (m :: * -&gt; *) a. Monad m =&gt; m a -&gt; StateT CompilerState m a
+forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(Either Text () -&gt; CompilerMonad ())
+-&gt; Either Text () -&gt; CompilerMonad ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error: Cannot call a Boolean&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-148"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var">astCallToAsm</span></a></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="AST.Ast.html#AVoid"><span class="hs-identifier hs-var">AVoid</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-149"></span><span>    </span><span class="annot"><span class="annottext">Either Text () -&gt; CompilerMonad ()
+forall (m :: * -&gt; *) a. Monad m =&gt; m a -&gt; StateT CompilerState m a
+forall (t :: (* -&gt; *) -&gt; * -&gt; *) (m :: * -&gt; *) a.
+(MonadTrans t, Monad m) =&gt;
+m a -&gt; t m a
+</span><span class="hs-identifier hs-var">lift</span></span><span> </span><span class="annot"><span class="annottext">(Either Text () -&gt; CompilerMonad ())
+-&gt; Either Text () -&gt; CompilerMonad ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Text -&gt; Either Text ()
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;Error: Cannot call Void&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-150"></span><span class="annot"><a href="Compiler.ASM.AstToAsm.html#astCallToAsm"><span class="hs-identifier hs-var">astCallToAsm</span></a></span><span> </span><span id="local-6989586621679114053"><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114053"><span class="hs-identifier hs-var">compileFn</span></a></span></span><span> </span><span id="local-6989586621679114054"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114054"><span class="hs-identifier hs-var">expr</span></a></span></span><span> </span><span id="local-6989586621679114055"><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114055"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-151"></span><span>    </span><span class="annot"><span class="annottext">(Ast -&gt; CompilerMonad ()) -&gt; [Ast] -&gt; CompilerMonad ()
+forall (t :: * -&gt; *) (m :: * -&gt; *) a b.
+(Foldable t, Monad m) =&gt;
+(a -&gt; m b) -&gt; t a -&gt; m ()
+</span><span class="hs-identifier hs-var">mapM_</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114053"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679114055"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; CompilerMonad ()
+</span><a href="#local-6989586621679114053"><span class="hs-identifier hs-var">compileFn</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679114054"><span class="hs-identifier hs-var">expr</span></a></span><span> </span><span class="annot"><span class="annottext">CompilerMonad () -&gt; CompilerMonad () -&gt; CompilerMonad ()
+forall a b.
+StateT CompilerState (Either Text) a
+-&gt; StateT CompilerState (Either Text) b
+-&gt; StateT CompilerState (Either Text) b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-152"></span><span>    </span><span class="annot"><span class="annottext">Instruction -&gt; CompilerMonad ()
+</span><a href="Compiler.ASM.CompilerMonad.html#emitInstruction"><span class="hs-identifier hs-var">emitInstruction</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="Compiler.Instruction.html#CallIndirect"><span class="hs-identifier hs-var">CallIndirect</span></a></span><span>
+</span><span id="line-153"></span></pre></body></html>

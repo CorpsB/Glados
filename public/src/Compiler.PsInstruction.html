@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- PsInstruction
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module : Compiler.PsInstruction
+Description : Intermediate Assembly representation.
+Stability : stable
+-}</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Compiler.PsInstruction.html"><span class="hs-identifier">Compiler.PsInstruction</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Compiler.PsInstruction.html#PsInstruction"><span class="hs-identifier">PsInstruction</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Instruction.html"><span class="hs-identifier">Compiler.Instruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier">Instruction</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- | Pseudo-instructions used during compilation/assembly.</span><span>
+</span><span id="line-21"></span><span class="hs-comment">--</span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-23"></span><span class="hs-comment">--   PsInstruction is an intermediate representation used by the compiler to</span><span>
+</span><span id="line-24"></span><span class="hs-comment">--   express labels and label-referencing operations before a dedicated</span><span>
+</span><span id="line-25"></span><span class="hs-comment">--   assembly pass resolves textual labels to concrete instruction offsets.</span><span>
+</span><span id="line-26"></span><span class="hs-comment">--   Many constructors here resolve to a 'Real Instruction' when labels are</span><span>
+</span><span id="line-27"></span><span class="hs-comment">--   resolved in the assembly pass.</span><span>
+</span><span id="line-28"></span><span class="hs-comment">--</span><span>
+</span><span id="line-29"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-30"></span><span class="hs-comment">--   N/A (this documents the type)</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">data</span><span> </span><span id="PsInstruction"><span class="annot"><a href="Compiler.PsInstruction.html#PsInstruction"><span class="hs-identifier hs-var">PsInstruction</span></a></span></span><span>
+</span><span id="line-33"></span><span>    </span><span class="annot"><span class="hs-comment">-- | A concrete instruction ready for bytecode generation</span></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="Real"><span class="annot"><a href="Compiler.PsInstruction.html#Real"><span class="hs-identifier hs-var">Real</span></a></span></span><span> </span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Defines a label position (e.g., &quot;func_main:&quot;)</span></span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="LabelDef"><span class="annot"><a href="Compiler.PsInstruction.html#LabelDef"><span class="hs-identifier hs-var">LabelDef</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Jumps to Label (resolved in assembly pass)</span></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="JumpLabel"><span class="annot"><a href="Compiler.PsInstruction.html#JumpLabel"><span class="hs-identifier hs-var">JumpLabel</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>              </span><span class="annot"><span class="hs-comment">-- ^ Resolves to Real (Jump off)</span></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="JumpIfFalseLabel"><span class="annot"><a href="Compiler.PsInstruction.html#JumpIfFalseLabel"><span class="hs-identifier hs-var">JumpIfFalseLabel</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>       </span><span class="annot"><span class="hs-comment">-- ^ Resolves to Real (JumpIfFalse off)</span></span><span>
+</span><span id="line-42"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="JumpIfTrueLabel"><span class="annot"><a href="Compiler.PsInstruction.html#JumpIfTrueLabel"><span class="hs-identifier hs-var">JumpIfTrueLabel</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>        </span><span class="annot"><span class="hs-comment">-- ^ Resolves to Real (JumpIfTrue off)</span></span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span>    </span><span class="annot"><span class="hs-comment">-- | Function Calls to Label</span></span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="CallLabel"><span class="annot"><a href="Compiler.PsInstruction.html#CallLabel"><span class="hs-identifier hs-var">CallLabel</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>              </span><span class="annot"><span class="hs-comment">-- ^ Resolves to Real (Call off)</span></span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="TailCallLabel"><span class="annot"><a href="Compiler.PsInstruction.html#TailCallLabel"><span class="hs-identifier hs-var">TailCallLabel</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>          </span><span class="annot"><span class="hs-comment">-- ^ Resolves to Real (TailCall off)</span></span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span>    </span><span class="hs-comment">-- | Closure &amp; Address Ops to Label</span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-comment">-- Used when we need the address of a function defined by a label</span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="MakeClosureLabel"><span class="annot"><a href="Compiler.PsInstruction.html#MakeClosureLabel"><span class="hs-identifier hs-var">MakeClosureLabel</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>   </span><span class="annot"><span class="hs-comment">-- ^ Resolves to Real (MakeClosure off n)</span></span><span>
+</span><span id="line-51"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="GetFuncAddrLabel"><span class="annot"><a href="Compiler.PsInstruction.html#GetFuncAddrLabel"><span class="hs-identifier hs-var">GetFuncAddrLabel</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span>       </span><span class="annot"><span class="hs-comment">-- ^ Resolves to Real (GetFuncAddr off)</span></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679113467"><span id="local-6989586621679113492"><span id="local-6989586621679113496"><span class="annot"><span class="annottext">Int -&gt; PsInstruction -&gt; ShowS
+[PsInstruction] -&gt; ShowS
+PsInstruction -&gt; String
+(Int -&gt; PsInstruction -&gt; ShowS)
+-&gt; (PsInstruction -&gt; String)
+-&gt; ([PsInstruction] -&gt; ShowS)
+-&gt; Show PsInstruction
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; PsInstruction -&gt; ShowS
+showsPrec :: Int -&gt; PsInstruction -&gt; ShowS
+$cshow :: PsInstruction -&gt; String
+show :: PsInstruction -&gt; String
+$cshowList :: [PsInstruction] -&gt; ShowS
+showList :: [PsInstruction] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679113501"><span id="local-6989586621679113519"><span class="annot"><span class="annottext">PsInstruction -&gt; PsInstruction -&gt; Bool
+(PsInstruction -&gt; PsInstruction -&gt; Bool)
+-&gt; (PsInstruction -&gt; PsInstruction -&gt; Bool) -&gt; Eq PsInstruction
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: PsInstruction -&gt; PsInstruction -&gt; Bool
+== :: PsInstruction -&gt; PsInstruction -&gt; Bool
+$c/= :: PsInstruction -&gt; PsInstruction -&gt; Bool
+/= :: PsInstruction -&gt; PsInstruction -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span></pre></body></html>

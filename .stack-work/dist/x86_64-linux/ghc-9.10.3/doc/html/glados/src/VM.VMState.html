@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- VM State
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="VM.VMState.html"><span class="hs-identifier">VM.VMState</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier">VMState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier">VirtualMachine</span></a></span><span>
+</span><span id="line-11"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#createVMState"><span class="hs-identifier">createVMState</span></a></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#createSnapshot"><span class="hs-identifier">createSnapshot</span></a></span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#doSnapshot"><span class="hs-identifier">doSnapshot</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">BS</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">V</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Strict</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">StateT</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">get</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">put</span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Handle</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">stdin</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">stdout</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">stderr</span></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMValue.html"><span class="hs-identifier">VM.VMValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier">VMValue</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.CallSnapshot.html"><span class="hs-identifier">VM.CallSnapshot</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.CallSnapshot.html#CallSnapshot"><span class="hs-identifier">CallSnapshot</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- | The core state of the Virtual Machine.</span><span>
+</span><span id="line-26"></span><span class="hs-comment">--</span><span>
+</span><span id="line-27"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-28"></span><span class="hs-comment">--   This structure holds the entire context of the executing program at any</span><span>
+</span><span id="line-29"></span><span class="hs-comment">--   given microsecond. It includes memory (stack, heap/globals), the processor</span><span>
+</span><span id="line-30"></span><span class="hs-comment">--   registers (IP, FP), and the code itself.</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">data</span><span> </span><span id="VMState"><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier hs-var">VMState</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="VMState"><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier hs-var">VMState</span></a></span></span><span>
+</span><span id="line-33"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="bytecode"><span class="annot"><span class="annottext">VMState -&gt; ByteString
+</span><a href="VM.VMState.html#bytecode"><span class="hs-identifier hs-var hs-var">bytecode</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span>
+</span><span id="line-34"></span><span>      </span><span class="annot"><span class="hs-comment">-- ^ The read-only byte array containing the compiled machine code.</span></span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="bytecodeIndex"><span class="annot"><span class="annottext">VMState -&gt; Int
+</span><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var hs-var">bytecodeIndex</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-37"></span><span>      </span><span class="hs-comment">-- ^ The current index in 'bytecode'.</span><span>
+</span><span id="line-38"></span><span>      </span><span class="hs-comment">--   When a function is called, this value (plus offset) becomes the </span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-comment">--   'callbackIndex' in the pushed CallSnapshot.</span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="vStack"><span class="annot"><span class="annottext">VMState -&gt; Vector VMValue
+</span><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var hs-var">vStack</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.Vector</span></span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span>
+</span><span id="line-42"></span><span>      </span><span class="hs-comment">-- ^ The main data stack.</span><span>
+</span><span id="line-43"></span><span>      </span><span class="hs-comment">--   Contains inputs, outputs, and local variables.</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="baseVStackIndex"><span class="annot"><span class="annottext">VMState -&gt; Int
+</span><a href="VM.VMState.html#baseVStackIndex"><span class="hs-identifier hs-var hs-var">baseVStackIndex</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-46"></span><span>      </span><span class="hs-comment">-- ^ The index in 'vStack' where the current function's local variables begin.</span><span>
+</span><span id="line-47"></span><span>      </span><span class="hs-comment">--   When a function is called, this value is saved as 'vStackIndex' </span><span>
+</span><span id="line-48"></span><span>      </span><span class="hs-comment">--   in the CallSnapshot.</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="snapshotStack"><span class="annot"><span class="annottext">VMState -&gt; [CallSnapshot]
+</span><a href="VM.VMState.html#snapshotStack"><span class="hs-identifier hs-var hs-var">snapshotStack</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="VM.CallSnapshot.html#CallSnapshot"><span class="hs-identifier hs-type">CallSnapshot</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-51"></span><span>      </span><span class="hs-comment">-- ^ The stack of saved contexts (formerly callStack).</span><span>
+</span><span id="line-52"></span><span>      </span><span class="hs-comment">--   Used to restore the state upon returning from a function.</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="env"><span class="annot"><span class="annottext">VMState -&gt; Vector VMValue
+</span><a href="VM.VMState.html#env"><span class="hs-identifier hs-var hs-var">env</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.Vector</span></span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span>
+</span><span id="line-55"></span><span>      </span><span class="hs-comment">-- ^ The Current Environment (Closures).</span><span>
+</span><span id="line-56"></span><span>      </span><span class="hs-comment">--   Contains variables captured by the currently executing function.</span><span>
+</span><span id="line-57"></span><span>      </span><span class="hs-comment">--   If the current function is not a closure, this is typically empty.</span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="globalEnv"><span class="annot"><span class="annottext">VMState -&gt; Vector VMValue
+</span><a href="VM.VMState.html#globalEnv"><span class="hs-identifier hs-var hs-var">globalEnv</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.Vector</span></span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span>
+</span><span id="line-60"></span><span>      </span><span class="hs-comment">-- ^ The persistent global environment.</span><span>
+</span><span id="line-61"></span><span>      </span><span class="hs-comment">--   Stores global variables accessible throughout the program life.</span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="isRunning"><span class="annot"><span class="annottext">VMState -&gt; Bool
+</span><a href="VM.VMState.html#isRunning"><span class="hs-identifier hs-var hs-var">isRunning</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-64"></span><span>      </span><span class="annot"><span class="hs-comment">-- ^ Execution flag. If False, the VM loop terminates.</span></span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="isDebug"><span class="annot"><span class="annottext">VMState -&gt; Bool
+</span><a href="VM.VMState.html#isDebug"><span class="hs-identifier hs-var hs-var">isDebug</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-67"></span><span>      </span><span class="annot"><span class="hs-comment">-- ^ Enable tracing</span></span><span>
+</span><span id="line-68"></span><span>
+</span><span id="line-69"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="vmFds"><span class="annot"><span class="annottext">VMState -&gt; Map Int Handle
+</span><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var hs-var">vmFds</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.Map</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span>
+</span><span id="line-70"></span><span>      </span><span class="annot"><span class="hs-comment">-- ^ Table of file descriptors (Kernel)</span></span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span>    </span><span class="hs-special">,</span><span> </span><span id="nextFd"><span class="annot"><span class="annottext">VMState -&gt; Int
+</span><a href="VM.VMState.html#nextFd"><span class="hs-identifier hs-var hs-var">nextFd</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-73"></span><span>      </span><span class="annot"><span class="hs-comment">-- ^ Next free fd</span></span><span>
+</span><span id="line-74"></span><span>    </span><span class="hs-special">}</span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- | The Monad Transformer stack used for the VM.</span><span>
+</span><span id="line-77"></span><span class="hs-comment">--</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-79"></span><span class="hs-comment">--   We use 'StateT' to carry the 'VMState' and 'IO' to allow for</span><span>
+</span><span id="line-80"></span><span class="hs-comment">--   side effects like printing to the console (PRINT instruction).</span><span>
+</span><span id="line-81"></span><span class="hs-keyword">type</span><span> </span><span id="VirtualMachine"><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-var">VirtualMachine</span></a></span></span><span> </span><span id="local-6989586621679117219"><span class="annot"><a href="#local-6989586621679117219"><span class="hs-identifier hs-type">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">StateT</span></span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><a href="#local-6989586621679117219"><span class="hs-identifier hs-type">a</span></a></span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- | Creates the initial state of the VM for a given program.</span><span>
+</span><span id="line-84"></span><span class="hs-comment">--</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-86"></span><span class="hs-comment">--   - code: The compiled binary code to execute.</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-89"></span><span class="hs-comment">--   A pristine 'VMState' ready for execution.</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="VM.VMState.html#createVMState"><span class="hs-identifier hs-type">createVMState</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span>
+</span><span id="line-92"></span><span id="createVMState"><span class="annot"><span class="annottext">createVMState :: ByteString -&gt; Bool -&gt; VMState
+</span><a href="VM.VMState.html#createVMState"><span class="hs-identifier hs-var hs-var">createVMState</span></a></span></span><span> </span><span id="local-6989586621679117220"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679117220"><span class="hs-identifier hs-var">code</span></a></span></span><span> </span><span id="local-6989586621679117221"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117221"><span class="hs-identifier hs-var">debug</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span>
+</span><span id="line-93"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">bytecode :: ByteString
+</span><a href="VM.VMState.html#bytecode"><span class="hs-identifier hs-var">bytecode</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679117220"><span class="hs-identifier hs-var">code</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">bytecodeIndex :: Int
+</span><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-94"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">vStack :: Vector VMValue
+</span><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Vector VMValue
+forall a. Vector a
+</span><span class="hs-identifier hs-var">V.empty</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">baseVStackIndex :: Int
+</span><a href="VM.VMState.html#baseVStackIndex"><span class="hs-identifier hs-var">baseVStackIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span>
+</span><span id="line-95"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">snapshotStack :: [CallSnapshot]
+</span><a href="VM.VMState.html#snapshotStack"><span class="hs-identifier hs-var">snapshotStack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">env :: Vector VMValue
+</span><a href="VM.VMState.html#env"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Vector VMValue
+forall a. Vector a
+</span><span class="hs-identifier hs-var">V.empty</span></span><span>
+</span><span id="line-96"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">globalEnv :: Vector VMValue
+</span><a href="VM.VMState.html#globalEnv"><span class="hs-identifier hs-var">globalEnv</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; VMValue -&gt; Vector VMValue
+forall a. Int -&gt; a -&gt; Vector a
+</span><span class="hs-identifier hs-var">V.replicate</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1024</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">VMValue
+forall a. HasCallStack =&gt; a
+</span><span class="hs-identifier hs-var">undefined</span></span><span class="hs-special">)</span><span>
+</span><span id="line-97"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">isRunning :: Bool
+</span><a href="VM.VMState.html#isRunning"><span class="hs-identifier hs-var">isRunning</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">isDebug :: Bool
+</span><a href="VM.VMState.html#isDebug"><span class="hs-identifier hs-var">isDebug</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117221"><span class="hs-identifier hs-var">debug</span></a></span><span>
+</span><span id="line-98"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">vmFds :: Map Int Handle
+</span><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[(Int, Handle)] -&gt; Map Int Handle
+forall k a. Ord k =&gt; [(k, a)] -&gt; Map k a
+</span><span class="hs-identifier hs-var">Map.fromList</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Handle
+</span><span class="hs-identifier hs-var">stdin</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Handle
+</span><span class="hs-identifier hs-var">stdout</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Handle
+</span><span class="hs-identifier hs-var">stderr</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-99"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">nextFd :: Int
+</span><a href="VM.VMState.html#nextFd"><span class="hs-identifier hs-var">nextFd</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">3</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- | Creates a snapshot of the current VM context (IP, FP, Env).</span><span>
+</span><span id="line-102"></span><span class="hs-comment">--</span><span>
+</span><span id="line-103"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-104"></span><span class="hs-comment">--   - vm: The current VM state.</span><span>
+</span><span id="line-105"></span><span class="hs-comment">--</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-107"></span><span class="hs-comment">--   Captures the current Instruction Pointer, Frame Pointer, and Closure Environment.</span><span>
+</span><span id="line-108"></span><span class="hs-comment">--   Used by CALL instructions to save the state before jumping.</span><span>
+</span><span id="line-109"></span><span class="hs-comment">--</span><span>
+</span><span id="line-110"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-111"></span><span class="hs-comment">--   A 'CallSnapshot' containing the saved context.</span><span>
+</span><span id="line-112"></span><span class="hs-comment">--</span><span>
+</span><span id="line-113"></span><span class="annot"><a href="VM.VMState.html#createSnapshot"><span class="hs-identifier hs-type">createSnapshot</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.CallSnapshot.html#CallSnapshot"><span class="hs-identifier hs-type">CallSnapshot</span></a></span><span>
+</span><span id="line-114"></span><span id="createSnapshot"><span class="annot"><span class="annottext">createSnapshot :: VMState -&gt; CallSnapshot
+</span><a href="VM.VMState.html#createSnapshot"><span class="hs-identifier hs-var hs-var">createSnapshot</span></a></span></span><span> </span><span id="local-6989586621679117227"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117227"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="VM.CallSnapshot.html#CallSnapshot"><span class="hs-identifier hs-type">CallSnapshot</span></a></span><span>
+</span><span id="line-115"></span><span>    </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">callbackIndex :: Int
+</span><a href="VM.CallSnapshot.html#callbackIndex"><span class="hs-identifier hs-var">callbackIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Int
+</span><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117227"><span class="hs-identifier hs-var">vm</span></a></span><span>
+</span><span id="line-116"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">vStackIndex :: Int
+</span><a href="VM.CallSnapshot.html#vStackIndex"><span class="hs-identifier hs-var">vStackIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Int
+</span><a href="VM.VMState.html#baseVStackIndex"><span class="hs-identifier hs-var">baseVStackIndex</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117227"><span class="hs-identifier hs-var">vm</span></a></span><span>
+</span><span id="line-117"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">vEnv :: Vector VMValue
+</span><a href="VM.CallSnapshot.html#vEnv"><span class="hs-identifier hs-var">vEnv</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Vector VMValue
+</span><a href="VM.VMState.html#env"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117227"><span class="hs-identifier hs-var">vm</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span class="hs-comment">-- | Sets up a new stack frame for a function call (Shared Logic).</span><span>
+</span><span id="line-120"></span><span class="hs-comment">--</span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-122"></span><span class="hs-comment">--   - idx: The absolute address (index) to jump to.</span><span>
+</span><span id="line-123"></span><span class="hs-comment">--   - newEnv: The closure environment to load (empty for static calls).</span><span>
+</span><span id="line-124"></span><span class="hs-comment">--</span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-126"></span><span class="hs-comment">--   1. Creates and pushes a snapshot of the current state.</span><span>
+</span><span id="line-127"></span><span class="hs-comment">--   2. Updates FP (baseVStackIndex) and IP (bytecodeIndex).</span><span>
+</span><span id="line-128"></span><span class="hs-comment">--   3. Sets the new environment.</span><span>
+</span><span id="line-129"></span><span class="hs-comment">--</span><span>
+</span><span id="line-130"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-131"></span><span class="hs-comment">--   Unit. State is modified.</span><span>
+</span><span id="line-132"></span><span class="hs-comment">--</span><span>
+</span><span id="line-133"></span><span class="annot"><a href="VM.VMState.html#doSnapshot"><span class="hs-identifier hs-type">doSnapshot</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.Vector</span></span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-134"></span><span id="doSnapshot"><span class="annot"><span class="annottext">doSnapshot :: Int -&gt; Vector VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMState.html#doSnapshot"><span class="hs-identifier hs-var hs-var">doSnapshot</span></a></span></span><span> </span><span id="local-6989586621679117229"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117229"><span class="hs-identifier hs-var">idx</span></a></span></span><span> </span><span id="local-6989586621679117230"><span class="annot"><span class="annottext">Vector VMValue
+</span><a href="#local-6989586621679117230"><span class="hs-identifier hs-var">nEnv</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-135"></span><span>    </span><span id="local-6989586621679117231"><span class="annot"><a href="#local-6989586621679117231"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMState
+forall s (m :: * -&gt; *). MonadState s m =&gt; m s
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-136"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">put</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><a href="#local-6989586621679117231"><span class="hs-identifier hs-type">vm</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#snapshotStack"><span class="hs-identifier hs-var">snapshotStack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="VM.VMState.html#createSnapshot"><span class="hs-identifier hs-type">createSnapshot</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117231"><span class="hs-identifier hs-type">vm</span></a></span><span> </span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span> </span><span class="annot"><a href="VM.VMState.html#snapshotStack"><span class="hs-identifier hs-var">snapshotStack</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117231"><span class="hs-identifier hs-type">vm</span></a></span><span>
+</span><span id="line-137"></span><span>             </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#baseVStackIndex"><span class="hs-identifier hs-var">baseVStackIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.length</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117231"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-138"></span><span>             </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#bytecodeIndex"><span class="hs-identifier hs-var">bytecodeIndex</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679117229"><span class="hs-identifier hs-type">idx</span></a></span><span>
+</span><span id="line-139"></span><span>             </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#env"><span class="hs-identifier hs-var">env</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="#local-6989586621679117230"><span class="hs-identifier hs-type">nEnv</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-140"></span></pre></body></html>

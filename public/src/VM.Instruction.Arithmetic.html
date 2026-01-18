@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Arithmetic Instructions
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module      : VM.Instruction.Arithmetic
+Description : Implementation of mathematical operations.
+Stability   : stable
+
+Handles basic arithmetic. 
+WARNING: Operations are performed on the top two stack elements. 
+Since the stack is LIFO, the first popped element is the Right-Hand Operand.
+-}</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="VM.Instruction.Arithmetic.html"><span class="hs-identifier">VM.Instruction.Arithmetic</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instAdd"><span class="hs-identifier">instAdd</span></a></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instSub"><span class="hs-identifier">instSub</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instMul"><span class="hs-identifier">instMul</span></a></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instDiv"><span class="hs-identifier">instDiv</span></a></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instMod"><span class="hs-identifier">instMod</span></a></span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Arithmetic.html#binaryInstInt"><span class="hs-identifier">binaryInstInt</span></a></span><span>
+</span><span id="line-24"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Arithmetic.html#binaryInstIntZero"><span class="hs-identifier">binaryInstIntZero</span></a></span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-26"></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Common.Type.Integer.html"><span class="hs-identifier">Common.Type.Integer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier">IntValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier">intValueToInt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMState.html"><span class="hs-identifier">VM.VMState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier">VirtualMachine</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMValue.html"><span class="hs-identifier">VM.VMValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier">VMValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMStack.html"><span class="hs-identifier">VM.VMStack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMStack.html#stackPush"><span class="hs-identifier">stackPush</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier">stackPop</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- | Helper function for binary integer operations.</span><span>
+</span><span id="line-33"></span><span class="hs-comment">--</span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-35"></span><span class="hs-comment">--   - fn: The Haskell binary function to apply (e.g., (+), (-)).</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-38"></span><span class="hs-comment">--   1. Pops the Right Operand (v2).</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--   2. Pops the Left Operand (v1).</span><span>
+</span><span id="line-40"></span><span class="hs-comment">--   3. Checks if both are integers.</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--   4. Applies 'fn' and pushes the result.</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- @throws</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--   Error if operands are not VInt.</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--</span><span>
+</span><span id="line-46"></span><span class="annot"><a href="VM.Instruction.Arithmetic.html#binaryInstInt"><span class="hs-identifier hs-type">binaryInstInt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span id="binaryInstInt"><span class="annot"><span class="annottext">binaryInstInt :: (Int -&gt; Int -&gt; Int) -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#binaryInstInt"><span class="hs-identifier hs-var hs-var">binaryInstInt</span></a></span></span><span> </span><span id="local-6989586621679117667"><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+</span><a href="#local-6989586621679117667"><span class="hs-identifier hs-var">fn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-48"></span><span>    </span><span id="local-6989586621679117668"><span class="annot"><a href="#local-6989586621679117668"><span class="hs-identifier hs-var">v2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-49"></span><span>    </span><span id="local-6989586621679117669"><span class="annot"><a href="#local-6989586621679117669"><span class="hs-identifier hs-var">v1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679117669"><span class="hs-identifier hs-type">v1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679117668"><span class="hs-identifier hs-type">v2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-51"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679117671"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117671"><span class="hs-identifier hs-var">i1</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679117672"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117672"><span class="hs-identifier hs-var">i2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-52"></span><span>            </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679117673"><span class="annot"><span class="annottext">result :: Int
+</span><a href="#local-6989586621679117673"><span class="hs-identifier hs-var hs-var">result</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+</span><a href="#local-6989586621679117667"><span class="hs-identifier hs-var">fn</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117671"><span class="hs-identifier hs-var">i1</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117672"><span class="hs-identifier hs-var">i2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">in</span><span>
+</span><span id="line-53"></span><span>            </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IntValue -&gt; VMValue
+</span><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-var">VInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I64"><span class="hs-identifier hs-var">I64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117673"><span class="hs-identifier hs-var">result</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-54"></span><span>        </span><span class="annot"><span class="annottext">(VMValue, VMValue)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: Arithmetic instruction expects Integers&quot;</span></span><span>
+</span><span id="line-55"></span><span>
+</span><span id="line-56"></span><span class="hs-comment">-- | Helper function for division and modulo with Zero Check.</span><span>
+</span><span id="line-57"></span><span class="hs-comment">--</span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--   - fn: The Haskell binary function (div or mod).</span><span>
+</span><span id="line-60"></span><span class="hs-comment">--</span><span>
+</span><span id="line-61"></span><span class="hs-comment">-- @throws</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--   Error &quot;VM Error: Division by Zero&quot; if the divisor (v2) is 0.</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--</span><span>
+</span><span id="line-64"></span><span class="annot"><a href="VM.Instruction.Arithmetic.html#binaryInstIntZero"><span class="hs-identifier hs-type">binaryInstIntZero</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span id="binaryInstIntZero"><span class="annot"><span class="annottext">binaryInstIntZero :: (Int -&gt; Int -&gt; Int) -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#binaryInstIntZero"><span class="hs-identifier hs-var hs-var">binaryInstIntZero</span></a></span></span><span> </span><span id="local-6989586621679117676"><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+</span><a href="#local-6989586621679117676"><span class="hs-identifier hs-var">fn</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-66"></span><span>    </span><span id="local-6989586621679117677"><span class="annot"><a href="#local-6989586621679117677"><span class="hs-identifier hs-var">v2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span> </span><span class="hs-comment">-- Divisor (b)</span><span>
+</span><span id="line-67"></span><span>    </span><span id="local-6989586621679117678"><span class="annot"><a href="#local-6989586621679117678"><span class="hs-identifier hs-var">v1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span> </span><span class="hs-comment">-- Dividend (a)</span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679117678"><span class="hs-identifier hs-type">v1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679117677"><span class="hs-identifier hs-type">v2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-69"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679117679"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117679"><span class="hs-identifier hs-var">i1</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679117680"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117680"><span class="hs-identifier hs-var">i2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679117681"><span class="annot"><span class="annottext">a :: Int
+</span><a href="#local-6989586621679117681"><span class="hs-identifier hs-var hs-var">a</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117679"><span class="hs-identifier hs-var">i1</span></a></span><span>
+</span><span id="line-70"></span><span>                                  </span><span id="local-6989586621679117682"><span class="annot"><span class="annottext">b :: Int
+</span><a href="#local-6989586621679117682"><span class="hs-identifier hs-var hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117680"><span class="hs-identifier hs-var">i2</span></a></span><span> </span><span class="hs-keyword">in</span><span>
+</span><span id="line-71"></span><span>            </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117682"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-72"></span><span>                </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: Division by Zero&quot;</span></span><span>
+</span><span id="line-73"></span><span>                </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IntValue -&gt; VMValue
+</span><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-var">VInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I64"><span class="hs-identifier hs-var">I64</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int64
+forall a b. (Integral a, Num b) =&gt; a -&gt; b
+</span><span class="hs-identifier hs-var">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+</span><a href="#local-6989586621679117676"><span class="hs-identifier hs-var">fn</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117681"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117682"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>        </span><span class="annot"><span class="annottext">(VMValue, VMValue)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: Arithmetic instruction expects Integers&quot;</span></span><span>
+</span><span id="line-75"></span><span>
+</span><span id="line-76"></span><span class="hs-comment">-- | Implements Addition (Opcode 0x10).</span><span>
+</span><span id="line-77"></span><span class="hs-comment">--</span><span>
+</span><span id="line-78"></span><span class="hs-comment">-- Stack: [a, b] -&gt; [a + b]</span><span>
+</span><span id="line-79"></span><span class="hs-comment">--</span><span>
+</span><span id="line-80"></span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instAdd"><span class="hs-identifier hs-type">instAdd</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-81"></span><span id="instAdd"><span class="annot"><span class="annottext">instAdd :: VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#instAdd"><span class="hs-identifier hs-var hs-var">instAdd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Int -&gt; Int) -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#binaryInstInt"><span class="hs-identifier hs-var">binaryInstInt</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">(+)</span></span><span>
+</span><span id="line-82"></span><span>
+</span><span id="line-83"></span><span class="hs-comment">-- | Implements Subtraction (Opcode 0x11).</span><span>
+</span><span id="line-84"></span><span class="hs-comment">--</span><span>
+</span><span id="line-85"></span><span class="hs-comment">-- Stack: [a, b] -&gt; [a - b] (Note: b is popped first)</span><span>
+</span><span id="line-86"></span><span class="hs-comment">--</span><span>
+</span><span id="line-87"></span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instSub"><span class="hs-identifier hs-type">instSub</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span id="instSub"><span class="annot"><span class="annottext">instSub :: VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#instSub"><span class="hs-identifier hs-var hs-var">instSub</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Int -&gt; Int) -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#binaryInstInt"><span class="hs-identifier hs-var">binaryInstInt</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- | Implements Multiplication (Opcode 0x12).</span><span>
+</span><span id="line-91"></span><span class="hs-comment">--</span><span>
+</span><span id="line-92"></span><span class="hs-comment">-- Stack: [a, b] -&gt; [a * b]</span><span>
+</span><span id="line-93"></span><span class="hs-comment">--</span><span>
+</span><span id="line-94"></span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instMul"><span class="hs-identifier hs-type">instMul</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-95"></span><span id="instMul"><span class="annot"><span class="annottext">instMul :: VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#instMul"><span class="hs-identifier hs-var hs-var">instMul</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Int -&gt; Int) -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#binaryInstInt"><span class="hs-identifier hs-var">binaryInstInt</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">(*)</span></span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- | Implements Division (Opcode 0x13).</span><span>
+</span><span id="line-98"></span><span class="hs-comment">--</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- Stack: [a, b] -&gt; [a / b]</span><span>
+</span><span id="line-100"></span><span class="hs-comment">--</span><span>
+</span><span id="line-101"></span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instDiv"><span class="hs-identifier hs-type">instDiv</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span id="instDiv"><span class="annot"><span class="annottext">instDiv :: VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#instDiv"><span class="hs-identifier hs-var hs-var">instDiv</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Int -&gt; Int) -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#binaryInstIntZero"><span class="hs-identifier hs-var">binaryInstIntZero</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Integral a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">div</span></span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- | Implements Modulo (Opcode 0x14).</span><span>
+</span><span id="line-105"></span><span class="hs-comment">--</span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- Stack: [a, b] -&gt; [a % b]</span><span>
+</span><span id="line-107"></span><span class="hs-comment">--</span><span>
+</span><span id="line-108"></span><span class="annot"><a href="VM.Instruction.Arithmetic.html#instMod"><span class="hs-identifier hs-type">instMod</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-109"></span><span id="instMod"><span class="annot"><span class="annottext">instMod :: VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#instMod"><span class="hs-identifier hs-var hs-var">instMod</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Int -&gt; Int) -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Arithmetic.html#binaryInstIntZero"><span class="hs-identifier hs-var">binaryInstIntZero</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Integral a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-identifier hs-var">mod</span></span><span>
+</span><span id="line-110"></span></pre></body></html>

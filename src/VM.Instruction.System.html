@@ -1,0 +1,144 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- System Instructions
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module      : VM.Instruction.System
+Description : System calls and VM control flow.
+Stability   : stable
+-}</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="VM.Instruction.System.html"><span class="hs-identifier">VM.Instruction.System</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="VM.Instruction.System.html#instPrint"><span class="hs-identifier">instPrint</span></a></span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.System.html#instHalt"><span class="hs-identifier">instHalt</span></a></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.System.html#instExit"><span class="hs-identifier">instExit</span></a></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.System.html#instCheckStack"><span class="hs-identifier">instCheckStack</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Exit</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">exitWith</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">ExitCode</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Strict</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">liftIO</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">modify</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">get</span></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">V</span></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text.IO</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">TIO</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMState.html"><span class="hs-identifier">VM.VMState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier">VirtualMachine</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier">VMState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMValue.html"><span class="hs-identifier">VM.VMValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#valueToString"><span class="hs-identifier">valueToString</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier">valueToInt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMStack.html"><span class="hs-identifier">VM.VMStack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier">stackPop</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.Bytecode.Reader.html"><span class="hs-identifier">VM.Bytecode.Reader</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.Bytecode.Reader.html#readInt32"><span class="hs-identifier">readInt32</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- | Implements PRINT (Opcode 0x70).</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--</span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-33"></span><span class="hs-comment">--   Pops the top value from the stack and prints its string representation</span><span>
+</span><span id="line-34"></span><span class="hs-comment">--   to the standard output (stdout), followed by a newline.</span><span>
+</span><span id="line-35"></span><span class="hs-comment">--   Useful for debugging or simple output programs.</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="annot"><a href="VM.Instruction.System.html#instPrint"><span class="hs-identifier hs-type">instPrint</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span id="instPrint"><span class="annot"><span class="annottext">instPrint :: VirtualMachine ()
+</span><a href="VM.Instruction.System.html#instPrint"><span class="hs-identifier hs-var hs-var">instPrint</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-39"></span><span>    </span><span id="local-6989586621679118122"><span class="annot"><a href="#local-6989586621679118122"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">liftIO</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">TIO.putStr</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#valueToString"><span class="hs-identifier hs-type">valueToString</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118122"><span class="hs-identifier hs-type">val</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- | Implements HALT (Opcode 0x71).</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   Sets the 'isRunning' flag of the VM state to False.</span><span>
+</span><span id="line-46"></span><span class="hs-comment">--   This will cause the main Execution loop to terminate gracefully</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--   on the next cycle.</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--</span><span>
+</span><span id="line-49"></span><span class="annot"><a href="VM.Instruction.System.html#instHalt"><span class="hs-identifier hs-type">instHalt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span id="instHalt"><span class="annot"><span class="annottext">instHalt :: VirtualMachine ()
+</span><a href="VM.Instruction.System.html#instHalt"><span class="hs-identifier hs-var hs-var">instHalt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(VMState -&gt; VMState) -&gt; VirtualMachine ()
+forall s (m :: * -&gt; *). MonadState s m =&gt; (s -&gt; s) -&gt; m ()
+</span><span class="hs-identifier hs-var">modify</span></span><span> </span><span class="annot"><span class="annottext">((VMState -&gt; VMState) -&gt; VirtualMachine ())
+-&gt; (VMState -&gt; VMState) -&gt; VirtualMachine ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679118125"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118125"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118125"><span class="hs-identifier hs-var">vm</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#isRunning"><span class="hs-identifier hs-var">isRunning</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">False</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- | Implements CHECK_STACK (Opcode 0xFE).</span><span>
+</span><span id="line-53"></span><span class="hs-comment">--</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--   Ensures the stack has at least 'N' elements.</span><span>
+</span><span id="line-56"></span><span class="hs-comment">--   Reads 'N' as an Int32. Throws error if stack is too small.</span><span>
+</span><span id="line-57"></span><span class="hs-comment">--</span><span>
+</span><span id="line-58"></span><span class="annot"><a href="VM.Instruction.System.html#instCheckStack"><span class="hs-identifier hs-type">instCheckStack</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span id="instCheckStack"><span class="annot"><span class="annottext">instCheckStack :: VirtualMachine ()
+</span><a href="VM.Instruction.System.html#instCheckStack"><span class="hs-identifier hs-var hs-var">instCheckStack</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-60"></span><span>    </span><span id="local-6989586621679118126"><span class="annot"><a href="#local-6989586621679118126"><span class="hs-identifier hs-var">required</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine Int
+</span><a href="VM.Bytecode.Reader.html#readInt32"><span class="hs-identifier hs-var">readInt32</span></a></span><span>
+</span><span id="line-61"></span><span>    </span><span id="local-6989586621679118127"><span class="annot"><a href="#local-6989586621679118127"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">get</span></span><span>
+</span><span id="line-62"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.length</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679118127"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-operator hs-type">&gt;=</span></span><span> </span><span class="annot"><a href="#local-6989586621679118126"><span class="hs-identifier hs-type">required</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-63"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">([Char] -&gt; VirtualMachine ()) -&gt; [Char] -&gt; VirtualMachine ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: Stack Check Failed (Required: &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span>
+</span><span id="line-64"></span><span>            </span><span class="annot"><span class="annottext">Int -&gt; [Char]
+forall a. Show a =&gt; a -&gt; [Char]
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679118126"><span class="hs-identifier hs-var">required</span></a></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;, Actual: &quot;</span></span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; [Char]
+forall a. Show a =&gt; a -&gt; [Char]
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vector VMValue -&gt; Int
+forall a. Vector a -&gt; Int
+</span><span class="hs-identifier hs-var">V.length</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">VMState -&gt; Vector VMValue
+</span><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679118127"><span class="hs-identifier hs-var">vm</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; [Char] -&gt; [Char]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-65"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; VirtualMachine ()
+forall a. a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- | Implements EXIT (Opcode 0x72).</span><span>
+</span><span id="line-68"></span><span class="hs-comment">--</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-70"></span><span class="hs-comment">--   Pops an integer status code from the stack and terminates the process.</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--   Useful for unit testing (exit 84 on failure).</span><span>
+</span><span id="line-72"></span><span class="hs-comment">--</span><span>
+</span><span id="line-73"></span><span class="annot"><a href="VM.Instruction.System.html#instExit"><span class="hs-identifier hs-type">instExit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span id="instExit"><span class="annot"><span class="annottext">instExit :: VirtualMachine ()
+</span><a href="VM.Instruction.System.html#instExit"><span class="hs-identifier hs-var hs-var">instExit</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-75"></span><span>    </span><span id="local-6989586621679118132"><span class="annot"><a href="#local-6989586621679118132"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679118133"><span class="annot"><a href="#local-6989586621679118133"><span class="hs-identifier hs-var hs-var">code</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; Int
+</span><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier hs-var">valueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">VMValue
+</span><a href="#local-6989586621679118132"><span class="hs-identifier hs-var">v</span></a></span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679118133"><span class="hs-identifier hs-type">code</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-78"></span><span>        </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO () -&gt; VirtualMachine ()
+forall a. IO a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; VirtualMachine ()) -&gt; IO () -&gt; VirtualMachine ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ExitCode -&gt; IO ()
+forall a. ExitCode -&gt; IO a
+</span><span class="hs-identifier hs-var">exitWith</span></span><span> </span><span class="annot"><span class="annottext">ExitCode
+</span><span class="hs-identifier hs-var">ExitSuccess</span></span><span>
+</span><span id="line-79"></span><span>        </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO () -&gt; VirtualMachine ()
+forall a. IO a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; VirtualMachine ()) -&gt; IO () -&gt; VirtualMachine ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ExitCode -&gt; IO ()
+forall a. ExitCode -&gt; IO a
+</span><span class="hs-identifier hs-var">exitWith</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; ExitCode
+</span><span class="hs-identifier hs-var">ExitFailure</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679118133"><span class="hs-identifier hs-var">code</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span></pre></body></html>

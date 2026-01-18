@@ -1,0 +1,368 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Ast
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="AST.Ast.html"><span class="hs-identifier">AST.Ast</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier">Ast</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier">showAst</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AST.Ast.html#printAst"><span class="hs-identifier">printAst</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier">cleanAst</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Common.Type.Integer.html"><span class="hs-identifier">Common.Type.Integer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier">IntValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier">intValueToInt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">DT</span></span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-comment">-- | Abstract Syntax Tree (AST) definition for the GLADOS language.</span><span>
+</span><span id="line-14"></span><span class="hs-comment">--</span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-16"></span><span class="hs-comment">--   The AST represents the hierarchical structure of the parsed source code.</span><span>
+</span><span id="line-17"></span><span class="hs-comment">--   Each constructor corresponds to a specific syntactic construct in</span><span>
+</span><span id="line-18"></span><span class="hs-comment">--   the language, such as literals, definitions, control flow, and</span><span>
+</span><span id="line-19"></span><span class="hs-comment">--   function calls.</span><span>
+</span><span id="line-20"></span><span class="hs-comment">--</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">data</span><span> </span><span id="Ast"><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-var">Ast</span></a></span></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="AInteger"><span class="annot"><a href="AST.Ast.html#AInteger"><span class="hs-identifier hs-var">AInteger</span></a></span></span><span> </span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier hs-type">IntValue</span></a></span><span>
+</span><span id="line-23"></span><span>      </span><span class="hs-comment">-- ^ Represents an integer literal.</span><span>
+</span><span id="line-24"></span><span>      </span><span class="hs-comment">--   @param IntValue The value of the integer.</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ABool"><span class="annot"><a href="AST.Ast.html#ABool"><span class="hs-identifier hs-var">ABool</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-27"></span><span>      </span><span class="hs-comment">-- ^ Represents a boolean literal.</span><span>
+</span><span id="line-28"></span><span>      </span><span class="hs-comment">--   @param Bool True or False.</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ASymbol"><span class="annot"><a href="AST.Ast.html#ASymbol"><span class="hs-identifier hs-var">ASymbol</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-31"></span><span>      </span><span class="hs-comment">-- ^ Represents a symbol (identifier).</span><span>
+</span><span id="line-32"></span><span>      </span><span class="hs-comment">--   Used for variable names, function names, or reference lookups.</span><span>
+</span><span id="line-33"></span><span>      </span><span class="hs-comment">--   @param Text The name of the symbol.</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AVoid"><span class="annot"><a href="AST.Ast.html#AVoid"><span class="hs-identifier hs-var">AVoid</span></a></span></span><span>
+</span><span id="line-36"></span><span>      </span><span class="annot"><span class="hs-comment">-- ^ Represents a Void or Null value (no return value).</span></span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AList"><span class="annot"><a href="AST.Ast.html#AList"><span class="hs-identifier hs-var">AList</span></a></span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-comment">-- ^ Represents a generic list of AST nodes.</span><span>
+</span><span id="line-40"></span><span>      </span><span class="hs-comment">--   Can be used for list literals or sequence of expressions.</span><span>
+</span><span id="line-41"></span><span>      </span><span class="hs-comment">--   @param [Ast] The elements of the list.</span><span>
+</span><span id="line-42"></span><span>
+</span><span id="line-43"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ADefineFunc"><span class="annot"><a href="AST.Ast.html#ADefineFunc"><span class="hs-identifier hs-var">ADefineFunc</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-44"></span><span>      </span><span class="hs-comment">-- ^ Represents a named function definition.</span><span>
+</span><span id="line-45"></span><span>      </span><span class="hs-comment">--   @param Text The name of the function.</span><span>
+</span><span id="line-46"></span><span>      </span><span class="hs-comment">--   @param [(Text, Text)] The list of arguments (Name, Type).</span><span>
+</span><span id="line-47"></span><span>      </span><span class="hs-comment">--   @param Text The return type of the function.</span><span>
+</span><span id="line-48"></span><span>      </span><span class="hs-comment">--   @param Ast The body of the function.</span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ADefineLambda"><span class="annot"><a href="AST.Ast.html#ADefineLambda"><span class="hs-identifier hs-var">ADefineLambda</span></a></span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-51"></span><span>      </span><span class="hs-comment">-- ^ Represents an anonymous function (Lambda).</span><span>
+</span><span id="line-52"></span><span>      </span><span class="hs-comment">--   @param [Text] The list of parameter names.</span><span>
+</span><span id="line-53"></span><span>      </span><span class="hs-comment">--   @param Ast The body of the lambda.</span><span>
+</span><span id="line-54"></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ADefineStruct"><span class="annot"><a href="AST.Ast.html#ADefineStruct"><span class="hs-identifier hs-var">ADefineStruct</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-56"></span><span>      </span><span class="hs-comment">-- ^ Represents a structure type definition.</span><span>
+</span><span id="line-57"></span><span>      </span><span class="hs-comment">--   @param Text The name of the structure.</span><span>
+</span><span id="line-58"></span><span>      </span><span class="hs-comment">--   @param [(Text, Text)] The list of fields (Name, Type).</span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ASetVar"><span class="annot"><a href="AST.Ast.html#ASetVar"><span class="hs-identifier hs-var">ASetVar</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-61"></span><span>      </span><span class="hs-comment">-- ^ Represents a variable definition or assignment.</span><span>
+</span><span id="line-62"></span><span>      </span><span class="hs-comment">--   @param Text The name of the variable.</span><span>
+</span><span id="line-63"></span><span>      </span><span class="hs-comment">--   @param Text The type of the variable.</span><span>
+</span><span id="line-64"></span><span>      </span><span class="hs-comment">--   @param Ast The value assigned to the variable.</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ASetStruct"><span class="annot"><a href="AST.Ast.html#ASetStruct"><span class="hs-identifier hs-var">ASetStruct</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span class="hs-special">)</span><span class="hs-special">]</span><span>
+</span><span id="line-67"></span><span>      </span><span class="hs-comment">-- ^ Represents a structure definition statement wrapper.</span><span>
+</span><span id="line-68"></span><span>      </span><span class="hs-comment">--   @param ADefineStruct The structure definition node.</span><span>
+</span><span id="line-69"></span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ACall"><span class="annot"><a href="AST.Ast.html#ACall"><span class="hs-identifier hs-var">ACall</span></a></span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-71"></span><span>      </span><span class="hs-comment">-- ^ Represents a function call (Application).</span><span>
+</span><span id="line-72"></span><span>      </span><span class="hs-comment">--   @param Ast The callee (function expression or symbol).</span><span>
+</span><span id="line-73"></span><span>      </span><span class="hs-comment">--   @param [Ast] The list of arguments passed to the function.</span><span>
+</span><span id="line-74"></span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AAccessStruct"><span class="annot"><a href="AST.Ast.html#AAccessStruct"><span class="hs-identifier hs-var">AAccessStruct</span></a></span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-76"></span><span>      </span><span class="hs-comment">-- ^ Represents a field access (e.g., player.x).</span><span>
+</span><span id="line-77"></span><span>      </span><span class="hs-comment">--   @param Ast The object/structure being accessed.</span><span>
+</span><span id="line-78"></span><span>      </span><span class="hs-comment">--   @param Text The name of the field.</span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AImport"><span class="annot"><a href="AST.Ast.html#AImport"><span class="hs-identifier hs-var">AImport</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-81"></span><span>      </span><span class="hs-comment">-- ^ Represents an import statement.</span><span>
+</span><span id="line-82"></span><span>      </span><span class="hs-comment">--   @param Text The name of the module or file to import.</span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AIf"><span class="annot"><a href="AST.Ast.html#AIf"><span class="hs-identifier hs-var">AIf</span></a></span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-85"></span><span>      </span><span class="hs-comment">-- ^ Represents a conditional control flow (If-Then-Else).</span><span>
+</span><span id="line-86"></span><span>      </span><span class="hs-comment">--   @param Ast The condition expression.</span><span>
+</span><span id="line-87"></span><span>      </span><span class="hs-comment">--   @param Ast The &quot;Then&quot; branch.</span><span>
+</span><span id="line-88"></span><span>      </span><span class="hs-comment">--   @param Ast The &quot;Else&quot; branch.</span><span>
+</span><span id="line-89"></span><span>
+</span><span id="line-90"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AWhile"><span class="annot"><a href="AST.Ast.html#AWhile"><span class="hs-identifier hs-var">AWhile</span></a></span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-91"></span><span>      </span><span class="hs-comment">-- ^ Represents a While loop.</span><span>
+</span><span id="line-92"></span><span>      </span><span class="hs-comment">--   @param Ast The loop condition.</span><span>
+</span><span id="line-93"></span><span>      </span><span class="hs-comment">--   @param Ast The loop body.</span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AFor"><span class="annot"><a href="AST.Ast.html#AFor"><span class="hs-identifier hs-var">AFor</span></a></span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-96"></span><span>      </span><span class="hs-comment">-- ^ Represents a For loop.</span><span>
+</span><span id="line-97"></span><span>      </span><span class="hs-comment">--   @param Ast The initialization step.</span><span>
+</span><span id="line-98"></span><span>      </span><span class="hs-comment">--   @param Ast The loop condition.</span><span>
+</span><span id="line-99"></span><span>      </span><span class="hs-comment">--   @param Ast The update/increment step.</span><span>
+</span><span id="line-100"></span><span>      </span><span class="hs-comment">--   @param Ast The loop body.</span><span>
+</span><span id="line-101"></span><span>
+</span><span id="line-102"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AReturn"><span class="annot"><a href="AST.Ast.html#AReturn"><span class="hs-identifier hs-var">AReturn</span></a></span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-103"></span><span>      </span><span class="hs-comment">-- ^ Represents an explicit return statement.</span><span>
+</span><span id="line-104"></span><span>      </span><span class="hs-comment">--   @param Ast The expression to return.</span><span>
+</span><span id="line-105"></span><span>
+</span><span id="line-106"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AExprStmt"><span class="annot"><a href="AST.Ast.html#AExprStmt"><span class="hs-identifier hs-var">AExprStmt</span></a></span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-107"></span><span>      </span><span class="hs-comment">-- ^ Represents an expression used as a statement.</span><span>
+</span><span id="line-108"></span><span>      </span><span class="hs-comment">--   This wrapper is used when an expression is executed for its side effects</span><span>
+</span><span id="line-109"></span><span>      </span><span class="hs-comment">--   (e.g., a function call or assignment) rather than its return value.</span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-comment">--   Usually corresponds to an expression followed by a semicolon.</span><span>
+</span><span id="line-111"></span><span>      </span><span class="hs-comment">--   @param Ast The wrapped expression.</span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ABlock"><span class="annot"><a href="AST.Ast.html#ABlock"><span class="hs-identifier hs-var">ABlock</span></a></span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-114"></span><span>      </span><span class="hs-comment">-- ^ Represents a scoped block of code (enclosed in braces `{}`).</span><span>
+</span><span id="line-115"></span><span>      </span><span class="hs-comment">--   Used to group multiple statements into a single logical unit,</span><span>
+</span><span id="line-116"></span><span>      </span><span class="hs-comment">--   typically for function bodies, loop bodies, or conditional branches.</span><span>
+</span><span id="line-117"></span><span>      </span><span class="hs-comment">--   @param [Ast] The list of statements contained in the block.</span><span>
+</span><span id="line-118"></span><span>
+</span><span id="line-119"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ABreak"><span class="annot"><a href="AST.Ast.html#ABreak"><span class="hs-identifier hs-var">ABreak</span></a></span></span><span>
+</span><span id="line-120"></span><span>      </span><span class="hs-comment">-- ^ Represents a 'break' statement.</span><span>
+</span><span id="line-121"></span><span>      </span><span class="hs-comment">--   Used to immediately terminate the nearest enclosing loop (for, while).</span><span>
+</span><span id="line-122"></span><span>      </span><span class="hs-comment">--   Control flow continues at the next statement following the loop.</span><span>
+</span><span id="line-123"></span><span>
+</span><span id="line-124"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="APos"><span class="annot"><a href="AST.Ast.html#APos"><span class="hs-identifier hs-var">APos</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-125"></span><span>      </span><span class="hs-comment">-- ^ Represents a source code position wrapper.</span><span>
+</span><span id="line-126"></span><span>      </span><span class="hs-comment">--   Used for precise error reporting (line, column).</span><span>
+</span><span id="line-127"></span><span>      </span><span class="hs-comment">--   This node wraps another AST node without changing its semantics.</span><span>
+</span><span id="line-128"></span><span>      </span><span class="hs-comment">--   @param Int The line number.</span><span>
+</span><span id="line-129"></span><span>      </span><span class="hs-comment">--   @param Int The column number.</span><span>
+</span><span id="line-130"></span><span>      </span><span class="hs-comment">--   @param Ast The wrapped AST node.</span><span>
+</span><span id="line-131"></span><span>
+</span><span id="line-132"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679110892"><span id="local-6989586621679110957"><span id="local-6989586621679110960"><span class="annot"><span class="annottext">Int -&gt; Ast -&gt; ShowS
+[Ast] -&gt; ShowS
+Ast -&gt; String
+(Int -&gt; Ast -&gt; ShowS)
+-&gt; (Ast -&gt; String) -&gt; ([Ast] -&gt; ShowS) -&gt; Show Ast
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+$cshowsPrec :: Int -&gt; Ast -&gt; ShowS
+showsPrec :: Int -&gt; Ast -&gt; ShowS
+$cshow :: Ast -&gt; String
+show :: Ast -&gt; String
+$cshowList :: [Ast] -&gt; ShowS
+showList :: [Ast] -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679110966"><span id="local-6989586621679111016"><span class="annot"><span class="annottext">Ast -&gt; Ast -&gt; Bool
+(Ast -&gt; Ast -&gt; Bool) -&gt; (Ast -&gt; Ast -&gt; Bool) -&gt; Eq Ast
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+$c== :: Ast -&gt; Ast -&gt; Bool
+== :: Ast -&gt; Ast -&gt; Bool
+$c/= :: Ast -&gt; Ast -&gt; Bool
+/= :: Ast -&gt; Ast -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-133"></span><span>
+</span><span id="line-134"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-type">showAst</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-135"></span><span id="showAst"><span class="annot"><span class="annottext">showAst :: Ast -&gt; String
+</span><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var hs-var">showAst</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AInteger"><span class="hs-identifier hs-type">AInteger</span></a></span><span> </span><span id="local-6989586621679111021"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679111021"><span class="hs-identifier hs-var">i</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">Prelude.show</span></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; String) -&gt; Int -&gt; String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679111021"><span class="hs-identifier hs-var">i</span></a></span><span>
+</span><span id="line-136"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ABool"><span class="hs-identifier hs-type">ABool</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;#t&quot;</span></span><span>
+</span><span id="line-137"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ABool"><span class="hs-identifier hs-type">ABool</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;#f&quot;</span></span><span>
+</span><span id="line-138"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ASymbol"><span class="hs-identifier hs-type">ASymbol</span></a></span><span> </span><span id="local-6989586621679111023"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111023"><span class="hs-identifier hs-var">s</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; String
+</span><span class="hs-identifier hs-var">DT.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111023"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-139"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AList"><span class="hs-identifier hs-type">AList</span></a></span><span> </span><span id="local-6989586621679111025"><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111025"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+</span><span class="hs-identifier hs-var">Prelude.unwords</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Ast -&gt; String) -&gt; [Ast] -&gt; [String]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">Prelude.map</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; String
+</span><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111025"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;)&quot;</span></span><span>
+</span><span id="line-140"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ADefineLambda"><span class="hs-identifier hs-type">ADefineLambda</span></a></span><span> </span><span class="annot"><span class="annottext">[Text]
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;#&lt;lambda&gt;&quot;</span></span><span>
+</span><span id="line-141"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#APos"><span class="hs-identifier hs-type">APos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679111027"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111027"><span class="hs-identifier hs-var">ast</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; String
+</span><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111027"><span class="hs-identifier hs-var">ast</span></a></span><span>
+</span><span id="line-142"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ABlock"><span class="hs-identifier hs-type">ABlock</span></a></span><span> </span><span id="local-6989586621679111028"><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111028"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;{ &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+</span><span class="hs-identifier hs-var">unwords</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Ast -&gt; String) -&gt; [Ast] -&gt; [String]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; String
+</span><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111028"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot; }&quot;</span></span><span>
+</span><span id="line-143"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="AST.Ast.html#ABreak"><span class="hs-identifier hs-var">ABreak</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;break&quot;</span></span><span>
+</span><span id="line-144"></span><span class="annot"><a href="AST.Ast.html#showAst"><span class="hs-identifier hs-var">showAst</span></a></span><span> </span><span id="local-6989586621679111029"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111029"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">Prelude.show</span></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111029"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-145"></span><span class="hs-comment">-- TO DO: add new AST lines</span><span>
+</span><span id="line-146"></span><span>
+</span><span id="line-147"></span><span class="annot"><a href="AST.Ast.html#printAst"><span class="hs-identifier hs-type">printAst</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-148"></span><span id="printAst"><span class="annot"><span class="annottext">printAst :: Ast -&gt; IO ()
+</span><a href="AST.Ast.html#printAst"><span class="hs-identifier hs-var hs-var">printAst</span></a></span></span><span> </span><span id="local-6989586621679111030"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111030"><span class="hs-identifier hs-var">ast</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">Prelude.show</span></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111030"><span class="hs-identifier hs-var">ast</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-149"></span><span class="hs-comment">-- TO DO: replace function by an AST tree view</span><span>
+</span><span id="line-150"></span><span>
+</span><span id="line-151"></span><span class="hs-comment">-- | Recursively removes all position wrappers (APos) from the AST.</span><span>
+</span><span id="line-152"></span><span class="hs-comment">--</span><span>
+</span><span id="line-153"></span><span class="hs-comment">-- This is useful for:</span><span>
+</span><span id="line-154"></span><span class="hs-comment">-- Pretty printing (to avoid cluttering the output with position data).</span><span>
+</span><span id="line-155"></span><span class="hs-comment">-- Testing (to compare AST structure without worrying about line numbers).</span><span>
+</span><span id="line-156"></span><span class="hs-comment">--</span><span>
+</span><span id="line-157"></span><span class="hs-comment">-- @param Ast The AST potentially containing APos nodes.</span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- @return Ast The cleaned AST with purely structural nodes.</span><span>
+</span><span id="line-159"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-type">cleanAst</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-160"></span><span id="cleanAst"><span class="annot"><span class="annottext">cleanAst :: Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var hs-var">cleanAst</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#APos"><span class="hs-identifier hs-type">APos</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span id="local-6989586621679111032"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111032"><span class="hs-identifier hs-var">ast</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111032"><span class="hs-identifier hs-var">ast</span></a></span><span>
+</span><span id="line-161"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ABlock"><span class="hs-identifier hs-type">ABlock</span></a></span><span> </span><span id="local-6989586621679111033"><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111033"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Ast] -&gt; Ast
+</span><a href="AST.Ast.html#ABlock"><span class="hs-identifier hs-var">ABlock</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Ast -&gt; Ast) -&gt; [Ast] -&gt; [Ast]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111033"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-162"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AList"><span class="hs-identifier hs-type">AList</span></a></span><span> </span><span id="local-6989586621679111034"><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111034"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Ast] -&gt; Ast
+</span><a href="AST.Ast.html#AList"><span class="hs-identifier hs-var">AList</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Ast -&gt; Ast) -&gt; [Ast] -&gt; [Ast]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111034"><span class="hs-identifier hs-var">xs</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-163"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ADefineFunc"><span class="hs-identifier hs-type">ADefineFunc</span></a></span><span> </span><span id="local-6989586621679111035"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111035"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679111036"><span class="annot"><span class="annottext">[(Text, Text)]
+</span><a href="#local-6989586621679111036"><span class="hs-identifier hs-var">a</span></a></span></span><span> </span><span id="local-6989586621679111037"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111037"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span id="local-6989586621679111038"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111038"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; [(Text, Text)] -&gt; Text -&gt; Ast -&gt; Ast
+</span><a href="AST.Ast.html#ADefineFunc"><span class="hs-identifier hs-var">ADefineFunc</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111035"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">[(Text, Text)]
+</span><a href="#local-6989586621679111036"><span class="hs-identifier hs-var">a</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111037"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111038"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-164"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ADefineLambda"><span class="hs-identifier hs-type">ADefineLambda</span></a></span><span> </span><span id="local-6989586621679111039"><span class="annot"><span class="annottext">[Text]
+</span><a href="#local-6989586621679111039"><span class="hs-identifier hs-var">args</span></a></span></span><span> </span><span id="local-6989586621679111040"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111040"><span class="hs-identifier hs-var">body</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[Text] -&gt; Ast -&gt; Ast
+</span><a href="AST.Ast.html#ADefineLambda"><span class="hs-identifier hs-var">ADefineLambda</span></a></span><span> </span><span class="annot"><span class="annottext">[Text]
+</span><a href="#local-6989586621679111039"><span class="hs-identifier hs-var">args</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111040"><span class="hs-identifier hs-var">body</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-165"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ASetVar"><span class="hs-identifier hs-type">ASetVar</span></a></span><span> </span><span id="local-6989586621679111041"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111041"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679111042"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111042"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679111043"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111043"><span class="hs-identifier hs-var">expr</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Text -&gt; Ast -&gt; Ast
+</span><a href="AST.Ast.html#ASetVar"><span class="hs-identifier hs-var">ASetVar</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111041"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111042"><span class="hs-identifier hs-var">t</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111043"><span class="hs-identifier hs-var">expr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ASetStruct"><span class="hs-identifier hs-type">ASetStruct</span></a></span><span> </span><span id="local-6989586621679111044"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111044"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span id="local-6989586621679111045"><span class="annot"><span class="annottext">[(Text, Ast)]
+</span><a href="#local-6989586621679111045"><span class="hs-identifier hs-var">fields</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-167"></span><span>    </span><span class="annot"><span class="annottext">Text -&gt; [(Text, Ast)] -&gt; Ast
+</span><a href="AST.Ast.html#ASetStruct"><span class="hs-identifier hs-var">ASetStruct</span></a></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111044"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">((Text, Ast) -&gt; (Text, Ast)) -&gt; [(Text, Ast)] -&gt; [(Text, Ast)]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span class="hs-special">(</span><span id="local-6989586621679111046"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111046"><span class="hs-identifier hs-var">f</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679111047"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111047"><span class="hs-identifier hs-var">a</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111046"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111047"><span class="hs-identifier hs-var">a</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[(Text, Ast)]
+</span><a href="#local-6989586621679111045"><span class="hs-identifier hs-var">fields</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-168"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#ACall"><span class="hs-identifier hs-type">ACall</span></a></span><span> </span><span id="local-6989586621679111048"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111048"><span class="hs-identifier hs-var">func</span></a></span></span><span> </span><span id="local-6989586621679111049"><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111049"><span class="hs-identifier hs-var">args</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; [Ast] -&gt; Ast
+</span><a href="AST.Ast.html#ACall"><span class="hs-identifier hs-var">ACall</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111048"><span class="hs-identifier hs-var">func</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Ast -&gt; Ast) -&gt; [Ast] -&gt; [Ast]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">[Ast]
+</span><a href="#local-6989586621679111049"><span class="hs-identifier hs-var">args</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-169"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AIf"><span class="hs-identifier hs-type">AIf</span></a></span><span> </span><span id="local-6989586621679111050"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111050"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span id="local-6989586621679111051"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111051"><span class="hs-identifier hs-var">t</span></a></span></span><span> </span><span id="local-6989586621679111052"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111052"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast -&gt; Ast -&gt; Ast
+</span><a href="AST.Ast.html#AIf"><span class="hs-identifier hs-var">AIf</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111050"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111051"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111052"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-170"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AWhile"><span class="hs-identifier hs-type">AWhile</span></a></span><span> </span><span id="local-6989586621679111053"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111053"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span id="local-6989586621679111054"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111054"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast -&gt; Ast
+</span><a href="AST.Ast.html#AWhile"><span class="hs-identifier hs-var">AWhile</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111053"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111054"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-171"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AFor"><span class="hs-identifier hs-type">AFor</span></a></span><span> </span><span id="local-6989586621679111055"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111055"><span class="hs-identifier hs-var">i</span></a></span></span><span> </span><span id="local-6989586621679111056"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111056"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span id="local-6989586621679111057"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111057"><span class="hs-identifier hs-var">u</span></a></span></span><span> </span><span id="local-6989586621679111058"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111058"><span class="hs-identifier hs-var">b</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-172"></span><span>    </span><span class="annot"><span class="annottext">Ast -&gt; Ast -&gt; Ast -&gt; Ast -&gt; Ast
+</span><a href="AST.Ast.html#AFor"><span class="hs-identifier hs-var">AFor</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111055"><span class="hs-identifier hs-var">i</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111056"><span class="hs-identifier hs-var">c</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111057"><span class="hs-identifier hs-var">u</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111058"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-173"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AReturn"><span class="hs-identifier hs-type">AReturn</span></a></span><span> </span><span id="local-6989586621679111059"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111059"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#AReturn"><span class="hs-identifier hs-var">AReturn</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111059"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-174"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AExprStmt"><span class="hs-identifier hs-type">AExprStmt</span></a></span><span> </span><span id="local-6989586621679111060"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111060"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#AExprStmt"><span class="hs-identifier hs-var">AExprStmt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111060"><span class="hs-identifier hs-var">e</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-175"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#AAccessStruct"><span class="hs-identifier hs-type">AAccessStruct</span></a></span><span> </span><span id="local-6989586621679111061"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111061"><span class="hs-identifier hs-var">obj</span></a></span></span><span> </span><span id="local-6989586621679111062"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111062"><span class="hs-identifier hs-var">field</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast -&gt; Text -&gt; Ast
+</span><a href="AST.Ast.html#AAccessStruct"><span class="hs-identifier hs-var">AAccessStruct</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Ast -&gt; Ast
+</span><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111061"><span class="hs-identifier hs-var">obj</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679111062"><span class="hs-identifier hs-var">field</span></a></span><span>
+</span><span id="line-176"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="AST.Ast.html#ABreak"><span class="hs-identifier hs-var">ABreak</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="AST.Ast.html#ABreak"><span class="hs-identifier hs-var">ABreak</span></a></span><span>
+</span><span id="line-177"></span><span class="annot"><a href="AST.Ast.html#cleanAst"><span class="hs-identifier hs-var">cleanAst</span></a></span><span> </span><span id="local-6989586621679111063"><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111063"><span class="hs-identifier hs-var">other</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Ast
+</span><a href="#local-6989586621679111063"><span class="hs-identifier hs-var">other</span></a></span><span>
+</span><span id="line-178"></span></pre></body></html>

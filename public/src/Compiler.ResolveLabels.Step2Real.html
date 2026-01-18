@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2026
+-- Glados
+-- File description:
+-- Step2Real
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Compiler.ResolveLabels.Step2Real.html"><span class="hs-identifier">Compiler.ResolveLabels.Step2Real</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.ResolveLabels.Step2Real.html#step2Real"><span class="hs-identifier">step2Real</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Text</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Compiler.Instruction.html"><span class="hs-identifier">Compiler.Instruction</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier">Instruction</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Compiler.Instruction.html#instructionSize"><span class="hs-identifier">instructionSize</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="annot"><a href="Compiler.ResolveLabels.Step2Real.html#step2Real"><span class="hs-identifier hs-type">step2Real</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-14"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Text</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">[</span><span class="annot"><a href="Compiler.Instruction.html#Instruction"><span class="hs-identifier hs-type">Instruction</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span id="step2Real"><span class="annot"><span class="annottext">step2Real :: [Instruction]
+-&gt; Int -&gt; Instruction -&gt; Either Text ([Instruction], Int)
+</span><a href="Compiler.ResolveLabels.Step2Real.html#step2Real"><span class="hs-identifier hs-var hs-var">step2Real</span></a></span></span><span> </span><span id="local-6989586621679115007"><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679115007"><span class="hs-identifier hs-var">out</span></a></span></span><span> </span><span id="local-6989586621679115008"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115008"><span class="hs-identifier hs-var">idx</span></a></span></span><span> </span><span id="local-6989586621679115009"><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679115009"><span class="hs-identifier hs-var">instr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">([Instruction], Int) -&gt; Either Text ([Instruction], Int)
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[Instruction]
+</span><a href="#local-6989586621679115007"><span class="hs-identifier hs-var">out</span></a></span><span> </span><span class="annot"><span class="annottext">[Instruction] -&gt; [Instruction] -&gt; [Instruction]
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679115009"><span class="hs-identifier hs-var">instr</span></a></span><span class="hs-special">]</span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679115008"><span class="hs-identifier hs-var">idx</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-operator hs-var">+</span></span><span> </span><span class="annot"><span class="annottext">Instruction -&gt; Int
+</span><a href="Compiler.Instruction.html#instructionSize"><span class="hs-identifier hs-var">instructionSize</span></a></span><span> </span><span class="annot"><span class="annottext">Instruction
+</span><a href="#local-6989586621679115009"><span class="hs-identifier hs-var">instr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span></pre></body></html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2026
+-- Glados
+-- File description:
+-- Header
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Common.Utils.Bytecode.Header.html"><span class="hs-identifier">Common.Utils.Bytecode.Header</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#extractContentIfValidHeader"><span class="hs-identifier">extractContentIfValidHeader</span></a></span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#evaluateHeader"><span class="hs-identifier">evaluateHeader</span></a></span><span>
+</span><span id="line-11"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#hasValidSize"><span class="hs-identifier">hasValidSize</span></a></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#hasValidMagic"><span class="hs-identifier">hasValidMagic</span></a></span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#hasValidVersion"><span class="hs-identifier">hasValidVersion</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-15"></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">BS</span></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Char8</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">C8</span></span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Exit</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">exitWith</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">ExitCode</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span>
+</span><span id="line-20"></span><span class="hs-comment">-- | Checks if the file is large enough to contain a header (10 bytes).</span><span>
+</span><span id="line-21"></span><span class="hs-comment">--</span><span>
+</span><span id="line-22"></span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#hasValidSize"><span class="hs-identifier hs-type">hasValidSize</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-23"></span><span id="hasValidSize"><span class="annot"><span class="annottext">hasValidSize :: ByteString -&gt; Bool
+</span><a href="Common.Utils.Bytecode.Header.html#hasValidSize"><span class="hs-identifier hs-var hs-var">hasValidSize</span></a></span></span><span> </span><span id="local-6989586621679112117"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112117"><span class="hs-identifier hs-var">bs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Int
+</span><span class="hs-identifier hs-var">BS.length</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112117"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- | Checks if the Magic Number is &quot;GLAD&quot; (0x47 0x4C 0x41 0x44).</span><span>
+</span><span id="line-26"></span><span class="hs-comment">--</span><span>
+</span><span id="line-27"></span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#hasValidMagic"><span class="hs-identifier hs-type">hasValidMagic</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-28"></span><span id="hasValidMagic"><span class="annot"><span class="annottext">hasValidMagic :: ByteString -&gt; Bool
+</span><a href="Common.Utils.Bytecode.Header.html#hasValidMagic"><span class="hs-identifier hs-var hs-var">hasValidMagic</span></a></span></span><span> </span><span id="local-6989586621679112119"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112119"><span class="hs-identifier hs-var">bs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int -&gt; ByteString -&gt; ByteString
+</span><span class="hs-identifier hs-var">BS.take</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">4</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112119"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; ByteString -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">C8.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;GLAD&quot;</span></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- | Checks if the Version is supported (0x02).</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--</span><span>
+</span><span id="line-32"></span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#hasValidVersion"><span class="hs-identifier hs-type">hasValidVersion</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-33"></span><span id="hasValidVersion"><span class="annot"><span class="annottext">hasValidVersion :: ByteString -&gt; Bool
+</span><a href="Common.Utils.Bytecode.Header.html#hasValidVersion"><span class="hs-identifier hs-var hs-var">hasValidVersion</span></a></span></span><span> </span><span id="local-6989586621679112122"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112122"><span class="hs-identifier hs-var">bs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">HasCallStack =&gt; ByteString -&gt; Int -&gt; Word8
+ByteString -&gt; Int -&gt; Word8
+</span><span class="hs-identifier hs-var">BS.index</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112122"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">4</span></span><span> </span><span class="annot"><span class="annottext">Word8 -&gt; Word8 -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">Word8
+</span><span class="hs-number">0x02</span></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- | Evaluates the header validity by combining all predicates.</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-38"></span><span class="hs-comment">--   Uses short-circuit boolean logic (&amp;&amp;).</span><span>
+</span><span id="line-39"></span><span class="hs-comment">--   Order matters: 'hasValidSize' must be checked first to prevent</span><span>
+</span><span id="line-40"></span><span class="hs-comment">--   segmentation faults in 'hasValidVersion'.</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--</span><span>
+</span><span id="line-42"></span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#evaluateHeader"><span class="hs-identifier hs-type">evaluateHeader</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-43"></span><span id="evaluateHeader"><span class="annot"><span class="annottext">evaluateHeader :: ByteString -&gt; Bool
+</span><a href="Common.Utils.Bytecode.Header.html#evaluateHeader"><span class="hs-identifier hs-var hs-var">evaluateHeader</span></a></span></span><span> </span><span id="local-6989586621679112124"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112124"><span class="hs-identifier hs-var">bs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Bool
+</span><a href="Common.Utils.Bytecode.Header.html#hasValidSize"><span class="hs-identifier hs-var">hasValidSize</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112124"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Bool
+</span><a href="Common.Utils.Bytecode.Header.html#hasValidMagic"><span class="hs-identifier hs-var">hasValidMagic</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112124"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Bool
+</span><a href="Common.Utils.Bytecode.Header.html#hasValidVersion"><span class="hs-identifier hs-var">hasValidVersion</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112124"><span class="hs-identifier hs-var">bs</span></a></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- | Validates the .gla file header and returns the raw bytecode.</span><span>
+</span><span id="line-46"></span><span class="hs-comment">--</span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--   If the header is valid, drops the 10-byte header and returns the code.</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--   If invalid, prints a generic error and exits.</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--</span><span>
+</span><span id="line-51"></span><span class="annot"><a href="Common.Utils.Bytecode.Header.html#extractContentIfValidHeader"><span class="hs-identifier hs-type">extractContentIfValidHeader</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">BS.ByteString</span></span><span>
+</span><span id="line-52"></span><span id="extractContentIfValidHeader"><span class="annot"><span class="annottext">extractContentIfValidHeader :: ByteString -&gt; IO ByteString
+</span><a href="Common.Utils.Bytecode.Header.html#extractContentIfValidHeader"><span class="hs-identifier hs-var hs-var">extractContentIfValidHeader</span></a></span></span><span> </span><span id="local-6989586621679112126"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112126"><span class="hs-identifier hs-var">content</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-53"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Bool
+</span><a href="Common.Utils.Bytecode.Header.html#evaluateHeader"><span class="hs-identifier hs-var">evaluateHeader</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112126"><span class="hs-identifier hs-var">content</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-54"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; IO ByteString
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; ByteString -&gt; ByteString
+</span><span class="hs-identifier hs-var">BS.drop</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">10</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679112126"><span class="hs-identifier hs-var">content</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-55"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;\ESC[31mInvalid File: Bad Header.\ESC[0m&quot;</span></span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO ByteString -&gt; IO ByteString
+forall a b. IO a -&gt; IO b -&gt; IO b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-56"></span><span>            </span><span class="annot"><span class="annottext">ExitCode -&gt; IO ByteString
+forall a. ExitCode -&gt; IO a
+</span><span class="hs-identifier hs-var">exitWith</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; ExitCode
+</span><span class="hs-identifier hs-var">ExitFailure</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">84</span></span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span></pre></body></html>

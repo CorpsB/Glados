@@ -1,0 +1,287 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{- 
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Lexer.hs
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module      : Parser.Lexer
+Description : Lexical analysis tools and basic parsers.
+Stability   : stable
+
+This module defines the basic building blocks for the parser, including:
+- Space consumers (handling whitespace and comments)
+- Lexeme wrappers
+- Symbol and keyword parsers
+- Reserved words management
+-}</span></span><span>
+</span><span id="line-19"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="Parser.Lexer.html"><span class="hs-identifier">Parser.Lexer</span></a></span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-20"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier">Parser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#sc"><span class="hs-identifier">sc</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#lexeme"><span class="hs-identifier">lexeme</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#symbol"><span class="hs-identifier">symbol</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#pKeyword"><span class="hs-identifier">pKeyword</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#pIdentifier"><span class="hs-identifier">pIdentifier</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#parens"><span class="hs-identifier">parens</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#braces"><span class="hs-identifier">braces</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#semicolon"><span class="hs-identifier">semicolon</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#comma"><span class="hs-identifier">comma</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#colon"><span class="hs-identifier">colon</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>    </span><span class="annot"><a href="Parser.Lexer.html#withPos"><span class="hs-identifier">withPos</span></a></span><span>
+</span><span id="line-32"></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Megaparsec</span></span><span>
+</span><span id="line-35"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Megaparsec.Char</span></span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Text.Megaparsec.Char.Lexer</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">L</span></span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Void</span></span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">DT</span></span><span>
+</span><span id="line-39"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AST.Ast.html"><span class="hs-identifier">AST.Ast</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier">Ast</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- | The standard Parser type for this project.</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- It uses Void as the custom error component (no custom errors)</span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- and DT.Text as the input stream type.</span><span>
+</span><span id="line-45"></span><span class="hs-keyword">type</span><span> </span><span id="Parser"><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-var">Parser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Parsec</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Void</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- | Space Consumer.</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- Consumes whitespace and ignores comments.</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- Supported comment styles:</span><span>
+</span><span id="line-51"></span><span class="hs-comment">--</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- * Line comments starting with //</span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- * Block comments enclosed in /* ... */</span><span>
+</span><span id="line-54"></span><span class="annot"><a href="Parser.Lexer.html#sc"><span class="hs-identifier hs-type">sc</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-55"></span><span id="sc"><span class="annot"><span class="annottext">sc :: Parser ()
+</span><a href="Parser.Lexer.html#sc"><span class="hs-identifier hs-var hs-var">sc</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser () -&gt; Parser () -&gt; Parser () -&gt; Parser ()
+forall e s (m :: * -&gt; *).
+MonadParsec e s m =&gt;
+m () -&gt; m () -&gt; m () -&gt; m ()
+</span><span class="hs-identifier hs-var">L.space</span></span><span>
+</span><span id="line-56"></span><span>    </span><span class="annot"><span class="annottext">Parser ()
+forall e s (m :: * -&gt; *).
+(MonadParsec e s m, Token s ~ Char) =&gt;
+m ()
+</span><span class="hs-identifier hs-var">space1</span></span><span>
+</span><span id="line-57"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Tokens Text -&gt; Parser ()
+forall e s (m :: * -&gt; *).
+(MonadParsec e s m, Token s ~ Char) =&gt;
+Tokens s -&gt; m ()
+</span><span class="hs-identifier hs-var">L.skipLineComment</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;//&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Tokens Text -&gt; Tokens Text -&gt; Parser ()
+forall e s (m :: * -&gt; *).
+MonadParsec e s m =&gt;
+Tokens s -&gt; Tokens s -&gt; m ()
+</span><span class="hs-identifier hs-var">L.skipBlockComment</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;/*&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;*/&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- | Wrapper for lexemes.</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- Consumes trailing whitespace after parsing the given parser 'p'.</span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- This is essential for the &quot;trailing whitespace&quot; convention used in this parser.</span><span>
+</span><span id="line-64"></span><span id="local-6989586621679115451"><span class="annot"><a href="Parser.Lexer.html#lexeme"><span class="hs-identifier hs-type">lexeme</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115451"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115451"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-65"></span><span id="lexeme"><span class="annot"><span class="annottext">lexeme :: forall a. Parser a -&gt; Parser a
+</span><a href="Parser.Lexer.html#lexeme"><span class="hs-identifier hs-var hs-var">lexeme</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser ()
+-&gt; ParsecT Void Text Identity a -&gt; ParsecT Void Text Identity a
+forall e s (m :: * -&gt; *) a. MonadParsec e s m =&gt; m () -&gt; m a -&gt; m a
+</span><span class="hs-identifier hs-var">L.lexeme</span></span><span> </span><span class="annot"><span class="annottext">Parser ()
+</span><a href="Parser.Lexer.html#sc"><span class="hs-identifier hs-var">sc</span></a></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- | Parse a fixed string as a symbol.</span><span>
+</span><span id="line-68"></span><span class="hs-comment">--</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- Consumes the string exactly as matches, followed by whitespace.</span><span>
+</span><span id="line-70"></span><span class="annot"><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-type">symbol</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-71"></span><span id="symbol"><span class="annot"><span class="annottext">symbol :: Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-var hs-var">symbol</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser ()
+-&gt; Tokens Text -&gt; ParsecT Void Text Identity (Tokens Text)
+forall e s (m :: * -&gt; *).
+MonadParsec e s m =&gt;
+m () -&gt; Tokens s -&gt; m (Tokens s)
+</span><span class="hs-identifier hs-var">L.symbol</span></span><span> </span><span class="annot"><span class="annottext">Parser ()
+</span><a href="Parser.Lexer.html#sc"><span class="hs-identifier hs-var">sc</span></a></span><span>
+</span><span id="line-72"></span><span>
+</span><span id="line-73"></span><span class="annot"><span class="hs-comment">-- | Parse content between parentheses (...).</span></span><span>
+</span><span id="line-74"></span><span id="local-6989586621679115577"><span class="annot"><a href="Parser.Lexer.html#parens"><span class="hs-identifier hs-type">parens</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115577"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115577"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-75"></span><span id="parens"><span class="annot"><span class="annottext">parens :: forall a. Parser a -&gt; Parser a
+</span><a href="Parser.Lexer.html#parens"><span class="hs-identifier hs-var hs-var">parens</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser Text
+-&gt; Parser Text
+-&gt; ParsecT Void Text Identity a
+-&gt; ParsecT Void Text Identity a
+forall (m :: * -&gt; *) open close a.
+Applicative m =&gt;
+m open -&gt; m close -&gt; m a -&gt; m a
+</span><span class="hs-identifier hs-var">between</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;(&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;)&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span>
+</span><span id="line-77"></span><span class="annot"><span class="hs-comment">-- | Parse content between braces {...}.</span></span><span>
+</span><span id="line-78"></span><span id="local-6989586621679115580"><span class="annot"><a href="Parser.Lexer.html#braces"><span class="hs-identifier hs-type">braces</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115580"><span class="hs-identifier hs-type">a</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679115580"><span class="hs-identifier hs-type">a</span></a></span></span><span>
+</span><span id="line-79"></span><span id="braces"><span class="annot"><span class="annottext">braces :: forall a. Parser a -&gt; Parser a
+</span><a href="Parser.Lexer.html#braces"><span class="hs-identifier hs-var hs-var">braces</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser Text
+-&gt; Parser Text
+-&gt; ParsecT Void Text Identity a
+-&gt; ParsecT Void Text Identity a
+forall (m :: * -&gt; *) open close a.
+Applicative m =&gt;
+m open -&gt; m close -&gt; m a -&gt; m a
+</span><span class="hs-identifier hs-var">between</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;{&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;}&quot;</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-80"></span><span>
+</span><span id="line-81"></span><span class="annot"><span class="hs-comment">-- | Parse a semicolon ; symbol.</span></span><span>
+</span><span id="line-82"></span><span class="annot"><a href="Parser.Lexer.html#semicolon"><span class="hs-identifier hs-type">semicolon</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-83"></span><span id="semicolon"><span class="annot"><span class="annottext">semicolon :: Parser Text
+</span><a href="Parser.Lexer.html#semicolon"><span class="hs-identifier hs-var hs-var">semicolon</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;;&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span>
+</span><span id="line-85"></span><span class="annot"><span class="hs-comment">-- | Parse a comma , symbol.</span></span><span>
+</span><span id="line-86"></span><span class="annot"><a href="Parser.Lexer.html#comma"><span class="hs-identifier hs-type">comma</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-87"></span><span id="comma"><span class="annot"><span class="annottext">comma :: Parser Text
+</span><a href="Parser.Lexer.html#comma"><span class="hs-identifier hs-var hs-var">comma</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;,&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="annot"><span class="hs-comment">-- | Parse a colon : symbol.</span></span><span>
+</span><span id="line-90"></span><span class="annot"><a href="Parser.Lexer.html#colon"><span class="hs-identifier hs-type">colon</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-91"></span><span id="colon"><span class="annot"><span class="annottext">colon :: Parser Text
+</span><a href="Parser.Lexer.html#colon"><span class="hs-identifier hs-var hs-var">colon</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#symbol"><span class="hs-identifier hs-var">symbol</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;:&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span>
+</span><span id="line-93"></span><span class="hs-comment">-- | Wraps a parser with position information.</span><span>
+</span><span id="line-94"></span><span class="hs-comment">--</span><span>
+</span><span id="line-95"></span><span class="hs-comment">-- Captures the current source position (line, column) before running the parser 'p',</span><span>
+</span><span id="line-96"></span><span class="hs-comment">-- and wraps the resulting AST node in an 'APos' constructor.</span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- This allows error reporting to pinpoint the exact location of semantic errors later.</span><span>
+</span><span id="line-98"></span><span class="hs-comment">--</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- @param Parser Ast The parser to wrap.</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- @return Parser Ast A parser that returns an APos node containing the original result.</span><span>
+</span><span id="line-101"></span><span class="annot"><a href="Parser.Lexer.html#withPos"><span class="hs-identifier hs-type">withPos</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><a href="AST.Ast.html#Ast"><span class="hs-identifier hs-type">Ast</span></a></span><span>
+</span><span id="line-102"></span><span id="withPos"><span class="annot"><span class="annottext">withPos :: Parser Ast -&gt; Parser Ast
+</span><a href="Parser.Lexer.html#withPos"><span class="hs-identifier hs-var hs-var">withPos</span></a></span></span><span> </span><span id="local-6989586621679115583"><span class="annot"><span class="annottext">Parser Ast
+</span><a href="#local-6989586621679115583"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-103"></span><span>    </span><span id="local-6989586621679115584"><span class="annot"><a href="#local-6989586621679115584"><span class="hs-identifier hs-var">pos</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ParsecT Void Text Identity SourcePos
+forall s e (m :: * -&gt; *).
+(TraversableStream s, MonadParsec e s m) =&gt;
+m SourcePos
+</span><span class="hs-identifier hs-var">getSourcePos</span></span><span>
+</span><span id="line-104"></span><span>    </span><span id="local-6989586621679115586"><span class="annot"><a href="#local-6989586621679115586"><span class="hs-identifier hs-var">node</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="#local-6989586621679115583"><span class="hs-identifier hs-type">p</span></a></span><span>
+</span><span id="line-105"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AST.Ast.html#APos"><span class="hs-identifier hs-type">APos</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">unPos</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-var">sourceLine</span></span><span> </span><span class="annot"><a href="#local-6989586621679115584"><span class="hs-identifier hs-type">pos</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">unPos</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-var">sourceColumn</span></span><span> </span><span class="annot"><a href="#local-6989586621679115584"><span class="hs-identifier hs-type">pos</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679115586"><span class="hs-identifier hs-type">node</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span>
+</span><span id="line-107"></span><span class="hs-comment">-- | List of reserved keywords in the language.</span><span>
+</span><span id="line-108"></span><span class="hs-comment">--</span><span>
+</span><span id="line-109"></span><span class="hs-comment">-- These words cannot be used as variable or function identifiers.</span><span>
+</span><span id="line-110"></span><span class="annot"><a href="Parser.Lexer.html#reservedWords"><span class="hs-identifier hs-type">reservedWords</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span class="hs-special">]</span><span>
+</span><span id="line-111"></span><span id="reservedWords"><span class="annot"><span class="annottext">reservedWords :: [Text]
+</span><a href="Parser.Lexer.html#reservedWords"><span class="hs-identifier hs-var hs-var">reservedWords</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(String -&gt; Text) -&gt; [String] -&gt; [Text]
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;func&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;ret&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;if&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;else&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;int&quot;</span></span><span class="hs-special">,</span><span>
+</span><span id="line-112"></span><span>        </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;bool&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;void&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;while&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;lambda&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;break&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-113"></span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- | Parse a specific keyword.</span><span>
+</span><span id="line-115"></span><span class="hs-comment">--</span><span>
+</span><span id="line-116"></span><span class="hs-comment">-- Ensures that the keyword is not followed by an alphanumeric character</span><span>
+</span><span id="line-117"></span><span class="hs-comment">-- to prevent partial matches (e.g., matching &quot;if&quot; inside &quot;ifelse&quot;).</span><span>
+</span><span id="line-118"></span><span class="annot"><a href="Parser.Lexer.html#pKeyword"><span class="hs-identifier hs-type">pKeyword</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-119"></span><span id="pKeyword"><span class="annot"><span class="annottext">pKeyword :: Text -&gt; Parser Text
+</span><a href="Parser.Lexer.html#pKeyword"><span class="hs-identifier hs-var hs-var">pKeyword</span></a></span></span><span> </span><span id="local-6989586621679115591"><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679115591"><span class="hs-identifier hs-var">w</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Parser Text -&gt; Parser Text
+forall a. Parser a -&gt; Parser a
+</span><a href="Parser.Lexer.html#lexeme"><span class="hs-identifier hs-var">lexeme</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Tokens Text -&gt; ParsecT Void Text Identity (Tokens Text)
+forall e s (m :: * -&gt; *).
+MonadParsec e s m =&gt;
+Tokens s -&gt; m (Tokens s)
+</span><span class="hs-identifier hs-var">string</span></span><span> </span><span class="annot"><span class="annottext">Text
+Tokens Text
+</span><a href="#local-6989586621679115591"><span class="hs-identifier hs-var">w</span></a></span><span> </span><span class="annot"><span class="annottext">Parser Text -&gt; Parser () -&gt; Parser Text
+forall a b.
+ParsecT Void Text Identity a
+-&gt; ParsecT Void Text Identity b -&gt; ParsecT Void Text Identity a
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f a -&gt; f b -&gt; f a
+</span><span class="hs-operator hs-var">&lt;*</span></span><span> </span><span class="annot"><span class="annottext">ParsecT Void Text Identity Char -&gt; Parser ()
+forall a. ParsecT Void Text Identity a -&gt; Parser ()
+forall e s (m :: * -&gt; *) a. MonadParsec e s m =&gt; m a -&gt; m ()
+</span><span class="hs-identifier hs-var">notFollowedBy</span></span><span> </span><span class="annot"><span class="annottext">ParsecT Void Text Identity Char
+ParsecT Void Text Identity (Token Text)
+forall e s (m :: * -&gt; *).
+(MonadParsec e s m, Token s ~ Char) =&gt;
+m (Token s)
+</span><span class="hs-identifier hs-var">alphaNumChar</span></span><span class="hs-special">)</span><span>
+</span><span id="line-120"></span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- | Parse a valid identifier.</span><span>
+</span><span id="line-122"></span><span class="hs-comment">--</span><span>
+</span><span id="line-123"></span><span class="hs-comment">-- An identifier must start with a letter or underscore, followed by</span><span>
+</span><span id="line-124"></span><span class="hs-comment">-- alphanumeric characters or underscores.</span><span>
+</span><span id="line-125"></span><span class="hs-comment">--</span><span>
+</span><span id="line-126"></span><span class="hs-comment">-- It fails if the parsed identifier is one of the 'reservedWords'.</span><span>
+</span><span id="line-127"></span><span class="annot"><a href="Parser.Lexer.html#pIdentifier"><span class="hs-identifier hs-type">pIdentifier</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Parser.Lexer.html#Parser"><span class="hs-identifier hs-type">Parser</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.Text</span></span><span>
+</span><span id="line-128"></span><span id="pIdentifier"><span class="annot"><span class="annottext">pIdentifier :: Parser Text
+</span><a href="Parser.Lexer.html#pIdentifier"><span class="hs-identifier hs-var hs-var">pIdentifier</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Parser Text -&gt; Parser Text
+forall a. Parser a -&gt; Parser a
+</span><a href="Parser.Lexer.html#lexeme"><span class="hs-identifier hs-var">lexeme</span></a></span><span> </span><span class="annot"><span class="annottext">(Parser Text -&gt; Parser Text) -&gt; Parser Text -&gt; Parser Text
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-129"></span><span>    </span><span id="local-6989586621679115596"><span class="annot"><a href="#local-6989586621679115596"><span class="hs-identifier hs-var">first</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">ParsecT Void Text Identity Char
+ParsecT Void Text Identity (Token Text)
+forall e s (m :: * -&gt; *).
+(MonadParsec e s m, Token s ~ Char) =&gt;
+m (Token s)
+</span><span class="hs-identifier hs-var">letterChar</span></span><span> </span><span class="annot"><span class="annottext">ParsecT Void Text Identity Char
+-&gt; ParsecT Void Text Identity Char
+-&gt; ParsecT Void Text Identity Char
+forall a.
+ParsecT Void Text Identity a
+-&gt; ParsecT Void Text Identity a -&gt; ParsecT Void Text Identity a
+forall (f :: * -&gt; *) a. Alternative f =&gt; f a -&gt; f a -&gt; f a
+</span><span class="hs-operator hs-var">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Token Text -&gt; ParsecT Void Text Identity (Token Text)
+forall e s (m :: * -&gt; *).
+(MonadParsec e s m, Token s ~ Char) =&gt;
+Token s -&gt; m (Token s)
+</span><span class="hs-identifier hs-var">char</span></span><span> </span><span class="annot"><span class="annottext">Char
+Token Text
+</span><span class="hs-char">'_'</span></span><span>
+</span><span id="line-130"></span><span>    </span><span id="local-6989586621679115600"><span class="annot"><a href="#local-6989586621679115600"><span class="hs-identifier hs-var">rest</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">many</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">alphaNumChar</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">char</span></span><span> </span><span class="annot"><span class="hs-char">'_'</span></span><span class="hs-special">)</span><span>
+</span><span id="line-131"></span><span>    </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679115602"><span class="annot"><a href="#local-6989586621679115602"><span class="hs-identifier hs-var hs-var">name</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; Text
+</span><span class="hs-identifier hs-var">DT.pack</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Char
+</span><a href="#local-6989586621679115596"><span class="hs-identifier hs-var">first</span></a></span><span> </span><span class="annot"><span class="annottext">Char -&gt; String -&gt; String
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679115600"><span class="hs-identifier hs-var">rest</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-132"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><a href="#local-6989586621679115602"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">`elem`</span></span><span> </span><span class="annot"><a href="Parser.Lexer.html#reservedWords"><span class="hs-identifier hs-type">reservedWords</span></a></span><span>
+</span><span id="line-133"></span><span>        </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="hs-identifier hs-type">fail</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">$</span></span><span>
+</span><span id="line-134"></span><span>            </span><span class="annot"><span class="hs-string">&quot;Keyword '&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">++</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">DT.unpack</span></span><span> </span><span class="annot"><a href="#local-6989586621679115602"><span class="hs-identifier hs-type">name</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot;' cannot be an identifier&quot;</span></span><span>
+</span><span id="line-135"></span><span>        </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="hs-identifier hs-type">return</span></span><span> </span><span class="annot"><a href="#local-6989586621679115602"><span class="hs-identifier hs-type">name</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Parser Text -&gt; String -&gt; Parser Text
+forall e s (m :: * -&gt; *) a.
+MonadParsec e s m =&gt;
+m a -&gt; String -&gt; m a
+</span><span class="hs-operator hs-var">&lt;?&gt;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><span class="hs-string">&quot;identifier&quot;</span></span><span>
+</span><span id="line-136"></span></pre></body></html>

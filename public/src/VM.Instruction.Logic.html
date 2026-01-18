@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- Logic Instructions
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module      : VM.Instruction.Logic
+Description : Implementation of comparison and logic operations.
+Stability   : stable
+-}</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="VM.Instruction.Logic.html"><span class="hs-identifier">VM.Instruction.Logic</span></a></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="VM.Instruction.Logic.html#instEq"><span class="hs-identifier">instEq</span></a></span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Logic.html#instTEq"><span class="hs-identifier">instTEq</span></a></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Logic.html#instLt"><span class="hs-identifier">instLt</span></a></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Logic.html#instLe"><span class="hs-identifier">instLe</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Logic.html#instNot"><span class="hs-identifier">instNot</span></a></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Logic.html#instAnd"><span class="hs-identifier">instAnd</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Logic.html#instOr"><span class="hs-identifier">instOr</span></a></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMState.html"><span class="hs-identifier">VM.VMState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier">VirtualMachine</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMValue.html"><span class="hs-identifier">VM.VMValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier">VMValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#eqValue"><span class="hs-identifier">eqValue</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMStack.html"><span class="hs-identifier">VM.VMStack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMStack.html#stackPush"><span class="hs-identifier">stackPush</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier">stackPop</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Common.Type.Integer.html"><span class="hs-identifier">Common.Type.Integer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier">intValueToInt</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- | Implements Logical NOT (Opcode 0x22).</span><span>
+</span><span id="line-29"></span><span class="hs-comment">--</span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--   Pops a boolean and pushes its inverse.</span><span>
+</span><span id="line-32"></span><span class="hs-comment">--   Stack: [a] -&gt; [not a]</span><span>
+</span><span id="line-33"></span><span class="hs-comment">--</span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- @throws</span><span>
+</span><span id="line-35"></span><span class="hs-comment">--   Error if the popped value is not a VBool.</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="annot"><a href="VM.Instruction.Logic.html#instNot"><span class="hs-identifier hs-type">instNot</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span id="instNot"><span class="annot"><span class="annottext">instNot :: VirtualMachine ()
+</span><a href="VM.Instruction.Logic.html#instNot"><span class="hs-identifier hs-var hs-var">instNot</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-39"></span><span>    </span><span id="local-6989586621679117349"><span class="annot"><a href="#local-6989586621679117349"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-40"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679117349"><span class="hs-identifier hs-type">v</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-41"></span><span>        </span><span class="annot"><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-type">VBool</span></a></span><span> </span><span id="local-6989586621679117351"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117351"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; VMValue
+</span><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-var">VBool</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117351"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-42"></span><span>        </span><span class="annot"><span class="annottext">VMValue
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: NOT expects Boolean&quot;</span></span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- | Implements Logical AND (Opcode 0x23).</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--</span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--   Pops two booleans and pushes their conjunction.</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--   Stack: [a, b] -&gt; [a &amp;&amp; b]</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--</span><span>
+</span><span id="line-50"></span><span class="annot"><a href="VM.Instruction.Logic.html#instAnd"><span class="hs-identifier hs-type">instAnd</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-51"></span><span id="instAnd"><span class="annot"><span class="annottext">instAnd :: VirtualMachine ()
+</span><a href="VM.Instruction.Logic.html#instAnd"><span class="hs-identifier hs-var hs-var">instAnd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-52"></span><span>    </span><span id="local-6989586621679117354"><span class="annot"><a href="#local-6989586621679117354"><span class="hs-identifier hs-var">v2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-53"></span><span>    </span><span id="local-6989586621679117355"><span class="annot"><a href="#local-6989586621679117355"><span class="hs-identifier hs-var">v1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679117355"><span class="hs-identifier hs-type">v1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679117354"><span class="hs-identifier hs-type">v2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-55"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-type">VBool</span></a></span><span> </span><span id="local-6989586621679117356"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117356"><span class="hs-identifier hs-var">b1</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-type">VBool</span></a></span><span> </span><span id="local-6989586621679117357"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117357"><span class="hs-identifier hs-var">b2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; VMValue
+</span><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-var">VBool</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117356"><span class="hs-identifier hs-var">b1</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">&amp;&amp;</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117357"><span class="hs-identifier hs-var">b2</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>        </span><span class="annot"><span class="annottext">(VMValue, VMValue)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: AND expects Booleans&quot;</span></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span class="hs-comment">-- | Implements Logical OR (Opcode 0x24).</span><span>
+</span><span id="line-59"></span><span class="hs-comment">--</span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--   Pops two booleans and pushes their disjunction.</span><span>
+</span><span id="line-62"></span><span class="hs-comment">--   Stack: [a, b] -&gt; [a || b]</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--</span><span>
+</span><span id="line-64"></span><span class="annot"><a href="VM.Instruction.Logic.html#instOr"><span class="hs-identifier hs-type">instOr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span id="instOr"><span class="annot"><span class="annottext">instOr :: VirtualMachine ()
+</span><a href="VM.Instruction.Logic.html#instOr"><span class="hs-identifier hs-var hs-var">instOr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-66"></span><span>    </span><span id="local-6989586621679117359"><span class="annot"><a href="#local-6989586621679117359"><span class="hs-identifier hs-var">v2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-67"></span><span>    </span><span id="local-6989586621679117360"><span class="annot"><a href="#local-6989586621679117360"><span class="hs-identifier hs-var">v1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679117360"><span class="hs-identifier hs-type">v1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679117359"><span class="hs-identifier hs-type">v2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-69"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-type">VBool</span></a></span><span> </span><span id="local-6989586621679117361"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117361"><span class="hs-identifier hs-var">b1</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-type">VBool</span></a></span><span> </span><span id="local-6989586621679117362"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117362"><span class="hs-identifier hs-var">b2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; VMValue
+</span><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-var">VBool</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117361"><span class="hs-identifier hs-var">b1</span></a></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">||</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679117362"><span class="hs-identifier hs-var">b2</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>        </span><span class="annot"><span class="annottext">(VMValue, VMValue)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: OR expects Booleans&quot;</span></span><span>
+</span><span id="line-71"></span><span>
+</span><span id="line-72"></span><span class="hs-comment">-- | Implements Equality Comparison (Opcode 0x20).</span><span>
+</span><span id="line-73"></span><span class="hs-comment">--</span><span>
+</span><span id="line-74"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-75"></span><span class="hs-comment">--   Pops two values and performs a deep equality check.</span><span>
+</span><span id="line-76"></span><span class="hs-comment">--   Supports: Ints (loose), Bools, Lists (recursive), Structs, FuncPtrs.</span><span>
+</span><span id="line-77"></span><span class="hs-comment">--</span><span>
+</span><span id="line-78"></span><span class="annot"><a href="VM.Instruction.Logic.html#instEq"><span class="hs-identifier hs-type">instEq</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span id="instEq"><span class="annot"><span class="annottext">instEq :: VirtualMachine ()
+</span><a href="VM.Instruction.Logic.html#instEq"><span class="hs-identifier hs-var hs-var">instEq</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-80"></span><span>    </span><span id="local-6989586621679117364"><span class="annot"><a href="#local-6989586621679117364"><span class="hs-identifier hs-var">v2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-81"></span><span>    </span><span id="local-6989586621679117365"><span class="annot"><a href="#local-6989586621679117365"><span class="hs-identifier hs-var">v1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-82"></span><span>    </span><span class="annot"><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-type">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-type">VBool</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#eqValue"><span class="hs-identifier hs-type">eqValue</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117365"><span class="hs-identifier hs-type">v1</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117364"><span class="hs-identifier hs-type">v2</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>
+</span><span id="line-84"></span><span class="hs-comment">-- | Implements Typed Equality (Strict ===).</span><span>
+</span><span id="line-85"></span><span class="hs-comment">--</span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--   Checks if two values are identical in Type AND Value.</span><span>
+</span><span id="line-88"></span><span class="hs-comment">--   No implicit casting (I8 5 !== I64 5).</span><span>
+</span><span id="line-89"></span><span class="hs-comment">--   Standard Haskell '==' on VMValue does exactly this.</span><span>
+</span><span id="line-90"></span><span class="hs-comment">--</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="VM.Instruction.Logic.html#instTEq"><span class="hs-identifier hs-type">instTEq</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span id="instTEq"><span class="annot"><span class="annottext">instTEq :: VirtualMachine ()
+</span><a href="VM.Instruction.Logic.html#instTEq"><span class="hs-identifier hs-var hs-var">instTEq</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-93"></span><span>    </span><span id="local-6989586621679117366"><span class="annot"><a href="#local-6989586621679117366"><span class="hs-identifier hs-var">v2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-94"></span><span>    </span><span id="local-6989586621679117367"><span class="annot"><a href="#local-6989586621679117367"><span class="hs-identifier hs-var">v1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-95"></span><span>    </span><span class="annot"><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-type">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-type">VBool</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679117367"><span class="hs-identifier hs-type">v1</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">==</span></span><span> </span><span class="annot"><a href="#local-6989586621679117366"><span class="hs-identifier hs-type">v2</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-96"></span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- | Implements Less Than Comparison (Opcode 0x21).</span><span>
+</span><span id="line-98"></span><span class="hs-comment">--</span><span>
+</span><span id="line-99"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-100"></span><span class="hs-comment">--   Pops two values and checks if the second popped (Left) is less than the first (Right).</span><span>
+</span><span id="line-101"></span><span class="hs-comment">--   Stack: [a, b] -&gt; [a &lt; b] (Push VBool)</span><span>
+</span><span id="line-102"></span><span class="hs-comment">--</span><span>
+</span><span id="line-103"></span><span class="annot"><a href="VM.Instruction.Logic.html#instLt"><span class="hs-identifier hs-type">instLt</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-104"></span><span id="instLt"><span class="annot"><span class="annottext">instLt :: VirtualMachine ()
+</span><a href="VM.Instruction.Logic.html#instLt"><span class="hs-identifier hs-var hs-var">instLt</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-105"></span><span>    </span><span id="local-6989586621679117368"><span class="annot"><a href="#local-6989586621679117368"><span class="hs-identifier hs-var">v2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-106"></span><span>    </span><span id="local-6989586621679117369"><span class="annot"><a href="#local-6989586621679117369"><span class="hs-identifier hs-var">v1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-107"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679117369"><span class="hs-identifier hs-type">v1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679117368"><span class="hs-identifier hs-type">v2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-108"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679117371"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117371"><span class="hs-identifier hs-var">i1</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679117372"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117372"><span class="hs-identifier hs-var">i2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; VMValue
+</span><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-var">VBool</span></a></span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-109"></span><span>            </span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117371"><span class="hs-identifier hs-var">i1</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117372"><span class="hs-identifier hs-var">i2</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-110"></span><span>        </span><span class="annot"><span class="annottext">(VMValue, VMValue)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: LT expects Integers&quot;</span></span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- | Implements Less or Equal Comparison (Opcode 0x25).</span><span>
+</span><span id="line-113"></span><span class="hs-comment">--</span><span>
+</span><span id="line-114"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-115"></span><span class="hs-comment">--   Pops two integers and checks if Left &lt;= Right.</span><span>
+</span><span id="line-116"></span><span class="hs-comment">--   Stack: [a, b] -&gt; [a &lt;= b]</span><span>
+</span><span id="line-117"></span><span class="hs-comment">--</span><span>
+</span><span id="line-118"></span><span class="annot"><a href="VM.Instruction.Logic.html#instLe"><span class="hs-identifier hs-type">instLe</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span id="instLe"><span class="annot"><span class="annottext">instLe :: VirtualMachine ()
+</span><a href="VM.Instruction.Logic.html#instLe"><span class="hs-identifier hs-var hs-var">instLe</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-120"></span><span>    </span><span id="local-6989586621679117374"><span class="annot"><a href="#local-6989586621679117374"><span class="hs-identifier hs-var">v2</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-121"></span><span>    </span><span id="local-6989586621679117375"><span class="annot"><a href="#local-6989586621679117375"><span class="hs-identifier hs-var">v1</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-122"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="#local-6989586621679117375"><span class="hs-identifier hs-type">v1</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="#local-6989586621679117374"><span class="hs-identifier hs-type">v2</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-123"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679117376"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117376"><span class="hs-identifier hs-var">i1</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span id="local-6989586621679117377"><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117377"><span class="hs-identifier hs-var">i2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; VMValue
+</span><a href="VM.VMValue.html#VBool"><span class="hs-identifier hs-var">VBool</span></a></span><span> </span><span class="hs-special">(</span><span>
+</span><span id="line-124"></span><span>            </span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117376"><span class="hs-identifier hs-var">i1</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;=</span></span><span> </span><span class="annot"><span class="annottext">IntValue -&gt; Int
+</span><a href="Common.Type.Integer.html#intValueToInt"><span class="hs-identifier hs-var">intValueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">IntValue
+</span><a href="#local-6989586621679117377"><span class="hs-identifier hs-var">i2</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-125"></span><span>        </span><span class="annot"><span class="annottext">(VMValue, VMValue)
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine ()
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: LE expects Integers&quot;</span></span><span>
+</span><span id="line-126"></span></pre></body></html>

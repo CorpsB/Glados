@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- VM Stack
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module      : VM.VMStack
+Description : Low-level stack manipulation primitives.
+Stability   : stable
+
+This module provides the core abstractions to interact with the VM's operand stack.
+It abstracts the underlying 'Vector' implementation and handles underflow safety checks.
+-}</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="VM.VMStack.html"><span class="hs-identifier">VM.VMStack</span></a></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPush"><span class="hs-identifier">stackPush</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier">stackPop</span></a></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackTop"><span class="hs-identifier">stackTop</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Strict</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">get</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">put</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">modify</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">V</span></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMState.html"><span class="hs-identifier">VM.VMState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier">VMState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier">VirtualMachine</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMValue.html"><span class="hs-identifier">VM.VMValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier">VMValue</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">-- | Pushes a value onto the top of the global value stack.</span><span>
+</span><span id="line-29"></span><span class="hs-comment">--</span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- @args</span><span>
+</span><span id="line-31"></span><span class="hs-comment">--   - val: The 'VMValue' to push.</span><span>
+</span><span id="line-32"></span><span class="hs-comment">--</span><span>
+</span><span id="line-33"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-34"></span><span class="hs-comment">--   Modifies the VM state by appending the value to the end of the 'vStack' vector.</span><span>
+</span><span id="line-35"></span><span class="hs-comment">--   This operation is generally O(1).</span><span>
+</span><span id="line-36"></span><span class="hs-comment">--</span><span>
+</span><span id="line-37"></span><span class="annot"><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-type">stackPush</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span id="stackPush"><span class="annot"><span class="annottext">stackPush :: VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var hs-var">stackPush</span></a></span></span><span> </span><span id="local-6989586621679117286"><span class="annot"><span class="annottext">VMValue
+</span><a href="#local-6989586621679117286"><span class="hs-identifier hs-var">val</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(VMState -&gt; VMState) -&gt; VirtualMachine ()
+forall s (m :: * -&gt; *). MonadState s m =&gt; (s -&gt; s) -&gt; m ()
+</span><span class="hs-identifier hs-var">modify</span></span><span> </span><span class="annot"><span class="annottext">((VMState -&gt; VMState) -&gt; VirtualMachine ())
+-&gt; (VMState -&gt; VMState) -&gt; VirtualMachine ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="hs-glyph">\</span><span id="local-6989586621679117287"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117287"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117287"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.snoc</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117287"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679117286"><span class="hs-identifier hs-type">val</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-39"></span><span>
+</span><span id="line-40"></span><span class="hs-comment">-- | Removes and returns the value at the top of the stack.</span><span>
+</span><span id="line-41"></span><span class="hs-comment">--</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--   Retrieves the last element of the 'vStack' vector and removes it from the state.</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--   Uses 'case' instead of 'if' to avoid DoAndIfThenElse extension.</span><span>
+</span><span id="line-45"></span><span class="hs-comment">--   </span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- @throws</span><span>
+</span><span id="line-47"></span><span class="hs-comment">--   Error &quot;VM Error: Stack Underflow&quot; if the stack is empty.</span><span>
+</span><span id="line-48"></span><span class="hs-comment">--</span><span>
+</span><span id="line-49"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-50"></span><span class="hs-comment">--   The 'VMValue' that was at the top.</span><span>
+</span><span id="line-51"></span><span class="hs-comment">--</span><span>
+</span><span id="line-52"></span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span>
+</span><span id="line-53"></span><span id="stackPop"><span class="annot"><span class="annottext">stackPop :: VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var hs-var">stackPop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-54"></span><span>    </span><span id="local-6989586621679117289"><span class="annot"><a href="#local-6989586621679117289"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMState
+forall s (m :: * -&gt; *). MonadState s m =&gt; m s
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.null</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117289"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-56"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine VMValue
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: Stack Underflow&quot;</span></span><span>
+</span><span id="line-57"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; VirtualMachine ()
+forall s (m :: * -&gt; *). MonadState s m =&gt; s -&gt; m ()
+</span><span class="hs-identifier hs-var">put</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117289"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.init</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117289"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">VirtualMachine ()
+-&gt; VirtualMachine VMValue -&gt; VirtualMachine VMValue
+forall a b.
+StateT VMState IO a -&gt; StateT VMState IO b -&gt; StateT VMState IO b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span>
+</span><span id="line-58"></span><span>            </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine VMValue
+forall a. a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vector VMValue -&gt; VMValue
+forall a. Vector a -&gt; a
+</span><span class="hs-identifier hs-var">V.last</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">VMState -&gt; Vector VMValue
+</span><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117289"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- | Returns the value at the top of the stack without removing it (Peek).</span><span>
+</span><span id="line-61"></span><span class="hs-comment">--</span><span>
+</span><span id="line-62"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-63"></span><span class="hs-comment">--   Useful for instructions like DUP or conditional jumps that need to inspect</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--   the value without consuming it.</span><span>
+</span><span id="line-65"></span><span class="hs-comment">--</span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- @throws</span><span>
+</span><span id="line-67"></span><span class="hs-comment">--   Error &quot;VM Error: Stack Underflow (Top)&quot; if the stack is empty.</span><span>
+</span><span id="line-68"></span><span class="hs-comment">--</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- @return</span><span>
+</span><span id="line-70"></span><span class="hs-comment">--   The 'VMValue' currently at the top.</span><span>
+</span><span id="line-71"></span><span class="hs-comment">--</span><span>
+</span><span id="line-72"></span><span class="annot"><a href="VM.VMStack.html#stackTop"><span class="hs-identifier hs-type">stackTop</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier hs-type">VMValue</span></a></span><span>
+</span><span id="line-73"></span><span id="stackTop"><span class="annot"><span class="annottext">stackTop :: VirtualMachine VMValue
+</span><a href="VM.VMStack.html#stackTop"><span class="hs-identifier hs-var hs-var">stackTop</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-74"></span><span>    </span><span id="local-6989586621679117294"><span class="annot"><a href="#local-6989586621679117294"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMState
+forall s (m :: * -&gt; *). MonadState s m =&gt; m s
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="hs-identifier hs-type">V.null</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117294"><span class="hs-identifier hs-type">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-76"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Char] -&gt; VirtualMachine VMValue
+forall a. HasCallStack =&gt; [Char] -&gt; a
+</span><span class="hs-identifier hs-var">error</span></span><span> </span><span class="annot"><span class="annottext">[Char]
+</span><span class="hs-string">&quot;VM Error: Stack Underflow (Top)&quot;</span></span><span>
+</span><span id="line-77"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine VMValue
+forall a. a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vector VMValue -&gt; VMValue
+forall a. Vector a -&gt; a
+</span><span class="hs-identifier hs-var">V.last</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">VMState -&gt; Vector VMValue
+</span><a href="VM.VMState.html#vStack"><span class="hs-identifier hs-var">vStack</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117294"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span></pre></body></html>

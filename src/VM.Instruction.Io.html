@@ -1,0 +1,485 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-
+-- EPITECH PROJECT, 2026
+-- Glados
+-- File description:
+-- Io Instructions
+-}</span><span>
+</span><span id="line-7"></span><span>
+</span><span id="line-8"></span><span class="annot"><span class="hs-comment">{-|
+Module      : VM.Instruction.Io
+Description : System Input/Output primitives.
+Stability   : experimental
+
+This module implements low-level file system interactions (Open, Read, Write, Close).
+It acts as a bridge between the VM's stack-based memory and the Host OS.
+-}</span></span><span>
+</span><span id="line-16"></span><span class="hs-keyword">module</span><span> </span><span class="annot"><a href="VM.Instruction.Io.html"><span class="hs-identifier">VM.Instruction.Io</span></a></span><span>
+</span><span id="line-17"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="VM.Instruction.Io.html#instOpen"><span class="hs-identifier">instOpen</span></a></span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Io.html#instRead"><span class="hs-identifier">instRead</span></a></span><span>
+</span><span id="line-19"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Io.html#instWrite"><span class="hs-identifier">instWrite</span></a></span><span>
+</span><span id="line-20"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Io.html#instClose"><span class="hs-identifier">instClose</span></a></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.Instruction.Io.html#instInput"><span class="hs-identifier">instInput</span></a></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">try</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">IOException</span></span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.State.Strict</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">get</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">put</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">liftIO</span></span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Map.Strict</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">Map</span></span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Vector</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">V</span></span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.Text</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">T</span></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.IO</span></span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMState.html"><span class="hs-identifier">VM.VMState</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier">VirtualMachine</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier">VMState</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMValue.html"><span class="hs-identifier">VM.VMValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VMValue"><span class="hs-identifier">VMValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier">valueToInt</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#valueToString"><span class="hs-identifier">valueToString</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMValue.html#stringToValue"><span class="hs-identifier">stringToValue</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="VM.VMStack.html"><span class="hs-identifier">VM.VMStack</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier">stackPop</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPush"><span class="hs-identifier">stackPush</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-34"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Common.Type.Integer.html"><span class="hs-identifier">Common.Type.Integer</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#IntValue"><span class="hs-identifier">IntValue</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span>
+</span><span id="line-36"></span><span class="hs-comment">-- | Wrapper to attempt opening a file safely.</span><span>
+</span><span id="line-37"></span><span class="hs-comment">--</span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- @arg path: The target file path string.</span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- @arg mode: The Handle mode (Read/Write/Append).</span><span>
+</span><span id="line-40"></span><span class="hs-comment">--</span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-42"></span><span class="hs-comment">--   Catches any IOException using 'try' to prevent VM crash.</span><span>
+</span><span id="line-43"></span><span class="hs-comment">--   Returns an Either type to be handled by the caller.</span><span>
+</span><span id="line-44"></span><span class="hs-comment">--</span><span>
+</span><span id="line-45"></span><span class="annot"><a href="VM.Instruction.Io.html#tryOpen"><span class="hs-identifier hs-type">tryOpen</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOMode</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOException</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span id="tryOpen"><span class="annot"><span class="annottext">tryOpen :: FilePath -&gt; IOMode -&gt; VirtualMachine (Either IOException Handle)
+</span><a href="VM.Instruction.Io.html#tryOpen"><span class="hs-identifier hs-var hs-var">tryOpen</span></a></span></span><span> </span><span id="local-6989586621679117548"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679117548"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span id="local-6989586621679117549"><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679117549"><span class="hs-identifier hs-var">mode</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Either IOException Handle)
+-&gt; VirtualMachine (Either IOException Handle)
+forall a. IO a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOException Handle)
+ -&gt; VirtualMachine (Either IOException Handle))
+-&gt; IO (Either IOException Handle)
+-&gt; VirtualMachine (Either IOException Handle)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IO Handle -&gt; IO (Either IOException Handle)
+forall e a. Exception e =&gt; IO a -&gt; IO (Either e a)
+</span><span class="hs-identifier hs-var">try</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; IOMode -&gt; IO Handle
+</span><span class="hs-identifier hs-var">openFile</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679117548"><span class="hs-identifier hs-var">path</span></a></span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><a href="#local-6989586621679117549"><span class="hs-identifier hs-var">mode</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- | Converts an integer to a standard IOMode.</span><span>
+</span><span id="line-49"></span><span class="hs-comment">--</span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- @arg i: The integer representation (0, 1, 2).</span><span>
+</span><span id="line-51"></span><span class="hs-comment">--</span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-53"></span><span class="hs-comment">--   Mapping:</span><span>
+</span><span id="line-54"></span><span class="hs-comment">--   1 -&gt; WriteMode</span><span>
+</span><span id="line-55"></span><span class="hs-comment">--   2 -&gt; AppendMode</span><span>
+</span><span id="line-56"></span><span class="hs-comment">--   Default -&gt; ReadMode</span><span>
+</span><span id="line-57"></span><span class="hs-comment">--</span><span>
+</span><span id="line-58"></span><span class="annot"><a href="VM.Instruction.Io.html#getIoMode"><span class="hs-identifier hs-type">getIoMode</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOMode</span></span><span>
+</span><span id="line-59"></span><span id="getIoMode"><span class="annot"><span class="annottext">getIoMode :: Int -&gt; IOMode
+</span><a href="VM.Instruction.Io.html#getIoMode"><span class="hs-identifier hs-var hs-var">getIoMode</span></a></span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><span class="hs-identifier hs-var">WriteMode</span></span><span>
+</span><span id="line-60"></span><span class="annot"><a href="VM.Instruction.Io.html#getIoMode"><span class="hs-identifier hs-var">getIoMode</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">2</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><span class="hs-identifier hs-var">AppendMode</span></span><span>
+</span><span id="line-61"></span><span class="annot"><a href="VM.Instruction.Io.html#getIoMode"><span class="hs-identifier hs-var">getIoMode</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-identifier">_</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IOMode
+</span><span class="hs-identifier hs-var">ReadMode</span></span><span>
+</span><span id="line-62"></span><span>
+</span><span id="line-63"></span><span class="hs-comment">-- | Registers a new Handle in the VM state.</span><span>
+</span><span id="line-64"></span><span class="hs-comment">--</span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- @arg res: The result of the open operation (Handle or Error).</span><span>
+</span><span id="line-66"></span><span class="hs-comment">--</span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-68"></span><span class="hs-comment">--   If Success: Assigns a new FD, stores Handle in vmFds, pushes FD.</span><span>
+</span><span id="line-69"></span><span class="hs-comment">--   If Error: Pushes -1 to the stack.</span><span>
+</span><span id="line-70"></span><span class="hs-comment">--</span><span>
+</span><span id="line-71"></span><span class="annot"><a href="VM.Instruction.Io.html#registerHandle"><span class="hs-identifier hs-type">registerHandle</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOException</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span id="registerHandle"><span class="annot"><span class="annottext">registerHandle :: Either IOException Handle -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#registerHandle"><span class="hs-identifier hs-var hs-var">registerHandle</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="annot"><span class="annottext">IOException
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IntValue -&gt; VMValue
+</span><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-var">VInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int32 -&gt; IntValue
+</span><a href="Common.Type.Integer.html#I32"><span class="hs-identifier hs-var">I32</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="annottext">Int32
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-73"></span><span class="annot"><a href="VM.Instruction.Io.html#registerHandle"><span class="hs-identifier hs-var">registerHandle</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679117558"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117558"><span class="hs-identifier hs-var">h</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-74"></span><span>    </span><span id="local-6989586621679117559"><span class="annot"><a href="#local-6989586621679117559"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMState
+forall s (m :: * -&gt; *). MonadState s m =&gt; m s
+</span><span class="hs-identifier hs-var">get</span></span><span>
+</span><span id="line-75"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">put</span></span><span> </span><span class="annot"><a href="#local-6989586621679117559"><span class="hs-identifier hs-type">vm</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.insert</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#nextFd"><span class="hs-identifier hs-var">nextFd</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117559"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679117558"><span class="hs-identifier hs-type">h</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117559"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-76"></span><span>        </span><span class="annot"><a href="VM.VMState.html#nextFd"><span class="hs-identifier hs-var">nextFd</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><a href="VM.VMState.html#nextFd"><span class="hs-identifier hs-var">nextFd</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117559"><span class="hs-identifier hs-type">vm</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">+</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-type">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMValue.html#VInt"><span class="hs-identifier hs-type">VInt</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Common.Type.Integer.html#I32"><span class="hs-identifier hs-type">I32</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">fromIntegral</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#nextFd"><span class="hs-identifier hs-var">nextFd</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117559"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span>
+</span><span id="line-79"></span><span class="hs-comment">-- | Implements OPEN instruction (Opcode 0xB0).</span><span>
+</span><span id="line-80"></span><span class="hs-comment">--</span><span>
+</span><span id="line-81"></span><span class="hs-comment">-- @arg StackTop: Mode (Int) - 0:Read, 1:Write, 2:Append.</span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- @arg StackNext: Path (String).</span><span>
+</span><span id="line-83"></span><span class="hs-comment">--</span><span>
+</span><span id="line-84"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-85"></span><span class="hs-comment">--   Pops path and mode, calls tryOpen, and pushes the resulting FD.</span><span>
+</span><span id="line-86"></span><span class="hs-comment">--   Safety: Returns -1 on failure instead of crashing.</span><span>
+</span><span id="line-87"></span><span class="hs-comment">--</span><span>
+</span><span id="line-88"></span><span class="annot"><a href="VM.Instruction.Io.html#instOpen"><span class="hs-identifier hs-type">instOpen</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span id="instOpen"><span class="annot"><span class="annottext">instOpen :: VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#instOpen"><span class="hs-identifier hs-var hs-var">instOpen</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-90"></span><span>    </span><span id="local-6989586621679117564"><span class="annot"><a href="#local-6989586621679117564"><span class="hs-identifier hs-var">mode</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Int -&gt; IOMode
+</span><a href="VM.Instruction.Io.html#getIoMode"><span class="hs-identifier hs-var">getIoMode</span></a></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; IOMode) -&gt; (VMValue -&gt; Int) -&gt; VMValue -&gt; IOMode
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; Int
+</span><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier hs-var">valueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">(VMValue -&gt; IOMode)
+-&gt; StateT VMState IO VMValue -&gt; StateT VMState IO IOMode
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-91"></span><span>    </span><span id="local-6989586621679117567"><span class="annot"><a href="#local-6989586621679117567"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMValue.html#valueToString"><span class="hs-identifier hs-type">valueToString</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-92"></span><span>    </span><span id="local-6989586621679117568"><span class="annot"><a href="#local-6989586621679117568"><span class="hs-identifier hs-var">res</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.Instruction.Io.html#tryOpen"><span class="hs-identifier hs-type">tryOpen</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">T.unpack</span></span><span> </span><span class="annot"><a href="#local-6989586621679117567"><span class="hs-identifier hs-type">path</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><a href="#local-6989586621679117564"><span class="hs-identifier hs-type">mode</span></a></span><span>
+</span><span id="line-93"></span><span>    </span><span class="annot"><a href="VM.Instruction.Io.html#registerHandle"><span class="hs-identifier hs-type">registerHandle</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117568"><span class="hs-identifier hs-type">res</span></a></span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span class="hs-comment">-- | Wrapper to attempt reading from a handle.</span><span>
+</span><span id="line-96"></span><span class="hs-comment">--</span><span>
+</span><span id="line-97"></span><span class="hs-comment">-- @arg h: The file handle.</span><span>
+</span><span id="line-98"></span><span class="hs-comment">-- @arg size: Number of bytes to read (-1 for all).</span><span>
+</span><span id="line-99"></span><span class="hs-comment">--</span><span>
+</span><span id="line-100"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-101"></span><span class="hs-comment">--   Dispatches between 'hGetContents' (full read) and 'readChars'</span><span>
+</span><span id="line-102"></span><span class="hs-comment">--   (partial read). Catches IOExceptions.</span><span>
+</span><span id="line-103"></span><span class="hs-comment">--</span><span>
+</span><span id="line-104"></span><span class="annot"><a href="VM.Instruction.Io.html#tryRead"><span class="hs-identifier hs-type">tryRead</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOException</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-105"></span><span id="tryRead"><span class="annot"><span class="annottext">tryRead :: Handle -&gt; Int -&gt; VirtualMachine (Either IOException FilePath)
+</span><a href="VM.Instruction.Io.html#tryRead"><span class="hs-identifier hs-var hs-var">tryRead</span></a></span></span><span> </span><span id="local-6989586621679117573"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117573"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="annot"><span class="hs-number">1</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Either IOException FilePath)
+-&gt; VirtualMachine (Either IOException FilePath)
+forall a. IO a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOException FilePath)
+ -&gt; VirtualMachine (Either IOException FilePath))
+-&gt; IO (Either IOException FilePath)
+-&gt; VirtualMachine (Either IOException FilePath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IO FilePath -&gt; IO (Either IOException FilePath)
+forall e a. Exception e =&gt; IO a -&gt; IO (Either e a)
+</span><span class="hs-identifier hs-var">try</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Handle -&gt; IO FilePath
+</span><span class="hs-identifier hs-var">hGetContents</span></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117573"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-106"></span><span class="annot"><a href="VM.Instruction.Io.html#tryRead"><span class="hs-identifier hs-var">tryRead</span></a></span><span> </span><span id="local-6989586621679117574"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117574"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679117575"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117575"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Either IOException FilePath)
+-&gt; VirtualMachine (Either IOException FilePath)
+forall a. IO a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOException FilePath)
+ -&gt; VirtualMachine (Either IOException FilePath))
+-&gt; IO (Either IOException FilePath)
+-&gt; VirtualMachine (Either IOException FilePath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IO FilePath -&gt; IO (Either IOException FilePath)
+forall e a. Exception e =&gt; IO a -&gt; IO (Either e a)
+</span><span class="hs-identifier hs-var">try</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Handle -&gt; Int -&gt; IO FilePath
+</span><a href="VM.Instruction.Io.html#readChars"><span class="hs-identifier hs-var">readChars</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117574"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117575"><span class="hs-identifier hs-var">size</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-107"></span><span>
+</span><span id="line-108"></span><span class="hs-comment">-- | Helper to read N characters safely.</span><span>
+</span><span id="line-109"></span><span class="hs-comment">--</span><span>
+</span><span id="line-110"></span><span class="hs-comment">-- @arg h: The file handle.</span><span>
+</span><span id="line-111"></span><span class="hs-comment">-- @arg n: The exact number of characters to read.</span><span>
+</span><span id="line-112"></span><span class="hs-comment">--</span><span>
+</span><span id="line-113"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-114"></span><span class="hs-comment">--   Recursive read that handles EOF gracefully.</span><span>
+</span><span id="line-115"></span><span class="hs-comment">--   Returns partial string if EOF is reached before N chars.</span><span>
+</span><span id="line-116"></span><span class="hs-comment">--</span><span>
+</span><span id="line-117"></span><span class="annot"><a href="VM.Instruction.Io.html#readChars"><span class="hs-identifier hs-type">readChars</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-118"></span><span id="readChars"><span class="annot"><span class="annottext">readChars :: Handle -&gt; Int -&gt; IO FilePath
+</span><a href="VM.Instruction.Io.html#readChars"><span class="hs-identifier hs-var hs-var">readChars</span></a></span></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><span class="hs-identifier">_</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">0</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO FilePath
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-119"></span><span class="annot"><a href="VM.Instruction.Io.html#readChars"><span class="hs-identifier hs-var">readChars</span></a></span><span> </span><span id="local-6989586621679117576"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117576"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679117577"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117577"><span class="hs-identifier hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-120"></span><span>    </span><span id="local-6989586621679117578"><span class="annot"><a href="#local-6989586621679117578"><span class="hs-identifier hs-var">eof</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Handle -&gt; IO Bool
+</span><span class="hs-identifier hs-var">hIsEOF</span></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117576"><span class="hs-identifier hs-var">h</span></a></span><span>
+</span><span id="line-121"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><a href="#local-6989586621679117578"><span class="hs-identifier hs-type">eof</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-122"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO FilePath
+forall a. a -&gt; IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-123"></span><span>        </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">:</span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">(Char -&gt; FilePath -&gt; FilePath)
+-&gt; IO Char -&gt; IO (FilePath -&gt; FilePath)
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">Handle -&gt; IO Char
+</span><span class="hs-identifier hs-var">hGetChar</span></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117576"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">IO (FilePath -&gt; FilePath) -&gt; IO FilePath -&gt; IO FilePath
+forall a b. IO (a -&gt; b) -&gt; IO a -&gt; IO b
+forall (f :: * -&gt; *) a b. Applicative f =&gt; f (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;*&gt;</span></span><span> </span><span class="annot"><span class="annottext">Handle -&gt; Int -&gt; IO FilePath
+</span><a href="VM.Instruction.Io.html#readChars"><span class="hs-identifier hs-var">readChars</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117576"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117577"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int
+forall a. Num a =&gt; a -&gt; a -&gt; a
+</span><span class="hs-glyph hs-var">-</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><span class="hs-number">1</span></span><span class="hs-special">)</span><span>
+</span><span id="line-124"></span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- | Handles the result of a read operation.</span><span>
+</span><span id="line-126"></span><span class="hs-comment">--</span><span>
+</span><span id="line-127"></span><span class="hs-comment">-- @arg res: The result from tryRead (String or Error).</span><span>
+</span><span id="line-128"></span><span class="hs-comment">--</span><span>
+</span><span id="line-129"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-130"></span><span class="hs-comment">--   Pushes the content string on success.</span><span>
+</span><span id="line-131"></span><span class="hs-comment">--   Pushes an empty list/string on failure.</span><span>
+</span><span id="line-132"></span><span class="hs-comment">--</span><span>
+</span><span id="line-133"></span><span class="annot"><a href="VM.Instruction.Io.html#handleReadResult"><span class="hs-identifier hs-type">handleReadResult</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOException</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-134"></span><span id="handleReadResult"><span class="annot"><span class="annottext">handleReadResult :: Either IOException FilePath -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#handleReadResult"><span class="hs-identifier hs-var hs-var">handleReadResult</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="annot"><span class="annottext">IOException
+</span><span class="hs-identifier">_</span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vector VMValue -&gt; VMValue
+</span><a href="VM.VMValue.html#VList"><span class="hs-identifier hs-var">VList</span></a></span><span> </span><span class="annot"><span class="annottext">Vector VMValue
+forall a. Vector a
+</span><span class="hs-identifier hs-var">V.empty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-135"></span><span class="annot"><a href="VM.Instruction.Io.html#handleReadResult"><span class="hs-identifier hs-var">handleReadResult</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679117584"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679117584"><span class="hs-identifier hs-var">content</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; VMValue
+</span><a href="VM.VMValue.html#stringToValue"><span class="hs-identifier hs-var">stringToValue</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; Text
+</span><span class="hs-identifier hs-var">T.pack</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679117584"><span class="hs-identifier hs-var">content</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-136"></span><span>
+</span><span id="line-137"></span><span class="hs-comment">-- | Implements READ instruction (Opcode 0xB1).</span><span>
+</span><span id="line-138"></span><span class="hs-comment">--</span><span>
+</span><span id="line-139"></span><span class="hs-comment">-- @arg StackTop: Size (Int).</span><span>
+</span><span id="line-140"></span><span class="hs-comment">-- @arg StackNext: FD (Int).</span><span>
+</span><span id="line-141"></span><span class="hs-comment">--</span><span>
+</span><span id="line-142"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-143"></span><span class="hs-comment">--   Reads 'Size' bytes from the file descriptor 'FD'.</span><span>
+</span><span id="line-144"></span><span class="hs-comment">--   Pushes the read content string to the stack.</span><span>
+</span><span id="line-145"></span><span class="hs-comment">--</span><span>
+</span><span id="line-146"></span><span class="annot"><a href="VM.Instruction.Io.html#instRead"><span class="hs-identifier hs-type">instRead</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-147"></span><span id="instRead"><span class="annot"><span class="annottext">instRead :: VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#instRead"><span class="hs-identifier hs-var hs-var">instRead</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-148"></span><span>    </span><span id="local-6989586621679117586"><span class="annot"><a href="#local-6989586621679117586"><span class="hs-identifier hs-var">size</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; Int
+</span><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier hs-var">valueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">(VMValue -&gt; Int)
+-&gt; StateT VMState IO VMValue -&gt; StateT VMState IO Int
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-149"></span><span>    </span><span id="local-6989586621679117587"><span class="annot"><a href="#local-6989586621679117587"><span class="hs-identifier hs-var">fd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier hs-type">valueToInt</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-150"></span><span>    </span><span id="local-6989586621679117588"><span class="annot"><a href="#local-6989586621679117588"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">get</span></span><span>
+</span><span id="line-151"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.lookup</span></span><span> </span><span class="annot"><a href="#local-6989586621679117587"><span class="hs-identifier hs-type">fd</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117588"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-152"></span><span>        </span><span class="annot"><span class="annottext">Maybe Handle
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vector VMValue -&gt; VMValue
+</span><a href="VM.VMValue.html#VList"><span class="hs-identifier hs-var">VList</span></a></span><span> </span><span class="annot"><span class="annottext">Vector VMValue
+forall a. Vector a
+</span><span class="hs-identifier hs-var">V.empty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-153"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679117590"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117590"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Handle -&gt; Int -&gt; VirtualMachine (Either IOException FilePath)
+</span><a href="VM.Instruction.Io.html#tryRead"><span class="hs-identifier hs-var">tryRead</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117590"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117586"><span class="hs-identifier hs-var">size</span></a></span><span> </span><span class="annot"><span class="annottext">VirtualMachine (Either IOException FilePath)
+-&gt; (Either IOException FilePath -&gt; VirtualMachine ())
+-&gt; VirtualMachine ()
+forall a b.
+StateT VMState IO a
+-&gt; (a -&gt; StateT VMState IO b) -&gt; StateT VMState IO b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Either IOException FilePath -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#handleReadResult"><span class="hs-identifier hs-var">handleReadResult</span></a></span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span><span class="hs-comment">-- | Wrapper to attempt writing to a handle.</span><span>
+</span><span id="line-156"></span><span class="hs-comment">--</span><span>
+</span><span id="line-157"></span><span class="hs-comment">-- @arg h: The file handle.</span><span>
+</span><span id="line-158"></span><span class="hs-comment">-- @arg c: The content string to write.</span><span>
+</span><span id="line-159"></span><span class="hs-comment">--</span><span>
+</span><span id="line-160"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-161"></span><span class="hs-comment">--   Writes string and forces a flush (hFlush) to ensure</span><span>
+</span><span id="line-162"></span><span class="hs-comment">--   output is visible immediately (useful for terminals).</span><span>
+</span><span id="line-163"></span><span class="hs-comment">--</span><span>
+</span><span id="line-164"></span><span class="annot"><a href="VM.Instruction.Io.html#tryWrite"><span class="hs-identifier hs-type">tryWrite</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOException</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-165"></span><span id="tryWrite"><span class="annot"><span class="annottext">tryWrite :: Handle -&gt; FilePath -&gt; VirtualMachine (Either IOException ())
+</span><a href="VM.Instruction.Io.html#tryWrite"><span class="hs-identifier hs-var hs-var">tryWrite</span></a></span></span><span> </span><span id="local-6989586621679117592"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117592"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span id="local-6989586621679117593"><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679117593"><span class="hs-identifier hs-var">c</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Either IOException ())
+-&gt; VirtualMachine (Either IOException ())
+forall a. IO a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOException ())
+ -&gt; VirtualMachine (Either IOException ()))
+-&gt; IO (Either IOException ())
+-&gt; VirtualMachine (Either IOException ())
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO (Either IOException ())
+forall e a. Exception e =&gt; IO a -&gt; IO (Either e a)
+</span><span class="hs-identifier hs-var">try</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Handle -&gt; FilePath -&gt; IO ()
+</span><span class="hs-identifier hs-var">hPutStr</span></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117592"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679117593"><span class="hs-identifier hs-var">c</span></a></span><span> </span><span class="annot"><span class="annottext">IO () -&gt; IO () -&gt; IO ()
+forall a b. IO a -&gt; IO b -&gt; IO b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">Handle -&gt; IO ()
+</span><span class="hs-identifier hs-var">hFlush</span></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117592"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-166"></span><span>
+</span><span id="line-167"></span><span class="hs-comment">-- | Implements WRITE instruction (Opcode 0xB2).</span><span>
+</span><span id="line-168"></span><span class="hs-comment">--</span><span>
+</span><span id="line-169"></span><span class="hs-comment">-- @arg StackTop: Content (String).</span><span>
+</span><span id="line-170"></span><span class="hs-comment">-- @arg StackNext: FD (Int).</span><span>
+</span><span id="line-171"></span><span class="hs-comment">--</span><span>
+</span><span id="line-172"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-173"></span><span class="hs-comment">--   Writes content to the specified file descriptor.</span><span>
+</span><span id="line-174"></span><span class="hs-comment">--   Ignores operation if FD is invalid.</span><span>
+</span><span id="line-175"></span><span class="hs-comment">--</span><span>
+</span><span id="line-176"></span><span class="annot"><a href="VM.Instruction.Io.html#instWrite"><span class="hs-identifier hs-type">instWrite</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-177"></span><span id="instWrite"><span class="annot"><span class="annottext">instWrite :: VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#instWrite"><span class="hs-identifier hs-var hs-var">instWrite</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-178"></span><span>    </span><span id="local-6989586621679117596"><span class="annot"><a href="#local-6989586621679117596"><span class="hs-identifier hs-var">content</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; Text
+</span><a href="VM.VMValue.html#valueToString"><span class="hs-identifier hs-var">valueToString</span></a></span><span> </span><span class="annot"><span class="annottext">(VMValue -&gt; Text)
+-&gt; StateT VMState IO VMValue -&gt; StateT VMState IO Text
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-179"></span><span>    </span><span id="local-6989586621679117597"><span class="annot"><a href="#local-6989586621679117597"><span class="hs-identifier hs-var">fd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier hs-type">valueToInt</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">&lt;$&gt;</span></span><span> </span><span class="annot"><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-type">stackPop</span></a></span><span>
+</span><span id="line-180"></span><span>    </span><span id="local-6989586621679117598"><span class="annot"><a href="#local-6989586621679117598"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">get</span></span><span>
+</span><span id="line-181"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.lookup</span></span><span> </span><span class="annot"><a href="#local-6989586621679117597"><span class="hs-identifier hs-type">fd</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117598"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-182"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679117599"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117599"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Handle -&gt; FilePath -&gt; VirtualMachine (Either IOException ())
+</span><a href="VM.Instruction.Io.html#tryWrite"><span class="hs-identifier hs-var">tryWrite</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117599"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Text -&gt; FilePath
+</span><span class="hs-identifier hs-var">T.unpack</span></span><span> </span><span class="annot"><span class="annottext">Text
+</span><a href="#local-6989586621679117596"><span class="hs-identifier hs-var">content</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">VirtualMachine (Either IOException ())
+-&gt; VirtualMachine () -&gt; VirtualMachine ()
+forall a b.
+StateT VMState IO a -&gt; StateT VMState IO b -&gt; StateT VMState IO b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">() -&gt; VirtualMachine ()
+forall a. a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-183"></span><span>        </span><span class="annot"><span class="annottext">Maybe Handle
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; VirtualMachine ()
+forall a. a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-184"></span><span>
+</span><span id="line-185"></span><span class="hs-comment">-- | Implements CLOSE instruction (Opcode 0xB3).</span><span>
+</span><span id="line-186"></span><span class="hs-comment">--</span><span>
+</span><span id="line-187"></span><span class="hs-comment">-- @arg StackTop: FD (Int).</span><span>
+</span><span id="line-188"></span><span class="hs-comment">--</span><span>
+</span><span id="line-189"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-190"></span><span class="hs-comment">--   Closes the handle and removes the FD from the VM state map.</span><span>
+</span><span id="line-191"></span><span class="hs-comment">--   Safe to call on invalid FD (no-op).</span><span>
+</span><span id="line-192"></span><span class="hs-comment">--</span><span>
+</span><span id="line-193"></span><span class="annot"><a href="VM.Instruction.Io.html#instClose"><span class="hs-identifier hs-type">instClose</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-194"></span><span id="instClose"><span class="annot"><span class="annottext">instClose :: VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#instClose"><span class="hs-identifier hs-var hs-var">instClose</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-195"></span><span>    </span><span id="local-6989586621679117600"><span class="annot"><a href="#local-6989586621679117600"><span class="hs-identifier hs-var">fd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; Int
+</span><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier hs-var">valueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">(VMValue -&gt; Int)
+-&gt; StateT VMState IO VMValue -&gt; StateT VMState IO Int
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-196"></span><span>    </span><span id="local-6989586621679117601"><span class="annot"><a href="#local-6989586621679117601"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">get</span></span><span>
+</span><span id="line-197"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.lookup</span></span><span> </span><span class="annot"><a href="#local-6989586621679117600"><span class="hs-identifier hs-type">fd</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117601"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-198"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679117602"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117602"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO () -&gt; VirtualMachine ()
+forall a. IO a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Handle -&gt; IO ()
+</span><span class="hs-identifier hs-var">hClose</span></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117602"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">VirtualMachine () -&gt; VirtualMachine () -&gt; VirtualMachine ()
+forall a b.
+StateT VMState IO a -&gt; StateT VMState IO b -&gt; StateT VMState IO b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; m b -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;</span></span><span> </span><span class="annot"><span class="annottext">VMState -&gt; Int -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#removeFd"><span class="hs-identifier hs-var">removeFd</span></a></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117601"><span class="hs-identifier hs-var">vm</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117600"><span class="hs-identifier hs-var">fd</span></a></span><span>
+</span><span id="line-199"></span><span>        </span><span class="annot"><span class="annottext">Maybe Handle
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">() -&gt; VirtualMachine ()
+forall a. a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-200"></span><span>
+</span><span id="line-201"></span><span class="hs-comment">-- | Removes a File Descriptor from the VM state.</span><span>
+</span><span id="line-202"></span><span class="hs-comment">--</span><span>
+</span><span id="line-203"></span><span class="hs-comment">-- @arg vm: The current VM State.</span><span>
+</span><span id="line-204"></span><span class="hs-comment">-- @arg fd: The File Descriptor to remove.</span><span>
+</span><span id="line-205"></span><span class="hs-comment">--</span><span>
+</span><span id="line-206"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-207"></span><span class="hs-comment">--   Updates the Map in the state to delete the key.</span><span>
+</span><span id="line-208"></span><span class="hs-comment">--</span><span>
+</span><span id="line-209"></span><span class="annot"><a href="VM.Instruction.Io.html#removeFd"><span class="hs-identifier hs-type">removeFd</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VMState"><span class="hs-identifier hs-type">VMState</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-210"></span><span id="removeFd"><span class="annot"><span class="annottext">removeFd :: VMState -&gt; Int -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#removeFd"><span class="hs-identifier hs-var hs-var">removeFd</span></a></span></span><span> </span><span id="local-6989586621679117605"><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117605"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span id="local-6989586621679117606"><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679117606"><span class="hs-identifier hs-var">fd</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">VMState -&gt; VirtualMachine ()
+forall s (m :: * -&gt; *). MonadState s m =&gt; s -&gt; m ()
+</span><span class="hs-identifier hs-var">put</span></span><span> </span><span class="annot"><span class="annottext">VMState
+</span><a href="#local-6989586621679117605"><span class="hs-identifier hs-var">vm</span></a></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.delete</span></span><span> </span><span class="annot"><a href="#local-6989586621679117606"><span class="hs-identifier hs-type">fd</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117605"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-211"></span><span>
+</span><span id="line-212"></span><span class="hs-comment">-- | Wrapper to attempt reading a line.</span><span>
+</span><span id="line-213"></span><span class="hs-comment">--</span><span>
+</span><span id="line-214"></span><span class="hs-comment">-- @arg h: The file handle.</span><span>
+</span><span id="line-215"></span><span class="hs-comment">--</span><span>
+</span><span id="line-216"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-217"></span><span class="hs-comment">--   Uses hGetLine to read until newline.</span><span>
+</span><span id="line-218"></span><span class="hs-comment">--   Catches EOF or other IO errors.</span><span>
+</span><span id="line-219"></span><span class="hs-comment">--</span><span>
+</span><span id="line-220"></span><span class="annot"><a href="VM.Instruction.Io.html#tryInput"><span class="hs-identifier hs-type">tryInput</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handle</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOException</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">)</span><span>
+</span><span id="line-221"></span><span id="tryInput"><span class="annot"><span class="annottext">tryInput :: Handle -&gt; VirtualMachine (Either IOException FilePath)
+</span><a href="VM.Instruction.Io.html#tryInput"><span class="hs-identifier hs-var hs-var">tryInput</span></a></span></span><span> </span><span id="local-6989586621679117609"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117609"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO (Either IOException FilePath)
+-&gt; VirtualMachine (Either IOException FilePath)
+forall a. IO a -&gt; StateT VMState IO a
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOException FilePath)
+ -&gt; VirtualMachine (Either IOException FilePath))
+-&gt; IO (Either IOException FilePath)
+-&gt; VirtualMachine (Either IOException FilePath)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">IO FilePath -&gt; IO (Either IOException FilePath)
+forall e a. Exception e =&gt; IO a -&gt; IO (Either e a)
+</span><span class="hs-identifier hs-var">try</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Handle -&gt; IO FilePath
+</span><span class="hs-identifier hs-var">hGetLine</span></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117609"><span class="hs-identifier hs-var">h</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-222"></span><span>
+</span><span id="line-223"></span><span class="hs-comment">-- | Implements INPUT instruction (Opcode 0xB4).</span><span>
+</span><span id="line-224"></span><span class="hs-comment">--</span><span>
+</span><span id="line-225"></span><span class="hs-comment">-- @arg StackTop: FD (Int).</span><span>
+</span><span id="line-226"></span><span class="hs-comment">--</span><span>
+</span><span id="line-227"></span><span class="hs-comment">-- @details</span><span>
+</span><span id="line-228"></span><span class="hs-comment">--   Reads a single line from the FD (useful for stdin).</span><span>
+</span><span id="line-229"></span><span class="hs-comment">--   Pushes the string content (without newline usually) to stack.</span><span>
+</span><span id="line-230"></span><span class="hs-comment">--</span><span>
+</span><span id="line-231"></span><span class="annot"><a href="VM.Instruction.Io.html#instInput"><span class="hs-identifier hs-type">instInput</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="VM.VMState.html#VirtualMachine"><span class="hs-identifier hs-type">VirtualMachine</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-232"></span><span id="instInput"><span class="annot"><span class="annottext">instInput :: VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#instInput"><span class="hs-identifier hs-var hs-var">instInput</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-233"></span><span>    </span><span id="local-6989586621679117611"><span class="annot"><a href="#local-6989586621679117611"><span class="hs-identifier hs-var">fd</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; Int
+</span><a href="VM.VMValue.html#valueToInt"><span class="hs-identifier hs-var">valueToInt</span></a></span><span> </span><span class="annot"><span class="annottext">(VMValue -&gt; Int)
+-&gt; StateT VMState IO VMValue -&gt; StateT VMState IO Int
+forall (f :: * -&gt; *) a b. Functor f =&gt; (a -&gt; b) -&gt; f a -&gt; f b
+</span><span class="hs-operator hs-var">&lt;$&gt;</span></span><span> </span><span class="annot"><span class="annottext">StateT VMState IO VMValue
+</span><a href="VM.VMStack.html#stackPop"><span class="hs-identifier hs-var">stackPop</span></a></span><span>
+</span><span id="line-234"></span><span>    </span><span id="local-6989586621679117612"><span class="annot"><a href="#local-6989586621679117612"><span class="hs-identifier hs-var">vm</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="hs-identifier hs-type">get</span></span><span>
+</span><span id="line-235"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Map.lookup</span></span><span> </span><span class="annot"><a href="#local-6989586621679117611"><span class="hs-identifier hs-type">fd</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="VM.VMState.html#vmFds"><span class="hs-identifier hs-var">vmFds</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679117612"><span class="hs-identifier hs-type">vm</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-236"></span><span>        </span><span class="annot"><span class="annottext">Maybe Handle
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">VMValue -&gt; VirtualMachine ()
+</span><a href="VM.VMStack.html#stackPush"><span class="hs-identifier hs-var">stackPush</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Vector VMValue -&gt; VMValue
+</span><a href="VM.VMValue.html#VList"><span class="hs-identifier hs-var">VList</span></a></span><span> </span><span class="annot"><span class="annottext">Vector VMValue
+forall a. Vector a
+</span><span class="hs-identifier hs-var">V.empty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-237"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679117613"><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117613"><span class="hs-identifier hs-var">h</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Handle -&gt; VirtualMachine (Either IOException FilePath)
+</span><a href="VM.Instruction.Io.html#tryInput"><span class="hs-identifier hs-var">tryInput</span></a></span><span> </span><span class="annot"><span class="annottext">Handle
+</span><a href="#local-6989586621679117613"><span class="hs-identifier hs-var">h</span></a></span><span> </span><span class="annot"><span class="annottext">VirtualMachine (Either IOException FilePath)
+-&gt; (Either IOException FilePath -&gt; VirtualMachine ())
+-&gt; VirtualMachine ()
+forall a b.
+StateT VMState IO a
+-&gt; (a -&gt; StateT VMState IO b) -&gt; StateT VMState IO b
+forall (m :: * -&gt; *) a b. Monad m =&gt; m a -&gt; (a -&gt; m b) -&gt; m b
+</span><span class="hs-operator hs-var">&gt;&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Either IOException FilePath -&gt; VirtualMachine ()
+</span><a href="VM.Instruction.Io.html#handleReadResult"><span class="hs-identifier hs-var">handleReadResult</span></a></span><span>
+</span><span id="line-238"></span></pre></body></html>
