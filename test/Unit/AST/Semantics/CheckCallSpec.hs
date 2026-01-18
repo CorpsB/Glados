@@ -43,6 +43,7 @@ mockCheckExpr _ _ = Left "Mock error: expression not supported in unit test"
 
 simType :: CheckEnv -> Ast -> Either String Type
 simType _ (AInteger _) = Right TyInt
+simType _ (AList _)    = Right (TyList TyInt)
 simType _ (ASymbol s)
     | s == p "str"     = Right (TyList TyInt)
     | s == p "listStr" = Right (TyList (TyList TyInt))
@@ -913,3 +914,31 @@ spec = describe "AST.Semantics.CheckCall" $ do
                     let call = ASymbol (p "input")
                     let args = [AInteger (I8 0)]
                     checkCall simType testEnv call args `shouldBe` Right tyString
+
+            it "validates write(fd: int, content: string) successfully" $ do
+                let args = [AInteger (I8 1), AList []]
+                checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
+                    `shouldBe` Right TyInt
+
+            it "rejects write when FD is not an integer" $ do
+                let args = [ABool True, AList []]
+                checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
+                    `shouldBe` Left "write expects an integer file descriptor (int) as first argument"
+
+            it "rejects write when content is not a list/string" $ do
+                let args = [AInteger (I8 1), AInteger (I8 42)]
+                checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
+                    `shouldBe` Left "write expects a string or list ([char]) as second argument"
+
+            it "rejects write with missing arguments" $ do
+                let args = [AInteger (I8 1)]
+                checkCall simType emptyEnv (ASymbol (DT.pack "write")) args 
+                    `shouldBe` Left "write expects 2 arguments (fd: int, content: [char])"
+
+        describe "checkSizeof" $ do
+                it "Accepts any argument and returns Int" $ do
+                    let args = [ASymbol (p "str")]
+                    checkSizeof simType testEnv args `shouldBe` Right TyInt
+
+                it "Rejects missing argument" $ do
+                    checkSizeof simType testEnv [] `shouldBe` Left "sizeof expects 1 argument"

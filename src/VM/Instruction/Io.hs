@@ -118,7 +118,9 @@ readChars :: Handle -> Int -> IO String
 readChars _ 0 = return []
 readChars h n = do
     eof <- hIsEOF h
-    if eof then return [] else (:) <$> hGetChar h <*> readChars h (n - 1)
+    case eof of
+        True -> return []
+        False -> (:) <$> hGetChar h <*> readChars h (n - 1)
 
 -- | Handles the result of a read operation.
 --

@@ -7,7 +7,7 @@
 # =========================
 # Lib String (Functional)
 # Location: test/Functional/Lib/String/...
-# Imports: src/@lib/string/string_utils.npy
+# Imports: src/@lib/string/module.npy
 # =========================
 
 # 01) module
@@ -60,14 +60,14 @@ declare -A test_lib_string_slice_right_over_ok=([titre]="Lib String : right('abc
 declare -A test_lib_string_slice_right_n0_ok=([titre]="Lib String : right('abcdef',0) == ''" [fichier]="test/Functional/Lib/String/slice/right_n0_ok.npy" [exitcode]="0" [output]="")
 
 # 40-47) split/join/lines (8)
-declare -A test_lib_string_splitjoin_split_count3_ok=([titre]="Lib String : split('a,b,c',',') count == 3" [fichier]="test/Functional/Lib/String/splitjoin/split_count3_ok.npy" [exitcode]="0" [output]="3")
-declare -A test_lib_string_splitjoin_split_no_delim_count1_ok=([titre]="Lib String : split('abc',',') count == 1" [fichier]="test/Functional/Lib/String/splitjoin/split_no_delim_count1_ok.npy" [exitcode]="0" [output]="1")
-declare -A test_lib_string_splitjoin_split_space_count3_ok=([titre]="Lib String : split('a b c',' ') count == 3" [fichier]="test/Functional/Lib/String/splitjoin/split_space_count3_ok.npy" [exitcode]="0" [output]="3")
-declare -A test_lib_string_splitjoin_join_three_ok=([titre]="Lib String : join(['a','b','c'],',') == 'a,b,c'" [fichier]="test/Functional/Lib/String/splitjoin/join_three_ok.npy" [exitcode]="0" [output]="a,b,c")
-declare -A test_lib_string_splitjoin_join_one_ok=([titre]="Lib String : join(['abc'],',') == 'abc'" [fichier]="test/Functional/Lib/String/splitjoin/join_one_ok.npy" [exitcode]="0" [output]="abc")
-declare -A test_lib_string_splitjoin_join_empty_ok=([titre]="Lib String : join([],',') == ''" [fichier]="test/Functional/Lib/String/splitjoin/join_empty_ok.npy" [exitcode]="0" [output]="")
-declare -A test_lib_string_splitjoin_split_join_roundtrip_ok=([titre]="Lib String : join(split('a,b,c',','),',') == 'a,b,c'" [fichier]="test/Functional/Lib/String/splitjoin/split_join_roundtrip_ok.npy" [exitcode]="0" [output]="a,b,c")
-declare -A test_lib_string_splitjoin_lines_count3_ok=([titre]="Lib String : lines('a\\nb\\nc') count == 3" [fichier]="test/Functional/Lib/String/splitjoin/lines_count3_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_lib_string_build_split_count3_ok=([titre]="Lib String : split('a,b,c',',') count == 3" [fichier]="test/Functional/Lib/String/build/split_count3_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_lib_string_build_split_no_delim_count1_ok=([titre]="Lib String : split('abc',',') count == 1" [fichier]="test/Functional/Lib/String/build/split_no_delim_count1_ok.npy" [exitcode]="0" [output]="1")
+declare -A test_lib_string_build_split_space_count3_ok=([titre]="Lib String : split('a b c',' ') count == 3" [fichier]="test/Functional/Lib/String/build/split_space_count3_ok.npy" [exitcode]="0" [output]="3")
+declare -A test_lib_string_build_join_three_ok=([titre]="Lib String : join(['a','b','c'],',') == 'a,b,c'" [fichier]="test/Functional/Lib/String/build/join_three_ok.npy" [exitcode]="0" [output]="a,b,c")
+declare -A test_lib_string_build_join_one_ok=([titre]="Lib String : join(['abc'],',') == 'abc'" [fichier]="test/Functional/Lib/String/build/join_one_ok.npy" [exitcode]="0" [output]="abc")
+declare -A test_lib_string_build_join_empty_ok=([titre]="Lib String : join([],',') == ''" [fichier]="test/Functional/Lib/String/build/join_empty_ok.npy" [exitcode]="0" [output]="")
+declare -A test_lib_string_build_split_join_roundtrip_ok=([titre]="Lib String : join(split('a,b,c',','),',') == 'a,b,c'" [fichier]="test/Functional/Lib/String/build/split_join_roundtrip_ok.npy" [exitcode]="0" [output]="a,b,c")
+declare -A test_lib_string_build_lines_count3_ok=([titre]="Lib String : lines('a\\nb\\nc') count == 3" [fichier]="test/Functional/Lib/String/build/lines_count3_ok.npy" [exitcode]="0" [output]="3")
 
 # 48-71) validate (24 incl hasOnly_empty_true)
 declare -A test_lib_string_validate_isEmpty_empty_ok=([titre]="Lib String : isEmpty([]) == True" [fichier]="test/Functional/Lib/String/validate/isEmpty_empty_ok.npy" [exitcode]="0" [output]="True")
@@ -111,8 +111,8 @@ declare -A test_lib_string_convert_toBool_true_ok=([titre]="Lib String : toBool(
 declare -A test_lib_string_convert_toBool_false_ok=([titre]="Lib String : toBool('False') == False" [fichier]="test/Functional/Lib/String/convert/toBool_false_ok.npy" [exitcode]="0" [output]="False")
 declare -A test_lib_string_convert_toBool_lowercase_false_ok=([titre]="Lib String : toBool('true') == False" [fichier]="test/Functional/Lib/String/convert/toBool_lowercase_false_ok.npy" [exitcode]="0" [output]="False")
 
-declare -A test_lib_string_utils_pushStr_basic_ok=([titre]="Lib String : pushStr('Hello ', 'w')" [fichier]="test/Functional/Lib/String/utils/pushStr_basic_ok.npy" [exitcode]="0" [output]="Hello w")
-declare -A test_lib_string_utils_pushStr_empty_ok=([titre]="Lib String : pushStr(pushStr('', 'a'), 'b')" [fichier]="test/Functional/Lib/String/utils/pushStr_empty_ok.npy" [exitcode]="0" [output]="ab")
+declare -A test_lib_module_pushStr_basic_ok=([titre]="Lib String : pushStr('Hello ', 'w')" [fichier]="test/Functional/Lib/String/utils/pushStr_basic_ok.npy" [exitcode]="0" [output]="Hello w")
+declare -A test_lib_module_pushStr_empty_ok=([titre]="Lib String : pushStr(pushStr('', 'a'), 'b')" [fichier]="test/Functional/Lib/String/utils/pushStr_empty_ok.npy" [exitcode]="0" [output]="ab")
 
 # Test func
 RED="\e[31m"
@@ -268,14 +268,14 @@ run_all_tests() {
         test_lib_string_slice_right_n0_ok
 
         # 40-47) split/join/lines (8)
-        test_lib_string_splitjoin_split_count3_ok
-        test_lib_string_splitjoin_split_no_delim_count1_ok
-        test_lib_string_splitjoin_split_space_count3_ok
-        test_lib_string_splitjoin_join_three_ok
-        test_lib_string_splitjoin_join_one_ok
-        test_lib_string_splitjoin_join_empty_ok
-        test_lib_string_splitjoin_split_join_roundtrip_ok
-        test_lib_string_splitjoin_lines_count3_ok
+        test_lib_string_build_split_count3_ok
+        test_lib_string_build_split_no_delim_count1_ok
+        test_lib_string_build_split_space_count3_ok
+        test_lib_string_build_join_three_ok
+        test_lib_string_build_join_one_ok
+        test_lib_string_build_join_empty_ok
+        test_lib_string_build_split_join_roundtrip_ok
+        test_lib_string_build_lines_count3_ok
 
         # 48-71) validate (24)
         test_lib_string_validate_isEmpty_empty_ok
@@ -312,8 +312,8 @@ run_all_tests() {
         test_lib_string_convert_toBool_false_ok
         test_lib_string_convert_toBool_lowercase_false_ok
 
-        test_lib_string_utils_pushStr_basic_ok
-        test_lib_string_utils_pushStr_empty_ok
+        test_lib_module_pushStr_basic_ok
+        test_lib_module_pushStr_empty_ok
     )
 
     local total=${#tests[@]}

@@ -1,21 +1,38 @@
+import "src/@lib/string/module.npy";
+
+// READ_MODE 0;
+// WRITE_MODE 1;
+// APPEND_MODE 2;
+// MAX_FILE_SIZE 1000000;
+
 func ffread(path: [char]) -> [[char]] {
-    fd: int = open(path, MODE_READ);
+    fd: int = open(path, 0);
     if (fd == -1) {
         ret [['\0']];
     }
 
-    content: [char] = read(fd, MAX_FILE_SIZE);
+    content: [char] = read(fd, 1000000);
+    if (typeof(content) == "[void]") {
+        ret [['\0']];
+    }
+
+    str: [char] = ['\0'];
+    str_size: int = sizeof(content);
+    for (i = 0; i < str_size; ++i) {
+        str = cons(content[i], str);
+    }
+    str = reverse(str);
     close(fd);
-    ret split_lines(content);
+    ret split(str, '\n');
 }
 
 func ffwrite(path: [char], content: [[char]]) -> bool {
-    fd: int = open(path, MODE_WRITE);
+    fd: int = open(path, 2);
     if (fd == -1) {
         ret False;
     }
 
-    write(fd, content);
+    res: int = write(fd, content);
     close(fd);
-    ret True;
+    ret (res > 0);
 }

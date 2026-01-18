@@ -1,4 +1,4 @@
-import "src/@lib/string/string_utils.npy";
+import "src/@lib/string/module.npy";
 
 
 func main() { print(left("abc\0", 99)); }

@@ -1,2 +1,1 @@
-import "src/@lib/io/src/string.npy";
 import "src/@lib/io/src/files.npy";

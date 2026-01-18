@@ -20,9 +20,12 @@ module VM.Instruction.Stack
     , instSwap
     , instCast
     , instTypeOf
+    , instSizeOf
     ) where
 
 import Data.Word (Word8)
+import qualified Data.Vector as V
+
 import Common.Type.Integer (IntValue(..))
 import VM.VMState (VirtualMachine)
 import VM.VMValue
@@ -133,8 +136,8 @@ instPop = do
 --
 instDup :: VirtualMachine ()
 instDup = do
-    val <- stackTop
-    stackPush val
+    v <- stackTop
+    stackPush v
 
 -- | Implements the SWAP instruction (Opcode 0x04).
 --
@@ -157,8 +160,8 @@ instSwap = do
 instCast :: VirtualMachine ()
 instCast = do
     typeId <- readByte
-    val <- stackPop
-    stackPush (castValue typeId val)
+    v <- stackPop
+    stackPush (castValue typeId v)
 
 -- | Implements TYPEOF (Opcode 0x81).
 --
@@ -171,5 +174,24 @@ instCast = do
 instTypeOf :: VirtualMachine ()
 instTypeOf = do
     v <- stackPop
-    let typeStr = getValueName v
-    stackPush (stringToValue typeStr)
+    let typeVal = getValueName v
+    stackPush (stringToValue typeVal)
+
+-- | Implements SIZEOF (Opcode 0x82).
+--
+-- @details
+--   Pops a value and pushes its length.
+--   - List: Number of elements.
+--   - Struct: Number of fields.
+--   - Others: 0 (or error, depending on strictness choice).
+--
+-- @throws
+--   Error if the value is not a container (List/Struct).
+--
+instSizeOf :: VirtualMachine ()
+instSizeOf = do
+    v <- stackPop
+    case v of
+        VList vec -> stackPush (VInt (I64 (fromIntegral (V.length vec))))
+        VStruct vec -> stackPush (VInt (I64 (fromIntegral (V.length vec))))
+        _ -> error "VM Error: sizeof expects a List or Struct"

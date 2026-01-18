@@ -155,8 +155,8 @@ declare -A test_cmp_list_eq_disallowed=([titre]="Comparisons : list == disallowe
 declare -A test_cmp_bool_neq_ok=([titre]="Comparisons : bool != ok" [fichier]="test/Functional/Comparisons/Advanced/bool_neq_ok.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_bool_lt_disallowed=([titre]="Comparisons : bool < disallowed" [fichier]="test/Functional/Comparisons/Advanced/bool_lt_disallowed.npy" [exitcode]="84" [output]="")
 declare -A test_cmp_bool_gte_disallowed=([titre]="Comparisons : bool >= disallowed" [fichier]="test/Functional/Comparisons/Advanced/bool_gte_disallowed.npy" [exitcode]="84" [output]="")
-declare -A test_cmp_void_eq_disallowed=([titre]="Comparisons : void == disallowed" [fichier]="test/Functional/Comparisons/Advanced/void_eq_disallowed.npy" [exitcode]="0" [output]=$'1\n1\nTrue')
-declare -A test_cmp_void_neq_disallowed=([titre]="Comparisons : void != disallowed" [fichier]="test/Functional/Comparisons/Advanced/void_neq_disallowed.npy" [exitcode]="0" [output]=$'1\nFalse')
+declare -A test_cmp_void_eq_disallowed=([titre]="Comparisons : void == disallowed" [fichier]="test/Functional/Comparisons/Advanced/void_eq_disallowed.npy" [exitcode]="0" [output]=$'11True')
+declare -A test_cmp_void_neq_disallowed=([titre]="Comparisons : void != disallowed" [fichier]="test/Functional/Comparisons/Advanced/void_neq_disallowed.npy" [exitcode]="0" [output]=$'1False')
 declare -A test_cmp_struct_eq_disallowed=([titre]="Comparisons : struct == disallowed" [fichier]="test/Functional/Comparisons/Advanced/struct_eq_disallowed.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_struct_neq_disallowed=([titre]="Comparisons : struct != disallowed" [fichier]="test/Functional/Comparisons/Advanced/struct_neq_disallowed.npy" [exitcode]="0" [output]="True")
 declare -A test_cmp_list_lt_disallowed=([titre]="Comparisons : list < disallowed" [fichier]="test/Functional/Comparisons/Advanced/list_lt_disallowed.npy" [exitcode]="84" [output]="")
@@ -307,7 +307,7 @@ declare -A test_print_expr_ok=([titre]="Print : expression format ok" [fichier]=
 declare -A test_print_list_int_format_ok=([titre]="Print : [int] format ok" [fichier]="test/Functional/Print/list_int_format_ok.npy" [exitcode]="0" [output]="[1, 2, 3]")
 declare -A test_print_nested_list_format_ok=([titre]="Print : [[int]] format ok" [fichier]="test/Functional/Print/nested_list_format_ok.npy" [exitcode]="0" [output]="[[1, 2], [3]]")
 declare -A test_print_struct_format_ok=([titre]="Print : struct format ok" [fichier]="test/Functional/Print/struct_format_ok.npy" [exitcode]="0" [output]="{1, 2}")
-declare -A test_print_void_no_output_ok=([titre]="Print : void prints nothing (no newline) ok" [fichier]="test/Functional/Print/void_no_output_ok.npy" [exitcode]="0" [output]=$'0\n42')
+declare -A test_print_void_no_output_ok=([titre]="Print : void prints nothing (no newline) ok" [fichier]="test/Functional/Print/void_no_output_ok.npy" [exitcode]="0" [output]=$'042')
 
 # Syntactic sugar
 declare -A test_sugar_postfix_increment_value_ok=([titre]="Sugar : postfix i++ value ok" [fichier]="test/Functional/Sugar/postfix_increment_value_ok.npy" [exitcode]="0" [output]="2")

@@ -37,7 +37,7 @@ import VM.Bytecode.Reader (readInt32)
 instPrint :: VirtualMachine ()
 instPrint = do
     val <- stackPop
-    liftIO $ TIO.putStrLn (valueToString val)
+    liftIO $ TIO.putStr (valueToString val)
 
 -- | Implements HALT (Opcode 0x71).
 --
