@@ -139,9 +139,11 @@ decodePushVal 0x00 = do
     pure $ "PUSH BOOL " ++ (if b == 0 then "False" else "True")
 
 -- Integers (Signed & Unsigned)
-decodePushVal 0x01 = fmap (("PUSH I8 " ++) . show . (fromIntegral :: Word8 -> Int8)) getWord8
+decodePushVal 0x01 = fmap (("PUSH I8 " ++) . show .
+    (fromIntegral :: Word8 -> Int8)) getWord8
 decodePushVal 0x02 = fmap (("PUSH UI8 " ++) . show) getWord8
-decodePushVal 0x03 = fmap (("PUSH I16 " ++) . show . (fromIntegral :: Word16 -> Int16)) getWord16be
+decodePushVal 0x03 = fmap (("PUSH I16 " ++) . show .
+    (fromIntegral :: Word16 -> Int16)) getWord16be
 decodePushVal 0x04 = fmap (("PUSH UI16 " ++) . show) getWord16be
 decodePushVal 0x05 = fmap (("PUSH I32 " ++) . show) getInt32be
 decodePushVal 0x06 = fmap (("PUSH UI32 " ++) . show) getWord32be
@@ -149,7 +151,8 @@ decodePushVal 0x07 = fmap (("PUSH I64 " ++) . show) getInt64be
 decodePushVal 0x08 = fmap (("PUSH UI64 " ++) . show) getWord64be
 
 -- Char (explicit cast to avoid ambiguity)
-decodePushVal 0x09 = fmap (("PUSH CHAR " ++) . show . (toEnum :: Int -> Char) . fromIntegral) getWord8
+decodePushVal 0x09 = fmap (("PUSH CHAR " ++) . show .
+    (toEnum :: Int -> Char) . fromIntegral) getWord8
 
 -- Unknown types (skips payload based on immediateSize)
 decodePushVal t = skip (immSize t) >> pure ("PUSH (Type " ++ show t ++ ")")
