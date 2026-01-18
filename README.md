@@ -356,25 +356,25 @@ CONTRIBUTORS
 ============
 
 Jason KOENIG (OkotEgarim)
-Lead Developer · Project Management · VM Engineer · Compiler Engineer · Lib IO
-https://github.com/OkotEgarim
+- Lead Developer · Project Management · VM Engineer · Compiler Engineer · Lib IO
+- https://github.com/OkotEgarim
 
 Thibaut LOUIS (Turtelthib)
-Parsing (Lisp & Noopy) · Error Management
-https://github.com/Turtelthib
+- Parsing (Lisp & Noopy) · Error Management
+- https://github.com/Turtelthib
 
 Pierre-Louis SCHORSCH (simsipierre)
-VM Engineer · Compiler Engineer · Math Library
-https://github.com/simsipierre
+- VM Engineer · Compiler Engineer · Math Library
+- https://github.com/simsipierre
 
 Thomas CAMUSET (2k5Type0)
-Compiler Engineer · String Library
-https://github.com/2k5Type0
+- Compiler Engineer · String Library
+- https://github.com/2k5Type0
 
 Tom RUDOLF (Frogoth)
-Compiler Engineer · Assert Library · Example Project (Crocus)
-https://github.com/Frogoth
+- Compiler Engineer · Assert Library · Example Project (Crocus)
+- https://github.com/Frogoth
 
 Noé CARABIN (CorpsB)
-Project Management · CI/CD · Testing Policy
-https://github.com/CorpsB
+- Project Management · CI/CD · Testing Policy
+- https://github.com/CorpsB
