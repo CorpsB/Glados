@@ -297,10 +297,25 @@ pExprStatement = do
     _ <- semicolon <?> "\";\" after expression"
     return (AExprStmt expr)
 
+-- | Parses a 'break' statement.
+--
+-- Syntax: break;
+--
+-- It wraps the 'ABreak' node in an AExprStmt to ensure consistency
+-- with other statements that are expressions (like function calls).
+-- This allows the 'break' to be treated as a standard instruction
+-- in the AST processing pipeline.
+pBreak :: Parser Ast
+pBreak = do
+    _ <- pKeyword (DT.pack "break")
+    _ <- semicolon
+    return (AExprStmt ABreak)
+
 -- | Group of basic statement parsers (Return, Variable, Expression).
 pBasic :: [Parser Ast]
 pBasic =
     [ pReturn
+    , pBreak
     , try pVarDefStmt
     , pExprStatement
     ]

@@ -145,8 +145,9 @@ data Instruction
     | GetStructField Int      -- ^ 0x63 GET_STRUCT_FIELD [idx]
     | AttrUpdate              -- ^ 0x64 ATTR_UPDATE [struct] [idx] [value]
     | Cast Word8              -- ^ 0x80 CAST [TypeID]
+    | TypeOf                  -- ^ 0x81 TYPEOF
 
-    -- 9. List Operations
+    -- 8. List Operations
     | Cons                    -- ^ 0x90 CONS
     | Head                    -- ^ 0x91 HEAD [list]
     | Tail                    -- ^ 0x92 TAIL [list]
@@ -154,7 +155,14 @@ data Instruction
     | NthUpdate               -- ^ 0x95 NTH_UPDATE [list] [idx] [value]
     | BuildList Int           -- ^ 0x94 BUILD_LIST [n_elements]
 
-    -- 8. System / Debug
+    -- 8. I/O
+    | Open                    -- ^ 0xA0 OPEN
+    | Read                    -- ^ 0xA1 READ
+    | Write                   -- ^ 0xA2 WRITE
+    | Close                   -- ^ 0xA3 CLOSE
+    | Input                   -- ^ 0xA4 INPUT
+
+    -- 9. System / Debug
     | Print                   -- ^ 0x70 PRINT
     | Halt                    -- ^ 0x71 HALT
     | Exit                    -- ^ 0x72 EXIT
@@ -217,6 +225,7 @@ getInstCode (BuildStruct _)      = 0x62
 getInstCode (GetStructField _)   = 0x63
 getInstCode AttrUpdate           = 0x64
 getInstCode (Cast _)             = 0x80
+getInstCode TypeOf               = 0x81
 
 getInstCode Cons                 = 0x90
 getInstCode Head                 = 0x91
@@ -224,6 +233,12 @@ getInstCode Tail                 = 0x92
 getInstCode Nth                  = 0x93
 getInstCode (BuildList _)        = 0x94
 getInstCode NthUpdate            = 0x95
+
+getInstCode Open                 = 0xA0
+getInstCode Read                 = 0xA1
+getInstCode Write                = 0xA2
+getInstCode Close                = 0xA3
+getInstCode Input                = 0xA4
 
 getInstCode Print                = 0x70
 getInstCode Halt                 = 0x71
@@ -292,6 +307,7 @@ instructionSize (BuildStruct _)     = 1 + 4
 instructionSize (GetStructField _)  = 1 + 4
 instructionSize AttrUpdate          = 1
 instructionSize (Cast _)            = 1 + 1
+instructionSize TypeOf              = 1
 
 -- List Operations
 instructionSize Cons                = 1
@@ -300,6 +316,13 @@ instructionSize Tail                = 1
 instructionSize Nth                 = 1
 instructionSize (BuildList _)       = 1 + 4
 instructionSize NthUpdate           = 1
+
+-- I/O
+instructionSize Open                = 1
+instructionSize Read                = 1
+instructionSize Write               = 1
+instructionSize Close               = 1
+instructionSize Input               = 1
 
 -- System / Debug
 instructionSize Print               = 1

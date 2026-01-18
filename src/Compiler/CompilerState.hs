@@ -17,12 +17,13 @@ module Compiler.CompilerState
     , createCompilerState
     ) where
 
-import Compiler.PsInstruction (PsInstruction(..))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Text (Text)
+
+import Compiler.PsInstruction (PsInstruction(..))
 
 -- | Defines the memory scope of a variable.
 --
@@ -68,6 +69,7 @@ data CompilerState = CompilerState
     , csLabelCnt  :: Int                      -- ^ Counter for unique label generation
     , csScopeContext :: ScopeType             -- ^ Scope context (used to determine variables scopes)
     , csCurrentArgCount :: Int                -- ^ Number of args on the stack (atomic return clean)
+    , csLoopExits :: [Text]                   -- ^ Stack of loop exit labels (for break)
     } deriving (Show, Eq)
 
 -- | Initial, empty compiler state.
@@ -89,4 +91,4 @@ createCompilerState = CompilerState
     , csLabelCnt = 0
     , csScopeContext = ScopeGlobal
     , csCurrentArgCount = 0
-    }
+    , csLoopExits = [] }

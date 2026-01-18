@@ -34,6 +34,7 @@ import VM.Instruction.List
 import VM.Instruction.Function
 import VM.Instruction.Variable
 import VM.Instruction.System
+import VM.Instruction.Io
 
 -- | Maps a raw opcode byte to its corresponding instruction function.
 --
@@ -90,6 +91,7 @@ executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
 executeInstruction 0x72 = instExit
 executeInstruction 0x80 = instCast
+executeInstruction 0x81 = instTypeOf
 
 executeInstruction 0x90 = instCons
 executeInstruction 0x91 = instHead
@@ -97,6 +99,12 @@ executeInstruction 0x92 = instTail
 executeInstruction 0x93 = instNth
 executeInstruction 0x94 = instBuildList
 executeInstruction 0x95 = instNthUpdate
+
+executeInstruction 0xA0 = instOpen
+executeInstruction 0xA1 = instRead
+executeInstruction 0xA2 = instWrite
+executeInstruction 0xA3 = instClose
+executeInstruction 0xA4 = instInput
 
 executeInstruction 0xFE = instCheckStack
 executeInstruction 0xFF = return () -- NOP

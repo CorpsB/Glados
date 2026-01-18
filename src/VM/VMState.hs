@@ -13,9 +13,11 @@ module VM.VMState
     , doSnapshot
     ) where
 
+import qualified Data.Map.Strict as Map
 import qualified Data.ByteString as BS
 import qualified Data.Vector as V
 import Control.Monad.State.Strict (StateT, get, put)
+import System.IO (Handle, stdin, stdout, stderr)
 
 import VM.VMValue (VMValue)
 import VM.CallSnapshot (CallSnapshot(..))
@@ -63,6 +65,12 @@ data VMState = VMState
 
     , isDebug :: Bool
       -- ^ Enable tracing
+
+    , vmFds :: Map.Map Int Handle
+      -- ^ Table of file descriptors (Kernel)
+
+    , nextFd :: Int
+      -- ^ Next free fd
     }
 
 -- | The Monad Transformer stack used for the VM.
@@ -82,15 +90,13 @@ type VirtualMachine a = StateT VMState IO a
 --
 createVMState :: BS.ByteString -> Bool -> VMState
 createVMState code debug = VMState
-    { bytecode         = code
-    , bytecodeIndex    = 0
-    , vStack           = V.empty
-    , baseVStackIndex  = 0
-    , snapshotStack    = []
-    , env              = V.empty
-    , globalEnv        = V.replicate 1024 (undefined)
-    , isRunning        = True
-    , isDebug          = debug }
+    { bytecode = code, bytecodeIndex = 0
+    , vStack = V.empty, baseVStackIndex = 0
+    , snapshotStack = [], env = V.empty
+    , globalEnv = V.replicate 1024 (undefined)
+    , isRunning = True, isDebug = debug
+    , vmFds = Map.fromList [(0, stdin), (1, stdout), (2, stderr)]
+    , nextFd = 3 }
 
 -- | Creates a snapshot of the current VM context (IP, FP, Env).
 --
@@ -107,8 +113,8 @@ createVMState code debug = VMState
 createSnapshot :: VMState -> CallSnapshot
 createSnapshot vm = CallSnapshot
     { callbackIndex = bytecodeIndex vm
-    , vStackIndex   = baseVStackIndex vm
-    , vEnv          = env vm }
+    , vStackIndex = baseVStackIndex vm
+    , vEnv = env vm }
 
 -- | Sets up a new stack frame for a function call (Shared Logic).
 --
