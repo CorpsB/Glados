@@ -25,6 +25,7 @@ steps:
       title: "Release ${CI_COMMIT_TAG}"
       files:
         - glados
+        - glados-vm
 
       note: |        
         Commit:  ${CI_COMMIT_SHA}
