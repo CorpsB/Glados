@@ -1,6 +1,6 @@
 import "src/@lib/string/string_utils.npy";
 
 
-func main() { print(removeSpaces("a b  c")); }
+func main() { print(removeSpaces("a b  c\0")); }
 main();
 

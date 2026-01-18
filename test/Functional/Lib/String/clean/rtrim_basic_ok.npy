@@ -1,6 +1,6 @@
 import "src/@lib/string/string_utils.npy";
 
 
-func main() { print(rtrim("Hello   ")); }
+func main() { print(rtrim("Hello   \0")); }
 main();
 

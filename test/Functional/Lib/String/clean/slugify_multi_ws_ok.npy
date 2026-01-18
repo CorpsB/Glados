@@ -1,6 +1,6 @@
 import "src/@lib/string/string_utils.npy";
 
 
-func main() { print(slugify("  Hello   \t World \n  ")); }
+func main() { print(slugify("  Hello   \t World \n  \0")); }
 main();
 

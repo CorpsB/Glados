@@ -1,6 +1,6 @@
 import "src/@lib/string/string_utils.npy";
 
 
-func main() { print(trim("\t\tHello\t")); }
+func main() { print(trim("\t\tHello\t\0")); }
 main();
 
