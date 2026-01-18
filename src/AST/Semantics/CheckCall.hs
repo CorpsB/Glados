@@ -188,6 +188,7 @@ checkIOFuncs c e n a
     | n == DT.pack "close"   = Just $ checkClose c e a
     | n == DT.pack "read"    = Just $ checkRead c e a
     | n == DT.pack "input"   = Just $ checkInput c e a
+    | n == DT.pack "write"   = Just $ checkWrite c e a
     | otherwise = Nothing
 
 -- | Dispatcher for Data functions: Casts and List operations.
@@ -554,3 +555,21 @@ checkInput checker env [fd] = do
         then Right (TyList TyInt)
         else Left "input expects an integer file descriptor"
 checkInput _ _ _ = Left "input expects 1 argument"
+
+-- | Validates 'write(fd, content)'.
+--
+-- Low-level Write: Writes content to a file descriptor.
+--
+-- @param fd: Int (TyInt) the file descriptor.
+-- @param content: String/List ([char] or [int]) the data to write.
+-- @return: Int (TyInt) usually the number of bytes written.
+checkWrite :: CheckExprFn -> CheckEnv -> [Ast] -> Either String Type
+checkWrite checker env [fd, content] = do
+    tFd <- checker env fd
+    tContent <- checker env content
+    unless (areTypesCompatible TyInt tFd) $ 
+        Left "write expects an integer file descriptor (int) as first argument"
+    case tContent of
+        TyList _ -> Right TyInt
+        _ -> Left "write expects a string or list ([char]) as second argument"
+checkWrite _ _ _ = Left "write expects 2 arguments (fd: int, content: [char])"
