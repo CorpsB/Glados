@@ -1,0 +1,6 @@
+import "src/@lib/string/string_utils.npy";
+
+
+func main() { print(substring("abcdef", 2, 3)); }
+main();
+

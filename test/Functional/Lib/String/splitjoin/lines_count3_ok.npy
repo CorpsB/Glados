@@ -1,0 +1,18 @@
+import "src/@lib/string/string_utils.npy";
+
+
+func main() {
+    parts = lines("a\nb\nc");
+
+    i: int = 0;
+    while (True) {
+        if (nth(parts, i) == void) {
+            break;
+        }
+        i++;
+    }
+    print(i);
+
+}
+main();
+

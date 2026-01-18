@@ -1,0 +1,18 @@
+import "src/@lib/string/string_utils.npy";
+
+
+func main() {
+    parts = split("a,b,c", ',');
+
+    i: int = 0;
+    while (True) {
+        if (nth(parts, i) == void) {
+            break;
+        }
+        i++;
+    }
+    print(i);
+
+}
+main();
+

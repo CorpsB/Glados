@@ -1,0 +1,185 @@
+// Utils
+
+func length(str: [char]) -> int {
+    count: int = 0;
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        count++;
+    }
+    ret count;
+}
+
+func pushStr(str: [char], c: char) -> [char] {
+    if (str == ['\0']) {
+        ret cons(c, str);
+    }
+    ret cons(head(str), pushStr(tail(str), c));
+}
+
+func concat(str1: [char], str2: [char]) -> [char] {
+    if (str2 == []) {
+        ret str1;
+    }
+
+    ret concat(pushStr(str1, head(str2)), tail(str2));
+}
+
+// Split Join
+
+func join(list: [[char]], sep: char) -> [char] {
+
+    if (list == []) {
+        ret ['\0'];
+    }
+
+    if (tail(list) == []) {
+        ret head(list);
+    }
+
+    ret concat(concat(head(list), [sep]), join(tail(list), sep));
+}
+
+// Transform
+
+func capitalize(str: [char]) -> [char] {
+    result: [char] = str;
+
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    if (result[0] >= 'a' && result[0] <= 'z') {
+        result[0] = upper[result[0] - 97];
+    }
+    ret result;
+}
+
+func repeat(str: [char], n: int) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; i < n; i++) {
+        result = concat(result, str);
+    }
+    ret result;
+}
+
+func reverse(str: [char]) -> [char] {
+    result: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        result = cons(str[i], result);
+    }
+    ret result;
+}
+
+func swapCase(str: [char]) -> [char] {
+    result: [char] = str;
+
+    lower: [char] = "abcdefghijklmnopqrstuvwxyz";
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+            result[i] = upper[str[i] - 97];
+        }
+        if (str[i] >= 'A' && str[i] <= 'Z') {
+            result[i] = lower[str[i] - 65];
+        }
+    }
+    ret result;
+}
+
+func toLower(str: [char]) -> [char] {
+    result: [char] = str;
+
+    lower: [char] = "abcdefghijklmnopqrstuvwxyz";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'A' && str[i] <= 'Z') {
+            result[i] = lower[str[i] - 65];
+        }
+    }
+    ret result;
+}
+
+func toUpper(str: [char]) -> [char] {
+    result: [char] = str;
+
+    upper: [char] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] >= 'a' && str[i] <= 'z') {
+            result[i] = upper[str[i] - 97];
+        }
+    }
+    ret result;
+}
+
+// Validate
+
+func hasOnly(str: [char], charset: char) -> bool {
+    if (str == [] || str == ['\0']) {
+        ret True;
+    }
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != charset) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isAlnum(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z') || (str[i] >= '0' && str[i] <= '9')) == False) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isAlpha(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z')) == False) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isEmpty(str: [char]) -> bool {
+    if (str == [] || str == "\0") {
+        ret True;
+    }
+    ret False;
+}
+
+func isBlank(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != ' ' && str[i] != '\t' && str[i] != '\n' && str[i] != '\r') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isLower(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < 'a' || str[i] > 'z') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isNumeric(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < '0' || str[i] > '9') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isUpper(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < 'A' || str[i] > 'Z') {
+            ret False;
+        }
+    }
+    ret True;
+}
