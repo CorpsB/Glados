@@ -50,7 +50,8 @@ builtinIoList =
 
 builtinSystemList :: [(Text, Instruction)]
 builtinSystemList =
-    [ (pack "print", Print), (pack "exit", Exit) ]
+    [ (pack "typeof", TypeOf), (pack "print", Print)
+    , (pack "exit", Exit) ]
 
 builtinList :: [(Text, Instruction)]
 builtinList = (builtinCastList

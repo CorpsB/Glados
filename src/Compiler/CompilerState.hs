@@ -69,6 +69,7 @@ data CompilerState = CompilerState
     , csLabelCnt  :: Int                      -- ^ Counter for unique label generation
     , csScopeContext :: ScopeType             -- ^ Scope context (used to determine variables scopes)
     , csCurrentArgCount :: Int                -- ^ Number of args on the stack (atomic return clean)
+    , csLoopExits :: [Text]                   -- ^ Stack of loop exit labels (for break)
     } deriving (Show, Eq)
 
 -- | Initial, empty compiler state.
@@ -90,4 +91,4 @@ createCompilerState = CompilerState
     , csLabelCnt = 0
     , csScopeContext = ScopeGlobal
     , csCurrentArgCount = 0
-    }
+    , csLoopExits = [] }

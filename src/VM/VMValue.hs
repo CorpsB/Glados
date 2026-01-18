@@ -7,6 +7,7 @@
 
 module VM.VMValue
     ( VMValue(..)
+    , getValueName
     , castValue
     , valueToString
     , valueToInt
@@ -152,6 +153,20 @@ valueToInt (VBool True) = 1
 valueToInt (VBool False) = 0
 valueToInt (VFuncPtr addr) = addr
 valueToInt _ = 0
+
+-- | Helpers to get string representation of type.
+--
+-- @arg val: The VMValue to inspect.
+-- @return The string name of the type.
+--
+getValueName :: VMValue -> T.Text
+getValueName (VInt _) = T.pack "int"
+getValueName (VBool _) = T.pack "bool"
+getValueName (VList _) = T.pack "list"
+getValueName (VStruct _) = T.pack "struct"
+getValueName (VClosure _ _) = T.pack "function"
+getValueName (VFuncPtr _) = T.pack "function"
+getValueName VVoid = T.pack "void"
 
 -- | Converts a VMValue to a specific target TypeID.
 --

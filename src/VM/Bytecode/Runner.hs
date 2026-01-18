@@ -91,6 +91,7 @@ executeInstruction 0x70 = instPrint
 executeInstruction 0x71 = instHalt
 executeInstruction 0x72 = instExit
 executeInstruction 0x80 = instCast
+executeInstruction 0x81 = instTypeOf
 
 executeInstruction 0x90 = instCons
 executeInstruction 0x91 = instHead

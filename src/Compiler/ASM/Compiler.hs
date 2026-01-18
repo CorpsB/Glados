@@ -178,7 +178,9 @@ compileLoop :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Text -> CompilerMonad 
 compileLoop compileFn cond body lEnd =
     compileFn cond >>
     emitJumpIfFalseToLabel lEnd >>
-    compileFn body
+    pushLoopExit endLabel >>
+    compileFn body >>
+    popLoopExit
 
 -- | Compiles a While loop.
 --
@@ -469,6 +471,18 @@ compileAttrUpdate compileFn obj fieldArg v = do
     compileFn v
     emitInstruction AttrUpdate
 
+-- | Pushes a loop exit label onto the stack.
+--
+pushLoopExit :: Text -> CompilerMonad ()
+pushLoopExit label = modify $ \s -> s { csLoopExits = label : csLoopExits s }
+
+-- | Pops the last loop exit label.
+--
+popLoopExit :: CompilerMonad ()
+popLoopExit = modify $ \s -> case csLoopExits s of
+    (_:xs) -> s { csLoopExits = xs }
+    []     -> s
+
 -- | Main Dispatcher Function: Compiles any AST node.
 --
 -- @args
@@ -507,6 +521,11 @@ compileAst (AFor i cond u body) = compileFor compileAst i cond u body
 compileAst (ACall (ASymbol name) [obj, fieldArg, v]) 
     | name == pack "attr_update" = compileAttrUpdate compileAst obj fieldArg v
 compileAst (ACall func args) = astCallToAsm compileAst func args
+compileAst ABreak = do
+    state <- get
+    case csLoopExits state of
+        [] -> lift $ Left (pack "Error: 'break' statement outside of loop")
+        (label:_) -> emitJumpToLabel label
 compileAst (AReturn expr) = do
     compileAst expr
     s <- get

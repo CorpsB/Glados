@@ -19,12 +19,18 @@ module VM.Instruction.Stack
     , instDup
     , instSwap
     , instCast
+    , instTypeOf
     ) where
 
 import Data.Word (Word8)
 import Common.Type.Integer (IntValue(..))
 import VM.VMState (VirtualMachine)
-import VM.VMValue (VMValue(..), castValue)
+import VM.VMValue
+    ( VMValue(..)
+    , castValue
+    , getValueName
+    , stringToValue
+    )
 import VM.Bytecode.Reader
     ( readByte
     , readInt8
@@ -153,3 +159,17 @@ instCast = do
     typeId <- readByte
     val <- stackPop
     stackPush (castValue typeId val)
+
+-- | Implements TYPEOF (Opcode 0x81).
+--
+-- @details
+--   Pops a value from the stack, determines its runtime type,
+--   and pushes a string representation (e.g., "int", "list").
+--
+--   Stack: [value] -> ["type_name"]
+--
+instTypeOf :: VirtualMachine ()
+instTypeOf = do
+    v <- stackPop
+    let typeStr = getValueName v
+    stackPush (stringToValue typeStr)

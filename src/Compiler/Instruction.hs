@@ -145,6 +145,7 @@ data Instruction
     | GetStructField Int      -- ^ 0x63 GET_STRUCT_FIELD [idx]
     | AttrUpdate              -- ^ 0x64 ATTR_UPDATE [struct] [idx] [value]
     | Cast Word8              -- ^ 0x80 CAST [TypeID]
+    | TypeOf                  -- ^ 0x81 TYPEOF
 
     -- 8. List Operations
     | Cons                    -- ^ 0x90 CONS
@@ -224,6 +225,7 @@ getInstCode (BuildStruct _)      = 0x62
 getInstCode (GetStructField _)   = 0x63
 getInstCode AttrUpdate           = 0x64
 getInstCode (Cast _)             = 0x80
+getInstCode TypeOf               = 0x81
 
 getInstCode Cons                 = 0x90
 getInstCode Head                 = 0x91
@@ -305,6 +307,7 @@ instructionSize (BuildStruct _)     = 1 + 4
 instructionSize (GetStructField _)  = 1 + 4
 instructionSize AttrUpdate          = 1
 instructionSize (Cast _)            = 1 + 1
+instructionSize TypeOf              = 1
 
 -- List Operations
 instructionSize Cons                = 1

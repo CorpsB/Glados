@@ -146,6 +146,7 @@ serializeInstruction AttrUpdate = encodeWord8 0x64
 serializeInstruction (Cast typeId) =
     encodeWord8 0x80 <>
     encodeWord8 typeId
+serializeInstruction TypeOf = encodeWord8 0x81
 
 serializeInstruction Cons = encodeWord8 0x90
 serializeInstruction Head = encodeWord8 0x91
