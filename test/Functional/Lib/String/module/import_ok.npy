@@ -1,0 +1,8 @@
+import "src/@lib/string/string_utils.npy";
+
+
+func main() {
+    print(42);
+}
+main();
+

@@ -1,0 +1,9 @@
+import "src/@lib/string/string_utils.npy";
+
+
+func main() {
+    parts = split("a,b,c", ,);
+    print(join(parts, ,));
+}
+main();
+
