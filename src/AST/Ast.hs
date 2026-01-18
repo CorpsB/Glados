@@ -104,8 +104,22 @@ data Ast
       --   @param Ast The expression to return.
 
     | AExprStmt Ast
+      -- ^ Represents an expression used as a statement.
+      --   This wrapper is used when an expression is executed for its side effects
+      --   (e.g., a function call or assignment) rather than its return value.
+      --   Usually corresponds to an expression followed by a semicolon.
+      --   @param Ast The wrapped expression.
 
     | ABlock [Ast]
+      -- ^ Represents a scoped block of code (enclosed in braces `{}`).
+      --   Used to group multiple statements into a single logical unit,
+      --   typically for function bodies, loop bodies, or conditional branches.
+      --   @param [Ast] The list of statements contained in the block.
+
+    | ABreak
+      -- ^ Represents a 'break' statement.
+      --   Used to immediately terminate the nearest enclosing loop (for, while).
+      --   Control flow continues at the next statement following the loop.
 
     | APos Int Int Ast
       -- ^ Represents a source code position wrapper.
@@ -126,6 +140,7 @@ showAst (AList xs) = "(" ++ Prelude.unwords (Prelude.map showAst xs) ++ ")"
 showAst (ADefineLambda _ _) = "#<lambda>"
 showAst (APos _ _ ast) = showAst ast
 showAst (ABlock xs) = "{ " ++ unwords (map showAst xs) ++ " }"
+showAst ABreak = "break"
 showAst other = Prelude.show other
 -- TO DO: add new AST lines
 
@@ -158,4 +173,5 @@ cleanAst (AFor i c u b) =
 cleanAst (AReturn e) = AReturn (cleanAst e)
 cleanAst (AExprStmt e) = AExprStmt (cleanAst e)
 cleanAst (AAccessStruct obj field) = AAccessStruct (cleanAst obj) field
+cleanAst ABreak = ABreak
 cleanAst other = other
