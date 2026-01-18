@@ -178,7 +178,7 @@ compileLoop :: (Ast -> CompilerMonad ()) -> Ast -> Ast -> Text -> CompilerMonad 
 compileLoop compileFn cond body lEnd =
     compileFn cond >>
     emitJumpIfFalseToLabel lEnd >>
-    pushLoopExit endLabel >>
+    pushLoopExit lEnd >>
     compileFn body >>
     popLoopExit
 
