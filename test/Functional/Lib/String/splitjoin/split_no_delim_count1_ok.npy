@@ -2,11 +2,11 @@ import "src/@lib/string/string_utils.npy";
 
 
 func main() {
-    parts = split("abc", ',');
+    parts = split("abc\0", ',');
 
     i: int = 0;
     while (True) {
-        if (nth(parts, i) == void) {
+        if (nth(parts, i) == ['\0']) {
             break;
         }
         i++;

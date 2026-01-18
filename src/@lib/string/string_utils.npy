@@ -156,6 +156,24 @@ func split(str: [char], sep: char) -> [[char]] {
     ret result;
 }
 
+func lines(str: [char]) -> [[char]] {
+    result: [[char]] = [['\0']];
+    cache: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] == '\n') {
+            result = pushMatrix(result, cache);
+            cache = ['\0'];
+        } else {
+            cache = pushStr(cache, str[i]);
+        }
+    }
+    if (cache != ['\0']) {
+        result = pushMatrix(result, cache);
+    }
+    ret result;
+}
+
 // Transform
 
 func capitalize(str: [char]) -> [char] {
