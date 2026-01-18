@@ -16,9 +16,8 @@ func is_no_number(str: [char]) -> int {
     ret 1;
 }
 
-func main() {
-    data_n: [char] = "0123456789\0";
-    data_s: [char] = "noupy\0";
+func main(data_n: [char], data_s: [char]) {
     print_ascii(data_n, data_s);
 }
-main();
+
+main("0123456789\0", "noupy\0");
