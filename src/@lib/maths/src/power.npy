@@ -1,0 +1,59 @@
+func pow(base: int, exp: int) -> int {
+    if (exp < 0) {
+        ret 0;
+    }
+    res: int = 1;
+    b: int = base;
+    e: int = exp;
+
+    while (e > 0) {
+        if ((e % 2) == 1) {
+            res = res * b;
+        }
+        e = e / 2;
+        if (e > 0) {
+            b = b * b;
+        } else {
+            b = b * b;
+        }
+    }
+    ret res;
+}
+
+func pow10(exp: int) -> int {
+    if (exp < 0) {
+        ret 0;
+    }
+    res: int = 1;
+    i: int = 0;
+    while (i < exp) {
+        res = res * 10;
+        i = i + 1;
+    }
+    ret res;
+}
+
+func modPow(base: int, exp: int, m: int) -> int {
+    if (m <= 0) {
+        ret 0;
+    }
+    if (exp < 0) {
+        ret 0;
+    }
+    if (m == 1) {
+        ret 0;
+    }
+
+    res: int = 1 % m;
+    b: int = modPos(base, m);
+    e: int = exp;
+
+    while (e > 0) {
+        if ((e % 2) == 1) {
+            res = (res * b) % m;
+        }
+        e = e / 2;
+        b = (b * b) % m;
+    }
+    ret res;
+}

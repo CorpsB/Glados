@@ -42,6 +42,14 @@ insertVar env name t =
     let newVars = Map.insert name t (envVars env)
     in Right $ env { envVars = newVars }
 
+-- Helper to check a sequence
+checkBlock :: CheckEnv -> [Ast] -> Either String Type
+checkBlock _ [] = Right TyVoid
+checkBlock env [x] = checkExpr env x
+checkBlock env (x:xs) = do
+    _ <- checkExpr env x
+    checkBlock env xs
+
 -- | Check Expression: Verifies an expression and returns its Semantic Type.
 --
 -- Does not modify the AST, only extracts the type.

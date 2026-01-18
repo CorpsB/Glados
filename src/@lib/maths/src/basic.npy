@@ -1,0 +1,65 @@
+func abs(x: int) -> int {
+    if (x < 0) {
+        ret 0 - x;
+    }
+    ret x;
+}
+
+func sign(x: int) -> int {
+    if (x < 0) {
+        ret 0 - 1;
+    }
+    if (x == 0) {
+        ret 0;
+    }
+    ret 1;
+}
+
+func min(a: int, b: int) -> int {
+    if (a < b) {
+        ret a;
+    }
+    ret b;
+}
+
+func max(a: int, b: int) -> int {
+    if (a > b) {
+        ret a;
+    }
+    ret b;
+}
+
+func clamp(x: int, lo: int, hi: int) -> int {
+    if (x < lo) {
+        ret lo;
+    }
+    if (x > hi) {
+        ret hi;
+    }
+    ret x;
+}
+
+func isEven(n: int) -> bool {
+    if ((n % 2) == 0) {
+        ret True;
+    }
+    ret False;
+}
+
+func isOdd(n: int) -> bool {
+    if (isEven(n)) {
+        ret False;
+    }
+    ret True;
+}
+
+func modPos(a: int, m: int) -> int {
+    if (m <= 0) {
+        ret 0;
+    }
+    r: int = a % m;
+    if (r < 0) {
+        ret r + m;
+    }
+    ret r;
+}

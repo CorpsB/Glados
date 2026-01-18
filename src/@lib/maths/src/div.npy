@@ -1,0 +1,21 @@
+func divTrunc(a: int, b: int) -> int {
+    if (b == 0) {
+        ret 0;
+    }
+    ret a / b;
+}
+
+func divCeil(a: int, b: int) -> int {
+    if (b == 0) {
+        ret 0;
+    }
+    q: int = a / b;
+    r: int = a % b;
+    if (r == 0) {
+        ret q;
+    }
+    if (((a > 0) && (b > 0)) || ((a < 0) && (b < 0))) {
+        ret q + 1;
+    }
+    ret q;
+}
