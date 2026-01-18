@@ -1,0 +1,7 @@
+import "src/@lib/maths/module.npy";
+
+func main() {
+    print(divTrunc(7, 0));
+}
+
+main();

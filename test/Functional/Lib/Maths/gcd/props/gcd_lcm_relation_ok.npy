@@ -1,0 +1,13 @@
+import "src/@lib/maths/module.npy";
+
+func main() {
+
+    a = 21;
+    b = 6;
+    g = gcd(a, b);
+    l = lcm(a, b);
+    print(g * l == a * b);
+
+}
+
+main();
