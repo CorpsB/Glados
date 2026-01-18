@@ -14,7 +14,7 @@ language.
 CURRENT VERSION
 ---------------
 
-Noopy 2.2 introduces multiple fixes, including improvements to lambda handling and release
+Noopy 2.1 introduces multiple fixes, including improvements to lambda handling and release
 mechanisms, as well as the first native libraries.
 
 

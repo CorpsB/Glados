@@ -1,11 +1,37 @@
-# Changelog for `glados`
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to the
-[Haskell Package Versioning Policy](https://pvp.haskell.org/).
+## [1.0.0] - 2025-12-18
 
-## Unreleased
+### Added
+- Lisp interpreter
 
-## 0.1.0.0 - YYYY-MM-DD
+
+## [2.0.0] - 2026-01-17
+
+### Added
+- Noopy compiler
+- Noopy virtual machine
+- Project documentation
+
+### Fixed
+- Releases are now built from the `main` branch
+
+### Known Issues
+- Lambda functions may behave incorrectly in some cases
+
+
+## [2.1.0] - 2026-01-18
+
+### Added
+- String standard library
+- Example project: Crocus
+- README.md
+- IO standard library
+- Functional tests for standard libraries
+- New CI pipeline to validate libraries
+
+### Fixed
+- Releases now include both the VM binary and the `glados` compiler
+- Lambda functions are now fully supported
