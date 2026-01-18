@@ -24,10 +24,7 @@ DOCUMENTATION
 Developer documentation:
 https://corpsb.github.io/Glados/AST-Semantics-Check.html
 
-User documentation:
-Coming soon
-
-
+User documentation: https://glados.ncarabin.cloud
 
 GLaDOS / Noopy – Feature Checklist
 ================================
