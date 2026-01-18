@@ -1,0 +1,24 @@
+/*
+** EPITECH PROJECT, 2026
+** Glados
+** File description:
+** main.npy
+*/
+
+import "src/@example/crocus/src/print_ascii.npy";
+
+func is_no_number(str: [char]) -> int {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] > '9' || str[i] < '0') {
+            ret 0;
+        }
+    }
+    ret 1;
+}
+
+func main() {
+    data_n: [char] = "0123456789\0";
+    data_s: [char] = "noupy\0";
+    print_ascii(data_n, data_s);
+}
+main();

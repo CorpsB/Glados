@@ -1,0 +1,16 @@
+/*
+** EPITECH PROJECT, 2026
+** Glados
+** File description:
+** display_line.npy
+*/
+
+func display_line(str: [char], c: char) {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] == 'x') {
+            print(c);
+        } else {
+            print(' ');
+        }
+    }
+}
