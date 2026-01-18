@@ -1,11 +1,11 @@
 func gcd(a: int, b: int) -> int {
-    x: int = abs(a);
-    y: int = abs(b);
+    x: int = a;
+    y: int = b;
 
-    if (x == 0) { ret y; }
-    if (y == 0) { ret x; }
+    if (x < 0) { x = 0 - x; }
+    if (y < 0) { y = 0 - y; }
 
-    while (y != 0) {
+    while (!(y == 0)) {
         t: int = x % y;
         x = y;
         y = t;
@@ -16,9 +16,12 @@ func gcd(a: int, b: int) -> int {
 func lcm(a: int, b: int) -> int {
     if (a == 0 || b == 0) { ret 0; }
     g: int = gcd(a, b);
-    ret abs((a / g) * b);
+    x: int = a / g;
+    v: int = x * b;
+    if (v < 0) { ret 0 - v; }
+    ret v;
 }
 
-func coPrime(a: int, b: int) -> bool {
+func coprime(a: int, b: int) -> bool {
     ret gcd(a, b) == 1;
 }

@@ -8,3 +8,13 @@ import "src/@lib/maths/src/prime.npy";
 import "src/@lib/maths/src/range.npy";
 import "src/@lib/maths/src/combin.npy";
 import "src/@lib/maths/src/ntheory.npy";
+
+func isSqrt(n: int) -> int { ret intSqrt(n); }
+func pmod(a: int, m: int) -> int { ret modPos(a, m); }
+func coPrime(a: int, b: int) -> bool { ret coprime(a, b); }
+func fact(n: int) -> int { ret factorial(n); }
+func prodRange(a: int, b: int) -> int { ret productRange(a, b); }
+func isPow2(n: int) -> bool { ret isPowerOfTwo(n); }
+func nextPow2(n: int) -> int { ret nextPowerOfTwo(n); }
+func modinv(a: int, m: int) -> int { ret modInv(a, m); }
+func isSquare(n: int) -> bool { ret isPerfectSquare(n); }

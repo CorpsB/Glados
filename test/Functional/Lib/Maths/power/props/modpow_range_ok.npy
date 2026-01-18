@@ -1,0 +1,11 @@
+import "src/@lib/maths/module.npy";
+
+func main() {
+
+    m = 19;
+    x = modPow(5, 117, m);
+    print(x >= 0 && x < m);
+
+}
+
+main();
