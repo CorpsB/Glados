@@ -84,6 +84,7 @@ getLambdaFreeVariables (AIf cond t e) =
     Set.unions [getLambdaFreeVariables cond, getLambdaFreeVariables t,
         getLambdaFreeVariables e]
 getLambdaFreeVariables (AList e) = Set.unions (map getLambdaFreeVariables e)
+getLambdaFreeVariables (APos _ _ ast) = getLambdaFreeVariables ast
 getLambdaFreeVariables _ = Set.empty
 
 -- | Helper function for Tail Call Optimization

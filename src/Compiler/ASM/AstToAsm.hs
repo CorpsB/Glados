@@ -28,6 +28,7 @@ import Compiler.ASM.CompilerMonad
     ( CompilerMonad
     , emitInstruction
     , emitCallToLabel
+    , lookupSymbol
     )
 import Compiler.CompilerState (CompilerState(..), ScopeType(..))
 import Compiler.Instruction (Instruction(..), Immediate(..))
@@ -133,7 +134,13 @@ astCallToAsm compileFn (ASymbol name) [a, b] | name == pack "tneq?" =
     emitInstruction TEq >> emitInstruction Not
 astCallToAsm compileFn (ASymbol name) args = case Map.lookup name builtinMap of
     Just instr -> mapM_ compileFn args >> emitInstruction instr
-    Nothing -> mapM_ compileFn args >> emitCallToLabel (pack "fun_" <> name)
+    Nothing -> do
+        sym <- lookupSymbol name
+        case sym of
+            Just _ -> mapM_ compileFn args >> compileFn (ASymbol name) >>
+                emitInstruction CallIndirect
+            Nothing -> mapM_ compileFn args >>
+                emitCallToLabel (pack "fun_" <> name)
 astCallToAsm _ (AInteger _) _ =
     lift $ Left (pack "Error: Cannot call an Integer")
 astCallToAsm _ (ABool _) _ =

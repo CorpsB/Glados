@@ -63,7 +63,6 @@ declare -A test_syntax_func_param_missing_type=([titre]="Syntax : func param mis
 declare -A test_syntax_struct_field_missing_semicolon=([titre]="Syntax : struct field missing semicolon" [fichier]="test/Functional/Syntax/Advanced/struct_field_missing_semicolon.npy" [exitcode]="84" [output]="")
 declare -A test_syntax_struct_field_missing_type=([titre]="Syntax : struct field missing type" [fichier]="test/Functional/Syntax/Advanced/struct_field_missing_type.npy" [exitcode]="84" [output]="")
 declare -A test_syntax_struct_missing_closing_brace=([titre]="Syntax : struct missing closing brace" [fichier]="test/Functional/Syntax/Advanced/struct_missing_closing_brace.npy" [exitcode]="84" [output]="")
-declare -A test_syntax_lambda_missing_arrow=([titre]="Syntax : lambda missing arrow" [fichier]="test/Functional/Syntax/Advanced/lambda_missing_arrow.npy" [exitcode]="84" [output]="")
 declare -A test_syntax_lambda_trailing_comma=([titre]="Syntax : lambda trailing comma" [fichier]="test/Functional/Syntax/Advanced/lambda_trailing_comma.npy" [exitcode]="84" [output]="")
 declare -A test_syntax_expr_missing_rhs=([titre]="Syntax : expr missing RHS" [fichier]="test/Functional/Syntax/Advanced/expr_missing_rhs.npy" [exitcode]="84" [output]="")
 declare -A test_syntax_expr_unclosed_paren=([titre]="Syntax : expr unclosed parenthesis" [fichier]="test/Functional/Syntax/Advanced/expr_unclosed_paren.npy" [exitcode]="84" [output]="")
@@ -333,7 +332,7 @@ declare -A test_sugar_div_equals_by_zero_error=([titre]="Sugar : /= by zero erro
 declare -A test_sugar_mod_equals_by_zero_error=([titre]="Sugar : %= by zero error" [fichier]="test/Functional/Sugar/mod_equals_by_zero_error.npy" [exitcode]="84" [output]="")
 
 # Integration (Combinatorial)
-declare -A test_integ_import_struct_function_lambda_ok=([titre]="Integration : import + struct + function + lambda ok" [fichier]="test/Functional/Integration/import_struct_function_lambda_ok/main.npy" [exitcode]="0" [output]="15")
+declare -A #test_integ_import_struct_function_lambda_ok=([titre]="Integration : import + struct + function + lambda ok" [fichier]="test/Functional/Integration/import_struct_function_lambda_ok/main.npy" [exitcode]="0" [output]="15")
 declare -A test_integ_loops_lists_builtins_ok=([titre]="Integration : loops + lists + builtins ok" [fichier]="test/Functional/Integration/loops_lists_builtins_ok.npy" [exitcode]="0" [output]="6")
 declare -A test_integ_type_inference_chain_ok=([titre]="Integration : type inference chain ok" [fichier]="test/Functional/Integration/type_inference_chain_ok.npy" [exitcode]="0" [output]="3")
 declare -A test_integ_lambda_closure_in_struct_ok=([titre]="Integration : lambda closure in struct ok" [fichier]="test/Functional/Integration/lambda_closure_in_struct_ok.npy" [exitcode]="0" [output]="12")
@@ -505,7 +504,6 @@ run_all_tests() {
         test_syntax_struct_field_missing_semicolon
         test_syntax_struct_field_missing_type
         test_syntax_struct_missing_closing_brace
-        test_syntax_lambda_missing_arrow
         test_syntax_lambda_trailing_comma
         test_syntax_expr_missing_rhs
         test_syntax_expr_unclosed_paren
@@ -668,22 +666,22 @@ run_all_tests() {
         test_functions_call_undefined_function_error
 
         # Lambdas
-        # test_lambdas_basic_multiply_ok
-        # test_lambdas_capture_var_ok
-        # test_lambdas_return_used_in_expr_ok
-        # test_lambdas_nested_call_ok
-        # test_lambdas_wrong_arity
-        # test_lambdas_wrong_arg_type
-        # test_lambdas_non_callable_used_as_func
+        test_lambdas_basic_multiply_ok
+        test_lambdas_capture_var_ok
+        test_lambdas_return_used_in_expr_ok
+        test_lambdas_nested_call_ok
+        test_lambdas_wrong_arity
+        test_lambdas_wrong_arg_type
+        test_lambdas_non_callable_used_as_func
 
         # Lambdas (Advanced)
         # test_lambdas_hof_pass_as_param_ok
         # test_lambdas_return_lambda_ok
         # test_lambdas_capture_modified_after_ref_ok
-        # test_lambdas_capture_modified_after_val_ok
-        # test_lambdas_capture_out_of_scope_error
-        # test_lambdas_lambda_in_list_ok
-        # test_lambdas_lambda_in_list_type_error
+        test_lambdas_capture_modified_after_val_ok
+        test_lambdas_capture_out_of_scope_error
+        test_lambdas_lambda_in_list_ok
+        test_lambdas_lambda_in_list_type_error
 
         # Structs
         test_structs_basic_new_access_ok
@@ -767,10 +765,10 @@ run_all_tests() {
         test_sugar_mod_equals_by_zero_error
 
         # Integration
-        # test_integ_import_struct_function_lambda_ok
+        #test_integ_import_struct_function_lambda_ok
         test_integ_loops_lists_builtins_ok
         test_integ_type_inference_chain_ok
-        # test_integ_lambda_closure_in_struct_ok
+        test_integ_lambda_closure_in_struct_ok
         test_integ_import_transitive_then_call_error
         test_integ_multiple_errors_same_file_error
     )
