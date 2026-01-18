@@ -1,0 +1,8 @@
+import "src/@lib/string/module.npy";
+
+func main() {
+    result: [char] = pushStr("Hello\0", ' ');
+    result = pushStr(result, 'w');
+    print(result);
+}
+main();

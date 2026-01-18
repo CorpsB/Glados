@@ -1,0 +1,48 @@
+func join(list: [[char]], sep: char) -> [char] {
+
+    if (head(list) == ['\0']) {
+        ret ['\0'];
+    }
+
+    if (head(tail(list)) == ['\0']) {
+        ret head(list);
+    }
+
+    ret concat(concat(head(list), [sep]), join(tail(list), sep));
+}
+
+func split(str: [char], sep: char) -> [[char]] {
+    result: [[char]] = [['\0']];
+    cache: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] == sep) {
+            result = pushMatrix(result, cache);
+            cache = ['\0'];
+        } else {
+            cache = pushStr(cache, str[i]);
+        }
+    }
+    if (cache != ['\0']) {
+        result = pushMatrix(result, cache);
+    }
+    ret result;
+}
+
+func lines(str: [char]) -> [[char]] {
+    result: [[char]] = [['\0']];
+    cache: [char] = ['\0'];
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] == '\n') {
+            result = pushMatrix(result, cache);
+            cache = ['\0'];
+        } else {
+            cache = pushStr(cache, str[i]);
+        }
+    }
+    if (cache != ['\0']) {
+        result = pushMatrix(result, cache);
+    }
+    ret result;
+}

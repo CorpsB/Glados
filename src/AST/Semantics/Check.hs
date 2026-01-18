@@ -7,7 +7,6 @@
 
 module AST.Semantics.Check (checkAst, checkExpr, checkStmt) where
 
-import Control.Monad (foldM, unless, forM_)
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as DT
 import Data.List (isPrefixOf)
@@ -15,6 +14,8 @@ import Data.List (isPrefixOf)
 import AST.Ast (Ast(..))
 import AST.Semantics.Type
 import AST.Semantics.CheckCall (checkCall)
+import Common.Type.Integer (IntValue(..))
+import Control.Monad
 
 -- | Main entry point: validates AND transforms a list of AST nodes.
 --
@@ -41,14 +42,6 @@ insertVar :: CheckEnv -> DT.Text -> Type -> Either String CheckEnv
 insertVar env name t =
     let newVars = Map.insert name t (envVars env)
     in Right $ env { envVars = newVars }
-
--- Helper to check a sequence
-checkBlock :: CheckEnv -> [Ast] -> Either String Type
-checkBlock _ [] = Right TyVoid
-checkBlock env [x] = checkExpr env x
-checkBlock env (x:xs) = do
-    _ <- checkExpr env x
-    checkBlock env xs
 
 -- | Check Expression: Verifies an expression and returns its Semantic Type.
 --
@@ -164,6 +157,7 @@ checkStmt env (AImport _) = Right (AVoid, env)
 checkStmt env (AExprStmt stmt) = do
     (newStmt, newEnv) <- checkStmt env stmt
     return (AExprStmt newStmt, newEnv)
+checkStmt env ABreak = Right (ABreak, env)
 checkStmt env ast = do
     _ <- checkExpr env ast
     return (ast, env)
@@ -374,18 +368,55 @@ validateField env expectedFields (fieldName, expr) = do
                "' expected " ++ typeToString expectedType ++ 
                " but got " ++ typeToString actualType
 
--- | Checks that all elements in a list literal have the same type.
+-- | Checks if an AST node represents a character literal.
+--
+-- Used to distinguish between standard integers (I8, I64...) and characters (IChar)
+-- within the 'AInteger' constructor.
+--
+-- @param ast: The AST node to inspect.
+-- @return: True if the node is an AInteger wrapping an IChar, False otherwise.
+isCharLiteral :: Ast -> Bool
+isCharLiteral (AInteger (IChar _)) = True
+isCharLiteral (APos _ _ ast) = isCharLiteral ast
+isCharLiteral _ = False
+
+-- | Checks that all elements in a list literal have the same type AND same literal structure.
+--
+-- This function iterates over the list and delegates validation to 'checkElement'.
+-- It determines the expected type and literal structure (Char vs Int) based on the first element.
+--
+-- @param env: The current semantic environment.
+-- @param list: The list of AST nodes to check.
+-- @return: The inferred type of the list (e.g., TyList TyInt) or an error.
 checkListExpr :: CheckEnv -> [Ast] -> Either String Type
 checkListExpr _ [] = Right (TyList TyVoid)
 checkListExpr env (x:xs) = do
     expectedType <- checkExpr env x
-    forM_ xs $ \elemAst -> do
-        elemType <- checkExpr env elemAst
-        unless (areTypesCompatible expectedType elemType) $
-            Left $ "List type mismatch: expected " ++
-                   typeToString expectedType ++
-                   " but got " ++ typeToString elemType
+    let firstIsChar = isCharLiteral x
+    forM_ xs $ \elemAst -> 
+        checkElement env expectedType firstIsChar elemAst
     return (TyList expectedType)
+
+-- | Validates a single list element against the expected constraints.
+--
+-- It performs two checks:
+-- 1. Standard Type Compatibility (e.g., Int vs Int).
+-- 2. Strict Literal Structure (prevents mixing 'char' literals with standard integers).
+--
+-- @param env: Current checking environment.
+-- @param expectedType: The type derived from the first element of the list.
+-- @param firstIsChar: Boolean flag indicating if the first element was a Char literal.
+-- @param elemAst: The current element being validated.
+checkElement :: CheckEnv -> Type -> Bool -> Ast -> Either String ()
+checkElement env expectedType firstIsChar elemAst = do
+    elemType <- checkExpr env elemAst
+    unless (areTypesCompatible expectedType elemType) $
+        Left $ "List type mismatch: expected " ++
+               typeToString expectedType ++
+               " but got " ++ typeToString elemType
+    when (firstIsChar /= isCharLiteral elemAst) $
+        Left $ "List literal mismatch: cannot mix 'char' and " ++
+            "'int' in the same list"
 
 -- | Checks if the AST contains a Return statement.
 hasReturn :: Ast -> Bool

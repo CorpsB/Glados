@@ -1,0 +1,30 @@
+func length(str: [char]) -> int {
+    count: int = 0;
+
+    for (i: int = 0; str[i] != '\0'; i++) {
+        count++;
+    }
+    ret count;
+}
+
+func pushStr(str: [char], c: char) -> [char] {
+    if (str == ['\0']) {
+        ret cons(c, str);
+    }
+    ret cons(head(str), pushStr(tail(str), c));
+}
+
+func pushMatrix(list: [[char]], str: [char]) -> [[char]] {
+    if (list == [['\0']]) {
+        ret cons(str, list);
+    }
+    ret cons(head(list), pushMatrix(tail(list), str));
+}
+
+func concat(str1: [char], str2: [char]) -> [char] {
+    if (str2 == []) {
+        ret str1;
+    }
+
+    ret concat(pushStr(str1, head(str2)), tail(str2));
+}

@@ -109,7 +109,7 @@ withPos p = do
 -- These words cannot be used as variable or function identifiers.
 reservedWords :: [DT.Text]
 reservedWords = map DT.pack ["func", "ret", "if", "else", "int",
-        "bool", "void", "while", "lambda"]
+        "bool", "void", "while", "lambda", "break"]
 
 -- | Parse a specific keyword.
 --

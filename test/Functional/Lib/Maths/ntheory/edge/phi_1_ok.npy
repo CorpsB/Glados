@@ -1,0 +1,7 @@
+import "src/@lib/maths/module.npy";
+
+func main() {
+    print(phi(1));
+}
+
+main();

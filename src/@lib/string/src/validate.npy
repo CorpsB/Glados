@@ -1,0 +1,72 @@
+func hasOnly(str: [char], charset: char) -> bool {
+    if (str == [] || str == ['\0']) {
+        ret True;
+    }
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != charset) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isAlnum(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z') || (str[i] >= '0' && str[i] <= '9')) == False) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isAlpha(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (((str[i] >= 'A' && str[i] <= 'Z') || (str[i] >= 'a' && str[i] <= 'z')) == False) {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isEmpty(str: [char]) -> bool {
+    if (str == [] || str == "\0") {
+        ret True;
+    }
+    ret False;
+}
+
+func isBlank(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] != ' ' && str[i] != '\t' && str[i] != '\n' && str[i] != '\r') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isLower(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < 'a' || str[i] > 'z') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isNumeric(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < '0' || str[i] > '9') {
+            ret False;
+        }
+    }
+    ret True;
+}
+
+func isUpper(str: [char]) -> bool {
+    for (i: int = 0; str[i] != '\0'; i++) {
+        if (str[i] < 'A' || str[i] > 'Z') {
+            ret False;
+        }
+    }
+    ret True;
+}

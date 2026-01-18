@@ -1,0 +1,8 @@
+import "src/@lib/string/module.npy";
+
+func main() {
+    result: [char] = pushStr(['\0'], 'a');
+    result = pushStr(result, 'b');
+    print(result);
+}
+main();

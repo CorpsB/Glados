@@ -1,0 +1,7 @@
+import "src/@lib/maths/module.npy";
+
+func main() {
+    print(prodRange(1, 5));
+}
+
+main();

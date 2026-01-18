@@ -1,0 +1,6 @@
+import "src/@lib/string/module.npy";
+
+
+func main() { print(left("abc\0", 99)); }
+main();
+

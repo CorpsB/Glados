@@ -1,0 +1,12 @@
+import "src/@lib/maths/module.npy";
+
+func main() {
+
+    a = 3;
+    m = 11;
+    inv = modinv(a, m);
+    print(modPos(a * inv, m));
+
+}
+
+main();

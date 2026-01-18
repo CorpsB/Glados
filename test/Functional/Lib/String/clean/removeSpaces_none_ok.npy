@@ -1,0 +1,6 @@
+import "src/@lib/string/module.npy";
+
+
+func main() { print(removeSpaces("abc\0")); }
+main();
+

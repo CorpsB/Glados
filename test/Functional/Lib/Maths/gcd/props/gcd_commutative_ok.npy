@@ -1,0 +1,11 @@
+import "src/@lib/maths/module.npy";
+
+func main() {
+
+    a = 48;
+    b = 18;
+    print(gcd(a, b) == gcd(b, a));
+
+}
+
+main();

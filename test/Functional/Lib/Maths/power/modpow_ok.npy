@@ -1,0 +1,7 @@
+import "src/@lib/maths/module.npy";
+
+func main() {
+    print(modPow(2, 10, 1000));
+}
+
+main();

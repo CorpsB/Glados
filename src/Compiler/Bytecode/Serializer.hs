@@ -146,6 +146,8 @@ serializeInstruction AttrUpdate = encodeWord8 0x64
 serializeInstruction (Cast typeId) =
     encodeWord8 0x80 <>
     encodeWord8 typeId
+serializeInstruction TypeOf = encodeWord8 0x81
+serializeInstruction SizeOf = encodeWord8 0x82
 
 serializeInstruction Cons = encodeWord8 0x90
 serializeInstruction Head = encodeWord8 0x91
@@ -155,6 +157,12 @@ serializeInstruction (BuildList n) =
     encodeWord8 0x94 <>
     encodeInt32BE (fromIntegral n)
 serializeInstruction NthUpdate = encodeWord8 0x95
+
+serializeInstruction Open = encodeWord8 0xA0
+serializeInstruction Read = encodeWord8 0xA1
+serializeInstruction Write = encodeWord8 0xA2
+serializeInstruction Close = encodeWord8 0xA3
+serializeInstruction Input = encodeWord8 0xA4
 
 serializeInstruction Print = encodeWord8 0x70
 serializeInstruction Halt = encodeWord8 0x71
