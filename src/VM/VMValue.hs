@@ -11,6 +11,8 @@ module VM.VMValue
     , valueToString
     , valueToInt
     , eqValue
+    , stringToValue
+    , charToValue
     ) where
 
 import Data.Word (Word8)
@@ -18,7 +20,7 @@ import Data.Vector (Vector)
 import qualified Data.Vector as V
 import qualified Data.Text as T
 import Data.Text (Text)
-import Data.Char (chr)
+import Data.Char (chr, ord)
 
 import Common.Type.Integer (IntValue(..), intValueToInt)
 
@@ -113,6 +115,29 @@ valueToString (VList v) = let elements = V.toList v in
         Just txt -> txt
         Nothing -> T.pack "[" <> (T.intercalate (T.pack ", ")
             (map valueToString elements)) <> T.pack "]"
+
+-- | Converts a single Character to a VMValue.
+--
+-- @arg c: The character to convert.
+--
+-- @details
+--   Wraps the character's ordinal value into an IChar (Int8).
+--   Used as a helper for string conversion.
+--
+charToValue :: Char -> VMValue
+charToValue c = VInt (IChar (fromIntegral (ord c)))
+
+-- | Converts a Text string into a VMValue.
+--
+-- @arg txt: The text string to convert.
+--
+-- @details
+--   Transforms the Text into a VList of VInt (IChar).
+--   This reverses the logic of 'valueToString' for strings, creating
+--   the standard list-based string representation used by the VM.
+--
+stringToValue :: Text -> VMValue
+stringToValue txt = VList (V.fromList (map charToValue (T.unpack txt)))
 
 -- | Helper to extract a raw integer value for casting purposes.
 --

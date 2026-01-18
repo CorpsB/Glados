@@ -42,6 +42,12 @@ builtinLogicList =
     , (pack "<", Lt), (pack "<=", Le)
     , (pack "&&", And), (pack "||", Or), (pack "!", Not) ]
 
+builtinIoList :: [(Text, Instruction)]
+builtinIoList =
+    [ (pack "open", Open), (pack "read", Read)
+    , (pack "write", Write), (pack "close", Close)
+    , (pack "input", Input) ]
+
 builtinSystemList :: [(Text, Instruction)]
 builtinSystemList =
     [ (pack "print", Print), (pack "exit", Exit) ]
@@ -51,6 +57,7 @@ builtinList = (builtinCastList
     ++ builtinArithList
     ++ builtinStackList
     ++ builtinLogicList
+    ++ builtinIoList
     ++ builtinSystemList)
 
 -- | Mapping of builtin operator names to their VM instructions.

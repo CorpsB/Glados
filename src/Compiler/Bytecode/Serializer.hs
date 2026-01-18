@@ -156,6 +156,12 @@ serializeInstruction (BuildList n) =
     encodeInt32BE (fromIntegral n)
 serializeInstruction NthUpdate = encodeWord8 0x95
 
+serializeInstruction Open = encodeWord8 0xA0
+serializeInstruction Read = encodeWord8 0xA1
+serializeInstruction Write = encodeWord8 0xA2
+serializeInstruction Close = encodeWord8 0xA3
+serializeInstruction Input = encodeWord8 0xA4
+
 serializeInstruction Print = encodeWord8 0x70
 serializeInstruction Halt = encodeWord8 0x71
 serializeInstruction Exit = encodeWord8 0x72

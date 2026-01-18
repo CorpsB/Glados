@@ -1,0 +1,21 @@
+func ffread(path: [char]) -> [[char]] {
+    fd: int = open(path, MODE_READ);
+    if (fd == -1) {
+        ret [['\0']];
+    }
+
+    content: [char] = read(fd, MAX_FILE_SIZE);
+    close(fd);
+    ret split_lines(content);
+}
+
+func ffwrite(path: [char], content: [[char]]) -> bool {
+    fd: int = open(path, MODE_WRITE);
+    if (fd == -1) {
+        ret False;
+    }
+
+    write(fd, content);
+    close(fd);
+    ret True;
+}

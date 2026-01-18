@@ -17,12 +17,13 @@ module Compiler.CompilerState
     , createCompilerState
     ) where
 
-import Compiler.PsInstruction (PsInstruction(..))
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 import Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import Data.Text (Text)
+
+import Compiler.PsInstruction (PsInstruction(..))
 
 -- | Defines the memory scope of a variable.
 --
