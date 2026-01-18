@@ -17,11 +17,10 @@ import Data.Foldable (toList)
 import qualified Data.Sequence as Seq
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import Numeric (showHex) -- Nécessaire pour l'affichage hexadécimal
+import Numeric (showHex)
 import Data.Char (toUpper)
 import Control.Monad (forM_)
 
--- Imports existants du projet
 import Parser.Statement (parseALL)
 import Parser.ImportSystem (resolveImports)
 import Compiler.ASM.Compiler (compileAst)
