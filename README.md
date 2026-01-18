@@ -33,170 +33,170 @@ GLaDOS / Noopy – Feature Checklist
 ================================
 
 Legend:
-[ ] Not implemented / To do
-[x] Implemented
+- [ ] Not implemented / To do
+- [x] Implemented
 
 
 --------------------------------
 Part 0 – Tooling, Tests & CI
 --------------------------------
-[x] Build system present (Makefile)
-[x] Project builds from a fresh clone
-[x] Language implemented in Haskell
-[x] Binary named `glados`
-[x] Proper exit codes (0 on success, 84 on error)
-[x] Error messages written to stderr
+- [x] Build system present (Makefile)
+- [x] Project builds from a fresh clone
+- [x] Language implemented in Haskell
+- [x] Binary named `glados`
+- [x] Proper exit codes (0 on success, 84 on error)
+- [x] Error messages written to stderr
 
-[x] Unit tests
-[x] Integration tests
-[x] Test coverage available
-[x] Continuous Integration (CI)
-[x] Continuous Delivery (automatic release build)
+- [x] Unit tests
+- [x] Integration tests
+- [x] Test coverage available
+- [x] Continuous Integration (CI)
+- [x] Continuous Delivery (automatic release build)
 
 
 --------------------------------
 Part 1 – Minimal LISP Interpreter
 --------------------------------
-[x] S-Expression parser
-[x] Atoms: integers
-[x] Atoms: symbols
-[x] Lists (nested S-expressions)
-[x] Read program from stdin
-[x] Stop execution on first error
-[x] Exit code 84 on error
+- [x] S-Expression parser
+- [x] Atoms: integers
+- [x] Atoms: symbols
+- [x] Lists (nested S-expressions)
+- [x] Read program from stdin
+- [x] Stop execution on first error
+- [x] Exit code 84 on error
 
 Core concepts:
-[x] 64-bit integers
-[x] Boolean values (#t / #f)
-[x] Procedure / function type
+- [x] 64-bit integers
+- [x] Boolean values (#t / #f)
+- [x] Procedure / function type
 
 Bindings:
-[x] Symbol binding
-[x] Error on unbound symbol
+- [x] Symbol binding
+- [x] Error on unbound symbol
 
 Functions & lambdas:
-[x] Anonymous functions (lambda)
-[x] Named functions
-[x] Function calls
-[x] Recursive functions
+- [x] Anonymous functions (lambda)
+- [x] Named functions
+- [x] Function calls
+- [x] Recursive functions
 
 Conditionals:
-[x] if expression
+- [x] if expression
 
 Built-in functions:
-[x] eq?
-[x] <
-[x] +
-[x] -
-[x] *
-[x] div
-[x] mod
+- [x] eq?
+- [x] <
+- [x] +
+- [x] -
+- [x] *
+- [x] div
+- [x] mod
 
 
 --------------------------------
 Part 2 – Custom Language (Noopy)
 --------------------------------
 Security & robustness:
-[x] Strong typing
-[x] Type checking before execution
-[x] Runtime error handling
+- [x] Strong typing
+- [x] Type checking before execution
+- [x] Runtime error handling
 
 Syntax & semantics:
-[x] Custom syntax (not S-expressions)
-[x] Blocks with braces
-[x] Expressions split across lines
-[x] Infix arithmetic operators
-[x] Operator precedence
-[x] Syntactic sugar
+- [x] Custom syntax (not S-expressions)
+- [x] Blocks with braces
+- [x] Expressions split across lines
+- [x] Infix arithmetic operators
+- [x] Operator precedence
+- [x] Syntactic sugar
 
 Types:
-[x] int
-[x] bool
-[x] void
-[x] Lists
-[x] Strings (as list of char)
-[x] Structs
+- [x] int
+- [x] bool
+- [x] void
+- [x] Lists
+- [x] Strings (as list of char)
+- [x] Structs
 
 Variables:
-[x] Variable declaration
-[x] Type inference (auto)
-[x] Explicit typing
-[x] Mutable variables
+- [x] Variable declaration
+- [x] Type inference (auto)
+- [x] Explicit typing
+- [x] Mutable variables
 
 Control flow:
-[x] if / else if / else
-[x] while loops
-[x] for loops
+- [x] if / else if / else
+- [x] while loops
+- [x] for loops
 
 Functions:
-[x] Named functions
-[x] Lambdas
-[x] Closures
-[x] Return values
-[x] Functions as values
+- [x] Named functions
+- [x] Lambdas
+- [x] Closures
+- [x] Return values
+- [x] Functions as values
 
 Data structures:
-[x] Lists
-[x] Nested lists
-[x] Structs
-[x] Field access
+- [x] Lists
+- [x] Nested lists
+- [x] Structs
+- [x] Field access
 
 Modules:
-[x] Import system
-[x] Multi-file programs
+- [x] Import system
+- [x] Multi-file programs
 
 Built-ins:
-[x] print
-[x] exit
-[x] List manipulation (head, tail, cons, nth)
-[x] Cast functions (int8, int16, int32, int64, etc.)
+- [x] print
+- [x] exit
+- [x] List manipulation (head, tail, cons, nth)
+- [x] Cast functions (int8, int16, int32, int64, etc.)
 
 
 --------------------------------
 Evaluation & Compilation
 --------------------------------
-[x] AST generation
-[x] Semantic analysis
-[x] Compiler
-[x] Virtual Machine
-[x] Custom instruction set
-[x] Bytecode format
-[x] Human-readable disassembly
-[x] VM executes bytecode
-[x] Tail-call support (TAILCALL instruction)
+- [x] AST generation
+- [x] Semantic analysis
+- [x] Compiler
+- [x] Virtual Machine
+- [x] Custom instruction set
+- [x] Bytecode format
+- [x] Human-readable disassembly
+- [x] VM executes bytecode
+- [x] Tail-call support (TAILCALL instruction)
 
 
 --------------------------------
 Documentation
 --------------------------------
-[x] Developer documentation
-[x] User manual (complete)
-[x] Grammar description
-[x] Compilation pipeline documented
-[x] Security design explained
+- [x] Developer documentation
+- [x] User manual (complete)
+- [x] Grammar description
+- [x] Compilation pipeline documented
+- [x] Security design explained
 
 
 --------------------------------
 Bonus Features
 --------------------------------
-[x] Type inference
-[x] Lists with syntactic sugar ([1, 2, 3])
-[x] Strings
-[x] Structs
-[x] Closures
-[x] Imperative constructs
-[x] Loops
-[x] Tail-call optimisation
-[x] Extensive functional test suite
-[x] Clear ASM / VM specification
+- [x] Type inference
+- [x] Lists with syntactic sugar ([1, 2, 3])
+- [x] Strings
+- [x] Structs
+- [x] Closures
+- [x] Imperative constructs
+- [x] Loops
+- [x] Tail-call optimisation
+- [x] Extensive functional test suite
+- [x] Clear ASM / VM specification
 
-[ ] Floating point numbers
-[x] File I/O
-[ ] Foreign Function Interface (FFI)
-[ ] Networking / graphics bindings
-[ ] Additional backend (WASM, native, etc.)
-[ ] Second VM implementation
-[ ] Metaprogramming (macros)
+- [ ] Floating point numbers
+- [x] File I/O
+- [ ] Foreign Function Interface (FFI)
+- [ ] Networking / graphics bindings
+- [ ] Additional backend (WASM, native, etc.)
+- [ ] Second VM implementation
+- [ ] Metaprogramming (macros)
 
 PREREQUISITES
 =============
@@ -257,7 +257,7 @@ Parser → AST → Semantic checks → ASM generation → Bytecode → Execution
 
 Top-level directories
 ---------------------
-
+```
 app/
     Entry points of the project.
     - Main.hs        : compiler executable (glados)
@@ -335,7 +335,7 @@ tools/
     - coding style checks
     - coverage tools
     - commit helpers
-
+```
 
 
 TESTING
