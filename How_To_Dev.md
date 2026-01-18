@@ -217,4 +217,5 @@ Standard operators and functions available globally.
 | `&&`, `!`, `\|\|` | Logical operators |
 | `print(val)` | Prints a value to stdout |
 |`int8(integer)`, `uint8(integer)`, `int16(integer)`, `uint16(integer)`, `int32(integer)`, `uint32(integer)`, `int64(integer)`, `uint64(integer)`, `char(integer)`, `uchar(integer)` | Casts value to specific Integer type|
-|`exit(code)`, `head(list)`, `cons(list)`, `tail(lsit)`, nth(list, index)| Standard list manipulation functions|
+|`exit(code)`, `head(list)`, `cons(list)`, `tail(lsit)`, `nth(list, index)`| Standard list manipulation functions|
+| `typeof(arg)`, `ffread(path)`, `close(fd)`, `ffwrite(path, content)`, `write(fd, content)`, `read(fd, size)`, `open(path, mode)`, `input(fd: int)` | Built-in functions for file manipulation|
