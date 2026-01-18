@@ -1,0 +1,10 @@
+struct Player {
+    hp: int;
+}
+
+func main() {
+    p: Player = new Player { hp: 1 };
+    p.hp = 10;
+    print(p.hp);
+}
+main();

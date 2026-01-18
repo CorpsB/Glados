@@ -1,0 +1,24 @@
+func gcd(a: int, b: int) -> int {
+    x: int = abs(a);
+    y: int = abs(b);
+
+    if (x == 0) { ret y; }
+    if (y == 0) { ret x; }
+
+    while (y != 0) {
+        t: int = x % y;
+        x = y;
+        y = t;
+    }
+    ret x;
+}
+
+func lcm(a: int, b: int) -> int {
+    if (a == 0 || b == 0) { ret 0; }
+    g: int = gcd(a, b);
+    ret abs((a / g) * b);
+}
+
+func coPrime(a: int, b: int) -> bool {
+    ret gcd(a, b) == 1;
+}

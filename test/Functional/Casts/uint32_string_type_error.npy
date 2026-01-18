@@ -1,0 +1,4 @@
+func main() {
+    print(uint32("Noopy"));
+}
+main();

@@ -1,0 +1,77 @@
+{
+  "Function": {
+    "prefix": [
+      "func"
+    ],
+    "body": [
+      "func ${1:name}(${2:args}) -> ${3:int} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Function declaration"
+  },
+  "If": {
+    "prefix": [
+      "if"
+    ],
+    "body": [
+      "if (${1:condition}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "If statement"
+  },
+  "IfElseExpr": {
+    "prefix": [
+      "ifexpr"
+    ],
+    "body": [
+      "${1:var}: ${2:int} = if (${3:condition}) { ${4:then} } else { ${5:else} };"
+    ],
+    "description": "If expression assignment"
+  },
+  "Struct": {
+    "prefix": [
+      "struct"
+    ],
+    "body": [
+      "struct ${1:TypeName} {",
+      "\t${2:field}: ${3:int};",
+      "}"
+    ],
+    "description": "Struct declaration"
+  },
+  "NewStruct": {
+    "prefix": [
+      "new"
+    ],
+    "body": [
+      "${1:var}: ${2:TypeName} = new ${2:TypeName} {",
+      "\t${3:field}: ${4:value}",
+      "};"
+    ],
+    "description": "Struct instantiation"
+  },
+  "For": {
+    "prefix": [
+      "for"
+    ],
+    "body": [
+      "for (${1:i}: int = 0; ${1:i} < ${2:n}; ${1:i}++) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "For loop"
+  },
+  "While": {
+    "prefix": [
+      "while"
+    ],
+    "body": [
+      "while (${1:condition}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "While loop"
+  }
+}

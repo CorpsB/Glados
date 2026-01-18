@@ -1,0 +1,14 @@
+struct Pair {
+    a: int;
+    b: int;
+}
+
+func mk() -> Pair {
+    ret new Pair { a: 9, b: 1 };
+}
+
+func main() {
+    p = mk();
+    print(p.a);
+}
+main();

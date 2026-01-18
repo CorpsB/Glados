@@ -1,0 +1,8 @@
+import "test/Functional/Basics/ImportAdvanced/transitive/a.npy";
+
+func main() {
+    // hidden() is defined in transitive/b.npy, but main did not import it directly.
+    print(hidden());
+}
+
+main();

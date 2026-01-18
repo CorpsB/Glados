@@ -1,0 +1,6 @@
+func main() {
+    x = True;
+    x++;
+    print(x);
+}
+main();

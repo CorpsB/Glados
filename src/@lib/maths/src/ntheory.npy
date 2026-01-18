@@ -1,0 +1,43 @@
+func phi(n: int) -> int {
+    if (n <= 0) { ret 0; }
+    result: int = n;
+    x: int = n;
+
+    p: int = 2;
+    while (p * p <= x) {
+        if ((x % p) == 0) {
+            while ((x % p) == 0) { x = x / p; }
+            result = result - (result / p);
+        }
+        p = p + 1;
+    }
+    if (x > 1) {
+        result = result - (result / x);
+    }
+    ret result;
+}
+
+func modinv(a: int, m: int) -> int {
+    if (m <= 1) { ret 0; }
+
+    t: int = 0;
+    nt: int = 1;
+    r: int = m;
+    nr: int = pmod(a, m);
+
+    while (nr != 0) {
+        q: int = r / nr;
+
+        tmpT: int = t - (q * nt);
+        t = nt;
+        nt = tmpT;
+
+        tmpR: int = r - (q * nr);
+        r = nr;
+        nr = tmpR;
+    }
+
+    if (r != 1) { ret 0; }
+    if (t < 0) { t = t + m; }
+    ret t;
+}

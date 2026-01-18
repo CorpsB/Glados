@@ -1,0 +1,7 @@
+func main() {
+    base = 10;
+    f = lambda(x) x + base;
+    base = 19;
+    print(f(1));
+}
+main();

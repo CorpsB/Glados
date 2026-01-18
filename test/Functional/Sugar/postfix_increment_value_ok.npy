@@ -1,0 +1,8 @@
+func main() {
+    i = 1;
+    x = i++;
+    // i should now be 2
+    print(i);
+}
+
+main();

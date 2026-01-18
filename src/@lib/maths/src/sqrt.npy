@@ -1,0 +1,29 @@
+func isSqrt(n: int) -> int {
+    if (n <= 0) { ret 0; }
+
+    lo: int = 1;
+    hi: int = n;
+    ans: int = 0;
+
+    while (lo <= hi) {
+        mid: int = (lo + hi) / 2;
+        sq: int = mid * mid;
+
+        if (sq == n) { ret mid; }
+
+        if (sq > 0 && sq < n) {
+            ans = mid;
+            lo = lo + 1;
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    ret ans;
+}
+
+func isSquare(n: int) -> bool {
+    if (n < 0) { ret False; }
+    r: int = isSqrt(n);
+    ret (r * r) == n;
+}

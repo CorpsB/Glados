@@ -1,0 +1,15 @@
+struct Vec2 {
+    x: int;
+    y: int;
+}
+
+struct Player {
+    pos: Vec2;
+}
+
+func main() {
+    p: Player = new Player { pos: new Vec2 { x: 0, y: 0 } };
+    p.pos.x = 42;
+    print(p.pos.x);
+}
+main();

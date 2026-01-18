@@ -1,0 +1,7 @@
+func main() {
+    l: [int] = [10, 20];
+    l2 = cons(5, l);
+    print(head(l2));
+}
+
+main();

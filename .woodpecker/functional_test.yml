@@ -1,11 +1,23 @@
 kind: pipeline
 name: Functional tests
 
-when:
-  - event: [push, pull_request]
-  
+depends_on:
+  - build
+
 steps:
   - name: Basic tests
+    when:
+      event: push
+    image: haskell:9.10.3
+    volumes:
+      - /var/lib/woodpecker/stack:/root/.stack
+    commands:
+      - make
+      - ./test/Functional/test.sh
+
+  - name: Basic tests
+    when:
+      event: pull_request
     image: haskell:9.10.3
     commands:
       - make

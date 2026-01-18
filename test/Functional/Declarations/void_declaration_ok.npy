@@ -1,0 +1,2 @@
+nothing: void;
+print(42);

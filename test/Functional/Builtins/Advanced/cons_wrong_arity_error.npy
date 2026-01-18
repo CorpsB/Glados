@@ -1,0 +1,7 @@
+func main() {
+    l: [int] = [1, 2, 3];
+    // wrong arity: doc ambiguity probe (should error if cons expects 2 args)
+    l2 = cons(l);
+    print(head(l2));
+}
+main();

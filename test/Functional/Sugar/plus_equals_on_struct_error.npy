@@ -1,0 +1,10 @@
+struct S {
+    x: int;
+}
+
+func main() {
+    s: S = new S { x: 1 };
+    s += 1;
+    print(42);
+}
+main();

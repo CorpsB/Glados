@@ -1,0 +1,3 @@
+func sum(p: Pair) -> int {
+    ret p.a + p.b;
+}

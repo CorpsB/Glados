@@ -16,24 +16,67 @@ library
   hs-source-dirs:
       src
   exposed-modules:
-      Coucou
-      Ast
-      Lisp
-      Parser.Coucou
-      Eval.Coucou
-      Eval.Run
-      Eval.Ast
-      Eval.Builtins
-      Eval.Conditions
-      Eval.Functions
-      Type.Integer
-      Parser.Ast
-      Utils.List
-      Parser.ParserISL
+      AST.Ast
+      AST.Semantics.Type
+      AST.Semantics.Check
+      AST.Semantics.CheckCall
+      Common.Type.Integer
+      Common.Utils.List
+      Common.Utils.Bytecode.Header
+      Common.Utils.Bytecode.File
+      Common.Error
+      Compiler.ASM.Builtins
+      Compiler.ASM.CompilerMonad
+      Compiler.ASM.Compiler
+      Compiler.ASM.AstToAsm
+      Compiler.ASM.Assembler
+      Compiler.Bytecode.Encoder
+      Compiler.Bytecode.Serializer
+      Compiler.Bytecode.DisasmFinal
+      Compiler.CompilerState
+      Compiler.Instruction
+      Compiler.PsInstruction
+      Compiler.ResolveLabels.ResolveLabels
+      Compiler.ResolveLabels.ResolveLabelsHelpers
+      Compiler.ResolveLabels.Step2CallLabel
+      Compiler.ResolveLabels.Step2GetFuncAddrLabel
+      Compiler.ResolveLabels.Step2JumpIfFalseLabel
+      Compiler.ResolveLabels.Step2JumpIfTrueLabel
+      Compiler.ResolveLabels.Step2JumpLabel
+      Compiler.ResolveLabels.Step2LabelDef
+      Compiler.ResolveLabels.Step2MakeClosureLabel
+      Compiler.ResolveLabels.Step2Real
+      Compiler.ResolveLabels.Step2TailCallLabel
+      Parser.Lexer
+      Parser.Expression
+      Parser.Statement
+      Parser.Conditions
+      Parser.ImportSystem
+      VM.VMState
+      VM.VMValue
+      VM.VMStack
+      VM.CallSnapshot
+      VM.Bytecode.Reader
+      VM.Bytecode.Runner
+      VM.Instruction.Stack
+      VM.Instruction.Arithmetic
+      VM.Instruction.Logic
+      VM.Instruction.System
+      VM.Instruction.Index
+      VM.Instruction.Struct
+      VM.Instruction.List
+      VM.Instruction.Function
+      VM.Instruction.Variable
   build-depends:
       base >= 4.7 && < 5
     , megaparsec
     , parser-combinators
+    , bytestring
+    , text
+    , containers
+    , mtl
+    , binary
+    , vector
   default-language:    Haskell2010
   ghc-options:
     -Wall
@@ -53,11 +96,32 @@ executable glados
   build-depends:
       base >= 4.7 && < 5
     , glados
+    , megaparsec
+    , text
+    , bytestring
+    , mtl
+    , containers
   default-language:    Haskell2010
   ghc-options:
     -threaded
     -rtsopts
     -with-rtsopts=-N
+
+executable glados-vm
+  hs-source-dirs:      app/VM
+  main-is:             Main.hs
+  build-depends:
+      base >= 4.7 && < 5
+    , glados
+    , bytestring
+    , mtl
+    , vector
+  default-language:    Haskell2010
+  ghc-options:
+    -threaded
+    -rtsopts
+    -with-rtsopts=-N
+    -Wall
 
 test-suite glados-unit
   type:                exitcode-stdio-1.0
@@ -66,17 +130,49 @@ test-suite glados-unit
   main-is:             Spec.hs
   default-language:    Haskell2010
   other-modules:
-      Eval.BuiltinsSpec
-      Eval.ConditionsSpec
-      Eval.FunctionsSpec
-      Eval.AstSpec
-      Eval.RunSpec
-      AstSpec
-      Parser.AstSpec
-      Parser.ParserISLTest
-      Type.IntegerSpec
-      Utils.ListSpec
-      LispTest
+      AST.AstSpec
+      AST.Semantics.TypeSpec
+      AST.Semantics.CheckSpec
+      AST.Semantics.CheckCallSpec
+      Parser.StatementSpec
+      Parser.LexerSpec
+      Parser.ExpressionSpec
+      Parser.ConditionsSpec
+      Parser.ImportSystemSpec
+      Compiler.Bytecode.EncoderSpec
+      Compiler.Bytecode.SerializerSpec
+      Compiler.ResolveLabels.ResolveLabelsSpec
+      Compiler.ResolveLabels.ResolveLabelsHelpersSpec
+      Compiler.ResolveLabels.Step2CallLabelSpec
+      Compiler.ResolveLabels.Step2GetFuncAddrLabelSpec
+      Compiler.ResolveLabels.Step2JumpIfFalseLabelSpec
+      Compiler.ResolveLabels.Step2JumpIfTrueLabelSpec
+      Compiler.ResolveLabels.Step2JumpLabelSpec
+      Compiler.ResolveLabels.Step2LabelDefSpec
+      Compiler.ResolveLabels.Step2MakeClosureLabelSpec
+      Compiler.ResolveLabels.Step2RealSpec
+      Compiler.ResolveLabels.Step2TailCallLabelSpec
+      Compiler.InstructionSpec
+      Compiler.PsInstructionSpec
+      Compiler.CompilerStateSpec
+      Compiler.ASM.CompilerMonadSpec
+      Compiler.ASM.CompilerSpec
+      Compiler.ASM.AstToAsmSpec
+      Common.Type.IntegerSpec
+      Common.ErrorSpec
+      VM.Bytecode.ReaderSpec
+      VM.Bytecode.RunnerSpec
+      VM.Instruction.ArithmeticSpec
+      VM.Instruction.FunctionSpec
+      VM.Instruction.IndexSpec
+      VM.Instruction.LogicSpec
+      VM.Instruction.StackSpec
+      VM.Instruction.SystemSpec
+      VM.Instruction.VariableSpec
+      VM.CallSnapshotSpec
+      VM.VMStateSpec
+      VM.VMStackSpec
+      VM.VMValueSpec
   build-depends:
       base >= 4.7 && < 5
     , glados
@@ -84,6 +180,13 @@ test-suite glados-unit
     , silently
     , megaparsec
     , parser-combinators
+    , bytestring
+    , text
+    , containers
+    , transformers
+    , mtl
+    , vector
+    , directory
   ghc-options:
     -Wall
     -Wcompat

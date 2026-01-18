@@ -1,0 +1,8 @@
+import "test/Functional/Basics/ImportAdvanced/lib/value.npy";
+import "test/Functional/Basics/ImportAdvanced/lib/value.npy";
+
+func main() {
+    print(value());
+}
+
+main();

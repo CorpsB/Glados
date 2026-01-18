@@ -1,0 +1,175 @@
+{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- CompilerMonadSpec
+-}
+
+{-# LANGUAGE OverloadedStrings #-}
+
+module Compiler.ASM.CompilerMonadSpec (spec) where
+
+import Test.Hspec
+import Control.Exception (evaluate)
+import Control.Monad.State (runStateT)
+import Control.Monad.Trans.Class (lift)
+import qualified Data.Sequence as Seq
+import qualified Data.Text as T
+import qualified Data.Map.Strict as Map
+
+import Compiler.CompilerState (CompilerState(..), ScopeType(..), createCompilerState)
+import Compiler.PsInstruction (PsInstruction(..))
+import Compiler.Instruction (Instruction(..))
+import Compiler.ASM.CompilerMonad
+
+expectRight :: Either e a -> a
+expectRight (Right x) = x
+expectRight (Left _)  = error "Expected Right, got Left"
+
+expectLeft :: Either e a -> e
+expectLeft (Left e)  = e
+expectLeft (Right _) = error "Expected Left, got Right"
+
+runCM :: CompilerMonad a -> CompilerState -> Either T.Text (a, CompilerState)
+runCM = runStateT
+
+spec :: Spec
+spec = describe "Compiler.ASM.CompilerMonad (max coverage)" $ do
+  describe "helpers" $ do
+    it "expectRight / expectLeft cover both branches + throw branches" $ do
+      expectRight (Right (1 :: Int) :: Either T.Text Int) `shouldBe` 1
+      expectLeft (Left ("e" :: T.Text) :: Either T.Text Int) `shouldBe` "e"
+      evaluate (expectRight (Left ("boom" :: T.Text) :: Either T.Text Int)) `shouldThrow` anyErrorCall
+      evaluate (expectLeft (Right (2 :: Int) :: Either T.Text Int)) `shouldThrow` anyErrorCall
+
+  describe "appendPseudoInstruction + basic emitters" $ do
+    it "appendPseudoInstruction appends into csCode" $ do
+      let (_, st) = expectRight (runCM (appendPseudoInstruction (LabelDef "L")) createCompilerState)
+      csCode st `shouldBe` Seq.singleton (LabelDef "L")
+
+    it "emitInstruction wraps in Real" $ do
+      let (_, st) = expectRight (runCM (emitInstruction Halt) createCompilerState)
+      csCode st `shouldBe` Seq.singleton (Real Halt)
+
+    it "emitLabelDefinition / emitJump* / emitCallToLabel all append expected PsInstruction" $ do
+      let action = do
+            emitLabelDefinition "A"
+            emitJumpToLabel "B"
+            emitJumpIfFalseToLabel "C"
+            emitJumpIfTrueToLabel "D"
+            emitCallToLabel "E"
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe` Seq.fromList
+        [ LabelDef "A"
+        , JumpLabel "B"
+        , JumpIfFalseLabel "C"
+        , JumpIfTrueLabel "D"
+        , CallLabel "E"
+        ]
+
+  describe "generateUniqueLabel" $ do
+    it "increments csLabelCnt and (ret 0)urns unique labels" $ do
+      let action = do
+            l0 <- generateUniqueLabel "label"
+            l1 <- generateUniqueLabel "label"
+            pure (l0, l1)
+      let ((l0, l1), st) = expectRight (runCM action createCompilerState)
+      l0 `shouldBe` "label_0"
+      l1 `shouldBe` "label_1"
+      csLabelCnt st `shouldBe` 2
+
+  describe "defineSymbol" $ do
+    it "allocates ScopeGlobal indices and increments csNextIndex" $ do
+      let action = do
+            resA <- defineSymbol "varA" "int"
+            resB <- defineSymbol "varB" "int"
+            pure (resA, resB)
+      let ((scopeA, i0), (scopeB, i1)) = fst $ expectRight (runCM action createCompilerState)
+      let finalState = snd $ expectRight (runCM action createCompilerState)
+      scopeA `shouldBe` ScopeGlobal
+      i0 `shouldBe` 0
+      scopeB `shouldBe` ScopeGlobal
+      i1 `shouldBe` 1
+      csNextIndex finalState `shouldBe` 2
+      Map.lookup "varA" (csSymbols finalState) `shouldBe` Just (ScopeGlobal, 0, "int")
+      Map.lookup "varB" (csSymbols finalState) `shouldBe` Just (ScopeGlobal, 1, "int")
+
+  describe "registerSymbol" $ do
+    it "ScopeLocal adjusts csNextIndex to max(old, idx+1)" $ do
+      let action = do
+            registerSymbol "x" "int" ScopeLocal 0
+            registerSymbol "y" "int" ScopeLocal 3
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csNextIndex st `shouldBe` 4
+      Map.lookup "x" (csSymbols st) `shouldBe` Just (ScopeLocal, 0, "int")
+      Map.lookup "y" (csSymbols st) `shouldBe` Just (ScopeLocal, 3, "int")
+
+    it "ScopeGlobal adjusts csNextIndex similarly" $ do
+      let action = do
+            registerSymbol "g" "int" ScopeGlobal 10
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csNextIndex st `shouldBe` 11
+      Map.lookup "g" (csSymbols st) `shouldBe` Just (ScopeGlobal, 10, "int")
+
+    it "ScopeCapture does NOT touch csNextIndex" $ do
+      let st0 = createCompilerState { csNextIndex = 7 }
+      let (_, st) = expectRight (runCM (registerSymbol "c" "int" ScopeCapture 2) st0)
+      csNextIndex st `shouldBe` 7
+      Map.lookup "c" (csSymbols st) `shouldBe` Just (ScopeCapture, 2, "int")
+
+  describe "defineStruct / getStructDefinition" $ do
+    it "defineStruct stores field order" $ do
+      let action = defineStruct "Point" [("x", "int"),("y", "int"),("z", "int")]
+      let (_, st) = expectRight (runCM action createCompilerState)
+      Map.lookup "Point" (csStructs st) `shouldBe` Just [("x", "int"), ("y", "int"), ("z", "int")]
+
+    it "defineStruct overwrites existing definition" $ do
+      let action = do
+            defineStruct "S" [("a", "int")]
+            defineStruct "S" [("b", "int"), ("c", "int")]
+      let (_, st) = expectRight (runCM action createCompilerState)
+      Map.lookup "S" (csStructs st) `shouldBe` Just [("b", "int"), ("c", "int")]
+
+    it "getStructDefinition (ret 0)urns stored definition" $ do
+      let action = do
+            defineStruct "S" [("a", "int"), ("b", "int")]
+            getStructDefinition "S"
+      let (fields, _) = expectRight (runCM action createCompilerState)
+      fields `shouldBe` [("a", "int"), ("b", "int")]
+
+    it "getStructDefinition fails for unknown struct" $ do
+      let err = expectLeft (runCM (getStructDefinition "Unknown") createCompilerState)
+      T.unpack err `shouldContain` "Undefined struct"
+
+  describe "compileInIsolatedFunctionScope" $ do
+    it "moves isolated csCode into outer csFuncs, restores outer csCode, and merges nested csFuncs too" $ do
+      let action = do
+            emitInstruction Halt
+            compileInIsolatedFunctionScope $ do
+              emitLabelDefinition "inner"
+              emitInstruction Nop
+              compileInIsolatedFunctionScope $ do
+                emitLabelDefinition "nested"
+                emitInstruction (Ret 0)
+              emitInstruction (Ret 0)
+            emitInstruction Halt
+      let (_, st) = expectRight (runCM action createCompilerState)
+      csCode st `shouldBe` Seq.fromList [Real Halt, Real Halt]
+      csFuncs st `shouldBe` Seq.fromList
+        [ LabelDef "inner"
+        , Real Nop
+        , Real (Ret 0)
+        , LabelDef "nested"
+        , Real (Ret 0)
+        ]
+
+    it "propagates Left from isolated scope" $ do
+      let action = compileInIsolatedFunctionScope (lift (Left "Manual Error") :: CompilerMonad ())
+      let err = expectLeft (runStateT action createCompilerState)
+      err `shouldBe` "Manual Error"
+
+  describe "Underlying Either error propagation" $ do
+    it "lift Left bubbles up" $ do
+      let action = (lift (Left "Manual Error") :: CompilerMonad ())
+      let err = expectLeft (runStateT action createCompilerState)
+      err `shouldBe` "Manual Error"

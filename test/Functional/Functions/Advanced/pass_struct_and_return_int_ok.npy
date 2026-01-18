@@ -1,0 +1,13 @@
+struct Point {
+    x: int;
+}
+
+func getx(p: Point) -> int {
+    ret p.x;
+}
+
+func main() {
+    p: Point = new Point { x: 7 };
+    print(getx(p));
+}
+main();

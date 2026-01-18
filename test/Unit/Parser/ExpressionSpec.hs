@@ -1,0 +1,153 @@
+{-
+-- EPITECH PROJECT, 2025
+-- Glados
+-- File description:
+-- ExpressionSpec.hs
+-}
+
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings #-}
+
+module Parser.ExpressionSpec (spec) where
+
+import Test.Hspec
+import Text.Megaparsec (parse)
+import Parser.Expression (pExpr)
+import AST.Ast (Ast(..), cleanAst)
+import Common.Type.Integer (IntValue(..))
+import qualified Data.Text as DT
+import Data.Void (Void)
+import Text.Megaparsec.Error (ParseErrorBundle)
+import Data.Int (Int8)
+import Data.Char (ord)
+
+parseExpr :: DT.Text -> Either (ParseErrorBundle DT.Text Void) Ast
+parseExpr input = fmap cleanAst (parse pExpr "" input)
+
+p :: String -> DT.Text
+p = DT.pack
+
+charToInt8 :: Char -> Int8
+charToInt8 c = fromIntegral (ord c)
+
+spec :: Spec
+spec = describe "Parser.Expression - Full Coverage" $ do
+
+    describe "Booleans" $ do
+        it "Parses True" $ do
+            parseExpr "True" `shouldSatisfy` \case
+                Right (ABool True) -> True
+                _ -> False
+        
+        it "Parses False (Coverage Target)" $ do
+            parseExpr "False" `shouldSatisfy` \case
+                Right (ABool False) -> True
+                _ -> False
+
+    describe "Parentheses & Priority" $ do
+        it "Parses parenthesized expression" $ do
+            parseExpr "(42)" `shouldSatisfy` \case
+                Right (AInteger (I8 42)) -> True
+                _ -> False
+
+        it "Parses nested parentheses" $ do
+            parseExpr "((10))" `shouldSatisfy` \case
+                Right (AInteger (I8 10)) -> True
+                _ -> False
+
+    describe "Operators Coverage" $ do
+        
+        it "Parses Division (/ -> div)" $ do
+            parseExpr "10 / 2" `shouldSatisfy` \case
+                Right (ACall (ASymbol op) [AInteger (I8 10), AInteger (I8 2)]) -> op == p "div"
+                _ -> False
+
+        it "Parses Modulo (% -> mod)" $ do
+            parseExpr "10 % 3" `shouldSatisfy` \case
+                Right (ACall (ASymbol op) [AInteger (I8 10), AInteger (I8 3)]) -> op == p "mod"
+                _ -> False
+
+        it "Parses Subtraction (-)" $ do
+            parseExpr "10 - 5" `shouldSatisfy` \case
+                Right (ACall (ASymbol op) [AInteger (I8 10), AInteger (I8 5)]) -> op == p "-"
+                _ -> False
+
+        it "Parses Equality (== -> eq?)" $ do
+            parseExpr "1 == 1" `shouldSatisfy` \case
+                Right (ACall (ASymbol op) [AInteger (I8 1), AInteger (I8 1)]) -> op == p "eq?"
+                _ -> False
+
+        it "Parses Less Than (<)" $ do
+            parseExpr "1 < 2" `shouldSatisfy` \case
+                Right (ACall (ASymbol op) [AInteger (I8 1), AInteger (I8 2)]) -> op == p "<"
+                _ -> False
+        
+        it "Parses Greater Than (>)" $ do
+            parseExpr "2 > 1" `shouldSatisfy` \case
+                Right (ACall (ASymbol op) [AInteger (I8 2), AInteger (I8 1)]) -> op == p ">"
+                _ -> False
+
+    describe "Other Types (Strings, Chars, Lists)" $ do
+        it "Parses String" $ do
+            parseExpr "\"abc\"" `shouldSatisfy` \case
+                Right (AList _) -> True
+                _ -> False
+
+        it "Parses Char" $ do
+            parseExpr "'c'" `shouldSatisfy` \case
+                Right (AInteger (IChar v)) -> v == charToInt8 'c'
+                _ -> False
+
+        it "Parses List Literal" $ do
+            parseExpr "[1, 2]" `shouldSatisfy` \case
+                Right (AList _) -> True
+                _ -> False
+        
+        it "Parses Function ACall" $ do
+            parseExpr "foo(1)" `shouldSatisfy` \case
+                Right (ACall (ASymbol s) _) -> s == p "foo"
+                _ -> False
+
+    describe "Coverage: Parser Helpers" $ do
+        
+        it "Triggers incrementOps fallback (non-symbol argument)" $ do
+            let code = "++5"
+            parseExpr code `shouldSatisfy` \case
+                Right (ACall (ASymbol op) [AInteger (I8 5)]) -> op == p "++"
+                _ -> False
+
+        it "Triggers decrementOps fallback (non-symbol argument)" $ do
+            let code = "--(x+1)"
+            parseExpr code `shouldSatisfy` \case
+                Right (ACall (ASymbol op) _) -> op == p "--"
+                _ -> False
+
+    describe "Expression Parser - Structure Access" $ do
+
+        it "Parses simple field access (obj.field)" $ do
+            let input = "player.hp"
+            parseExpr input `shouldBe` Right (AAccessStruct (ASymbol (p "player")) (p "hp"))
+
+        it "Parses nested field access (obj.sub.field)" $ do
+            let input = "game.player.pos"
+            parseExpr input `shouldBe` Right (AAccessStruct 
+                                                (AAccessStruct (ASymbol (p "game")) (p "player")) 
+                                                (p "pos"))
+
+        it "Parses mixed array and struct access (arr[0].x)" $ do
+            let input = "grid[0].x"
+            
+            case parseExpr input of
+                Right (AAccessStruct _ name) | name == p "x" -> return ()
+                
+                Right ast -> expectationFailure $ "Expected AAccessStruct, got: " ++ show ast
+                Left err -> expectationFailure $ "Parse error: " ++ show err
+
+        it "Parses complex chain (obj.method(arg).res)" $ do
+            let input = "getPlayer().stats.hp"
+            case parseExpr input of
+                Right (AAccessStruct (AAccessStruct (ACall _ _) sub) field) 
+                    | sub == p "stats" && field == p "hp" -> return ()
+                    
+                Right ast -> expectationFailure $ "Structure incorrecte: " ++ show ast
+                Left err -> expectationFailure $ "Parse error: " ++ show err

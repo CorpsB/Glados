@@ -1,1 +1,0 @@
-(< "Not integer" 2)

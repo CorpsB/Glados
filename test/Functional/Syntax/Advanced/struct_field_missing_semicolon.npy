@@ -1,0 +1,9 @@
+struct Vector2 {
+    x: int
+    y: int;
+}
+
+func main() {
+    print(42);
+}
+main();

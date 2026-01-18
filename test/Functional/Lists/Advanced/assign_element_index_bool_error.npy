@@ -1,0 +1,6 @@
+func main() {
+    l: [int] = [1, 2, 3];
+    l[True] = 5;
+    print(l[0]);
+}
+main();
