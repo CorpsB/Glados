@@ -415,7 +415,8 @@ checkElement env expectedType firstIsChar elemAst = do
                typeToString expectedType ++
                " but got " ++ typeToString elemType
     when (firstIsChar /= isCharLiteral elemAst) $
-        Left "List literal mismatch: cannot mix 'char' and 'int' in the same list"
+        Left $ "List literal mismatch: cannot mix 'char' and " ++
+            "'int' in the same list"
 
 -- | Checks if the AST contains a Return statement.
 hasReturn :: Ast -> Bool
