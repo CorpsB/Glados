@@ -1,0 +1,69 @@
+/*
+** EPITECH PROJECT, 2026
+** Glados
+** File description:
+** print_ascii.npy
+*/
+
+import "src/@lib/string/module.npy";
+
+import "src/@example/crocus/src/digits/digits.npy";
+
+func print_number_part(nb: int, type: char, part_id: int) {
+    if (nb == 0) {
+        ret zero(part_id, type);
+    }
+    if (nb == 1) {
+        ret one(part_id, type);
+    }
+    if (nb == 2) {
+        ret two(part_id, type);
+    }
+    if (nb == 3) {
+        ret three(part_id, type);
+    }
+    if (nb == 4) {
+        ret four(part_id, type);
+    }
+    if (nb == 5) {
+        ret five(part_id, type);
+    }
+    if (nb == 6) {
+        ret six(part_id, type);
+    }
+    if (nb == 7) {
+        ret seven(part_id, type);
+    }
+    if (nb == 8) {
+        ret eight(part_id, type);
+    }
+    if (nb == 9) {
+        ret nine(part_id, type);
+    }
+}
+
+func get_number(data_n: [char], data_s: [char], part_id: int, i: int) {
+    nb: int = char(data_n[i] - 48);
+    str_size: int = 0;
+    type: char = '\0';
+
+    if (data_s == ['\0']) {
+        type = '0';
+    } else {
+        str_size = length(data_s);
+        type = data_s[nb % str_size];
+    }
+    print_number_part(nb, type, part_id);
+    if (data_n[i + 1] != '\0') {
+        print(' ');
+    }
+}
+
+func print_ascii(data_n: [char], data_s: [char]) {
+    for (j: int = 0; j < 5; j++) {
+        for (i: int = 0; data_n[i] != '\0'; i++) {
+            get_number(data_n, data_s, j, i);
+        }
+        print('\n');
+    }
+}

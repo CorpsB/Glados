@@ -1,0 +1,188 @@
+/*
+** EPITECH PROJECT, 2026
+** Glados
+** File description:
+** digits.npy
+*/
+
+import "src/@example/crocus/src/digits/display_line.npy";
+
+func zero(line: int, c: char) {
+    if (line == 0) {
+        display_line("oxxxo\0", c);
+    }
+    if (line == 1) {
+        display_line("xooox\0", c);
+    }
+    if (line == 2) {
+        display_line("xooox\0", c);
+    }
+    if (line == 3) {
+        display_line("xooox\0", c);
+    }
+    if (line == 4) {
+        display_line("oxxxo\0", c);
+    }
+}
+
+func one(line: int, c: char) {
+    if (line == 0) {
+        display_line("oxxxo\0", c);
+    }
+    if (line == 1) {
+        display_line("xoxxo\0", c);
+    }
+    if (line == 2) {
+        display_line("ooxxo\0", c);
+    }
+    if (line == 3) {
+        display_line("ooxxo\0", c);
+    }
+    if (line == 4) {
+        display_line("oxxxx\0", c);
+    }
+}
+
+func two(line: int, c: char) {
+    if (line == 0) {
+        display_line("oxxxo\0", c);
+    }
+    if (line == 1) {
+        display_line("xooox\0", c);
+    }
+    if (line == 2) {
+        display_line("oooxo\0", c);
+    }
+    if (line == 3) {
+        display_line("oxooo\0", c);
+    }
+    if (line == 4) {
+        display_line("xxxxx\0", c);
+    }
+}
+
+func three(line: int, c: char) {
+    if (line == 0) {
+        display_line("xxxxo\0", c);
+    }
+    if (line == 1) {
+        display_line("oooox\0", c);
+    }
+    if (line == 2) {
+        display_line("oxxxo\0", c);
+    }
+    if (line == 3) {
+        display_line("oooox\0", c);
+    }
+    if (line == 4) {
+        display_line("xxxxo\0", c);
+    }
+}
+
+func four(line: int, c: char) {
+    if (line == 0) {
+        display_line("ooxxo\0", c);
+    }
+    if (line == 1) {
+        display_line("oxoxo\0", c);
+    }
+    if (line == 2) {
+        display_line("xooxo\0", c);
+    }
+    if (line == 3) {
+        display_line("xxxxx\0", c);
+    }
+    if (line == 4) {
+        display_line("oooxo\0", c);
+    }
+}
+
+func five(line: int, c: char) {
+    if (line == 0) {
+        display_line("xxxxx\0", c);
+    }
+    if (line == 1) {
+        display_line("xoooo\0", c);
+    }
+    if (line == 2) {
+        display_line("xxxxo\0", c);
+    }
+    if (line == 3) {
+        display_line("oooox\0", c);
+    }
+    if (line == 4) {
+        display_line("xxxxo\0", c);
+    }
+}
+
+func six(line: int, c: char) {
+    if (line == 0) {
+        display_line("oxxxo\0", c);
+    }
+    if (line == 1) {
+        display_line("xoooo\0", c);
+    }
+    if (line == 2) {
+        display_line("xxxxo\0", c);
+    }
+    if (line == 3) {
+        display_line("xooox\0", c);
+    }
+    if (line == 4) {
+        display_line("oxxxo\0", c);
+    }
+}
+
+func seven(line: int, c: char) {
+    if (line == 0) {
+        display_line("xxxxx\0", c);
+    }
+    if (line == 1) {
+        display_line("oooox\0", c);
+    }
+    if (line == 2) {
+        display_line("oooxo\0", c);
+    }
+    if (line == 3) {
+        display_line("ooxoo\0", c);
+    }
+    if (line == 4) {
+        display_line("oxooo\0", c);
+    }
+}
+
+func eight(line: int, c: char) {
+    if (line == 0) {
+        display_line("oxxxo\0", c);
+    }
+    if (line == 1) {
+        display_line("xooox\0", c);
+    }
+    if (line == 2) {
+        display_line("oxxxo\0", c);
+    }
+    if (line == 3) {
+        display_line("xooox\0", c);
+    }
+    if (line == 4) {
+        display_line("oxxxo\0", c);
+    }
+}
+
+func nine(line: int, c: char) {
+    if (line == 0) {
+        display_line("oxxxo\0", c);
+    }
+    if (line == 1) {
+        display_line("xooox\0", c);
+    }
+    if (line == 2) {
+        display_line("oxxxx\0", c);
+    }
+    if (line == 3) {
+        display_line("oooox\0", c);
+    }
+    if (line == 4) {
+        display_line("oxxxo\0", c);
+    }
+}
